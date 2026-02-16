@@ -50,6 +50,28 @@ class QuranService:
                 return verse
         return None
 
+    def find_similar_verses(self, query: str, limit: int = 10):
+        """
+        Find verses similar to the query text.
+        
+        Args:
+            query: The search text
+            limit: Maximum number of verses to return (default: 10)
+            
+        Returns:
+            A list of similar verses (up to the limit)
+        """
+        query = query.strip()
+        if not query:
+            return []
+        
+        similar_verses = []
+        for verse in self.verses:
+            if query in verse["text"]:
+                similar_verses.append(verse)
+                
+        return similar_verses[:limit]
+
 
 # 🔥 Minimal test
 if __name__ == "__main__":
