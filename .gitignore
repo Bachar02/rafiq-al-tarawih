@@ -1,0 +1,29 @@
+# Python / FastAPI
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.env
+
+
+mobile
+# Flutter / Dart
+build/
+.dart_tool/
+.packages
+.pub-cache/
+pubspec.lock
+
+# IDEs / Editors
+.vscode/
+.idea/
+*.iml
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Keep your Quran dataset
+# data/quran/quran.txt will remain tracked
