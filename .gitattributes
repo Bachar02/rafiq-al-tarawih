@@ -1,0 +1,13 @@
+# Normalise line endings for source, so Windows and CI agree.
+* text=auto eol=lf
+
+# The Tanzil sources are distributed verbatim and must stay byte-for-byte
+# identical to upstream — their licence forbids modification, and line-ending
+# conversion would silently change their checksums. Never touch them.
+/data/raw/** -text
+
+# Binary assets
+*.wav binary
+*.mp3 binary
+*.onnx binary
+*.tflite binary

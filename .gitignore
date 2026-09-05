@@ -1,0 +1,33 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# Generated Quran artifacts (rebuild with: py data/build_quran.py)
+/data/quran.json
+
+# Audio: never commit recitation recordings, they are large and often rights-encumbered.
+# Keep eval manifests (*.jsonl) which reference audio by path/checksum.
+/eval/audio/
+
+# Models
+*.onnx
+*.tflite
+*.pt
+*.bin
+
+# Flutter (Phase 3)
+mobile/.dart_tool/
+mobile/build/
+mobile/.flutter-plugins*
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
