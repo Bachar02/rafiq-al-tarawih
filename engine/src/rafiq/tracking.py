@@ -46,6 +46,7 @@ class TrackerConfig:
     cold_start_confidence: float = 0.6  # confidence needed to show the very first position
     full_evidence_words: int = 3  # chunks shorter than this count as proportionally weaker evidence
     unknown_exit_cost: float = 0.3  # leaving al-Fatiha when we never saw where the reciter was before
+    hint_bonus: float = 0.3  # emission bonus inside the user's hint while searching (soft, never a filter)
     lost_after: int = 4  # consecutive noise chunks before reporting "lost"
     excursions: tuple[tuple[int, int], ...] = ((1, 7),)  # verse-id ranges: al-Fatiha
 
@@ -103,6 +104,7 @@ class Tracker:
         config: TrackerConfig = TrackerConfig(),
         transition: TransitionModel | None = None,
     ) -> None:
+        self._hint: tuple[int, int] | None = None  # stream range [lo, hi); survives reset()
         self.matcher = matcher
         self.index = matcher.index
         self.config = config
@@ -123,10 +125,26 @@ class Tracker:
         self._misses = 0
         self._state = TrackState(None, None, IDLE, 0.0)
 
-    def seed(self, verse_id: int) -> None:
-        """Tell the tracker where recitation is expected to start (e.g. tonight's juz)."""
-        start, _ = self.index.verse_span(verse_id)
-        self._hyps = [Hypothesis(end=start, score=1.0, emission=1.0)]
+    def hint(self, first_verse: int | None, last_verse: int | None = None) -> None:
+        """Optional user hint: "tonight the imam is in this surah / juz".
+
+        Detection is automatic without it. The hint only helps while the
+        tracker is *searching* (before the first lock, or after getting lost):
+        it adds a search restricted to the range and a small bonus for
+        candidates inside it. Once locked, it has no effect, so a wrong hint
+        can delay detection slightly but can never trap the tracker.
+        Pass `None` to clear. It survives `reset()`: it describes the session.
+        """
+        if first_verse is None:
+            self._hint = None
+            return
+        last_verse = last_verse or first_verse
+        self._hint = (self.index.verse_span(first_verse)[0], self.index.verse_span(last_verse)[1])
+
+    @property
+    def searching(self) -> bool:
+        """True until the first position is displayed, and again once lost."""
+        return self._shown is None or self._misses >= self.config.lost_after
 
     @property
     def state(self) -> TrackState:
@@ -136,7 +154,8 @@ class Tracker:
         """Feed one ASR chunk; returns what the UI should show now."""
         cfg = self.config
         tokens = self.index.tokenizer(text)
-        candidates = self._candidates(tokens)
+        hint = self._hint if self.searching else None
+        candidates = self._candidates(tokens, hint)
         # A one-word chunk matches perfectly in hundreds of places; it is weak
         # evidence however well it aligns, so short chunks are discounted.
         evidence = min(1.0, len(tokens) / cfg.full_evidence_words)
@@ -154,17 +173,19 @@ class Tracker:
             return self._state
 
         self._misses = 0
-        self._hyps = self._advance(candidates, evidence)
+        self._hyps = self._advance(candidates, evidence, hint)
         self._state = self._display(candidates)
         return self._state
 
     # -- search ----------------------------------------------------------
 
-    def _candidates(self, tokens: list[str]) -> list[Match]:
+    def _candidates(self, tokens: list[str], hint: tuple[int, int] | None) -> list[Match]:
         if not tokens:
             return []
         cfg = self.config
         found = self.matcher.match_tokens(tokens, k=cfg.candidates)
+        if hint:
+            found += self.matcher.match_tokens(tokens, k=cfg.candidates, lo=hint[0], hi=hint[1])
         # Always check "right where I expect", so a poor global ranking can
         # never make the tracker lose a hypothesis that is still correct.
         for h in self._hyps[: cfg.local_hyps]:
@@ -197,7 +218,9 @@ class Tracker:
         origin = h.anchor if h.anchor is not None else h.end
         return self.transition(origin, c.start), None
 
-    def _advance(self, candidates: list[Match], evidence: float) -> list[Hypothesis]:
+    def _advance(
+        self, candidates: list[Match], evidence: float, hint: tuple[int, int] | None
+    ) -> list[Hypothesis]:
         cfg = self.config
         prior_hyps = self._hyps
         new: list[Hypothesis] = []
@@ -205,6 +228,8 @@ class Tracker:
             emission = evidence * c.score
             if emission < cfg.min_emission * 0.5:
                 continue
+            if hint and hint[0] <= c.start < hint[1]:
+                emission += cfg.hint_bonus
             if prior_hyps:
                 best_prev, anchor = -math.inf, None
                 for h in prior_hyps:

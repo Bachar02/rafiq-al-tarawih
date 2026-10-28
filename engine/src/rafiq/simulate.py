@@ -68,10 +68,15 @@ def simulate(
     end_verse: int,
     noise: NoiseConfig = NoiseConfig(),
     seed: int = 0,
+    skip_words: int = 0,
 ) -> list[Step]:
-    """Recite verses `start_verse..end_verse` (global ids, inclusive) as noisy chunks."""
+    """Recite verses `start_verse..end_verse` (global ids, inclusive) as noisy chunks.
+
+    `skip_words` drops the start of the recitation: the listener opened the app
+    partway into an ayah, which is the normal case for detection.
+    """
     rng = random.Random(seed)
-    spoken = _recitation_order(index, start_verse, end_verse, noise, rng)
+    spoken = _recitation_order(index, start_verse, end_verse, noise, rng)[skip_words:]
 
     steps: list[Step] = []
     i = 0
