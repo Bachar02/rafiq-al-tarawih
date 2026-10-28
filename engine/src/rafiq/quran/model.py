@@ -45,6 +45,7 @@ class Surah:
     revelation_order: int
     rukus: int
     first_verse_id: int
+    has_basmala: bool = False  # recited before ayah 1 (not part of it); false for 1 and 9
 
     @property
     def last_verse_id(self) -> int:

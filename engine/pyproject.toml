@@ -9,7 +9,7 @@ description = "Quran position-recognition engine for Rafiq al-Tarawih"
 readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "MIT" }
-dependencies = []
+dependencies = ["rapidfuzz>=3.0"]
 
 [project.optional-dependencies]
 dev = ["pytest>=8.0", "ruff>=0.6"]
@@ -27,3 +27,12 @@ src = ["src", "tests"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B", "SIM"]
+
+[tool.ruff.lint.flake8-bugbear]
+# Frozen config dataclasses are immutable, so they are safe as argument defaults.
+extend-immutable-calls = [
+    "rafiq.matching.align.AlignConfig",
+    "rafiq.matching.matcher.MatchConfig",
+    "rafiq.simulate.NoiseConfig",
+    "rafiq.tracking.TrackerConfig",
+]

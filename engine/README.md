@@ -15,10 +15,26 @@ py -m pytest
 
 ## Layout
 
-| Module | Role | Phase |
-|--------|------|-------|
-| `rafiq.quran` | dataset loading and position arithmetic | 0 |
-| `rafiq.normalize` | Arabic text normalization | 1 |
-| `rafiq.matching` | text → candidate ayahs | 1 |
-| `rafiq.asr` | audio → text | 3 |
-| `rafiq.tracking` | stateful position tracking | 4 |
+| Module | Role |
+|--------|------|
+| `rafiq.quran` | dataset loading and position arithmetic |
+| `rafiq.normalize` | Arabic text normalization (one function for index *and* ASR output) |
+| `rafiq.matching` | text → ranked candidate spans: word stream index, IDF voting, fuzzy word alignment |
+| `rafiq.tracking` | stateful position tracking: beam search + pluggable transition prior + display policy |
+| `rafiq.simulate` | synthetic noisy recitation streams with ground truth |
+| `rafiq.evaluation` | product metrics (accuracy, wrong jumps, recovery) |
+| `rafiq.asr` | audio → text *(Phase 3)* |
+
+Data flows one way: `normalize → matching → tracking`. Each stage has a
+config dataclass with the knobs in one place, and each depends only on the
+stage before it — so a stage can be retuned or replaced (e.g. a learned
+transition model) without touching the others.
+
+```python
+from rafiq.matching import Matcher, get_index
+from rafiq.tracking import Tracker
+
+tracker = Tracker(Matcher(get_index()))
+for chunk in asr_chunks:  # a few seconds of recitation each
+    state = tracker.update(chunk)  # -> verse_id, status, confidence, candidates
+```

@@ -1,0 +1,545 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rafiq Playground</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Amiri+Quran&family=Amiri:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f6f5f1; --surface: #ffffff; --surface-2: #efede6; --text: #1d2420; --muted: #66706a;
+  --border: #dcd9cf; --accent: #0f766e; --accent-soft: #ccebe7;
+  --ok: #15803d; --ok-soft: #dcfce7; --bad: #b91c1c; --bad-soft: #fee2e2;
+  --warn: #b45309; --warn-soft: #fef3c7; --idle: #9ca3af;
+  --radius: 12px; --shadow: 0 1px 2px rgb(0 0 0 / .05), 0 4px 16px rgb(0 0 0 / .04);
+  --ar: "Amiri Quran", "Amiri", "Traditional Arabic", "Noto Naskh Arabic", serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #111513; --surface: #181d1a; --surface-2: #202622; --text: #e7ebe8; --muted: #95a09a;
+    --border: #2c3430; --accent: #2dd4bf; --accent-soft: #123b37;
+    --ok: #4ade80; --ok-soft: #12321f; --bad: #f87171; --bad-soft: #3b1515;
+    --warn: #fbbf24; --warn-soft: #3a2a0c; --idle: #6b7280;
+  }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text);
+  font: 14px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+header { display: flex; align-items: center; gap: 24px; padding: 14px 24px;
+  border-bottom: 1px solid var(--border); background: var(--surface); flex-wrap: wrap; }
+header h1 { font-size: 16px; margin: 0; font-weight: 650; }
+header h1 .ar { font-family: var(--ar); font-weight: 400; font-size: 20px; color: var(--accent); margin-inline-start: 6px; }
+nav { display: flex; gap: 4px; }
+nav button { border: 0; background: none; padding: 7px 14px; border-radius: 8px; color: var(--muted);
+  font: inherit; cursor: pointer; }
+nav button.active { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+main { display: grid; grid-template-columns: 340px minmax(0, 1fr); gap: 20px; padding: 20px 24px;
+  max-width: 1400px; margin: 0 auto; }
+@media (max-width: 900px) { main { grid-template-columns: 1fr; padding: 16px; } }
+.panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+  box-shadow: var(--shadow); padding: 16px; }
+.panel h2 { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted);
+  margin: 0 0 12px; font-weight: 600; }
+.stack { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+.field { margin-bottom: 12px; }
+.row { display: flex; gap: 10px; }
+.row > * { flex: 1; min-width: 0; }
+select, input, textarea { width: 100%; padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px;
+  background: var(--surface); color: var(--text); font: inherit; }
+textarea, input.ar { font-family: var(--ar); font-size: 18px; direction: rtl; }
+button.primary, button.ghost { font: inherit; padding: 8px 14px; border-radius: 8px; cursor: pointer; }
+button.primary { background: var(--accent); color: var(--surface); border: 0; font-weight: 600; }
+button.ghost { background: var(--surface-2); color: var(--text); border: 1px solid var(--border); }
+button:disabled { opacity: .5; cursor: default; }
+.hint { font-size: 12px; color: var(--muted); margin: 8px 0 0; }
+.hidden { display: none !important; }
+
+/* The "phone" display: what the real app will show. */
+.now { display: grid; grid-template-columns: 1fr auto; gap: 4px 16px; align-items: center; }
+.now .surah { font-family: var(--ar); font-size: 30px; line-height: 1.3; }
+.now .translit { color: var(--muted); font-size: 13px; }
+.now .ref { font-size: 40px; font-weight: 700; font-variant-numeric: tabular-nums; grid-row: span 2;
+  color: var(--accent); }
+.now.dim .ref, .now.dim .surah { opacity: .45; }
+.status { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600;
+  padding: 3px 10px; border-radius: 99px; text-transform: capitalize; }
+.status::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.status.tracking { background: var(--ok-soft); color: var(--ok); }
+.status.uncertain { background: var(--warn-soft); color: var(--warn); }
+.status.lost { background: var(--bad-soft); color: var(--bad); }
+.status.idle { background: var(--surface-2); color: var(--idle); }
+.meta { display: flex; gap: 12px; align-items: center; margin-top: 10px; flex-wrap: wrap; font-size: 12px; color: var(--muted); }
+.conf { width: 120px; height: 6px; border-radius: 3px; background: var(--surface-2); overflow: hidden; }
+.conf > div { height: 100%; background: var(--accent); transition: width .2s; }
+.pending { color: var(--warn); }
+
+.mushaf { max-height: 52vh; overflow-y: auto; direction: rtl; text-align: justify; font-family: var(--ar);
+  font-size: 24px; line-height: 2.3; padding: 4px 8px; scroll-behavior: smooth; }
+.mushaf .basmala { text-align: center; color: var(--muted); }
+.mushaf .v { padding: 2px 4px; border-radius: 6px; transition: background .2s; }
+.mushaf .v .n { font-size: 16px; color: var(--accent); margin: 0 4px; }
+.mushaf .v.current { background: var(--accent-soft); }
+.mushaf .v.truth { outline: 2px dashed var(--muted); outline-offset: 1px; }
+.mushaf .v.truth.current { outline-color: var(--ok); }
+
+.timeline { display: flex; flex-wrap: wrap; gap: 2px; }
+.timeline span { width: 10px; height: 18px; border-radius: 2px; background: var(--surface-2); cursor: pointer; }
+.timeline span.ok { background: var(--ok); opacity: .55; }
+.timeline span.bad { background: var(--bad); }
+.timeline span.blank { background: var(--warn); opacity: .6; }
+.timeline span.noise { background: var(--idle); opacity: .4; }
+.timeline span.at { outline: 2px solid var(--text); outline-offset: 1px; opacity: 1; }
+.legend { display: flex; gap: 14px; font-size: 12px; color: var(--muted); margin-top: 8px; flex-wrap: wrap; }
+.legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-inline-end: 5px; vertical-align: -1px; }
+
+.metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 10px; }
+.metric { background: var(--surface-2); border-radius: 8px; padding: 8px 10px; }
+.metric b { display: block; font-size: 20px; font-variant-numeric: tabular-nums; }
+.metric span { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+
+.feed { max-height: 34vh; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; }
+.feed .item { display: grid; grid-template-columns: 34px 1fr auto; gap: 10px; align-items: center;
+  padding: 6px 8px; border-radius: 8px; border-inline-start: 3px solid transparent; cursor: pointer; }
+.feed .item.at { background: var(--surface-2); }
+.feed .item.ok { border-color: var(--ok); } .feed .item.bad { border-color: var(--bad); }
+.feed .item.noise { border-color: var(--idle); } .feed .item.blank { border-color: var(--warn); }
+.feed .i { color: var(--muted); font-size: 11px; font-variant-numeric: tabular-nums; }
+.feed .t { font-family: var(--ar); font-size: 18px; direction: rtl; text-align: right; overflow-wrap: anywhere; }
+.feed .r { font-size: 12px; font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
+.feed .r small { display: block; color: var(--muted); }
+
+.cands { display: flex; flex-direction: column; gap: 8px; }
+.cand { border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; }
+.cand .top { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+.cand .ref { font-weight: 700; font-size: 16px; }
+.cand .name { color: var(--muted); font-size: 12px; }
+.cand .score { font-variant-numeric: tabular-nums; font-weight: 600; }
+.cand .ar { font-family: var(--ar); font-size: 20px; direction: rtl; text-align: right; margin-top: 4px; }
+.cand .matched { color: var(--muted); font-size: 12px; direction: rtl; text-align: right; }
+.bar { height: 4px; background: var(--surface-2); border-radius: 2px; margin-top: 6px; overflow: hidden; }
+.bar > div { height: 100%; background: var(--accent); }
+.empty { color: var(--muted); text-align: center; padding: 24px 0; }
+.err { color: var(--bad); font-size: 13px; margin-top: 8px; }
+.controls { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.controls .pos { margin-inline-start: auto; color: var(--muted); font-variant-numeric: tabular-nums; font-size: 12px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Rafiq Playground <span class="ar">رفيق التراويح</span></h1>
+  <nav>
+    <button data-tab="simulate" class="active">Simulate</button>
+    <button data-tab="type">Type it</button>
+    <button data-tab="match">Match</button>
+  </nav>
+</header>
+
+<main>
+  <!-- ===== left: controls per tab ===== -->
+  <div class="stack">
+    <section class="panel" data-pane="simulate">
+      <h2>Simulated recitation</h2>
+      <div class="field"><label for="sim-surah">Surah</label><select id="sim-surah"></select></div>
+      <div class="row field">
+        <div><label for="sim-from">From ayah</label><input id="sim-from" type="number" min="1" value="1"></div>
+        <div><label for="sim-to">To ayah</label><input id="sim-to" type="number" min="1"></div>
+      </div>
+      <div class="row field">
+        <div><label for="sim-noise">ASR noise</label>
+          <select id="sim-noise"><option>clean</option><option selected>light</option><option>heavy</option></select></div>
+        <div><label for="sim-fatiha">Al-Fatiha every</label>
+          <select id="sim-fatiha"><option value="0">never</option><option value="5">5 ayahs</option><option value="10">10 ayahs</option><option value="20">20 ayahs</option></select></div>
+      </div>
+      <div class="row field">
+        <div><label for="sim-seed">Seed</label><input id="sim-seed" type="number" value="1"></div>
+        <div><label for="sim-speed">Speed</label>
+          <select id="sim-speed"><option value="1500">slow</option><option value="700" selected>normal</option><option value="250">fast</option></select></div>
+      </div>
+      <button class="primary" id="sim-run" style="width:100%">Run simulation</button>
+      <p class="hint">Generates what an ASR model might hear (misheard letters, dropped words, coughs, repeated ayahs) and runs the tracker over it. The dashed outline is the truth; the highlight is what the app shows.</p>
+      <div class="err" id="sim-err"></div>
+    </section>
+
+    <section class="panel hidden" data-pane="type">
+      <h2>Be the ASR</h2>
+      <div class="field"><label for="type-input">Chunk heard (press Enter)</label>
+        <input id="type-input" class="ar" placeholder="والضحى والليل إذا سجى" autocomplete="off"></div>
+      <div class="controls">
+        <button class="ghost" id="type-example">Load example</button>
+        <button class="ghost" id="type-clear">Clear</button>
+      </div>
+      <p class="hint">Each chunk is a few seconds of recitation. Try typos, skip words, jump to another surah, recite al-Fatiha in the middle, or type the Ar-Rahman refrain and watch context pick the right one.</p>
+      <div class="err" id="type-err"></div>
+    </section>
+
+    <section class="panel hidden" data-pane="match">
+      <h2>Text → ayah</h2>
+      <div class="field"><label for="match-input">Arabic text</label>
+        <textarea id="match-input" rows="3">فباي الاء ربكما تكذبان</textarea></div>
+      <button class="primary" id="match-run" style="width:100%">Find candidates</button>
+      <p class="hint">Raw matcher output, no context: retrieval by rare words, then word-level fuzzy alignment.</p>
+      <div class="hint" id="match-tokens"></div>
+      <div class="err" id="match-err"></div>
+    </section>
+
+    <section class="panel" data-pane="simulate type" id="metrics-panel">
+      <h2>Metrics</h2>
+      <div class="metrics" id="metrics"><div class="empty" style="grid-column:1/-1">Run something first</div></div>
+    </section>
+  </div>
+
+  <!-- ===== right: the display ===== -->
+  <div class="stack">
+    <section class="panel" data-pane="simulate type">
+      <div class="now dim" id="now">
+        <div class="surah" id="now-surah">—</div>
+        <div class="ref" id="now-ref">–:–</div>
+        <div class="translit" id="now-translit">Waiting for recitation</div>
+      </div>
+      <div class="meta">
+        <span class="status idle" id="now-status">idle</span>
+        <span>confidence</span><div class="conf"><div id="now-conf" style="width:0"></div></div>
+        <span class="pending" id="now-pending"></span>
+      </div>
+    </section>
+
+    <section class="panel" data-pane="simulate type">
+      <div class="mushaf" id="mushaf"><div class="empty">The surah appears here once the app knows where you are.</div></div>
+    </section>
+
+    <section class="panel" data-pane="simulate">
+      <div class="controls" style="margin-bottom:12px">
+        <button class="ghost" id="p-prev" title="Previous step">◀</button>
+        <button class="ghost" id="p-play">Pause</button>
+        <button class="ghost" id="p-next" title="Next step">▶</button>
+        <span class="pos" id="p-pos"></span>
+      </div>
+      <div class="timeline" id="timeline"></div>
+      <div class="legend">
+        <span><i style="background:var(--ok);opacity:.55"></i>right</span>
+        <span><i style="background:var(--bad)"></i>wrong</span>
+        <span><i style="background:var(--warn);opacity:.6"></i>nothing shown</span>
+        <span><i style="background:var(--idle);opacity:.4"></i>noise chunk</span>
+      </div>
+    </section>
+
+    <section class="panel" data-pane="simulate type">
+      <h2>What the ASR heard</h2>
+      <div class="feed" id="feed"><div class="empty">No chunks yet</div></div>
+    </section>
+
+    <section class="panel hidden" data-pane="match">
+      <h2>Candidates</h2>
+      <div class="cands" id="cands"><div class="empty">Type some Arabic on the left</div></div>
+    </section>
+  </div>
+</main>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+
+async function api(path, body) {
+  const res = await fetch(path, body ? { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) } : {});
+  if (!res.ok) {
+    let msg = res.statusText;
+    try { const j = await res.json(); msg = typeof j.detail === "string" ? j.detail : JSON.stringify(j.detail); } catch {}
+    throw new Error(msg);
+  }
+  return res.json();
+}
+
+// ---------- shared data ----------
+let SURAHS = [];
+const verseCache = new Map();
+async function verses(surah) {
+  if (!verseCache.has(surah)) verseCache.set(surah, await api(`/api/surahs/${surah}`));
+  return verseCache.get(surah);
+}
+
+// ---------- tabs ----------
+let tab = "simulate";
+function setTab(name) {
+  tab = name;
+  document.querySelectorAll("nav button").forEach((b) => b.classList.toggle("active", b.dataset.tab === name));
+  document.querySelectorAll("[data-pane]").forEach((p) => p.classList.toggle("hidden", !p.dataset.pane.split(" ").includes(name)));
+  if (name !== "simulate") pause();
+  resetDisplay();
+  if (name === "simulate" && sim.steps.length) showStep(sim.i);
+  if (name === "type" && typed.states.length) renderTyped();
+}
+document.querySelectorAll("nav button").forEach((b) => b.addEventListener("click", () => setTab(b.dataset.tab)));
+
+// ---------- the display (shared by Simulate and Type) ----------
+let mushafSurah = null;
+function resetDisplay() {
+  mushafSurah = null;
+  $("mushaf").replaceChildren(el("div", "empty", "The surah appears here once the app knows where you are."));
+  renderNow(null);
+  $("feed").replaceChildren(el("div", "empty", "No chunks yet"));
+  $("metrics").replaceChildren(el("div", "empty", "Run something first"));
+  $("metrics").firstChild.style.gridColumn = "1/-1";
+}
+
+function renderNow(state) {
+  const pos = state && state.position;
+  const surah = pos ? SURAHS[pos.surah - 1] : null;
+  $("now").classList.toggle("dim", !pos || state.status !== "tracking");
+  $("now-surah").textContent = surah ? surah.name_ar : "—";
+  $("now-ref").textContent = pos ? pos.ref : "–:–";
+  $("now-translit").textContent = surah ? `${surah.name_translit} · ayah ${pos.ayah} of ${surah.ayah_count}` : "Waiting for recitation";
+  const status = state ? state.status : "idle";
+  $("now-status").className = `status ${status}`;
+  $("now-status").textContent = status;
+  $("now-conf").style.width = `${Math.round((state ? state.confidence : 0) * 100)}%`;
+  $("now-pending").textContent = state && state.pending ? `possible jump to ${state.pending.ref}…` : "";
+}
+
+async function renderMushaf(state, truth) {
+  const pos = state && state.position;
+  const focus = pos || truth;
+  if (!focus) return;
+  if (mushafSurah !== focus.surah) {
+    const list = await verses(focus.surah);
+    const box = $("mushaf");
+    box.replaceChildren();
+    if (SURAHS[focus.surah - 1].has_basmala) box.append(el("div", "basmala", "بسم الله الرحمن الرحيم"));
+    for (const v of list) {
+      const span = el("span", "v");
+      span.dataset.id = v.id;
+      span.append(document.createTextNode(v.text + " "), el("span", "n", `﴿${v.ayah.toLocaleString("ar-EG")}﴾`), document.createTextNode(" "));
+      box.append(span);
+    }
+    mushafSurah = focus.surah;
+  }
+  const box = $("mushaf");
+  box.querySelectorAll(".v.current, .v.truth").forEach((v) => v.classList.remove("current", "truth"));
+  const cur = pos && box.querySelector(`.v[data-id="${pos.verse_id}"]`);
+  if (cur) cur.classList.add("current");
+  const tr = truth && box.querySelector(`.v[data-id="${truth.verse_id}"]`);
+  if (tr) tr.classList.add("truth");
+  const target = cur || tr;
+  if (target) box.scrollTop = target.offsetTop - box.clientHeight / 2 + target.offsetHeight / 2;
+}
+
+function feedItem(i, text, cls, right, sub, onClick) {
+  const row = el("div", `item ${cls}`);
+  const r = el("div", "r", right);
+  if (sub) r.append(el("small", null, sub));
+  row.append(el("span", "i", `#${i + 1}`), el("div", "t", text), r);
+  if (onClick) row.addEventListener("click", onClick);
+  return row;
+}
+
+function metric(value, label) {
+  const m = el("div", "metric");
+  m.append(el("b", null, value), el("span", null, label));
+  return m;
+}
+
+// ---------- Simulate ----------
+const sim = { steps: [], report: null, i: 0, timer: null };
+
+function stepClass(s) {
+  if (s.truth === null) return "noise";
+  if (!s.state.position) return "blank";
+  return s.correct ? "ok" : "bad";
+}
+
+async function runSimulation() {
+  $("sim-err").textContent = "";
+  pause();
+  const body = {
+    surah: +$("sim-surah").value, from_ayah: +$("sim-from").value, to_ayah: +$("sim-to").value || null,
+    noise: $("sim-noise").value, fatiha_every: +$("sim-fatiha").value, seed: +$("sim-seed").value,
+  };
+  $("sim-run").disabled = true;
+  try {
+    const res = await api("/api/simulate", body);
+    Object.assign(sim, { steps: res.steps, report: res.report, i: 0 });
+    buildTimeline();
+    renderSimMetrics();
+    resetFeed();
+    await showStep(0);
+    play();
+  } catch (e) { $("sim-err").textContent = e.message; }
+  finally { $("sim-run").disabled = false; }
+}
+
+function buildTimeline() {
+  const tl = $("timeline");
+  tl.replaceChildren();
+  sim.steps.forEach((s, i) => {
+    const c = el("span", stepClass(s));
+    c.title = `#${i + 1}  truth ${s.truth ? s.truth.ref : "noise"} → shown ${s.state.position ? s.state.position.ref : "nothing"}`;
+    c.addEventListener("click", () => { pause(); showStep(i); });
+    tl.append(c);
+  });
+}
+
+function renderSimMetrics() {
+  const r = sim.report;
+  const pct = (x) => `${(x * 100).toFixed(1)}%`;
+  $("metrics").replaceChildren(
+    metric(pct(r.acceptable), "right ayah (±1)"),
+    metric(pct(r.accuracy), "exact ayah"),
+    metric(String(r.wrong_jumps), "wrong jumps"),
+    metric(r.mean_recovery ? `${r.mean_recovery.toFixed(1)} steps` : "–", "recovery"),
+    metric(pct(r.coverage), "something shown"),
+    metric(String(r.steps), "chunks"),
+  );
+}
+
+function resetFeed() { $("feed").replaceChildren(); }
+
+async function showStep(i) {
+  if (!sim.steps.length) return;
+  sim.i = Math.max(0, Math.min(i, sim.steps.length - 1));
+  const s = sim.steps[sim.i];
+  renderNow(s.state);
+  await renderMushaf(s.state, s.truth);
+
+  document.querySelectorAll("#timeline span").forEach((c, j) => c.classList.toggle("at", j === sim.i));
+  $("p-pos").textContent = `chunk ${sim.i + 1} / ${sim.steps.length}`;
+
+  // Feed shows everything heard so far, newest first.
+  const feed = $("feed");
+  feed.replaceChildren();
+  for (let j = sim.i; j >= Math.max(0, sim.i - 60); j--) {
+    const st = sim.steps[j];
+    const shown = st.state.position ? st.state.position.ref : "—";
+    const truth = st.truth ? `truth ${st.heard.join(", ")}` : "noise";
+    const row = feedItem(j, st.text, stepClass(st) + (j === sim.i ? " at" : ""), shown, truth, () => { pause(); showStep(j); });
+    feed.append(row);
+  }
+}
+
+function play() {
+  if (!sim.steps.length) return;
+  pause();
+  if (sim.i >= sim.steps.length - 1) sim.i = -1;
+  $("p-play").textContent = "Pause";
+  sim.timer = setInterval(async () => {
+    if (sim.i >= sim.steps.length - 1) { pause(); return; }
+    await showStep(sim.i + 1);
+  }, +$("sim-speed").value);
+}
+function pause() { clearInterval(sim.timer); sim.timer = null; $("p-play").textContent = "Play"; }
+$("p-play").addEventListener("click", () => (sim.timer ? pause() : play()));
+$("p-prev").addEventListener("click", () => { pause(); showStep(sim.i - 1); });
+$("p-next").addEventListener("click", () => { pause(); showStep(sim.i + 1); });
+$("sim-run").addEventListener("click", runSimulation);
+$("sim-speed").addEventListener("change", () => { if (sim.timer) play(); });
+$("sim-surah").addEventListener("change", () => {
+  const s = SURAHS[+$("sim-surah").value - 1];
+  $("sim-from").max = $("sim-to").max = s.ayah_count;
+  $("sim-from").value = 1;
+  $("sim-to").value = Math.min(s.ayah_count, 60);
+});
+
+// ---------- Type it ----------
+const typed = { chunks: [], states: [] };
+const EXAMPLE = [
+  "والضحى والليل اذا سجى",        // 93:1-2
+  "ما ودعك ربك وما قلي",           // typo: ى -> ي
+  "وللاخره خير لك من",             // crosses into 93:4
+  "الحمد لله رب العالمين",         // a new rak'ah begins: al-Fatiha
+  "الرحمن الرحيم مالك يوم الدين",
+  "اهدنا الصراط المستقيم",
+  "صراط الذين انعمت عليهم غير المغضوب عليهم ولا الضالين",
+  "الاولى ولسوف يعطيك ربك فترضى",  // ...and back to where he was
+  "الم يجدك يتيما فاوى",
+];
+
+async function sendChunks() {
+  $("type-err").textContent = "";
+  try {
+    const res = await api("/api/track", { chunks: typed.chunks });
+    typed.states = res.states;
+    renderTyped();
+  } catch (e) { $("type-err").textContent = e.message; }
+}
+
+function renderTyped() {
+  const last = typed.states[typed.states.length - 1] || null;
+  renderNow(last);
+  renderMushaf(last, null);
+  const feed = $("feed");
+  feed.replaceChildren();
+  if (!typed.chunks.length) feed.append(el("div", "empty", "No chunks yet"));
+  for (let j = typed.chunks.length - 1; j >= 0; j--) {
+    const st = typed.states[j];
+    const top = st.candidates[0];
+    const cls = st.status === "tracking" ? "ok" : st.position ? "blank" : "noise";
+    feed.append(feedItem(j, typed.chunks[j], cls, st.position ? st.position.ref : "—",
+      top ? `best match ${top.position.ref} (${top.score.toFixed(2)})` : "no match"));
+  }
+  const tracking = typed.states.filter((s) => s.status === "tracking").length;
+  $("metrics").replaceChildren(
+    metric(String(typed.chunks.length), "chunks"),
+    metric(typed.states.length ? `${Math.round((tracking / typed.states.length) * 100)}%` : "–", "confident"),
+    metric(last ? last.status : "idle", "status"),
+  );
+}
+
+$("type-input").addEventListener("keydown", (e) => {
+  if (e.key !== "Enter") return;
+  const text = e.target.value.trim();
+  if (!text) return;
+  typed.chunks.push(text);
+  e.target.value = "";
+  sendChunks();
+});
+$("type-clear").addEventListener("click", () => { typed.chunks = []; typed.states = []; resetDisplay(); renderTyped(); });
+$("type-example").addEventListener("click", () => { typed.chunks = [...EXAMPLE]; sendChunks(); });
+
+// ---------- Match ----------
+async function runMatch() {
+  $("match-err").textContent = "";
+  const text = $("match-input").value;
+  try {
+    const res = await api("/api/match", { text, k: 8 });
+    $("match-tokens").textContent = res.tokens.length ? `normalized: ${res.tokens.join(" ")}` : "";
+    const box = $("cands");
+    box.replaceChildren();
+    if (!res.candidates.length) box.append(el("div", "empty", "No match"));
+    for (const c of res.candidates) {
+      const p = c.position;
+      const surah = SURAHS[p.surah - 1];
+      const verse = (await verses(p.surah)).find((v) => v.id === p.verse_id);
+      const card = el("div", "cand");
+      const top = el("div", "top");
+      const left = el("div");
+      left.append(el("span", "ref", c.first_ref === p.ref ? p.ref : `${c.first_ref} → ${p.ref}`), document.createTextNode("  "),
+        el("span", "name", `${surah.name_translit} · ${surah.name_ar}`));
+      top.append(left, el("span", "score", c.score.toFixed(2)));
+      const bar = el("div", "bar"); const fill = el("div"); fill.style.width = `${c.score * 100}%`; bar.append(fill);
+      card.append(top, el("div", "ar", verse ? verse.text : ""), el("div", "matched", `aligned: ${c.matched_text}`), bar);
+      box.append(card);
+    }
+  } catch (e) { $("match-err").textContent = e.message; }
+}
+$("match-run").addEventListener("click", runMatch);
+$("match-input").addEventListener("keydown", (e) => { if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) runMatch(); });
+
+// ---------- boot ----------
+(async () => {
+  try {
+    SURAHS = await api("/api/surahs");
+    const sel = $("sim-surah");
+    for (const s of SURAHS) {
+      const o = el("option", null, `${s.index}. ${s.name_translit} — ${s.name_ar} (${s.ayah_count})`);
+      o.value = s.index;
+      sel.append(o);
+    }
+    sel.value = 78;
+    sel.dispatchEvent(new Event("change"));
+  } catch (e) {
+    $("sim-err").textContent = `Cannot reach the API: ${e.message}`;
+  }
+})();
+</script>
+</body>
+</html>

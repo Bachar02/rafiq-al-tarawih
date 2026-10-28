@@ -21,7 +21,7 @@ venv/
 *.pt
 *.bin
 
-# Flutter (Phase 3)
+# Flutter (Phase 5)
 mobile/.dart_tool/
 mobile/build/
 mobile/.flutter-plugins*
