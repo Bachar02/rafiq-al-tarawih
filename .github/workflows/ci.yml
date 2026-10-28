@@ -28,3 +28,5 @@ jobs:
         run: pytest server
       - name: Accuracy regression gate
         run: python eval/text_benchmark.py --quick --check
+      - name: Detection regression gate
+        run: python eval/detection_benchmark.py --quick --check

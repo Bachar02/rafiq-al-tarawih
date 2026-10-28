@@ -43,7 +43,8 @@ class TrackerConfig:
     decay: float = 0.6  # weight of history vs. the newest chunk
     miss_cost: float = 0.5  # penalty for a hypothesis that this chunk did not support
     confirm: int = 2  # consecutive wins a far jump needs before it is displayed
-    cold_start_confidence: float = 0.6  # confidence needed to show the very first position
+    cold_start_confidence: float = 0.3  # confidence needed to show the very first position
+    alternative_margin: float = 0.5  # rivals scoring within this of the best are reported as alternatives
     full_evidence_words: int = 3  # chunks shorter than this count as proportionally weaker evidence
     unknown_exit_cost: float = 0.3  # leaving al-Fatiha when we never saw where the reciter was before
     hint_bonus: float = 0.3  # emission bonus inside the user's hint while searching (soft, never a filter)
@@ -94,7 +95,8 @@ class TrackState:
     status: str
     confidence: float
     candidates: list[Match] = field(default_factory=list)  # this chunk's matches, for debugging/UI
-    pending_verse: int | None = None  # a far jump awaiting confirmation
+    pending_verse: int | None = None  # a far jump (or a first guess) awaiting confirmation
+    alternatives: list[int] = field(default_factory=list)  # other plausible verses, when ambiguous
 
 
 class Tracker:
@@ -265,9 +267,9 @@ class Tracker:
     def _display(self, candidates: list[Match]) -> TrackState:
         cfg = self.config
         best = self._hyps[0]
-        rival = next((h for h in self._hyps[1:] if not self._is_near(best.end, h.end)
-                      and not self._is_near(h.end, best.end)), None)  # fmt: skip
-        margin = best.score - rival.score if rival else best.score
+        rivals = [h for h in self._hyps[1:] if not self._is_near(best.end, h.end)
+                  and not self._is_near(h.end, best.end)]  # fmt: skip
+        margin = best.score - rivals[0].score if rivals else best.score
         confidence = best.emission * (1.0 - math.exp(-2.0 * max(margin, 0.0)))
 
         if self._shown is None:
@@ -288,6 +290,10 @@ class Tracker:
                 self._pending_count = 1
             self._pending = best.end
             accept = self._pending_count >= cfg.confirm
+            if self._shown is None:
+                # Agreement only counts if it says something: two equally
+                # ambiguous chunks (a repeated refrain) confirm nothing.
+                accept = accept and confidence >= cfg.cold_start_confidence / 3
 
         if accept:
             if self._in_excursion(best.end - 1):
@@ -299,8 +305,17 @@ class Tracker:
             self._pending, self._pending_count = None, 0
 
         pending_verse = self.index.verse_at(self._pending - 1) if self._pending is not None else None
+        alternatives: list[int] = []
+        for h in rivals:
+            v = self.index.verse_at(h.end - 1)
+            if best.score - h.score > cfg.alternative_margin or len(alternatives) == 3:
+                break
+            if v not in alternatives:
+                alternatives.append(v)
         if self._shown is None:
-            return TrackState(None, None, UNCERTAIN, round(confidence, 3), candidates, pending_verse)
+            return TrackState(
+                None, None, UNCERTAIN, round(confidence, 3), candidates, pending_verse, alternatives
+            )
         word = self._shown - 1
         status = TRACKING if confidence >= 0.5 and self._pending is None else UNCERTAIN
         return TrackState(
@@ -310,4 +325,5 @@ class Tracker:
             confidence=round(confidence, 3),
             candidates=candidates,
             pending_verse=pending_verse,
+            alternatives=alternatives,
         )

@@ -100,10 +100,11 @@ Word error rate is the wrong headline metric. We track product metrics:
 These change the architecture, so they get decided before the code that depends
 on them, not after:
 
-- Does the user pick the starting point ("tonight we begin at Al-Baqarah 1"),
-  or is surah detection fully automatic? Seeding the search space is a large
-  early reliability win; automatic detection is the magic. Likely: automatic,
-  with optional seeding.
+- ~~Does the user pick the starting point, or is detection automatic?~~
+  **Decided: automatic.** The app finds the surah *and* ayah from anywhere in
+  the Quran with no input (median: the first chunk, ~3 s). The user may
+  optionally name the surah or juz; this is a soft hint that speeds up the
+  first lock and can never trap the tracker if it is wrong.
 - What happens between rak'ahs, and during long pauses?
 - What if the imam repeats an ayah, or skips one?
 - What does the UI do when confidence drops — freeze, or show alternatives?
@@ -129,11 +130,13 @@ pip install -e "engine[dev]" -e "server[dev]"
 python data/build_quran.py                       # derive data/quran.json from the raw sources
 
 pytest engine && pytest server                   # tests
-python eval/text_benchmark.py                    # accuracy benchmark (product metrics)
+python eval/text_benchmark.py                    # tracking benchmark (product metrics)
+python eval/detection_benchmark.py               # detection: how fast it finds surah + ayah alone
 python -m rafiq_server                           # playground at http://127.0.0.1:8000
 ```
 
-The **playground** is the quickest way to see the product: *Simulate* replays a
+The **playground** is the quickest way to see the product. *🎲 Surprise me*
+picks a hidden random passage and shows the app detecting it. *Simulate* replays a
 noisy recitation and shows what the app would display against the truth,
 *Type it* lets you play the ASR yourself, and *Match* shows raw candidates for
 any text.

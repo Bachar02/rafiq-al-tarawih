@@ -314,6 +314,13 @@ def test_juz_boundaries(quran: Quran):
     assert quran.juz_of(quran.verse(114, 6).id) == 30
 
 
+def test_juz_span(quran: Quran):
+    assert quran.juz_span(1) == (1, quran.verse(2, 141).id)
+    assert quran.juz_span(30) == (quran.verse(78, 1).id, 6236)
+    covered = sum(b - a + 1 for a, b in (quran.juz_span(i) for i in range(1, 31)))
+    assert covered == 6236
+
+
 def test_sajdas(quran: Quran):
     assert len(quran.sajdas) == 15
     assert quran.sajda_at(7, 206) is not None

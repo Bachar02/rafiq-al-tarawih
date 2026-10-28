@@ -31,10 +31,10 @@ HINTS = ("none", "surah", "juz", "wrong surah")
 
 # Regression floor for --check, per (noise, hint): (min locked within 3 chunks, max first-shown-wrong).
 THRESHOLDS: dict[tuple[str, str], tuple[float, float]] = {
-    ("light", "none"): (0.85, 0.05),
-    ("light", "surah"): (0.90, 0.04),
-    ("heavy", "none"): (0.75, 0.08),
-    ("heavy", "surah"): (0.85, 0.06),
+    ("light", "none"): (0.95, 0.03),
+    ("light", "surah"): (0.97, 0.03),
+    ("heavy", "none"): (0.92, 0.04),
+    ("heavy", "surah"): (0.95, 0.04),
 }
 
 
@@ -81,7 +81,7 @@ def main() -> int:
     tracker = Tracker(Matcher(index))
     sample = trials(80 if args.quick else args.trials, args.seed, len(q))
 
-    print(f"{'noise':<6} {'hint':<12} {'≤1':>6} {'≤2':>6} {'≤3':>6} {'≤5':>6} {'median':>7} "
+    print(f"{'noise':<6} {'hint':<12} {'<=1':>6} {'<=2':>6} {'<=3':>6} {'<=5':>6} {'median':>7} "
           f"{'~sec':>5} {'never':>6} {'1st wrong':>9}")  # fmt: skip
     failed = []
     for noise_name in ("light", "heavy"):
@@ -110,7 +110,7 @@ def main() -> int:
 
             limits = THRESHOLDS.get((noise_name, mode))
             if limits and (within[3] < limits[0] or wrong > limits[1]):
-                failed.append(f"{noise_name}/{mode}: ≤3 chunks {within[3]:.0%} (min {limits[0]:.0%}), "
+                failed.append(f"{noise_name}/{mode}: <=3 chunks {within[3]:.0%} (min {limits[0]:.0%}), "
                               f"first wrong {wrong:.1%} (max {limits[1]:.0%})")  # fmt: skip
 
     if args.check and failed:
