@@ -33,6 +33,9 @@ class Report:
     wrong_jumps: int  # display changed to a verse that is not acceptable
     mean_recovery: float  # steps from going wrong to being acceptable again
     unrecovered: bool  # stream ended while wrong
+    # Detection: the app starts knowing nothing and must find surah + ayah itself.
+    time_to_lock: int | None  # chunks until the display is first right (None: never)
+    first_shown_wrong: bool  # the first position ever displayed was wrong
 
     def to_dict(self) -> dict:
         return asdict(self)
@@ -55,6 +58,8 @@ def score(predicted: Sequence[int | None], steps: Sequence[Step]) -> Report:
     wrong_since: int | None = None
     last_truth: Step | None = None
     prev: int | None = None
+    lock: int | None = None
+    first_shown_wrong: bool | None = None
 
     for i, (p, step) in enumerate(zip(predicted, steps, strict=True)):
         ref = step if step.truth_verse is not None else last_truth
@@ -66,6 +71,10 @@ def score(predicted: Sequence[int | None], steps: Sequence[Step]) -> Report:
             wrong_jumps += 1
         if p is not None:
             prev = p
+            if first_shown_wrong is None:
+                first_shown_wrong = not ok
+        if ok and lock is None:
+            lock = i + 1
 
         if step.truth_verse is None:
             continue
@@ -90,6 +99,8 @@ def score(predicted: Sequence[int | None], steps: Sequence[Step]) -> Report:
         wrong_jumps=wrong_jumps,
         mean_recovery=statistics.fmean(recoveries) if recoveries else 0.0,
         unrecovered=wrong_since is not None,
+        time_to_lock=lock,
+        first_shown_wrong=bool(first_shown_wrong),
     )
 
 

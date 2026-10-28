@@ -138,6 +138,17 @@ class Quran:
             current = index
         return current
 
+    def juz_span(self, index: int) -> tuple[int, int]:
+        """First and last verse id of a juz (1..30)."""
+        if not 1 <= index <= len(self._juzs):
+            raise KeyError(f"no such juz: {index}")
+        _, surah, ayah = self._juzs[index - 1]
+        first = self.verse(surah, ayah).id
+        if index == len(self._juzs):
+            return first, len(self._verses)
+        _, next_surah, next_ayah = self._juzs[index]
+        return first, self.verse(next_surah, next_ayah).id - 1
+
     # -- position arithmetic ---------------------------------------------
 
     def window(self, start_id: int, length: int) -> list[Verse]:
