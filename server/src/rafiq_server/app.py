@@ -41,8 +41,14 @@ class Engine:
     def quran(self) -> Quran:
         return self.index.quran
 
-    def tracker(self) -> Tracker:
-        return Tracker(self.matcher)
+    def tracker(self, hint: schemas.Hint | None = None) -> Tracker:
+        tracker = Tracker(self.matcher)
+        if hint and hint.surah:
+            s = self.quran.surah(hint.surah)
+            tracker.hint(s.first_verse_id, s.last_verse_id)
+        elif hint and hint.juz:
+            tracker.hint(*self.quran.juz_span(hint.juz))
+        return tracker
 
     # -- presenters: engine objects -> wire format ------------------------
 
@@ -66,6 +72,7 @@ class Engine:
             status=s.status,
             confidence=s.confidence,
             pending=self.position(s.pending_verse),
+            alternatives=[self.position(v) for v in s.alternatives],
             candidates=[self.candidate(c) for c in s.candidates[:top]],
         )
 
@@ -99,9 +106,7 @@ def create_app(engine: Engine | None = None) -> FastAPI:
 
     @app.post("/api/track", response_model=schemas.TrackResponse)
     def track(req: schemas.TrackRequest):
-        tracker = eng.tracker()
-        if req.seed_verse:
-            tracker.seed(req.seed_verse)
+        tracker = eng.tracker(req.hint)
         return schemas.TrackResponse(states=[eng.state(tracker.update(c)) for c in req.chunks])
 
     @app.post("/api/simulate", response_model=schemas.SimulateResponse)
@@ -116,9 +121,15 @@ def create_app(engine: Engine | None = None) -> FastAPI:
             raise HTTPException(422, "at most 300 ayahs per simulation")
 
         noise = replace(NoiseConfig.preset(req.noise), fatiha_every=req.fatiha_every)
-        steps = simulate(eng.index, first, last, noise, seed=req.seed)
+        steps = simulate(eng.index, first, last, noise, seed=req.seed, skip_words=req.join_late)
 
-        tracker = eng.tracker()
+        hint, told = None, None
+        if req.hint == "surah":
+            hint, told = schemas.Hint(surah=req.surah), f"Surah {surah.name_translit}"
+        elif req.hint == "juz":
+            juz = eng.quran.juz_of(first)
+            hint, told = schemas.Hint(juz=juz), f"Juz {juz}"
+        tracker = eng.tracker(hint)
         out: list[schemas.SimStep] = []
         predicted: list[int | None] = []
         for step in steps:
@@ -137,7 +148,7 @@ def create_app(engine: Engine | None = None) -> FastAPI:
                 )
             )
         report = evaluation.score(predicted, steps)
-        return schemas.SimulateResponse(steps=out, report=schemas.Report(**report.to_dict()))
+        return schemas.SimulateResponse(steps=out, report=schemas.Report(**report.to_dict()), told=told)
 
     app.mount("/static", StaticFiles(directory=STATIC), name="static")
 

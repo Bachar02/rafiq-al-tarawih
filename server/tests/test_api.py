@@ -44,6 +44,19 @@ def test_track_replays_chunks(client):
     assert states[-1]["status"] == "tracking"
 
 
+def test_track_with_hint(client):
+    chunks = ["فبأي آلاء ربكما تكذبان", "فبأي آلاء ربكما تكذبان"]
+    states = client.post("/api/track", json={"chunks": chunks, "hint": {"surah": 55}}).json()["states"]
+    pos = states[-1]["position"] or states[-1]["pending"]
+    assert pos["surah"] == 55
+
+
+def test_track_reports_alternatives(client):
+    chunks = ["فاتقوا الله وأطيعون وما أسألكم عليه من أجر"]
+    state = client.post("/api/track", json={"chunks": chunks}).json()["states"][0]
+    assert {a["surah"] for a in state["alternatives"]} == {26}
+
+
 def test_track_empty(client):
     assert client.post("/api/track", json={"chunks": []}).json()["states"] == []
 
@@ -56,6 +69,15 @@ def test_simulate(client):
     assert body["report"]["wrong_jumps"] == 0
     last = body["steps"][-1]
     assert last["truth"]["ref"] == "93:11" and last["correct"] is True
+    assert body["told"] is None and body["report"]["time_to_lock"] is not None
+
+
+def test_simulate_with_hint_and_late_join(client):
+    body = client.post(
+        "/api/simulate", json={"surah": 78, "from_ayah": 10, "hint": "juz", "join_late": 4}
+    ).json()
+    assert body["told"] == "Juz 30"
+    assert body["report"]["time_to_lock"] <= 3
 
 
 @pytest.mark.parametrize(

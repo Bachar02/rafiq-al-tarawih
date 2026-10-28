@@ -52,16 +52,24 @@ class MatchResponse(BaseModel):
 
 
 class StateOut(BaseModel):
-    position: Position | None
+    position: Position | None  # what the app shows: detected surah + ayah
     status: Literal["idle", "tracking", "uncertain", "lost"]
     confidence: float
-    pending: Position | None
+    pending: Position | None  # a first guess or far jump awaiting confirmation
+    alternatives: list[Position]  # other plausible positions when the text is ambiguous
     candidates: list[Candidate]
+
+
+class Hint(BaseModel):
+    """Optional help from the user. Detection works without it; at most one field."""
+
+    surah: int | None = Field(default=None, ge=1, le=114)
+    juz: int | None = Field(default=None, ge=1, le=30)
 
 
 class TrackRequest(BaseModel):
     chunks: list[str] = Field(max_length=500)
-    seed_verse: int | None = Field(default=None, ge=1, le=6236)
+    hint: Hint | None = None
 
 
 class TrackResponse(BaseModel):
@@ -75,6 +83,8 @@ class SimulateRequest(BaseModel):
     noise: Literal["clean", "light", "heavy"] = "light"
     fatiha_every: int = Field(default=0, ge=0, le=100)
     seed: int = 0
+    join_late: int = Field(default=0, ge=0, le=30)  # words missed before the app started listening
+    hint: Literal["none", "surah", "juz"] = "none"  # what the app is told (default: nothing)
 
 
 class SimStep(BaseModel):
@@ -94,8 +104,11 @@ class Report(BaseModel):
     wrong_jumps: int
     mean_recovery: float
     unrecovered: bool
+    time_to_lock: int | None  # chunks until the right surah + ayah was first shown
+    first_shown_wrong: bool
 
 
 class SimulateResponse(BaseModel):
     steps: list[SimStep]
     report: Report
+    told: str | None  # the hint the app was given, in words; None = it had to find it alone

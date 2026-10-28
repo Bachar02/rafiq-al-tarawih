@@ -68,7 +68,7 @@ Ayah accuracy · position error (in ayahs) · wrong jumps per hour · latency ·
 
 ## 7. Product decisions (proposed answers)
 
-- **Start point:** automatic, with an optional "juz tonight" seed.
+- **Start point:** automatic detection of surah and ayah is the core feature. The user can optionally name the surah or juz (a soft hint).
 - **Pauses / between rak'ahs:** hold the last position. Al-Fatiha (recited every rak'ah) is detected, shown, and then the tracker resumes right after where the last rak'ah ended.
 - **Repeats / skips:** handled by the tracker's transition prior.
 - **Low confidence:** freeze and dim. Never show a far jump until it's confirmed twice.
@@ -83,19 +83,24 @@ Ayah accuracy · position error (in ayahs) · wrong jumps per hour · latency ·
 
 ## 9. Progress (2026-10-28)
 
-**Built:** normalize → matching → tracking, a recitation simulator, a metrics harness, a FastAPI dev server, and the web playground. Also CI and 82 tests.
+**Built:** normalize → matching → tracking, a recitation simulator, a metrics harness, a FastAPI dev server, and the web playground. Also CI with accuracy and detection gates, and 92 tests.
 
-**Benchmark** (`eval/text_benchmark.py`, simulated ASR text):
+**Detection** (`eval/detection_benchmark.py`): the app opens mid-ayah, anywhere in the Quran, and is told nothing.
 
-| Scenario | Right ayah (±1) | Wrong jumps / 100 chunks |
-|---|---|---|
-| clean | 99% | 0.03 |
-| heavy noise + al-Fatiha every rak'ah | 97% | 0.05 |
+| Noise | Found on 1st chunk | Within 3 chunks (~8 s) | First guess wrong |
+|---|---|---|---|
+| light | 76% | 100% | 0% |
+| heavy | 60% | 98% | 0% |
+
+A correct surah or juz hint raises "1st chunk" to about 90% (light) and 80% (heavy). A *wrong* hint costs almost nothing.
+
+**Tracking** (`eval/text_benchmark.py`): 98–99.6% right ayah, ≤0.06 wrong jumps per 100 chunks, including heavy noise with al-Fatiha every rak'ah.
 
 **Findings worth remembering:**
 - Tanzil puts the basmala inside ayah 1 of 112 surahs. It's now split out at build time; otherwise it would put 113 copies of the phrase in the index.
 - A hypothesis must survive a chunk that doesn't support it. Otherwise one noisy chunk kills the correct position.
 - After al-Fatiha, measure the next position from where the imam was before it, never from 1:7.
-- Show nothing until the first guess is confident. A wrong first ayah is worse than a 2-second wait.
+- Show nothing until the first guess is confident, but don't over-wait. Confirmation during detection must carry real confidence: two copies of the same refrain confirm nothing.
+- Truly identical passages (the refrains in Ash-Shu'ara and Ar-Rahman) can't be resolved from text alone, so the app shows the alternatives instead of guessing.
 
 **Next:** Phase 2 (real recordings) and Phase 3 (ASR). Simulated text is kinder than a mosque, so treat these numbers as a floor for catching regressions, not as a promise of real-world accuracy.

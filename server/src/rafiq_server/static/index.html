@@ -123,12 +123,23 @@ button:disabled { opacity: .5; cursor: default; }
 .empty { color: var(--muted); text-align: center; padding: 24px 0; }
 .err { color: var(--bad); font-size: 13px; margin-top: 8px; }
 .controls { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.tag { text-transform: none; letter-spacing: 0; font-weight: 500; background: var(--surface-2);
+  padding: 1px 8px; border-radius: 99px; margin-inline-start: 6px; }
+.check { display: flex; gap: 8px; align-items: center; font-size: 13px; color: var(--text); margin: 4px 0; cursor: pointer; }
+.check input { width: auto; }
+.masked { border: 1px dashed var(--border); border-radius: 8px; padding: 18px; text-align: center;
+  color: var(--muted); margin-bottom: 12px; background: var(--surface-2); }
+.detect { margin-top: 10px; font-size: 13px; color: var(--muted); }
+.detect.found { color: var(--ok); font-weight: 600; }
+.alts { font-size: 12px; color: var(--warn); margin-top: 4px; }
+.timeline span.future { background: var(--surface-2); opacity: 1; }
 .controls .pos { margin-inline-start: auto; color: var(--muted); font-variant-numeric: tabular-nums; font-size: 12px; }
 </style>
 </head>
 <body>
 <header>
   <h1>Rafiq Playground <span class="ar">رفيق التراويح</span></h1>
+  <span class="hint" style="margin:0">Listens, then detects the surah and ayah by itself — telling it the surah is optional.</span>
   <nav>
     <button data-tab="simulate" class="active">Simulate</button>
     <button data-tab="type">Type it</button>
@@ -140,12 +151,20 @@ button:disabled { opacity: .5; cursor: default; }
   <!-- ===== left: controls per tab ===== -->
   <div class="stack">
     <section class="panel" data-pane="simulate">
-      <h2>Simulated recitation</h2>
-      <div class="field"><label for="sim-surah">Surah</label><select id="sim-surah"></select></div>
-      <div class="row field">
-        <div><label for="sim-from">From ayah</label><input id="sim-from" type="number" min="1" value="1"></div>
-        <div><label for="sim-to">To ayah</label><input id="sim-to" type="number" min="1"></div>
+      <button class="primary" id="sim-surprise" style="width:100%">🎲 Surprise me — can the app find it?</button>
+      <p class="hint">Picks a random passage anywhere in the Quran, joins mid-ayah, hides the answer, and lets the app detect the surah and ayah on its own.</p>
+    </section>
+
+    <section class="panel" data-pane="simulate">
+      <h2>1 · The imam recites <span class="tag">hidden from the app</span></h2>
+      <div id="truth-controls">
+        <div class="field"><label for="sim-surah">Surah</label><select id="sim-surah"></select></div>
+        <div class="row field">
+          <div><label for="sim-from">From ayah</label><input id="sim-from" type="number" min="1" value="1"></div>
+          <div><label for="sim-to">To ayah</label><input id="sim-to" type="number" min="1"></div>
+        </div>
       </div>
+      <div class="masked hidden" id="truth-masked">Hidden until the app detects it</div>
       <div class="row field">
         <div><label for="sim-noise">ASR noise</label>
           <select id="sim-noise"><option>clean</option><option selected>light</option><option>heavy</option></select></div>
@@ -157,7 +176,20 @@ button:disabled { opacity: .5; cursor: default; }
         <div><label for="sim-speed">Speed</label>
           <select id="sim-speed"><option value="1500">slow</option><option value="700" selected>normal</option><option value="250">fast</option></select></div>
       </div>
-      <button class="primary" id="sim-run" style="width:100%">Run simulation</button>
+      <label class="check"><input type="checkbox" id="sim-late" checked> Join mid-ayah (open the app late)</label>
+    </section>
+
+    <section class="panel" data-pane="simulate">
+      <h2>2 · What the app is told</h2>
+      <div class="field">
+        <select id="sim-hint">
+          <option value="none" selected>Nothing — detect surah &amp; ayah automatically</option>
+          <option value="surah">The surah (the user picked it)</option>
+          <option value="juz">The juz (e.g. "tonight is juz 30")</option>
+        </select>
+      </div>
+      <label class="check"><input type="checkbox" id="sim-mystery"> Mystery mode — hide the answer until detected</label>
+      <button class="primary" id="sim-run" style="width:100%; margin-top:12px">Run simulation</button>
       <p class="hint">Generates what an ASR model might hear (misheard letters, dropped words, coughs, repeated ayahs) and runs the tracker over it. The dashed outline is the truth; the highlight is what the app shows.</p>
       <div class="err" id="sim-err"></div>
     </section>
@@ -166,6 +198,8 @@ button:disabled { opacity: .5; cursor: default; }
       <h2>Be the ASR</h2>
       <div class="field"><label for="type-input">Chunk heard (press Enter)</label>
         <input id="type-input" class="ar" placeholder="والضحى والليل إذا سجى" autocomplete="off"></div>
+      <div class="field"><label for="type-hint">Tell the app (optional)</label>
+        <select id="type-hint"><option value="">Nothing — detect automatically</option></select></div>
       <div class="controls">
         <button class="ghost" id="type-example">Load example</button>
         <button class="ghost" id="type-clear">Clear</button>
@@ -203,6 +237,8 @@ button:disabled { opacity: .5; cursor: default; }
         <span>confidence</span><div class="conf"><div id="now-conf" style="width:0"></div></div>
         <span class="pending" id="now-pending"></span>
       </div>
+      <div class="detect" id="now-detect">Searching all 114 surahs…</div>
+      <div class="alts" id="now-alts"></div>
     </section>
 
     <section class="panel" data-pane="simulate type">
@@ -278,6 +314,7 @@ function resetDisplay() {
   mushafSurah = null;
   $("mushaf").replaceChildren(el("div", "empty", "The surah appears here once the app knows where you are."));
   renderNow(null);
+  renderDetect(searchingText(null), false);
   $("feed").replaceChildren(el("div", "empty", "No chunks yet"));
   $("metrics").replaceChildren(el("div", "empty", "Run something first"));
   $("metrics").firstChild.style.gridColumn = "1/-1";
@@ -294,8 +331,19 @@ function renderNow(state) {
   $("now-status").className = `status ${status}`;
   $("now-status").textContent = status;
   $("now-conf").style.width = `${Math.round((state ? state.confidence : 0) * 100)}%`;
-  $("now-pending").textContent = state && state.pending ? `possible jump to ${state.pending.ref}…` : "";
+  const pend = state && state.pending;
+  $("now-pending").textContent = pend ? (pos ? `possible jump to ${pend.ref}…` : `maybe ${SURAHS[pend.surah - 1].name_translit} ${pend.ref}…`) : "";
+  const alts = state ? state.alternatives : [];
+  $("now-alts").textContent = alts.length ? `Ambiguous text — could also be ${alts.map((a) => a.ref).join(" · ")}` : "";
 }
+
+// The detection line under the display: searching, or found and how fast.
+function renderDetect(text, found) {
+  $("now-detect").textContent = text;
+  $("now-detect").classList.toggle("found", !!found);
+}
+const SECONDS_PER_CHUNK = 2.75;  // ~5.5 words per chunk at ~2 words/s
+const searchingText = (told) => told ? `Searching ${told} first (a hint, not a filter)…` : "Searching all 114 surahs — the app was told nothing…";
 
 async function renderMushaf(state, truth) {
   const pos = state && state.position;
@@ -340,7 +388,7 @@ function metric(value, label) {
 }
 
 // ---------- Simulate ----------
-const sim = { steps: [], report: null, i: 0, timer: null };
+const sim = { steps: [], report: null, i: 0, timer: null, told: null, lock: null, mystery: false };
 
 function stepClass(s) {
   if (s.truth === null) return "noise";
@@ -348,24 +396,54 @@ function stepClass(s) {
   return s.correct ? "ok" : "bad";
 }
 
+// Mystery mode keeps the truth hidden until the app has found it (or the stream ends).
+function hidden(i) {
+  if (!sim.mystery) return false;
+  const revealAt = sim.lock === null ? sim.steps.length - 1 : sim.lock;
+  return i < revealAt;
+}
+
+function setMasked(masked) {
+  $("truth-controls").classList.toggle("hidden", masked);
+  $("truth-masked").classList.toggle("hidden", !masked);
+}
+
+function surprise() {
+  const s = SURAHS[Math.floor(Math.random() * SURAHS.length)];
+  const from = 1 + Math.floor(Math.random() * Math.max(1, s.ayah_count - 8));
+  $("sim-surah").value = s.index;
+  $("sim-from").max = $("sim-to").max = s.ayah_count;
+  $("sim-from").value = from;
+  $("sim-to").value = Math.min(s.ayah_count, from + 25);
+  $("sim-seed").value = Math.floor(Math.random() * 10000);
+  $("sim-late").checked = true;
+  $("sim-hint").value = "none";
+  $("sim-mystery").checked = true;
+  runSimulation();
+}
+
 async function runSimulation() {
   $("sim-err").textContent = "";
   pause();
+  const seed = +$("sim-seed").value;
   const body = {
     surah: +$("sim-surah").value, from_ayah: +$("sim-from").value, to_ayah: +$("sim-to").value || null,
-    noise: $("sim-noise").value, fatiha_every: +$("sim-fatiha").value, seed: +$("sim-seed").value,
+    noise: $("sim-noise").value, fatiha_every: +$("sim-fatiha").value, seed,
+    join_late: $("sim-late").checked ? 1 + (Math.abs(seed) % 6) : 0, hint: $("sim-hint").value,
   };
-  $("sim-run").disabled = true;
+  $("sim-run").disabled = $("sim-surprise").disabled = true;
   try {
     const res = await api("/api/simulate", body);
-    Object.assign(sim, { steps: res.steps, report: res.report, i: 0 });
+    const lock = res.report.time_to_lock;
+    Object.assign(sim, { steps: res.steps, report: res.report, i: 0, told: res.told,
+      lock: lock === null ? null : lock - 1, mystery: $("sim-mystery").checked });
     buildTimeline();
     renderSimMetrics();
     resetFeed();
     await showStep(0);
     play();
   } catch (e) { $("sim-err").textContent = e.message; }
-  finally { $("sim-run").disabled = false; }
+  finally { $("sim-run").disabled = $("sim-surprise").disabled = false; }
 }
 
 function buildTimeline() {
@@ -373,7 +451,7 @@ function buildTimeline() {
   tl.replaceChildren();
   sim.steps.forEach((s, i) => {
     const c = el("span", stepClass(s));
-    c.title = `#${i + 1}  truth ${s.truth ? s.truth.ref : "noise"} → shown ${s.state.position ? s.state.position.ref : "nothing"}`;
+    c.title = sim.mystery ? `#${i + 1}` : `#${i + 1}  truth ${s.truth ? s.truth.ref : "noise"} → shown ${s.state.position ? s.state.position.ref : "nothing"}`;
     c.addEventListener("click", () => { pause(); showStep(i); });
     tl.append(c);
   });
@@ -383,6 +461,7 @@ function renderSimMetrics() {
   const r = sim.report;
   const pct = (x) => `${(x * 100).toFixed(1)}%`;
   $("metrics").replaceChildren(
+    metric(r.time_to_lock === null ? "never" : `${r.time_to_lock} · ~${Math.round(r.time_to_lock * SECONDS_PER_CHUNK)}s`, "chunks to detect"),
     metric(pct(r.acceptable), "right ayah (±1)"),
     metric(pct(r.accuracy), "exact ayah"),
     metric(String(r.wrong_jumps), "wrong jumps"),
@@ -398,10 +477,24 @@ async function showStep(i) {
   if (!sim.steps.length) return;
   sim.i = Math.max(0, Math.min(i, sim.steps.length - 1));
   const s = sim.steps[sim.i];
+  const secret = hidden(sim.i);
+  setMasked(secret);
   renderNow(s.state);
-  await renderMushaf(s.state, s.truth);
+  await renderMushaf(s.state, secret ? null : s.truth);
 
-  document.querySelectorAll("#timeline span").forEach((c, j) => c.classList.toggle("at", j === sim.i));
+  if (sim.lock !== null && sim.i >= sim.lock) {
+    const p = sim.steps[sim.lock].state.position;
+    const n = sim.lock + 1;
+    renderDetect(`✓ Detected ${SURAHS[p.surah - 1].name_translit} ${p.ref} after ${n} chunk${n > 1 ? "s" : ""} (~${Math.round(n * SECONDS_PER_CHUNK)} s of recitation)` +
+      (sim.told ? ` · told: ${sim.told}` : " · told nothing"), true);
+  } else {
+    renderDetect(searchingText(sim.told), false);
+  }
+
+  document.querySelectorAll("#timeline span").forEach((c, j) => {
+    c.classList.toggle("at", j === sim.i);
+    c.classList.toggle("future", sim.mystery && j > sim.i);
+  });
   $("p-pos").textContent = `chunk ${sim.i + 1} / ${sim.steps.length}`;
 
   // Feed shows everything heard so far, newest first.
@@ -410,8 +503,9 @@ async function showStep(i) {
   for (let j = sim.i; j >= Math.max(0, sim.i - 60); j--) {
     const st = sim.steps[j];
     const shown = st.state.position ? st.state.position.ref : "—";
-    const truth = st.truth ? `truth ${st.heard.join(", ")}` : "noise";
-    const row = feedItem(j, st.text, stepClass(st) + (j === sim.i ? " at" : ""), shown, truth, () => { pause(); showStep(j); });
+    const truth = !st.truth ? "noise" : secret ? "truth hidden" : `truth ${st.heard.join(", ")}`;
+    const cls = secret ? "" : stepClass(st);
+    const row = feedItem(j, st.text, cls + (j === sim.i ? " at" : ""), shown, truth, () => { pause(); showStep(j); });
     feed.append(row);
   }
 }
@@ -431,6 +525,7 @@ $("p-play").addEventListener("click", () => (sim.timer ? pause() : play()));
 $("p-prev").addEventListener("click", () => { pause(); showStep(sim.i - 1); });
 $("p-next").addEventListener("click", () => { pause(); showStep(sim.i + 1); });
 $("sim-run").addEventListener("click", runSimulation);
+$("sim-surprise").addEventListener("click", surprise);
 $("sim-speed").addEventListener("change", () => { if (sim.timer) play(); });
 $("sim-surah").addEventListener("change", () => {
   const s = SURAHS[+$("sim-surah").value - 1];
@@ -456,7 +551,9 @@ const EXAMPLE = [
 async function sendChunks() {
   $("type-err").textContent = "";
   try {
-    const res = await api("/api/track", { chunks: typed.chunks });
+    const [kind, n] = ($("type-hint").value || ":").split(":");
+    const hint = kind === "s" ? { surah: +n } : kind === "j" ? { juz: +n } : null;
+    const res = await api("/api/track", { chunks: typed.chunks, hint });
     typed.states = res.states;
     renderTyped();
   } catch (e) { $("type-err").textContent = e.message; }
@@ -466,6 +563,16 @@ function renderTyped() {
   const last = typed.states[typed.states.length - 1] || null;
   renderNow(last);
   renderMushaf(last, null);
+  const firstFound = typed.states.findIndex((s) => s.position);
+  const hintSel = $("type-hint");
+  const told = hintSel.value ? hintSel.options[hintSel.selectedIndex].textContent : null;
+  if (firstFound >= 0 && last && last.position) {
+    const p = last.position;
+    renderDetect(`✓ ${SURAHS[p.surah - 1].name_translit} ${p.ref} — first detected after ${firstFound + 1} chunk${firstFound ? "s" : ""}` +
+      (told ? ` · told: ${told}` : " · told nothing"), true);
+  } else {
+    renderDetect(searchingText(told), false);
+  }
   const feed = $("feed");
   feed.replaceChildren();
   if (!typed.chunks.length) feed.append(el("div", "empty", "No chunks yet"));
@@ -536,6 +643,14 @@ $("match-input").addEventListener("keydown", (e) => { if (e.key === "Enter" && (
     }
     sel.value = 78;
     sel.dispatchEvent(new Event("change"));
+
+    const hint = $("type-hint");
+    const gs = el("optgroup"); gs.label = "Surah";
+    for (const s of SURAHS) { const o = el("option", null, `${s.index}. ${s.name_translit}`); o.value = `s:${s.index}`; gs.append(o); }
+    const gj = el("optgroup"); gj.label = "Juz";
+    for (let j = 1; j <= 30; j++) { const o = el("option", null, `Juz ${j}`); o.value = `j:${j}`; gj.append(o); }
+    hint.append(gs, gj);
+    hint.addEventListener("change", () => { if (typed.chunks.length) sendChunks(); else renderTyped(); });
   } catch (e) {
     $("sim-err").textContent = `Cannot reach the API: ${e.message}`;
   }
