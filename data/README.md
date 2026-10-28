@@ -51,6 +51,15 @@ rather than emitting a subtly wrong Quran. It checks that
 A silent data error here would surface much later as an inexplicable accuracy
 problem in the matcher, so it is worth failing loudly at build time.
 
+## The basmala
+
+Tanzil prefixes ayah 1 of every surah except 1 and 9 with
+"بسم الله الرحمن الرحيم". In the Hafs numbering the basmala is **not** part of
+those ayahs, and leaving it in would put 113 copies of the phrase in the matching
+index, making every surah opening ambiguous. The build strips it (and aborts if
+it is not there to strip) and records `has_basmala` on the surah instead.
+Al-Fatiha keeps it as ayah 1, and 27:30 keeps it mid-verse.
+
 ## Shape of `quran.json`
 
 ```jsonc
@@ -59,7 +68,7 @@ problem in the matcher, so it is worth failing loudly at build time.
   "surahs":  [ { "index": 93, "name_ar": "الضحى", "name_translit": "Ad-Dhuhaa",
                  "name_en": "The Morning Hours", "ayah_count": 11,
                  "revelation_type": "Meccan", "revelation_order": 11,
-                 "first_verse_id": 6091 }, ... ],
+                 "first_verse_id": 6091, "has_basmala": true }, ... ],
   "verses":  [ { "id": 6092, "surah": 93, "ayah": 2,
                  "text": "والليل اذا سجى" }, ... ],
   "juzs":    [ { "index": 1, "surah": 1, "ayah": 1 }, ... ],

@@ -25,9 +25,7 @@ DEFAULT_OUT = DATA_DIR / "quran.json"
 TOTAL_VERSES = 6236
 TOTAL_SURAHS = 114
 
-SOURCE_NOTE = (
-    "Tanzil Quran Text (Simple Clean, v1.1) + Tanzil metadata, https://tanzil.net"
-)
+SOURCE_NOTE = "Tanzil Quran Text (Simple Clean, v1.1) + Tanzil metadata, https://tanzil.net"
 LICENSE_NOTE = "Creative Commons Attribution 3.0 — Copyright (C) Tanzil Project"
 
 
@@ -44,24 +42,16 @@ def parse_text(path: Path) -> list[dict]:
             continue
         parts = line.split("|")
         if len(parts) != 3:
-            raise BuildError(
-                f"{path.name}:{lineno}: expected 3 |-separated fields, got {len(parts)}"
-            )
+            raise BuildError(f"{path.name}:{lineno}: expected 3 |-separated fields, got {len(parts)}")
         surah_s, ayah_s, text = parts
         try:
             surah, ayah = int(surah_s), int(ayah_s)
         except ValueError:
-            raise BuildError(
-                f"{path.name}:{lineno}: non-integer surah/ayah {surah_s!r}/{ayah_s!r}"
-            ) from None
+            raise BuildError(f"{path.name}:{lineno}: non-integer surah/ayah {surah_s!r}/{ayah_s!r}") from None
         text = text.strip()
         if not text:
-            raise BuildError(
-                f"{path.name}:{lineno}: empty verse text for {surah}:{ayah}"
-            )
-        verses.append(
-            {"id": len(verses) + 1, "surah": surah, "ayah": ayah, "text": text}
-        )
+            raise BuildError(f"{path.name}:{lineno}: empty verse text for {surah}:{ayah}")
+        verses.append({"id": len(verses) + 1, "surah": surah, "ayah": ayah, "text": text})
     return verses
 
 
@@ -119,9 +109,7 @@ def validate(verses: list[dict], meta: dict) -> None:
 
     declared_total = sum(s["ayah_count"] for s in surahs)
     if declared_total != TOTAL_VERSES:
-        raise BuildError(
-            f"metadata ayah counts sum to {declared_total}, expected {TOTAL_VERSES}"
-        )
+        raise BuildError(f"metadata ayah counts sum to {declared_total}, expected {TOTAL_VERSES}")
 
     # Walk the text once, checking surah order, ayah contiguity, and that each
     # surah's length matches what the metadata independently declares.
@@ -132,9 +120,7 @@ def validate(verses: list[dict], meta: dict) -> None:
         s, a = v["surah"], v["ayah"]
         if s == prev_surah:
             if a != seen[s] + 1:
-                raise BuildError(
-                    f"surah {s}: ayah {a} follows {seen[s]}, expected {seen[s] + 1}"
-                )
+                raise BuildError(f"surah {s}: ayah {a} follows {seen[s]}, expected {seen[s] + 1}")
         elif s == prev_surah + 1:
             if a != 1:
                 raise BuildError(f"surah {s} starts at ayah {a}, expected 1")
@@ -146,27 +132,46 @@ def validate(verses: list[dict], meta: dict) -> None:
 
     for index, count in expected.items():
         if seen.get(index) != count:
-            raise BuildError(
-                f"surah {index}: text has {seen.get(index)} ayahs, metadata declares {count}"
-            )
+            raise BuildError(f"surah {index}: text has {seen.get(index)} ayahs, metadata declares {count}")
 
     # Tanzil's per-surah `start` offset is a third, redundant encoding of the
     # same layout. If it disagrees, one of the two files is not what we think.
     running = 0
     for s in surahs:
         if s["_start"] != running:
-            raise BuildError(
-                f"surah {s['index']}: metadata start={s['_start']}, computed {running}"
-            )
+            raise BuildError(f"surah {s['index']}: metadata start={s['_start']}, computed {running}")
         running += s["ayah_count"]
 
     valid = {(v["surah"], v["ayah"]) for v in verses}
     for name, marks in (("juz", meta["juzs"]), ("sajda", meta["sajdas"])):
         for m in marks:
             if (m["surah"], m["ayah"]) not in valid:
-                raise BuildError(
-                    f"{name} {m['index']} points at nonexistent verse {m['surah']}:{m['ayah']}"
-                )
+                raise BuildError(f"{name} {m['index']} points at nonexistent verse {m['surah']}:{m['ayah']}")
+
+
+BASMALA = "بسم الله الرحمن الرحيم"
+NO_BASMALA = {1, 9}  # al-Fatiha: the basmala *is* ayah 1. at-Tawbah: no basmala.
+
+
+def split_basmala(verses: list[dict], surahs: list[dict]) -> None:
+    """Move the basmala out of the first ayah of surahs 2..114 (except 9).
+
+    Tanzil prefixes ayah 1 of those surahs with the basmala, but in the Hafs
+    numbering it is not part of the ayah. Left in, it would plant 113 copies
+    of the same phrase in the matching index and make every surah opening
+    ambiguous. It becomes a per-surah `has_basmala` flag instead, so the UI
+    can still show it above the surah.
+    """
+    first = {v["surah"]: v for v in verses if v["ayah"] == 1}
+    for s in surahs:
+        index = s["index"]
+        s["has_basmala"] = index not in NO_BASMALA
+        if not s["has_basmala"]:
+            continue
+        verse = first[index]
+        if not verse["text"].startswith(BASMALA + " "):
+            raise BuildError(f"surah {index}: ayah 1 does not start with the basmala as expected")
+        verse["text"] = verse["text"][len(BASMALA) :].strip()
 
 
 def build(text_src: Path, meta_src: Path) -> dict:
@@ -177,6 +182,7 @@ def build(text_src: Path, meta_src: Path) -> dict:
     verses = parse_text(text_src)
     meta = parse_metadata(meta_src)
     validate(verses, meta)
+    split_basmala(verses, meta["surahs"])
 
     surahs = []
     for s in meta["surahs"]:
@@ -188,7 +194,7 @@ def build(text_src: Path, meta_src: Path) -> dict:
         "meta": {
             "source": SOURCE_NOTE,
             "license": LICENSE_NOTE,
-            "text_variant": "simple-clean",
+            "text_variant": "simple-clean, basmala split from ayah 1",
             "note": "Derived artifact. Do not edit by hand; rebuild with data/build_quran.py.",
             "verse_count": len(verses),
             "surah_count": len(surahs),
@@ -201,9 +207,7 @@ def build(text_src: Path, meta_src: Path) -> dict:
 
 
 def main() -> int:
-    ap = argparse.ArgumentParser(
-        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
-    )
+    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument(
         "-o",
         "--out",

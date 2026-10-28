@@ -1,0 +1,6 @@
+# Style for loose scripts outside the packages (eval/). The packages carry the
+# same settings in their own pyproject.toml so they stay self-contained.
+line-length = 110
+
+[lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]

@@ -72,12 +72,12 @@ works at all.
 
 | Phase | Deliverable | Status |
 |-------|-------------|--------|
-| 0 | Product definition, repo foundation, Quran data pipeline | **in progress** |
-| 1 | Arabic normalization + text→ayah matching (no ML) | not started |
-| 2 | Evaluation set of real recitations + product metrics | not started |
+| 0 | Product definition, repo foundation, Quran data pipeline | done |
+| 1 | Arabic normalization + text→ayah matching (no ML) | done |
+| 2 | Evaluation set of real recitations + product metrics | metrics + simulator done; real audio not started |
 | 3 | ASR baseline: audio→text→ayah | not started |
-| 4 | Position tracker (stateful, windowed) | not started |
-| 5 | Flutter MVP against the engine | not started |
+| 4 | Position tracker (stateful, windowed) | text-level tracker done |
+| 5 | Flutter MVP against the engine | dev API + web playground done; Flutter not started |
 | 6 | On-device inference, real mosque testing | not started |
 
 Phase 1 deliberately contains **no ML**. If `text → ayah` is not rock solid on
@@ -114,8 +114,8 @@ on them, not after:
 ```
 data/     Quran datasets (raw, verbatim) + the build script that derives quran.json
 engine/   the recognition engine — a plain Python library, the heart of the project
-eval/     recitation test set + metric harness            (Phase 2)
-server/   thin FastAPI wrapper over the engine, for the app to talk to   (Phase 5)
+eval/     benchmarks: simulated streams today, real recitations in Phase 2
+server/   thin FastAPI wrapper over the engine + the web playground
 mobile/   Flutter client                                  (Phase 5)
 ```
 
@@ -124,10 +124,19 @@ mobile/   Flutter client                                  (Phase 5)
 Requires Python 3.11+.
 
 ```bash
-py data/build_quran.py          # derive data/quran.json from the raw sources
-cd engine && py -m pip install -e ".[dev]"
-py -m pytest
+py -m venv .venv && .venv/Scripts/activate     # macOS/Linux: source .venv/bin/activate
+pip install -e "engine[dev]" -e "server[dev]"
+python data/build_quran.py                       # derive data/quran.json from the raw sources
+
+pytest engine && pytest server                   # tests
+python eval/text_benchmark.py                    # accuracy benchmark (product metrics)
+python -m rafiq_server                           # playground at http://127.0.0.1:8000
 ```
+
+The **playground** is the quickest way to see the product: *Simulate* replays a
+noisy recitation and shows what the app would display against the truth,
+*Type it* lets you play the ASR yourself, and *Match* shows raw candidates for
+any text.
 
 ## Attribution
 

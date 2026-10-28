@@ -226,6 +226,19 @@ def test_endpoints(quran: Quran):
 def test_known_verse_text(quran: Quran):
     assert quran.verse(1, 1).text == "بسم الله الرحمن الرحيم"
     assert quran.verse(93, 2).text == "والليل إذا سجى"
+    assert quran.verse(93, 1).text == "والضحى"
+
+
+BASMALA = "بسم الله الرحمن الرحيم"
+
+
+def test_basmala_is_split_from_first_ayahs(quran: Quran):
+    """Only al-Fatiha 1:1 is the basmala itself; elsewhere it is a surah flag."""
+    starting = [v.ref for v in quran if v.text.startswith(BASMALA)]
+    assert starting == ["1:1"]
+    assert BASMALA in quran.verse(27, 30).text  # the one mid-surah occurrence stays
+    flagged = [s.index for s in quran.surahs if s.has_basmala]
+    assert flagged == [i for i in range(2, 115) if i != 9]
 
 
 def test_surah_metadata(quran: Quran):

@@ -1,0 +1,30 @@
+name: ci
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Install
+        run: pip install -e "engine[dev]" -e "server[dev]"
+      - name: Build Quran dataset
+        run: python data/build_quran.py
+      - name: Lint
+        run: |
+          ruff check data engine eval server
+          ruff format --check data engine eval server
+      - name: Engine tests
+        run: pytest engine
+      - name: Server tests
+        run: pytest server
+      - name: Accuracy regression gate
+        run: python eval/text_benchmark.py --quick --check
