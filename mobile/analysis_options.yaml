@@ -1,0 +1,26 @@
+include: package:flutter_lints/flutter.yaml
+
+analyzer:
+  language:
+    strict-casts: true
+    strict-raw-types: true
+  exclude:
+    - build/**
+
+linter:
+  rules:
+    # Async mistakes are the classic source of "it hangs sometimes" bugs in
+    # a streaming app; make them visible.
+    - unawaited_futures
+    - close_sinks
+    - avoid_void_async
+    # Readability and safety.
+    - prefer_final_locals
+    - prefer_final_in_for_each
+    - always_declare_return_types
+    - avoid_dynamic_calls
+    - only_throw_errors
+    - prefer_single_quotes
+    - sort_child_properties_last
+    - use_super_parameters
+    - avoid_print

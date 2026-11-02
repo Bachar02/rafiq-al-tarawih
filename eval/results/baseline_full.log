@@ -41,3 +41,4 @@ device: cuda | 12 reciters x 3 passages x 3 rooms = 108 runs
   Alafasy_128kbps                  p1 clean  right  100%  wrong 0  detect 2.58s  lag 0.13s/0.35s  missed 0
   Alafasy_128kbps                  p1 mosque right  100%  wrong 0  detect 3.07s  lag 1.03s/1.05s  missed 0
   Alafasy_128kbps                  p1 far    right   82%  wrong 0  detect 10.61s  lag 1.24s/2.35s  missed 0
+  Husary_128kbps                   p1 clean  right   90%  wrong 1  detect 7.02s  lag 5.23s/6.16s  missed 0

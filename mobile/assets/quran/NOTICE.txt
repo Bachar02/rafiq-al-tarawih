@@ -1,0 +1,8 @@
+Quran text and metadata: Tanzil Project (https://tanzil.net)
+Tanzil Quran Text (Simple Clean, v1.1) + Tanzil metadata
+Copyright (C) 2007-2025 Tanzil Project
+License: Creative Commons Attribution 3.0
+
+quran.json is derived from the verbatim Tanzil files in data/raw/ by
+data/build_quran.py (the only change: the basmala is split out of the first
+ayah of surahs 2-114 into a per-surah flag, per the Hafs numbering).
