@@ -152,6 +152,25 @@ class Tracker:
     def state(self) -> TrackState:
         return self._state
 
+    # Everything update() changes. Hypotheses and states are immutable, so a
+    # shallow copy of these fields is a complete snapshot.
+    _SESSION_FIELDS = ("_hyps", "_shown", "_shown_anchor", "_pending", "_pending_count", "_misses", "_state")
+
+    def preview(self, text: str) -> TrackState:
+        """What `update(text)` would show, without committing it.
+
+        For live partial transcripts: the words recited so far in the current
+        breath are previewed every second so the screen keeps up with the
+        imam, and only the final transcript of the chunk is committed. That
+        way the same words are never counted twice as evidence.
+        """
+        saved = {f: getattr(self, f) for f in self._SESSION_FIELDS}
+        try:
+            return self.update(text)
+        finally:
+            for f, v in saved.items():
+                setattr(self, f, v)
+
     def update(self, text: str) -> TrackState:
         """Feed one ASR chunk; returns what the UI should show now."""
         cfg = self.config
