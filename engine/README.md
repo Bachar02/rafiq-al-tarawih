@@ -23,9 +23,9 @@ py -m pytest
 | `rafiq.tracking` | stateful position tracking: beam search + pluggable transition prior + display policy |
 | `rafiq.simulate` | synthetic noisy recitation streams with ground truth |
 | `rafiq.evaluation` | product metrics (accuracy, wrong jumps, recovery) |
-| `rafiq.asr` | audio → text *(Phase 3)* |
+| `rafiq.asr` | live audio → chunks at natural pauses → Whisper → tracker (optional extra: `pip install -e ".[asr]"`) |
 
-Data flows one way: `normalize → matching → tracking`. Each stage has a
+Data flows one way: `asr → normalize → matching → tracking`. Each stage has a
 config dataclass with the knobs in one place, and each depends only on the
 stage before it — so a stage can be retuned or replaced (e.g. a learned
 transition model) without touching the others.
@@ -37,4 +37,15 @@ from rafiq.tracking import Tracker
 tracker = Tracker(Matcher(get_index()))
 for chunk in asr_chunks:  # a few seconds of recitation each
     state = tracker.update(chunk)  # -> verse_id, status, confidence, candidates
+```
+
+Live audio uses the same tracker behind a `Listener`:
+
+```python
+from rafiq.asr import EnergyVad, Listener, Segmenter, WhisperTranscriber
+
+listener = Listener(Segmenter(EnergyVad()), WhisperTranscriber(), tracker)
+for block in microphone:  # 16 kHz mono float32, any block size
+    for heard in listener.feed(block):
+        print(heard.text, heard.state.verse_id)
 ```

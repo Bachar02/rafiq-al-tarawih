@@ -75,7 +75,7 @@ works at all.
 | 0 | Product definition, repo foundation, Quran data pipeline | done |
 | 1 | Arabic normalization + text→ayah matching (no ML) | done |
 | 2 | Evaluation set of real recitations + product metrics | metrics + simulator done; real audio not started |
-| 3 | ASR baseline: audio→text→ayah | not started |
+| 3 | ASR baseline: audio→text→ayah | baseline done (Whisper-base Quran, live mic in the playground) |
 | 4 | Position tracker (stateful, windowed) | text-level tracker done |
 | 5 | Flutter MVP against the engine | dev API + web playground done; Flutter not started |
 | 6 | On-device inference, real mosque testing | not started |
@@ -126,16 +126,19 @@ Requires Python 3.11+.
 
 ```bash
 py -m venv .venv && .venv/Scripts/activate     # macOS/Linux: source .venv/bin/activate
-pip install -e "engine[dev]" -e "server[dev]"
+pip install -e "engine[dev,asr]" -e "server[dev,asr]"   # drop ",asr" to skip speech recognition
 python data/build_quran.py                       # derive data/quran.json from the raw sources
 
 pytest engine && pytest server                   # tests
 python eval/text_benchmark.py                    # tracking benchmark (product metrics)
 python eval/detection_benchmark.py               # detection: how fast it finds surah + ayah alone
+python eval/audio_check.py --surah 78 --to 10    # real audio end to end (downloads EveryAyah ayahs)
 python -m rafiq_server                           # playground at http://127.0.0.1:8000
 ```
 
-The **playground** is the quickest way to see the product. *🎲 Surprise me*
+The **playground** is the quickest way to see the product. *🎤 Listen* uses
+your microphone (or plays an audio file) and shows the detected surah and ayah
+live — play a recitation near the laptop. *🎲 Surprise me*
 picks a hidden random passage and shows the app detecting it. *Simulate* replays a
 noisy recitation and shows what the app would display against the truth,
 *Type it* lets you play the ASR yourself, and *Match* shows raw candidates for

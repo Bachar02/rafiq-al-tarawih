@@ -56,7 +56,7 @@ Python can't ship inside Flutter. So:
 | 0 | Data pipeline ✅ | — |
 | 1 ✅ | `normalize` + `match` (text → ayah, no ML) | ≥99% top-1 on clean ayah text, and ≥95% on noisy text fragments (deleted or swapped words) |
 | 2 | Eval set + metrics harness | ~10 reciters from EveryAyah, plus ≥2 h of real Taraweeh recordings with ayah timestamps. Harness reports the five metrics below |
-| 3 | ASR baseline (audio → text → ayah) | Numbers on the eval set; know where it fails |
+| 3 🟡 | ASR baseline (audio → text → ayah), baseline done | Numbers on the eval set; know where it fails |
 | 4 🟡 | Tracker (text-level done) | Stability and recovery clearly beat Phase 3 |
 | 5 | Flutter MVP + FastAPI WebSocket | Works in a real mosque with a laptop nearby |
 | 6 | On-device (Dart port + sherpa-onnx) | Fully offline on a mid-range Android phone, latency < 3 s |
@@ -104,3 +104,24 @@ A correct surah or juz hint raises "1st chunk" to about 90% (light) and 80% (hea
 - Truly identical passages (the refrains in Ash-Shu'ara and Ar-Rahman) can't be resolved from text alone, so the app shows the alternatives instead of guessing.
 
 **Next:** Phase 2 (real recordings) and Phase 3 (ASR). Simulated text is kinder than a mosque, so treat these numbers as a floor for catching regressions, not as a promise of real-world accuracy.
+
+## 10. Audio (2026-11-02)
+
+**Built:** `rafiq.asr` (audio → chunks cut at the imam's pauses → Whisper → tracker), a live `/ws/listen` WebSocket, and a 🎤 **Listen** tab (mic or audio file). `eval/audio_check.py` runs real EveryAyah recitations end to end.
+
+**Real audio (Alafasy, app told nothing):**
+
+| Condition | Right ayah | Detected after | Wrong jumps |
+|---|---|---|---|
+| clean, joined mid-surah | 90–100% | 1–2 chunks | 0 |
+| mosque echo (RT60 1.5 s, DRR 0–3 dB) + noise (SNR 15–20) | 91–100% | 1–2 chunks | 0 |
+| heavy echo + noise (DRR 0, SNR 15) | 60% | 5 chunks | 0 |
+
+Speech recognition runs at ~0.2× real time on a laptop CPU (about 0.8 s per chunk).
+
+**Findings:**
+- Silero VAD treats long tajweed vowels (madd) as "not speech" and cuts mid-word. A loudness VAD with an adaptive noise floor works better for recitation.
+- That VAD must also cap its threshold below the loud level. Otherwise listening that starts mid-recitation learns the voice as "noise" and hears nothing.
+- The tracker fails safe: with bad audio it waits instead of showing a wrong ayah.
+
+**Biggest lever next:** ASR quality under echo. Options: a larger Quran Whisper (small/turbo), fine-tuning on reverberant audio, or real mosque recordings for the eval set (Phase 2).
