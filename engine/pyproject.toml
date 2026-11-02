@@ -12,7 +12,10 @@ license = { text = "MIT" }
 dependencies = ["rapidfuzz>=3.0"]
 
 [project.optional-dependencies]
-dev = ["pytest>=8.0", "ruff>=0.6"]
+dev = ["pytest>=8.0", "ruff>=0.6", "numpy>=1.24"]
+# Audio -> text. faster-whisper's bundled audio decoder breaks on PyAV >= 15, so
+# rafiq.asr decodes with PyAV directly and any recent PyAV works.
+asr = ["numpy>=1.24", "faster-whisper>=1.1", "av>=12"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/rafiq"]
@@ -35,4 +38,5 @@ extend-immutable-calls = [
     "rafiq.matching.matcher.MatchConfig",
     "rafiq.simulate.NoiseConfig",
     "rafiq.tracking.TrackerConfig",
+    "rafiq.asr.segmenter.SegmenterConfig",
 ]
