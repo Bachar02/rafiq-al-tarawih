@@ -4,9 +4,11 @@ import 'dart:typed_data';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/providers.dart';
+import '../../core/audio/audio_source.dart';
 import '../../core/audio/pcm.dart';
 import '../../core/recognition/models.dart';
 import '../../core/recognition/recognition_engine.dart';
+import '../../services/screen_awake.dart';
 import 'listen_state.dart';
 
 /// The listening session: microphone -> recognition engine -> [ListenState].
@@ -18,6 +20,10 @@ import 'listen_state.dart';
 /// (stopped, paused, failed or restarted) see a stale number and do nothing,
 /// which is what keeps late events from resurrecting a finished session.
 class ListenController extends Notifier<ListenState> {
+  // Platform services are captured once: cleanup runs during disposal, when
+  // reading providers is no longer allowed.
+  late AudioSource _audioSource;
+  late ScreenAwake _screenAwake;
   RecognitionEngine? _engine;
   StreamSubscription<RecognitionEvent>? _events;
   StreamSubscription<Float32List>? _audio;
@@ -30,7 +36,12 @@ class ListenController extends Notifier<ListenState> {
 
   @override
   ListenState build() {
-    ref.onDispose(_teardown);
+    _audioSource = ref.read(audioSourceProvider);
+    _screenAwake = ref.read(screenAwakeProvider);
+    ref.onDispose(() {
+      _generation++;
+      unawaited(_teardown());
+    });
     return const ListenState();
   }
 
@@ -45,7 +56,7 @@ class ListenController extends Notifier<ListenState> {
       startedAt: DateTime.now(),
     );
 
-    final audio = ref.read(audioSourceProvider);
+    final audio = _audioSource;
     bool allowed;
     try {
       allowed = await audio.ensurePermission();
@@ -78,7 +89,7 @@ class ListenController extends Notifier<ListenState> {
       _fail(generation, ListenError.microphone, 'Could not start the microphone.');
       return;
     }
-    if (settings.keepScreenOn) unawaited(ref.read(screenAwakeProvider).enable());
+    if (settings.keepScreenOn) unawaited(_screenAwake.enable());
   }
 
   /// Graceful stop: the chunk being recited is still recognised.
@@ -200,7 +211,7 @@ class ListenController extends Notifier<ListenState> {
     _audio = null;
     await sub?.cancel();
     try {
-      await ref.read(audioSourceProvider).stop();
+      await _audioSource.stop();
     } catch (_) {}
   }
 
@@ -215,6 +226,6 @@ class ListenController extends Notifier<ListenState> {
       await engine.cancel();
       await engine.dispose();
     }
-    await ref.read(screenAwakeProvider).disable();
+    await _screenAwake.disable();
   }
 }

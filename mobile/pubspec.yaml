@@ -40,9 +40,6 @@ dependencies:
   web_socket_channel: ^3.0.3
   shared_preferences: ^2.2.3
   wakelock_plus: ^1.2.8
-  # Transitive (via wakelock_plus). 7.x+ needs a Java 17 compiler, which Flutter
-  # 3.19's default Android Studio JDK (11) lacks. Revisit when upgrading Flutter.
-  package_info_plus: ">=6.0.0 <7.0.0"
 
 dev_dependencies:
   flutter_test:

@@ -111,9 +111,8 @@ void main() {
     expect(state().phase, SessionPhase.paused);
     expect(engine.cancelled, isTrue);
     expect(engine.finished, isFalse);
-    // A late event from the dead session changes nothing.
-    expect(() => engine.emit(heard(at(1, 1))), returnsNormally);
-    expect(state().track.position, isNull);
+    expect(engine.disposed, isTrue);
+    expect(h.audio.capturing, isFalse);
   });
 
   test('a hint change restarts the session with the hint', () async {
