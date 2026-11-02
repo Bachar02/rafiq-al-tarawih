@@ -27,3 +27,17 @@ device: cuda | 12 reciters x 3 passages x 3 rooms = 108 runs
   Ghamadi_40kbps                   p0 mosque right   89%  wrong 0  detect 7.41s  lag 0.11s/0.32s  missed 0
   Ghamadi_40kbps                   p0 far    right   88%  wrong 0  detect 7.21s  lag 1.47s/1.91s  missed 0
   Hudhaify_128kbps                 p0 clean  right   94%  wrong 0  detect 4.57s  lag 1.16s/1.53s  missed 0
+  Hudhaify_128kbps                 p0 mosque right   94%  wrong 0  detect 5.1s  lag 1.31s/1.69s  missed 0
+  Hudhaify_128kbps                 p0 far    right   67%  wrong 1  detect 5.09s  lag 1.7s/3.69s  missed 0
+  Yasser_Ad-Dussary_128kbps        p0 clean  right  100%  wrong 0  detect 3.61s  lag 0.22s/0.26s  missed 0
+  Yasser_Ad-Dussary_128kbps        p0 mosque right  100%  wrong 0  detect 6.21s  lag 0.14s/2.09s  missed 0
+  Yasser_Ad-Dussary_128kbps        p0 far    right   81%  wrong 0  detect 9.62s  lag 0.44s/2.0s  missed 0
+  Nasser_Alqatami_128kbps          p0 clean  right  100%  wrong 0  detect 2.62s  lag 0.42s/0.47s  missed 0
+  Nasser_Alqatami_128kbps          p0 mosque right  100%  wrong 0  detect 4.66s  lag 0.17s/0.38s  missed 0
+  Nasser_Alqatami_128kbps          p0 far    right   79%  wrong 0  detect 24.7s  lag 1.14s/1.91s  missed 0
+  Muhammad_Ayyoub_128kbps          p0 clean  right  100%  wrong 0  detect 2.05s  lag 0.43s/1.59s  missed 0
+  Muhammad_Ayyoub_128kbps          p0 mosque right  100%  wrong 0  detect 3.6s  lag 0.29s/2.82s  missed 0
+  Muhammad_Ayyoub_128kbps          p0 far    right  100%  wrong 0  detect 6.2s  lag 2.68s/4.08s  missed 0
+  Alafasy_128kbps                  p1 clean  right  100%  wrong 0  detect 2.58s  lag 0.13s/0.35s  missed 0
+  Alafasy_128kbps                  p1 mosque right  100%  wrong 0  detect 3.07s  lag 1.03s/1.05s  missed 0
+  Alafasy_128kbps                  p1 far    right   82%  wrong 0  detect 10.61s  lag 1.24s/2.35s  missed 0
