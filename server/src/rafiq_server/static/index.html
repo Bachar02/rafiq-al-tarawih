@@ -123,6 +123,9 @@ button:disabled { opacity: .5; cursor: default; }
 .empty { color: var(--muted); text-align: center; padding: 24px 0; }
 .err { color: var(--bad); font-size: 13px; margin-top: 8px; }
 .controls { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.level { height: 6px; border-radius: 3px; background: var(--surface-2); overflow: hidden; margin-top: 12px; }
+.level > div { height: 100%; width: 0; background: var(--ok); transition: width .08s; }
+#mic-start.on { background: var(--bad); }
 .tag { text-transform: none; letter-spacing: 0; font-weight: 500; background: var(--surface-2);
   padding: 1px 8px; border-radius: 99px; margin-inline-start: 6px; }
 .check { display: flex; gap: 8px; align-items: center; font-size: 13px; color: var(--text); margin: 4px 0; cursor: pointer; }
@@ -141,7 +144,8 @@ button:disabled { opacity: .5; cursor: default; }
   <h1>Rafiq Playground <span class="ar">رفيق التراويح</span></h1>
   <span class="hint" style="margin:0">Listens, then detects the surah and ayah by itself — telling it the surah is optional.</span>
   <nav>
-    <button data-tab="simulate" class="active">Simulate</button>
+    <button data-tab="listen" class="active">🎤 Listen</button>
+    <button data-tab="simulate">Simulate</button>
     <button data-tab="type">Type it</button>
     <button data-tab="match">Match</button>
   </nav>
@@ -150,6 +154,23 @@ button:disabled { opacity: .5; cursor: default; }
 <main>
   <!-- ===== left: controls per tab ===== -->
   <div class="stack">
+    <section class="panel" data-pane="listen">
+      <h2>Listen live</h2>
+      <div class="controls">
+        <button class="primary" id="mic-start">🎤 Start listening</button>
+        <button class="ghost" id="mic-stop" disabled>■ Stop</button>
+      </div>
+      <div class="level" title="microphone level"><div id="mic-level"></div></div>
+      <div class="field" style="margin-top:14px"><label for="file-input">…or play a recitation file (mp3, m4a, wav, video)</label>
+        <input type="file" id="file-input" accept="audio/*,video/*"></div>
+      <audio id="file-audio" controls class="hidden" style="width:100%"></audio>
+      <div class="field"><label for="listen-hint">Tell the app (optional)</label>
+        <select id="listen-hint"><option value="">Nothing — detect automatically</option></select></div>
+      <p class="hint">Play a recitation near your microphone — from your phone, YouTube, or a real imam. The app is told nothing: it finds the surah and ayah by itself.</p>
+      <div class="hint" id="listen-status"></div>
+      <div class="err" id="listen-err"></div>
+    </section>
+
     <section class="panel" data-pane="simulate">
       <button class="primary" id="sim-surprise" style="width:100%">🎲 Surprise me — can the app find it?</button>
       <p class="hint">Picks a random passage anywhere in the Quran, joins mid-ayah, hides the answer, and lets the app detect the surah and ayah on its own.</p>
@@ -218,7 +239,7 @@ button:disabled { opacity: .5; cursor: default; }
       <div class="err" id="match-err"></div>
     </section>
 
-    <section class="panel" data-pane="simulate type" id="metrics-panel">
+    <section class="panel" data-pane="listen simulate type" id="metrics-panel">
       <h2>Metrics</h2>
       <div class="metrics" id="metrics"><div class="empty" style="grid-column:1/-1">Run something first</div></div>
     </section>
@@ -226,7 +247,7 @@ button:disabled { opacity: .5; cursor: default; }
 
   <!-- ===== right: the display ===== -->
   <div class="stack">
-    <section class="panel" data-pane="simulate type">
+    <section class="panel" data-pane="listen simulate type">
       <div class="now dim" id="now">
         <div class="surah" id="now-surah">—</div>
         <div class="ref" id="now-ref">–:–</div>
@@ -241,7 +262,7 @@ button:disabled { opacity: .5; cursor: default; }
       <div class="alts" id="now-alts"></div>
     </section>
 
-    <section class="panel" data-pane="simulate type">
+    <section class="panel" data-pane="listen simulate type">
       <div class="mushaf" id="mushaf"><div class="empty">The surah appears here once the app knows where you are.</div></div>
     </section>
 
@@ -261,7 +282,7 @@ button:disabled { opacity: .5; cursor: default; }
       </div>
     </section>
 
-    <section class="panel" data-pane="simulate type">
+    <section class="panel" data-pane="listen simulate type">
       <h2>What the ASR heard</h2>
       <div class="feed" id="feed"><div class="empty">No chunks yet</div></div>
     </section>
@@ -296,12 +317,13 @@ async function verses(surah) {
 }
 
 // ---------- tabs ----------
-let tab = "simulate";
+let tab = "listen";
 function setTab(name) {
   tab = name;
   document.querySelectorAll("nav button").forEach((b) => b.classList.toggle("active", b.dataset.tab === name));
   document.querySelectorAll("[data-pane]").forEach((p) => p.classList.toggle("hidden", !p.dataset.pane.split(" ").includes(name)));
   if (name !== "simulate") pause();
+  if (name !== "listen") stopListening();
   resetDisplay();
   if (name === "simulate" && sim.steps.length) showStep(sim.i);
   if (name === "type" && typed.states.length) renderTyped();
@@ -631,6 +653,196 @@ async function runMatch() {
 $("match-run").addEventListener("click", runMatch);
 $("match-input").addEventListener("keydown", (e) => { if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) runMatch(); });
 
+// ---------- Listen (live audio) ----------
+// Browser audio -> AudioWorklet (raw samples) -> resample to 16 kHz -> WebSocket.
+// The server segments, transcribes and tracks; we just render what comes back.
+const WORKLET = `
+class Capture extends AudioWorkletProcessor {
+  process(inputs) {
+    const chans = inputs[0];
+    if (chans && chans.length) {
+      const out = new Float32Array(chans[0].length);
+      for (const c of chans) for (let i = 0; i < c.length; i++) out[i] += c[i] / chans.length;
+      this.port.postMessage(out, [out.buffer]);
+    }
+    return true;
+  }
+}
+registerProcessor("capture", Capture);`;
+
+const live = { ws: null, ctx: null, stream: null, heard: [], firstFound: -1, told: null, pending: [], pendingLen: 0, stopping: false };
+
+// Linear-interpolation resampler with state carried across blocks.
+function makeResampler(inRate, outRate = 16000) {
+  const step = inRate / outRate;
+  let t = 0, prev = 0;
+  return (x) => {
+    const out = [];
+    while (t < x.length - 1) {
+      const i = Math.floor(t), f = t - i;
+      const a = i < 0 ? prev : x[i];
+      out.push(a + (x[i + 1] - a) * f);
+      t += step;
+    }
+    t -= x.length;
+    prev = x[x.length - 1];
+    return Float32Array.from(out);
+  };
+}
+
+function listenHint() {
+  const sel = $("listen-hint");
+  const [kind, n] = (sel.value || ":").split(":");
+  live.told = sel.value ? sel.options[sel.selectedIndex].textContent : null;
+  return kind === "s" ? `?surah=${n}` : kind === "j" ? `?juz=${n}` : "";
+}
+
+function setListening(on, label) {
+  $("mic-start").disabled = on;
+  $("mic-stop").disabled = !on;
+  $("file-input").disabled = on;
+  $("mic-start").classList.toggle("on", on);
+  $("listen-status").textContent = label || "";
+}
+
+async function startListening(source) {  // source: "mic" | File
+  stopListening();
+  $("listen-err").textContent = "";
+  resetDisplay();
+  Object.assign(live, { heard: [], firstFound: -1, pending: [], pendingLen: 0, stopping: false });
+  renderDetect(searchingText(null), false);
+  setListening(true, "Connecting… (the first time loads the speech model)");
+
+  const ws = new WebSocket(`${location.protocol === "https:" ? "wss" : "ws"}://${location.host}/ws/listen${listenHint()}`);
+  ws.binaryType = "arraybuffer";
+  live.ws = ws;
+  ws.onmessage = async (e) => {
+    const msg = JSON.parse(e.data);
+    if (msg.type === "ready") {
+      try { await startAudio(source); }
+      catch (err) { $("listen-err").textContent = `Audio error: ${err.message}`; stopListening(); }
+    } else if (msg.type === "heard") {
+      onHeard(msg);
+    } else if (msg.type === "error") {
+      $("listen-err").textContent = msg.message;
+      stopListening();
+    } else if (msg.type === "done") {
+      ws.close();
+    }
+  };
+  ws.onclose = () => { if (live.ws === ws) { live.ws = null; teardownAudio(); setListening(false, live.heard.length ? "Stopped." : ""); } };
+  ws.onerror = () => { $("listen-err").textContent = "Cannot reach the server."; };
+}
+
+async function startAudio(source) {
+  const ctx = new AudioContext();
+  live.ctx = ctx;
+  await ctx.audioWorklet.addModule(URL.createObjectURL(new Blob([WORKLET], { type: "application/javascript" })));
+  const node = new AudioWorkletNode(ctx, "capture");
+  const mute = ctx.createGain(); mute.gain.value = 0;
+  node.connect(mute).connect(ctx.destination);  // keeps the worklet pulled without playing it twice
+
+  let input;
+  if (source === "mic") {
+    // Raw sound: browser "voice call" processing fights recitation (it treats long vowels as noise).
+    live.stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: true } });
+    input = ctx.createMediaStreamSource(live.stream);
+    setListening(true, "Listening… play a recitation near the microphone.");
+  } else {
+    // A media element can feed only one audio graph in its lifetime: use a fresh one per file.
+    const old = $("file-audio");
+    const audio = old.cloneNode();
+    old.replaceWith(audio);
+    audio.classList.remove("hidden");
+    audio.src = URL.createObjectURL(source);
+    input = ctx.createMediaElementSource(audio);
+    input.connect(ctx.destination);  // you hear the file while the app listens to it
+    audio.onended = () => finishListening();
+    await audio.play();
+    setListening(true, `Listening to ${source.name}…`);
+  }
+  input.connect(node);
+
+  const resample = makeResampler(ctx.sampleRate);
+  node.port.onmessage = (e) => {
+    const block = e.data;
+    let peak = 0;
+    for (let i = 0; i < block.length; i++) peak = Math.max(peak, Math.abs(block[i]));
+    $("mic-level").style.width = `${Math.min(100, Math.round(peak * 140))}%`;
+    const pcm = resample(block);
+    live.pending.push(pcm);
+    live.pendingLen += pcm.length;
+    if (live.pendingLen >= 4000 && live.ws && live.ws.readyState === WebSocket.OPEN && !live.stopping) {
+      const frame = new Float32Array(live.pendingLen);
+      let o = 0;
+      for (const p of live.pending) { frame.set(p, o); o += p.length; }
+      live.ws.send(frame.buffer);
+      live.pending = []; live.pendingLen = 0;
+    }
+  };
+}
+
+function teardownAudio() {
+  if (live.stream) live.stream.getTracks().forEach((t) => t.stop());
+  if (live.ctx) live.ctx.close().catch(() => {});
+  const audio = $("file-audio");
+  if (!audio.paused) audio.pause();
+  live.stream = null; live.ctx = null;
+  $("mic-level").style.width = "0";
+}
+
+// Graceful stop: stop capturing, let the server finish the last chunk, then close.
+function finishListening() {
+  if (!live.ws || live.stopping) return;
+  live.stopping = true;
+  teardownAudio();
+  setListening(true, "Finishing the last chunk…");
+  if (live.ws.readyState === WebSocket.OPEN) live.ws.send(JSON.stringify({ type: "end" }));
+}
+
+function stopListening() {
+  if (live.ws) { const ws = live.ws; live.ws = null; try { ws.close(); } catch {} }
+  teardownAudio();
+  setListening(false, "");
+}
+
+function onHeard(msg) {
+  live.heard.push(msg);
+  const state = msg.state;
+  if (live.firstFound < 0 && state.position) live.firstFound = live.heard.length - 1;
+  renderNow(state);
+  renderMushaf(state, null);
+  if (state.position && live.firstFound >= 0) {
+    const p = state.position;
+    const n = live.firstFound + 1;
+    const at = live.heard[live.firstFound].end;
+    renderDetect(`✓ ${SURAHS[p.surah - 1].name_translit} ${p.ref} — first detected after ${n} chunk${n > 1 ? "s" : ""} (${at.toFixed(0)} s of audio)` +
+      (live.told ? ` · told: ${live.told}` : " · told nothing"), true);
+  } else {
+    renderDetect(searchingText(live.told), false);
+  }
+
+  const feed = $("feed");
+  feed.replaceChildren();
+  for (let j = live.heard.length - 1; j >= Math.max(0, live.heard.length - 60); j--) {
+    const h = live.heard[j];
+    const cls = h.state.status === "tracking" ? "ok" : h.state.position ? "blank" : "noise";
+    feed.append(feedItem(j, h.text || "(nothing recognised)", cls, h.state.position ? h.state.position.ref : "—",
+      `${h.start.toFixed(1)}–${h.end.toFixed(1)} s · ASR ${h.asr_ms} ms`));
+  }
+  const avgAsr = live.heard.reduce((a, h) => a + h.asr_ms, 0) / live.heard.length;
+  $("metrics").replaceChildren(
+    metric(live.firstFound >= 0 ? `${live.firstFound + 1}` : "–", "chunks to detect"),
+    metric(String(live.heard.length), "chunks heard"),
+    metric(`${Math.round(avgAsr)} ms`, "speech-to-text per chunk"),
+    metric(state.status, "status"),
+  );
+}
+
+$("mic-start").addEventListener("click", () => startListening("mic"));
+$("mic-stop").addEventListener("click", finishListening);
+$("file-input").addEventListener("change", (e) => { const f = e.target.files[0]; if (f) startListening(f); e.target.value = ""; });
+
 // ---------- boot ----------
 (async () => {
   try {
@@ -650,6 +862,14 @@ $("match-input").addEventListener("keydown", (e) => { if (e.key === "Enter" && (
     const gj = el("optgroup"); gj.label = "Juz";
     for (let j = 1; j <= 30; j++) { const o = el("option", null, `Juz ${j}`); o.value = `j:${j}`; gj.append(o); }
     hint.append(gs, gj);
+    $("listen-hint").append(gs.cloneNode(true), gj.cloneNode(true));
+
+    const health = await api("/api/health");
+    if (!health.asr) {
+      $("listen-err").textContent = 'Speech recognition is not installed on the server. Run: pip install -e "engine[asr]" — the other tabs work without it.';
+      $("mic-start").disabled = $("file-input").disabled = true;
+    }
+    setTab("listen");
     hint.addEventListener("change", () => { if (typed.chunks.length) sendChunks(); else renderTyped(); });
   } catch (e) {
     $("sim-err").textContent = `Cannot reach the API: ${e.message}`;

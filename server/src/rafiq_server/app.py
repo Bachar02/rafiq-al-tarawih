@@ -4,12 +4,13 @@ The server holds no session state: `/api/track` replays the whole chunk list
 through a fresh tracker on every call. Replay costs a few milliseconds per
 chunk, and statelessness means no session store, no cleanup, and identical
 results for identical input — which is what a debugging tool needs. The live
-audio path (Phase 5) will use a WebSocket with one tracker per connection.
+audio path (`/ws/listen`, see listen.py) is the exception: one tracker per
+connection, because audio cannot be replayed cheaply.
 """
 
 from __future__ import annotations
 
-from dataclasses import dataclass, replace
+from dataclasses import dataclass, field, replace
 from functools import cached_property
 from pathlib import Path
 
@@ -17,6 +18,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from rafiq import evaluation
+from rafiq.asr import Transcriber, WhisperTranscriber, asr_available
 from rafiq.matching import Match, Matcher, QuranIndex, get_index
 from rafiq.quran import Quran
 from rafiq.simulate import NoiseConfig, simulate
@@ -32,6 +34,13 @@ class Engine:
     """Everything built once per process. Trackers are cheap and per request."""
 
     index: QuranIndex
+    # Speech-to-text, shared by all connections. None when the optional ASR
+    # dependencies are missing: everything except /ws/listen still works.
+    transcriber: Transcriber | None = field(default=None)
+
+    def __post_init__(self) -> None:
+        if self.transcriber is None and asr_available():
+            self.transcriber = WhisperTranscriber()
 
     @cached_property
     def matcher(self) -> Matcher:
@@ -83,7 +92,12 @@ def create_app(engine: Engine | None = None) -> FastAPI:
 
     @app.get("/api/health")
     def health() -> dict:
-        return {"ok": True, "verses": len(eng.quran), "words": len(eng.index)}
+        return {
+            "ok": True,
+            "verses": len(eng.quran),
+            "words": len(eng.index),
+            "asr": eng.transcriber is not None,
+        }
 
     @app.get("/api/surahs", response_model=list[schemas.SurahOut])
     def surahs():
@@ -150,6 +164,10 @@ def create_app(engine: Engine | None = None) -> FastAPI:
         report = evaluation.score(predicted, steps)
         return schemas.SimulateResponse(steps=out, report=schemas.Report(**report.to_dict()), told=told)
 
+    from rafiq_server.listen import router as listen_router
+
+    app.state.engine = eng
+    app.include_router(listen_router)
     app.mount("/static", StaticFiles(directory=STATIC), name="static")
 
     @app.get("/", include_in_schema=False)

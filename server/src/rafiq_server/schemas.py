@@ -108,6 +108,17 @@ class Report(BaseModel):
     first_shown_wrong: bool
 
 
+class HeardOut(BaseModel):
+    """One recognised audio chunk, pushed over /ws/listen."""
+
+    type: Literal["heard"] = "heard"
+    text: str  # Whisper's transcription, with diacritics
+    start: float  # seconds since listening started
+    end: float
+    asr_ms: int
+    state: StateOut
+
+
 class SimulateResponse(BaseModel):
     steps: list[SimStep]
     report: Report
