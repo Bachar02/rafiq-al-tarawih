@@ -45,6 +45,11 @@ class TrackerConfig:
     confirm: int = 2  # consecutive wins a far jump needs before it is displayed
     cold_start_confidence: float = 0.3  # confidence needed to show the very first position
     alternative_margin: float = 0.5  # rivals scoring within this of the best are reported as alternatives
+    # How much the newest chunk's own match quality scales confidence (1 = fully,
+    # 0 = confidence comes from the margin over rivals alone). Below 1, a strong
+    # history is not wiped out by one short chunk ("واقيموا"). 0.5 was chosen on
+    # recorded real ASR (tracker_replay.py): faster detection, no wrong displays.
+    emission_weight: float = 0.5
     full_evidence_words: int = 3  # chunks shorter than this count as proportionally weaker evidence
     unknown_exit_cost: float = 0.3  # leaving al-Fatiha when we never saw where the reciter was before
     hint_bonus: float = 0.3  # emission bonus inside the user's hint while searching (soft, never a filter)
@@ -311,7 +316,8 @@ class Tracker:
         rivals = [h for h in self._hyps[1:] if not self._is_near(best.end, h.end)
                   and not self._is_near(h.end, best.end)]  # fmt: skip
         margin = best.score - rivals[0].score if rivals else best.score
-        confidence = best.emission * (1.0 - math.exp(-2.0 * max(margin, 0.0)))
+        quality = 1.0 - cfg.emission_weight * (1.0 - min(best.emission, 1.0))
+        confidence = quality * (1.0 - math.exp(-2.0 * max(margin, 0.0)))
 
         if self._shown is None:
             # Cold start: show nothing rather than a guess. A short first chunk

@@ -30,7 +30,7 @@ import time
 from dataclasses import asdict
 from pathlib import Path
 
-from audiolib import Room, RunResult, build_stream, degrade, replay_realtime, score_run
+from audiolib import Room, build_stream, degrade, replay_realtime, save_recording, score_run
 from rafiq.asr import SAMPLE_RATE, EnergyVad, Listener, Segmenter, WhisperTranscriber
 from rafiq.matching import Matcher, get_index
 from rafiq.tracking import Tracker
@@ -81,11 +81,11 @@ def passages(q, index, n: int, seed: int, words: int = 60, max_ayahs: int = 15) 
     return out
 
 
-def run_one(transcriber, index, audio, timeline, join: float) -> RunResult:
+def run_one(transcriber, index, audio, timeline, join: float):
     listener = Listener(Segmenter(EnergyVad()), transcriber, Tracker(Matcher(index)))
     clip = audio[int(join * SAMPLE_RATE) :]
     heard, ready = replay_realtime(listener, clip)
-    return score_run(heard, ready, timeline, join, len(clip) / SAMPLE_RATE)
+    return score_run(heard, ready, timeline, join, len(clip) / SAMPLE_RATE), heard, ready
 
 
 def summarize(runs: list[dict], key: str) -> dict[str, dict]:
@@ -159,6 +159,9 @@ def main() -> int:
     ap.add_argument("--save", type=Path, default=None, help="write all runs + summaries as JSON")
     ap.add_argument("--baseline", type=Path, default=None, help="a previous --save file to compare with")
     ap.add_argument("--check", action="store_true", help="exit 1 if below regression thresholds")
+    ap.add_argument(
+        "--record", type=Path, default=None, help="save each run's ASR events here (for tracker_replay)"
+    )
     args = ap.parse_args()
 
     reciters = RECITERS[: args.reciters or (6 if args.quick else len(RECITERS))]
@@ -186,7 +189,17 @@ def main() -> int:
             for room_name, room in rooms.items():
                 join = round(rng.uniform(0.5, 3.0), 1)
                 audio = degrade(clean, room, seed=args.seed + pi)
-                r = run_one(transcriber, index, audio, timeline, join)
+                r, heard, ready = run_one(transcriber, index, audio, timeline, join)
+                if args.record:
+                    name = f"{reciter}__{room_name}__p{pi}.json"
+                    meta = {
+                        "reciter": reciter,
+                        "room": room_name,
+                        "passage": pi,
+                        "join": join,
+                        "seconds": r.seconds,
+                    }
+                    save_recording(args.record / name, heard, ready, timeline, **meta)
                 runs.append(
                     {"reciter": reciter, "room": room_name, "passage": pi, "join": join, **r.to_dict()}
                 )

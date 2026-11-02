@@ -11,6 +11,7 @@ personal/research use; never commit them.
 
 from __future__ import annotations
 
+import json
 import math
 import statistics
 import sys
@@ -24,6 +25,7 @@ from rafiq import evaluation
 from rafiq.asr import SAMPLE_RATE, Heard, Listener, load_audio
 from rafiq.quran import Quran
 from rafiq.simulate import Step
+from rafiq.tracking import Tracker
 
 AUDIO_DIR = Path(__file__).resolve().parent / "audio"
 EVERYAYAH = "https://everyayah.com/data/{reciter}/{surah:03d}{ayah:03d}.mp3"
@@ -118,6 +120,35 @@ def percentile(sorted_values: list[float], pct: float) -> float:
     """Nearest-rank percentile: always one of the values, and never below the median."""
     rank = math.ceil(pct / 100 * len(sorted_values))
     return sorted_values[max(rank, 1) - 1]
+
+
+# -- recordings: replay the tracker over real ASR output in milliseconds ----
+
+
+def save_recording(path: Path, heard: list[Heard], ready: list[float], timeline: Timeline, **meta) -> None:
+    """Keep what ASR produced for one run, so tracker changes can be re-scored offline.
+
+    Segmentation and transcription never depend on the tracker, so replaying
+    these events through a different tracker is exact: same texts, same
+    timing, only the tracker's decisions change.
+    """
+    events = [
+        {"text": h.text, "start": h.start, "end": h.end, "asr_ms": h.asr_ms, "final": h.final, "ready": t}
+        for h, t in zip(heard, ready, strict=True)
+    ]
+    payload = {**meta, "timeline": timeline, "events": events}
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
+
+
+def replay_tracker(recording: dict, tracker: Tracker) -> tuple[list[Heard], list[float]]:
+    """Re-run only the tracker over a recording: finals commit, partials preview."""
+    heard, ready = [], []
+    for e in recording["events"]:
+        state = tracker.update(e["text"]) if e["final"] else tracker.preview(e["text"])
+        heard.append(Heard(e["text"], e["start"], e["end"], e["asr_ms"], state, e["final"]))
+        ready.append(e["ready"])
+    return heard, ready
 
 
 def heard_verses(timeline: Timeline, t0: float, t1: float) -> tuple[int, ...]:
