@@ -87,43 +87,59 @@ class _ListenScreenState extends ConsumerState<ListenScreen> with WidgetsBinding
               padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
               child: NowCard(state: state, quran: quran),
             ),
-            if (state.track.alternatives.isNotEmpty && state.isActive)
-              _Notice(
-                icon: Icons.call_split_rounded,
-                text: 'Repeated text — could also be ${state.track.alternatives.map((p) => p.ref).join(' · ')}',
-                color: context.colors.uncertain,
-              ),
-            if (state.warning != null) _Notice(icon: Icons.info_outline, text: state.warning!, color: context.colors.uncertain),
-            if (state.phase == SessionPhase.failed && state.error != null)
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-                child: ErrorPanel(
-                  error: state.error!,
-                  message: state.errorMessage ?? '',
-                  onRetry: controller.start,
-                  onOpenSettings: _openSettings,
-                  onDismiss: controller.dismissError,
-                ),
-              ),
+            // Everything between the status card and the mic shares one
+            // flexible region, so nothing overflows on small screens or with
+            // large system fonts: the surah text gives way first.
             Expanded(
-              child: shown == null
-                  ? _EmptyState(status: status)
-                  : SurahView(
-                      quran: quran,
-                      surah: shown.surah,
-                      current: shown,
-                      confident: status.confident,
-                      textScale: settings.textScale,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  if (state.track.alternatives.isNotEmpty && state.isActive)
+                    _Notice(
+                      icon: Icons.call_split_rounded,
+                      text: 'Repeated text — could also be ${state.track.alternatives.map((p) => p.ref).join(' · ')}',
+                      color: context.colors.uncertain,
                     ),
-            ),
-            if (settings.showDiagnostics)
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxHeight: 180),
-                  child: SingleChildScrollView(child: TranscriptPanel(state: state)),
-                ),
+                  if (state.warning != null)
+                    _Notice(icon: Icons.info_outline, text: state.warning!, color: context.colors.uncertain),
+                  if (state.phase == SessionPhase.failed && state.error != null)
+                    Flexible(
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                        child: ErrorPanel(
+                          error: state.error!,
+                          message: state.errorMessage ?? '',
+                          onRetry: controller.start,
+                          onOpenSettings: _openSettings,
+                          onDismiss: controller.dismissError,
+                        ),
+                      ),
+                    ),
+                  Expanded(
+                    flex: 2,
+                    child: shown == null
+                        ? _EmptyState(status: status)
+                        : SurahView(
+                            quran: quran,
+                            surah: shown.surah,
+                            current: shown,
+                            confident: status.confident,
+                            textScale: settings.textScale,
+                          ),
+                  ),
+                  if (settings.showDiagnostics)
+                    Flexible(
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxHeight: 180),
+                        child: SingleChildScrollView(
+                          padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                          child: TranscriptPanel(state: state),
+                        ),
+                      ),
+                    ),
+                ],
               ),
+            ),
             _BottomBar(
               state: state,
               status: status,
@@ -205,7 +221,7 @@ class _EmptyState extends StatelessWidget {
   Widget build(BuildContext context) {
     final listening = status == DisplayStatus.searching || status == DisplayStatus.connecting;
     return Center(
-      child: Padding(
+      child: SingleChildScrollView(
         padding: const EdgeInsets.all(32),
         child: Column(
           mainAxisSize: MainAxisSize.min,

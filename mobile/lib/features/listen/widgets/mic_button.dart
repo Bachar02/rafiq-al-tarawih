@@ -37,10 +37,11 @@ class MicButton extends StatelessWidget {
       button: true,
       label: _active ? 'Stop following' : 'Start following the imam',
       child: SizedBox(
-        width: _size + 50,
-        height: _size + 50,
+        width: _size + 36,
+        height: _size + 36,
         child: Stack(
           alignment: Alignment.center,
+          clipBehavior: Clip.none, // the level ring may breathe past the box
           children: [
             AnimatedContainer(
               duration: const Duration(milliseconds: 90),
