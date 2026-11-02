@@ -33,7 +33,9 @@ def silence(seconds: float) -> np.ndarray:
 
 def client_with(lines: list[str]) -> TestClient:
     """Finals only: a scripted transcriber has one line per final chunk."""
-    eng = Engine(get_index(), transcriber=ScriptedTranscriber(lines), listener_config=ListenerConfig(partial_every_s=0))
+    eng = Engine(
+        get_index(), transcriber=ScriptedTranscriber(lines), listener_config=ListenerConfig(partial_every_s=0)
+    )
     return TestClient(create_app(eng))
 
 

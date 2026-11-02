@@ -103,6 +103,7 @@ button:disabled { opacity: .5; cursor: default; }
 .feed .item { display: grid; grid-template-columns: 34px 1fr auto; gap: 10px; align-items: center;
   padding: 6px 8px; border-radius: 8px; border-inline-start: 3px solid transparent; cursor: pointer; }
 .feed .item.at { background: var(--surface-2); }
+.feed .item.live .t { color: var(--muted); font-style: italic; }
 .feed .item.ok { border-color: var(--ok); } .feed .item.bad { border-color: var(--bad); }
 .feed .item.noise { border-color: var(--idle); } .feed .item.blank { border-color: var(--warn); }
 .feed .i { color: var(--muted); font-size: 11px; font-variant-numeric: tabular-nums; }
@@ -343,12 +344,13 @@ function resetDisplay() {
 }
 
 function renderNow(state) {
-  const pos = state && state.position;
+  const pos = state && (state.upcoming || state.position);
   const surah = pos ? SURAHS[pos.surah - 1] : null;
   $("now").classList.toggle("dim", !pos || state.status !== "tracking");
   $("now-surah").textContent = surah ? surah.name_ar : "—";
   $("now-ref").textContent = pos ? pos.ref : "–:–";
-  $("now-translit").textContent = surah ? `${surah.name_translit} · ayah ${pos.ayah} of ${surah.ayah_count}` : "Waiting for recitation";
+  $("now-translit").textContent = surah ? `${surah.name_translit} · ayah ${pos.ayah} of ${surah.ayah_count}` +
+    (state.upcoming ? " · next ↓" : "") : "Waiting for recitation";
   const status = state ? state.status : "idle";
   $("now-status").className = `status ${status}`;
   $("now-status").textContent = status;
@@ -368,7 +370,7 @@ const SECONDS_PER_CHUNK = 2.75;  // ~5.5 words per chunk at ~2 words/s
 const searchingText = (told) => told ? `Searching ${told} first (a hint, not a filter)…` : "Searching all 114 surahs — the app was told nothing…";
 
 async function renderMushaf(state, truth) {
-  const pos = state && state.position;
+  const pos = state && (state.upcoming || state.position);
   const focus = pos || truth;
   if (!focus) return;
   if (mushafSurah !== focus.surah) {
@@ -670,7 +672,7 @@ class Capture extends AudioWorkletProcessor {
 }
 registerProcessor("capture", Capture);`;
 
-const live = { ws: null, ctx: null, stream: null, heard: [], firstFound: -1, told: null, pending: [], pendingLen: 0, stopping: false };
+const live = { ws: null, ctx: null, stream: null, heard: [], partial: null, detectedAt: null, told: null, pending: [], pendingLen: 0, stopping: false, lastMsgAt: 0 };
 
 // Linear-interpolation resampler with state carried across blocks.
 function makeResampler(inRate, outRate = 16000) {
@@ -709,7 +711,7 @@ async function startListening(source) {  // source: "mic" | File
   stopListening();
   $("listen-err").textContent = "";
   resetDisplay();
-  Object.assign(live, { heard: [], firstFound: -1, pending: [], pendingLen: 0, stopping: false });
+  Object.assign(live, { heard: [], partial: null, detectedAt: null, pending: [], pendingLen: 0, stopping: false, lastMsgAt: 0 });
   renderDetect(searchingText(null), false);
   setListening(true, "Connecting… (the first time loads the speech model)");
 
@@ -721,7 +723,7 @@ async function startListening(source) {  // source: "mic" | File
     if (msg.type === "ready") {
       try { await startAudio(source); }
       catch (err) { $("listen-err").textContent = `Audio error: ${err.message}`; stopListening(); }
-    } else if (msg.type === "heard") {
+    } else if (msg.type === "heard" || msg.type === "partial") {
       onHeard(msg);
     } else if (msg.type === "error") {
       $("listen-err").textContent = msg.message;
@@ -807,16 +809,15 @@ function stopListening() {
 }
 
 function onHeard(msg) {
-  live.heard.push(msg);
+  // "partial" = live preview while the imam is still reciting; "heard" = final at a pause.
+  if (msg.type === "heard") { live.heard.push(msg); live.partial = null; } else { live.partial = msg; }
   const state = msg.state;
-  if (live.firstFound < 0 && state.position) live.firstFound = live.heard.length - 1;
+  if (live.detectedAt === null && state.position) live.detectedAt = msg.end;
   renderNow(state);
   renderMushaf(state, null);
-  if (state.position && live.firstFound >= 0) {
-    const p = state.position;
-    const n = live.firstFound + 1;
-    const at = live.heard[live.firstFound].end;
-    renderDetect(`✓ ${SURAHS[p.surah - 1].name_translit} ${p.ref} — first detected after ${n} chunk${n > 1 ? "s" : ""} (${at.toFixed(0)} s of audio)` +
+  if (live.detectedAt !== null && state.position) {
+    const p = state.upcoming || state.position;
+    renderDetect(`✓ ${SURAHS[p.surah - 1].name_translit} ${p.ref} — detected after ${live.detectedAt.toFixed(1)} s of recitation` +
       (live.told ? ` · told: ${live.told}` : " · told nothing"), true);
   } else {
     renderDetect(searchingText(live.told), false);
@@ -824,18 +825,25 @@ function onHeard(msg) {
 
   const feed = $("feed");
   feed.replaceChildren();
+  if (live.partial) {
+    const h = live.partial;
+    feed.append(feedItem(live.heard.length, (h.text || "…") + " …", "live", h.state.position ? h.state.position.ref : "—",
+      `live · ${h.start.toFixed(1)}–${h.end.toFixed(1)} s · ASR ${h.asr_ms} ms`));
+  }
   for (let j = live.heard.length - 1; j >= Math.max(0, live.heard.length - 60); j--) {
     const h = live.heard[j];
     const cls = h.state.status === "tracking" ? "ok" : h.state.position ? "blank" : "noise";
     feed.append(feedItem(j, h.text || "(nothing recognised)", cls, h.state.position ? h.state.position.ref : "—",
       `${h.start.toFixed(1)}–${h.end.toFixed(1)} s · ASR ${h.asr_ms} ms`));
   }
-  const avgAsr = live.heard.reduce((a, h) => a + h.asr_ms, 0) / live.heard.length;
+  const now = performance.now();
+  const gap = live.lastMsgAt ? (now - live.lastMsgAt) / 1000 : null;
+  live.lastMsgAt = now;
   $("metrics").replaceChildren(
-    metric(live.firstFound >= 0 ? `${live.firstFound + 1}` : "–", "chunks to detect"),
-    metric(String(live.heard.length), "chunks heard"),
-    metric(`${Math.round(avgAsr)} ms`, "speech-to-text per chunk"),
-    metric(state.status, "status"),
+    metric(live.detectedAt !== null ? `${live.detectedAt.toFixed(1)} s` : "–", "to detect"),
+    metric(gap !== null ? `${gap.toFixed(1)} s` : "–", "between updates"),
+    metric(`${msg.asr_ms} ms`, "speech-to-text"),
+    metric(String(live.heard.length), "chunks done"),
   );
 }
 

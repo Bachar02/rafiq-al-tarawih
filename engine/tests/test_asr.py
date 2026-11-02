@@ -157,9 +157,15 @@ def test_upcoming_ayah_when_one_ends(matcher, vid):
 
 def test_upcoming_after_fatiha_is_where_the_imam_left_off(matcher, vid):
     tracker = Tracker(matcher)
-    for chunk in ["قل أعوذ برب الفلق", "من شر ما خلق", "الحمد لله رب العالمين", "الرحمن الرحيم مالك يوم الدين",
-                  "إياك نعبد وإياك نستعين اهدنا الصراط المستقيم",
-                  "صراط الذين أنعمت عليهم غير المغضوب عليهم ولا الضالين"]:  # fmt: skip
+    chunks = [
+        "قل أعوذ برب الفلق",
+        "من شر ما خلق",
+        "الحمد لله رب العالمين",
+        "الرحمن الرحيم مالك يوم الدين",
+        "إياك نعبد وإياك نستعين اهدنا الصراط المستقيم",
+        "صراط الذين أنعمت عليهم غير المغضوب عليهم ولا الضالين",
+    ]
+    for chunk in chunks:
         state = tracker.update(chunk)
     assert state.verse_id == vid(1, 7)
     assert state.upcoming_verse == vid(113, 3)

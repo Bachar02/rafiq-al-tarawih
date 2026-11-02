@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import argparse
 import sys
+import time
 import urllib.request
 from pathlib import Path
 
@@ -90,6 +91,33 @@ def degrade(audio: np.ndarray, reverb_s: float, drr_db: float, snr_db: float | N
     return out.astype(np.float32)
 
 
+def replay_realtime(listener: Listener, audio: np.ndarray, block_s: float = 0.25):
+    """Run the listener exactly as the live server does, on a simulated clock.
+
+    Audio "arrives" in real time in 250 ms blocks. Whenever the worker is free
+    it takes ALL audio that has arrived since its last feed (the server's
+    catch-up behaviour), and the clock advances by the real processing time.
+    Returns the events and, for each, the moment it would reach the screen.
+    So lag and backlog here are what a user would see on this machine.
+    """
+    block = int(block_s * SAMPLE_RATE)
+    heard, ready = [], []
+    clock, pos = 0.0, 0
+    while pos < len(audio):
+        clock = max(clock, (pos + block) / SAMPLE_RATE)  # wait for at least one new block
+        avail = min(len(audio), max(pos + block, int(clock * SAMPLE_RATE) // block * block))
+        t = time.perf_counter()
+        events = listener.feed(audio[pos:avail])
+        clock += time.perf_counter() - t
+        pos = avail
+        heard += events
+        ready += [clock] * len(events)
+    t = time.perf_counter()
+    events = listener.flush()
+    clock += time.perf_counter() - t
+    return heard + events, ready + [clock] * len(events)
+
+
 def display_lags(heard, ready, timeline, join: float) -> list[float | None]:
     """Seconds from each ayah's start until the screen first shows it (None: never).
 
@@ -103,7 +131,10 @@ def display_lags(heard, ready, timeline, join: float) -> list[float | None]:
     for start, _, verse in timeline:
         if start - join < 0 or start - join < detected:
             continue
-        t = next((ready[i] for i, h in enumerate(heard) if h.state.showing == verse and ready[i] >= start - join), None)
+        t = next(
+            (ready[i] for i, h in enumerate(heard) if h.state.showing == verse and ready[i] >= start - join),
+            None,
+        )
         lags.append(None if t is None else t - (start - join))
     return lags
 
@@ -150,18 +181,7 @@ def main() -> int:
     listener = Listener(Segmenter(vad), transcriber, tracker, ListenerConfig(partial_every_s=args.partial))
     transcriber.load()  # load + warm up outside the timed run, as the server does at connect
 
-    block = SAMPLE_RATE // 4  # 250 ms, like a microphone stream
-    heard = []
-    for i in range(0, len(audio), block):
-        heard += listener.feed(audio[i : i + block])
-    heard += listener.flush()
-
-    # Real-time replay: an event is ready once its audio has arrived and the
-    # previous transcription is done; the screen shows its state from then on.
-    ready, clock = [], 0.0
-    for h in heard:
-        clock = max(clock, h.end) + h.asr_ms / 1000
-        ready.append(clock)
+    heard, ready = replay_realtime(listener, audio)
     lags = display_lags(heard, ready, timeline, args.join)
 
     # Accuracy is scored on finals only: they are what the tracker commits.
@@ -171,7 +191,8 @@ def main() -> int:
         if not h.final:
             if args.verbose:
                 shown = q.by_id(h.state.verse_id).ref if h.state.verse_id else "-"
-                print(f"{h.start + args.join:5.1f}-{h.end + args.join:5.1f}  {h.asr_ms:>4}ms {'(preview)':<14} {shown:<8} {h.text}")
+                span = f"{h.start + args.join:5.1f}-{h.end + args.join:5.1f}"
+                print(f"{span}  {h.asr_ms:>4}ms {'(preview)':<14} {shown:<8} {h.text}")
             continue
         t0, t1 = h.start + args.join, h.end + args.join
         spoken = tuple(v for s, e, v in timeline if s < t1 - 0.15 and e > t0 + 0.15)
@@ -193,7 +214,8 @@ def main() -> int:
     if lags:
         shown = [x for x in lags if x is not None]
         print(
-            f"display lag (ayah starts -> on screen): median {np.median(shown):.1f}s, worst {max(shown):.1f}s, "
+            f"display lag (ayah starts -> on screen): median {np.median(shown):.1f}s, "
+            f"worst {max(shown):.1f}s, "
             f"ayahs never shown {lags.count(None)}/{len(lags)}"
             if shown
             else f"display lag: no ayah was ever shown ({len(lags)} ayahs)"

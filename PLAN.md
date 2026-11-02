@@ -125,3 +125,17 @@ Speech recognition runs at ~0.2× real time on a laptop CPU (about 0.8 s per chu
 - The tracker fails safe: with bad audio it waits instead of showing a wrong ayah.
 
 **Biggest lever next:** ASR quality under echo. Options: a larger Quran Whisper (small/turbo), fine-tuning on reverberant audio, or real mosque recordings for the eval set (Phase 2).
+
+## 11. Real-time (2026-11-02)
+
+**Problem:** the screen changed only after the imam *finished* an ayah, so it lagged a whole ayah behind (median 5 s, worst 6.5 s).
+
+**Fixes:**
+- **Live partials:** about every 0.5 s mid-breath, the words so far are transcribed and *previewed* by the tracker. Only the final transcript at the pause is committed, so nothing is counted twice.
+- **Upcoming ayah:** when an ayah is recited to its end, the screen moves to the next one as soon as the imam pauses. After al-Fatiha, it moves back to where he left off.
+- **Catch-up:** if speech recognition falls behind, the server merges the waiting audio and transcribes only *now*. A slow machine updates less often, but it never builds a backlog.
+- **Warm-up at load, plus GPU auto-selection** with CPU fallback.
+
+**Measured** with `eval/audio_check.py`, which replays on a real-time clock exactly like the server: median lag from "ayah starts" to "on screen" is **0.1–0.4 s** at full CPU speed, and **~1.1 s** with the laptop on battery (CPU throttled to 1 GHz, ~1.7 s per Whisper call).
+
+**Root limit:** Whisper encodes a fixed 30 s window, so each call costs the same (~0.4 s on CPU) even for 1 s of audio. For the phone (Phase 6), consider a streaming CTC model, whose cost scales with audio length, or a GPU/NPU delegate.
