@@ -82,6 +82,11 @@ class Listener:
                 out.append(self._recognise(seg, final=False))
         return out
 
+    def skip(self, n_samples: int) -> None:
+        """Drop pending audio and `n_samples` not fed (see `Segmenter.skip`)."""
+        self.segmenter.skip(n_samples)
+        self._since_partial = 0
+
     def flush(self) -> list[Heard]:
         """End of stream."""
         return [self._recognise(seg, final=True) for seg in self.segmenter.flush()]

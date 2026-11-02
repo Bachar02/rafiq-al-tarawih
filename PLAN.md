@@ -139,3 +139,14 @@ Speech recognition runs at ~0.2× real time on a laptop CPU (about 0.8 s per chu
 **Measured** with `eval/audio_check.py`, which replays on a real-time clock exactly like the server: median lag from "ayah starts" to "on screen" is **0.1–0.4 s** at full CPU speed, and **~1.1 s** with the laptop on battery (CPU throttled to 1 GHz, ~1.7 s per Whisper call).
 
 **Root limit:** Whisper encodes a fixed 30 s window, so each call costs the same (~0.4 s on CPU) even for 1 s of audio. For the phone (Phase 6), consider a streaming CTC model, whose cost scales with audio length, or a GPU/NPU delegate.
+
+## 12. Robustness (2026-11-02)
+
+**Multi-reciter benchmark:** `eval/audio_bench.py`. 12 reciters (fast Haram imams, slow murattal, melodic, low-bitrate), seeded random passages from anywhere in the Quran (crossing surahs with the basmala), three rooms (clean / mosque / far), always joining late and told nothing. Replays on a real-time clock like the server. Results are saved as JSON and compared against a baseline; `--check` gates accuracy, wrong jumps per hour and detection rate.
+
+**Live-path hardening**, each with a test:
+- Malformed or oversized frames and NaN samples are repaired or skipped with a warning, never fatal.
+- Transcriber and model-load failures reach the client as errors instead of hanging the session.
+- The backlog is capped at 15 s (oldest audio dropped, timestamps stay continuous).
+- A 10-minute soak test confirms buffers and timestamps stay bounded.
+- Browser: the AudioContext is created inside the click (Chrome would otherwise leave it suspended), mic sessions auto-reconnect with backoff, and mic permission errors are explained.

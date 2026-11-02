@@ -182,3 +182,32 @@ def test_whisper_transcribes_a_real_ayah(matcher, vid):
 
     text = WhisperTranscriber().transcribe(load_audio(SAMPLE))
     assert matcher.match(text)[0].verse_id == vid(93, 2)
+
+
+# -- long sessions -------------------------------------------------------------
+
+
+def test_skip_keeps_timestamps_continuous():
+    seg = Segmenter(EnergyVad())
+    seg.push(tone(1.0))
+    seg.skip(10 * SAMPLE_RATE)  # dropped 10 s of backlog
+    out = seg.push(np.concatenate([tone(2.0), silence(0.6)])) + seg.flush()
+    assert len(out) == 1 and 11.0 <= out[0].start < 11.2
+
+
+def test_ten_minute_session_stays_bounded(matcher):
+    """A Taraweeh session is long: buffers and timestamps must not drift or grow."""
+    listener = Listener(
+        Segmenter(EnergyVad()), ConstantTranscriber("والضحى والليل إذا سجى"), Tracker(matcher),
+        ListenerConfig(partial_every_s=0),
+    )  # fmt: skip
+    breath = np.concatenate([tone(3.0), silence(0.7)])  # 3.7 s
+    finals, peak_buffer = [], 0
+    for _ in range(162):  # ~10 minutes
+        for block in np.split(breath, 37):  # 100 ms blocks, like a microphone
+            finals += listener.feed(block)
+            peak_buffer = max(peak_buffer, len(listener.segmenter._buf))
+    assert len(finals) >= 160
+    assert peak_buffer < 7 * SAMPLE_RATE
+    assert all(a.end <= b.start + 0.25 for a, b in zip(finals, finals[1:], strict=False))
+    assert abs(finals[-1].end - 162 * 3.7) < 1.0

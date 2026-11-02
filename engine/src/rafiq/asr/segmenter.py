@@ -63,6 +63,17 @@ class Segmenter:
             self._unanalyzed = len(self._buf)  # re-check the remainder straight away
         return out
 
+    def skip(self, n_samples: int) -> None:
+        """Forget pending audio and jump `n_samples` ahead, keeping timestamps continuous.
+
+        For a caller that fell too far behind real time and drops old audio:
+        the app follows the imam *now*, so stale audio is worth less than
+        staying current.
+        """
+        self._offset += len(self._buf) + n_samples
+        self._buf = np.zeros(0, dtype=np.float32)
+        self._unanalyzed = 0
+
     def in_progress(self, min_speech_s: float = 0.8) -> Segment | None:
         """The speech recited so far that has not ended in a pause yet.
 

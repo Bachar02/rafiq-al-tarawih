@@ -133,6 +133,7 @@ pytest engine && pytest server                   # tests
 python eval/text_benchmark.py                    # tracking benchmark (product metrics)
 python eval/detection_benchmark.py               # detection: how fast it finds surah + ayah alone
 python eval/audio_check.py --surah 78 --to 10    # real audio end to end (downloads EveryAyah ayahs)
+python eval/audio_bench.py --quick               # multi-reciter real-audio regression suite
 python -m rafiq_server                           # playground at http://127.0.0.1:8000
 ```
 

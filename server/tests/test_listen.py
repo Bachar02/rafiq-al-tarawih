@@ -45,7 +45,7 @@ class ConstantTranscriber:
 
 
 def run(ws, audio: np.ndarray) -> list[dict]:
-    assert ws.receive_json() == {"type": "ready"}
+    assert ws.receive_json()["type"] == "ready"
     for i in range(0, len(audio), 4000):  # 250 ms frames, like the browser
         ws.send_bytes(audio[i : i + 4000].tobytes())
     ws.send_text(json.dumps({"type": "end"}))
@@ -91,3 +91,96 @@ def test_listen_without_asr_reports_error():
     with TestClient(app).websocket_connect("/ws/listen") as ws:
         msg = ws.receive_json()
     assert msg["type"] == "error" and "engine[asr]" in msg["message"]
+
+
+# -- robustness: a bad client or a failing model must never hang a session ----
+
+
+def finals_client(transcriber) -> TestClient:
+    eng = Engine(get_index(), transcriber=transcriber, listener_config=ListenerConfig(partial_every_s=0))
+    return TestClient(create_app(eng))
+
+
+def drain(ws) -> list[dict]:
+    messages = []
+    while (msg := ws.receive_json())["type"] not in ("done", "error"):
+        messages.append(msg)
+    return [*messages, msg]
+
+
+def test_malformed_frame_is_a_warning_not_a_crash():
+    client = finals_client(ScriptedTranscriber(["والضحى والليل إذا سجى"]))
+    with client.websocket_connect("/ws/listen") as ws:
+        assert ws.receive_json()["type"] == "ready"
+        ws.send_bytes(b"\x00\x01\x02")  # 3 bytes: not float32
+        audio = np.concatenate([tone(2.0), silence(0.6)])
+        for i in range(0, len(audio), 4000):
+            ws.send_bytes(audio[i : i + 4000].tobytes())
+        ws.send_text(json.dumps({"type": "end"}))
+        msgs = drain(ws)
+    assert msgs[0]["type"] == "warning" and "float32" in msgs[0]["message"]
+    assert [m["type"] for m in msgs[1:]] == ["heard", "done"]
+
+
+def test_nan_and_out_of_range_samples_are_repaired():
+    client = finals_client(ScriptedTranscriber(["والضحى والليل إذا سجى"]))
+    audio = np.concatenate([tone(2.0), silence(0.6)])
+    audio[100:200] = np.nan
+    audio[300:400] = 50.0
+    with client.websocket_connect("/ws/listen") as ws:
+        msgs = run(ws, audio)
+    assert [m["type"] for m in msgs] == ["heard"]
+
+
+def test_oversized_frame_is_rejected():
+    client = finals_client(ScriptedTranscriber([]))
+    with client.websocket_connect("/ws/listen") as ws:
+        assert ws.receive_json()["type"] == "ready"
+        ws.send_bytes(silence(12.0).tobytes())
+        msg = ws.receive_json()
+    assert msg["type"] == "warning" and "longer than" in msg["message"]
+
+
+class BrokenTranscriber:
+    def transcribe(self, audio) -> str:
+        raise RuntimeError("GPU fell off the bus")
+
+
+def test_transcriber_failure_reaches_the_client():
+    client = finals_client(BrokenTranscriber())
+    with client.websocket_connect("/ws/listen") as ws:
+        assert ws.receive_json()["type"] == "ready"
+        audio = np.concatenate([tone(2.0), silence(0.6)])
+        for i in range(0, len(audio), 4000):
+            ws.send_bytes(audio[i : i + 4000].tobytes())
+        msg = ws.receive_json()
+    assert msg["type"] == "error" and "GPU fell off the bus" in msg["message"]
+
+
+class UnloadableTranscriber:
+    def load(self) -> None:
+        raise OSError("no internet to download the model")
+
+    def transcribe(self, audio) -> str:
+        return ""
+
+
+def test_model_load_failure_reaches_the_client():
+    with finals_client(UnloadableTranscriber()).websocket_connect("/ws/listen") as ws:
+        msg = ws.receive_json()
+    assert msg["type"] == "error" and "no internet" in msg["message"]
+
+
+def test_backlog_keeps_only_the_newest_audio():
+    import asyncio
+
+    from rafiq_server.listen import MAX_BACKLOG_S, take_backlog
+
+    queue: asyncio.Queue = asyncio.Queue()
+    for _ in range(40):  # 40 s waiting behind the current block
+        queue.put_nowait(silence(1.0))
+    queue.put_nowait(None)
+    audio, dropped, end = take_backlog(silence(1.0), queue)
+    assert len(audio) == MAX_BACKLOG_S * SR
+    assert dropped == (41 - MAX_BACKLOG_S) * SR
+    assert end

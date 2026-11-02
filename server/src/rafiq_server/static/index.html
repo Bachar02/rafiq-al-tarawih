@@ -169,6 +169,8 @@ button:disabled { opacity: .5; cursor: default; }
         <select id="listen-hint"><option value="">Nothing — detect automatically</option></select></div>
       <p class="hint">Play a recitation near your microphone — from your phone, YouTube, or a real imam. The app is told nothing: it finds the surah and ayah by itself.</p>
       <div class="hint" id="listen-status"></div>
+      <div class="hint" id="listen-device"></div>
+      <div class="hint" id="listen-warn" style="color:var(--warn)"></div>
       <div class="err" id="listen-err"></div>
     </section>
 
@@ -707,38 +709,79 @@ function setListening(on, label) {
   $("listen-status").textContent = label || "";
 }
 
+// One listening session = audio capture (lives as long as the user listens)
+// + a WebSocket (may drop and be re-opened). Mic sessions survive connection
+// loss: audio keeps flowing and the server re-detects within seconds.
+const MAX_RETRIES = 5;
+
 async function startListening(source) {  // source: "mic" | File
   stopListening();
   $("listen-err").textContent = "";
   resetDisplay();
-  Object.assign(live, { heard: [], partial: null, detectedAt: null, pending: [], pendingLen: 0, stopping: false, lastMsgAt: 0 });
-  renderDetect(searchingText(null), false);
+  Object.assign(live, { heard: [], partial: null, detectedAt: null, pending: [], pendingLen: 0, stopping: false,
+    lastMsgAt: 0, source, audioStarted: false, retries: 0, userStopped: false, hintQuery: listenHint() });
+  renderDetect(searchingText(live.told), false);
+  // Create the AudioContext inside the click handler: Chrome leaves contexts
+  // created later (after an await) suspended, and then no audio flows at all.
+  live.ctx = new AudioContext();
+  live.ctx.resume();
   setListening(true, "Connecting… (the first time loads the speech model)");
+  connect();
+}
 
-  const ws = new WebSocket(`${location.protocol === "https:" ? "wss" : "ws"}://${location.host}/ws/listen${listenHint()}`);
+function connect() {
+  const ws = new WebSocket(`${location.protocol === "https:" ? "wss" : "ws"}://${location.host}/ws/listen${live.hintQuery}`);
   ws.binaryType = "arraybuffer";
   live.ws = ws;
   ws.onmessage = async (e) => {
     const msg = JSON.parse(e.data);
     if (msg.type === "ready") {
-      try { await startAudio(source); }
-      catch (err) { $("listen-err").textContent = `Audio error: ${err.message}`; stopListening(); }
+      live.retries = 0;
+      $("listen-device").textContent = msg.device ? `speech model on ${msg.device.toUpperCase()}` : "";
+      if (live.audioStarted) { setListening(true, "Reconnected — listening…"); return; }
+      live.audioStarted = true;
+      try { await startAudio(live.source); }
+      catch (err) { $("listen-err").textContent = audioErrorText(err); stopListening(); }
     } else if (msg.type === "heard" || msg.type === "partial") {
       onHeard(msg);
+    } else if (msg.type === "warning") {
+      $("listen-warn").textContent = msg.message;
+      clearTimeout(live.warnTimer);
+      live.warnTimer = setTimeout(() => { $("listen-warn").textContent = ""; }, 6000);
     } else if (msg.type === "error") {
       $("listen-err").textContent = msg.message;
       stopListening();
     } else if (msg.type === "done") {
+      live.userStopped = true;
       ws.close();
     }
   };
-  ws.onclose = () => { if (live.ws === ws) { live.ws = null; teardownAudio(); setListening(false, live.heard.length ? "Stopped." : ""); } };
-  ws.onerror = () => { $("listen-err").textContent = "Cannot reach the server."; };
+  ws.onclose = () => {
+    if (live.ws !== ws) return;  // superseded by a newer connection
+    live.ws = null;
+    const canRetry = !live.userStopped && live.source === "mic" && live.retries < MAX_RETRIES;
+    if (!canRetry) {
+      if (!live.userStopped) $("listen-err").textContent = live.audioStarted ? "Lost the connection to the server." : "Cannot reach the server.";
+      teardownAudio();
+      setListening(false, live.heard.length ? "Stopped." : "");
+      return;
+    }
+    live.retries += 1;
+    const wait = Math.min(8000, 500 * 2 ** live.retries);
+    setListening(true, `Connection lost — reconnecting in ${(wait / 1000).toFixed(1)} s (attempt ${live.retries}/${MAX_RETRIES})…`);
+    live.retryTimer = setTimeout(() => { if (!live.userStopped) connect(); }, wait);
+  };
+}
+
+function audioErrorText(err) {
+  if (err.name === "NotAllowedError") return "Microphone permission was denied. Allow it from the lock icon in the address bar, then try again.";
+  if (err.name === "NotFoundError") return "No microphone was found on this device.";
+  if (err.name === "NotReadableError") return "The microphone is being used by another app.";
+  return `Audio error: ${err.message}`;
 }
 
 async function startAudio(source) {
-  const ctx = new AudioContext();
-  live.ctx = ctx;
+  const ctx = live.ctx;
   await ctx.audioWorklet.addModule(URL.createObjectURL(new Blob([WORKLET], { type: "application/javascript" })));
   const node = new AudioWorkletNode(ctx, "capture");
   const mute = ctx.createGain(); mute.gain.value = 0;
@@ -766,6 +809,7 @@ async function startAudio(source) {
   input.connect(node);
 
   const resample = makeResampler(ctx.sampleRate);
+  const MAX_PENDING = 32000;  // 2 s: while reconnecting, keep only the most recent audio
   node.port.onmessage = (e) => {
     const block = e.data;
     let peak = 0;
@@ -774,12 +818,15 @@ async function startAudio(source) {
     const pcm = resample(block);
     live.pending.push(pcm);
     live.pendingLen += pcm.length;
-    if (live.pendingLen >= 4000 && live.ws && live.ws.readyState === WebSocket.OPEN && !live.stopping) {
+    const open = live.ws && live.ws.readyState === WebSocket.OPEN && !live.stopping;
+    if (open && live.pendingLen >= 4000) {
       const frame = new Float32Array(live.pendingLen);
       let o = 0;
       for (const p of live.pending) { frame.set(p, o); o += p.length; }
       live.ws.send(frame.buffer);
       live.pending = []; live.pendingLen = 0;
+    } else if (!open && live.pendingLen > MAX_PENDING) {
+      while (live.pendingLen > MAX_PENDING) live.pendingLen -= live.pending.shift().length;
     }
   };
 }
@@ -795,14 +842,20 @@ function teardownAudio() {
 
 // Graceful stop: stop capturing, let the server finish the last chunk, then close.
 function finishListening() {
-  if (!live.ws || live.stopping) return;
+  if (live.stopping) return;
+  live.userStopped = true;
+  clearTimeout(live.retryTimer);
+  if (!live.ws) { stopListening(); return; }
   live.stopping = true;
   teardownAudio();
   setListening(true, "Finishing the last chunk…");
   if (live.ws.readyState === WebSocket.OPEN) live.ws.send(JSON.stringify({ type: "end" }));
+  else stopListening();
 }
 
 function stopListening() {
+  live.userStopped = true;
+  clearTimeout(live.retryTimer);
   if (live.ws) { const ws = live.ws; live.ws = null; try { ws.close(); } catch {} }
   teardownAudio();
   setListening(false, "");

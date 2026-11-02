@@ -99,6 +99,7 @@ def create_app(engine: Engine | None = None) -> FastAPI:
             "verses": len(eng.quran),
             "words": len(eng.index),
             "asr": eng.transcriber is not None,
+            "asr_device": getattr(eng.transcriber, "active_device", None),  # None until first listen
         }
 
     @app.get("/api/surahs", response_model=list[schemas.SurahOut])
