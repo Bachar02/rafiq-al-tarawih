@@ -18,7 +18,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from rafiq import evaluation
-from rafiq.asr import Transcriber, WhisperTranscriber, asr_available
+from rafiq.asr import ListenerConfig, Transcriber, WhisperTranscriber, asr_available
 from rafiq.matching import Match, Matcher, QuranIndex, get_index
 from rafiq.quran import Quran
 from rafiq.simulate import NoiseConfig, simulate
@@ -37,6 +37,7 @@ class Engine:
     # Speech-to-text, shared by all connections. None when the optional ASR
     # dependencies are missing: everything except /ws/listen still works.
     transcriber: Transcriber | None = field(default=None)
+    listener_config: ListenerConfig = field(default_factory=ListenerConfig)
 
     def __post_init__(self) -> None:
         if self.transcriber is None and asr_available():
@@ -82,6 +83,7 @@ class Engine:
             confidence=s.confidence,
             pending=self.position(s.pending_verse),
             alternatives=[self.position(v) for v in s.alternatives],
+            upcoming=self.position(s.upcoming_verse),
             candidates=[self.candidate(c) for c in s.candidates[:top]],
         )
 

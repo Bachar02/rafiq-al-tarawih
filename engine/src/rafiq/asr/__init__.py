@@ -6,7 +6,7 @@ be tested (and the server can start) without the model installed.
 """
 
 from rafiq.asr.audio import SAMPLE_RATE, load_audio
-from rafiq.asr.listener import Heard, Listener
+from rafiq.asr.listener import Heard, Listener, ListenerConfig
 from rafiq.asr.segmenter import Segment, Segmenter, SegmenterConfig
 from rafiq.asr.transcriber import Transcriber, WhisperTranscriber, asr_available
 from rafiq.asr.vad import EnergyVad, SileroVad, Vad
@@ -16,6 +16,7 @@ __all__ = [
     "EnergyVad",
     "Heard",
     "Listener",
+    "ListenerConfig",
     "Segment",
     "Segmenter",
     "SegmenterConfig",

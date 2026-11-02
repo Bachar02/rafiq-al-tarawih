@@ -10,7 +10,7 @@ import pytest
 
 np = pytest.importorskip("numpy")
 
-from rafiq.asr import SAMPLE_RATE, EnergyVad, Listener, Segmenter, asr_available  # noqa: E402
+from rafiq.asr import SAMPLE_RATE, EnergyVad, Listener, ListenerConfig, Segmenter, asr_available  # noqa: E402
 from rafiq.tracking import Tracker  # noqa: E402
 
 
@@ -79,6 +79,14 @@ def test_long_speech_is_cut_at_max_length():
     assert all(s.end - s.start <= 7.5 for s in segs)
 
 
+def test_one_big_block_with_two_breaths_gives_two_chunks():
+    """A caller that fell behind feeds everything at once; breaths must stay separate."""
+    seg = Segmenter(EnergyVad())
+    audio = np.concatenate([tone(2.0), silence(0.6), tone(2.0), silence(0.6)])
+    segs = seg.push(audio) + seg.flush()
+    assert len(segs) == 2
+
+
 def test_blips_are_dropped():
     assert stream(Segmenter(EnergyVad()), np.concatenate([tone(0.1), silence(2.0)])) == []
 
@@ -104,7 +112,8 @@ class ScriptedTranscriber:
 
 def test_listener_detects_from_audio_chunks(matcher, vid):
     script = ["والضحى والليل إذا سجى", "ما ودعك ربك وما قلى"]
-    listener = Listener(Segmenter(EnergyVad()), ScriptedTranscriber(script), Tracker(matcher))
+    finals_only = ListenerConfig(partial_every_s=0)
+    listener = Listener(Segmenter(EnergyVad()), ScriptedTranscriber(script), Tracker(matcher), finals_only)
     audio = np.concatenate([tone(2.0), silence(0.6), tone(2.0), silence(0.6)])
     heard = []
     for i in range(0, len(audio), 4000):
@@ -113,6 +122,47 @@ def test_listener_detects_from_audio_chunks(matcher, vid):
     assert [h.text for h in heard] == script
     assert heard[-1].state.verse_id == vid(93, 3)
     assert heard[0].start < heard[0].end <= heard[1].start
+
+
+class ConstantTranscriber:
+    def __init__(self, text: str) -> None:
+        self.text = text
+
+    def transcribe(self, audio):
+        return self.text
+
+
+def test_partials_preview_without_committing(matcher, vid):
+    tracker = Tracker(matcher)
+    listener = Listener(Segmenter(EnergyVad()), ConstantTranscriber("والضحى والليل إذا سجى"), tracker)
+    heard = []
+    for block in np.split(np.concatenate([tone(3.0), silence(0.5)]), 14):
+        heard += listener.feed(block)
+    partials = [h for h in heard if not h.final]
+    assert len(partials) >= 3
+    assert partials[0].state.verse_id == vid(93, 2)  # shown mid-breath...
+    assert partials[0].end < 1.5  # ...within ~1 s, long before the pause
+    assert heard[-1].final  # and committed once at the pause
+
+
+def test_upcoming_ayah_when_one_ends(matcher, vid):
+    tracker = Tracker(matcher)
+    tracker.update("ما ودعك ربك وما قلى")  # 93:3 recited to its last word
+    state = tracker.update("وللآخرة خير لك من الأولى")  # 93:4, complete
+    assert state.verse_id == vid(93, 4) and state.upcoming_verse == vid(93, 5)
+    assert state.showing == vid(93, 5)
+    mid = tracker.update("ولسوف يعطيك")  # 93:5, not finished
+    assert mid.upcoming_verse is None and mid.showing == vid(93, 5)
+
+
+def test_upcoming_after_fatiha_is_where_the_imam_left_off(matcher, vid):
+    tracker = Tracker(matcher)
+    for chunk in ["قل أعوذ برب الفلق", "من شر ما خلق", "الحمد لله رب العالمين", "الرحمن الرحيم مالك يوم الدين",
+                  "إياك نعبد وإياك نستعين اهدنا الصراط المستقيم",
+                  "صراط الذين أنعمت عليهم غير المغضوب عليهم ولا الضالين"]:  # fmt: skip
+        state = tracker.update(chunk)
+    assert state.verse_id == vid(1, 7)
+    assert state.upcoming_verse == vid(113, 3)
 
 
 # -- the real model (optional) -----------------------------------------------

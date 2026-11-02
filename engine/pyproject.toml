@@ -39,4 +39,5 @@ extend-immutable-calls = [
     "rafiq.simulate.NoiseConfig",
     "rafiq.tracking.TrackerConfig",
     "rafiq.asr.segmenter.SegmenterConfig",
+    "rafiq.asr.listener.ListenerConfig",
 ]

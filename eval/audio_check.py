@@ -23,7 +23,16 @@ from pathlib import Path
 
 import numpy as np
 from rafiq import evaluation
-from rafiq.asr import SAMPLE_RATE, EnergyVad, Listener, Segmenter, SileroVad, WhisperTranscriber, load_audio
+from rafiq.asr import (
+    SAMPLE_RATE,
+    EnergyVad,
+    Listener,
+    ListenerConfig,
+    Segmenter,
+    SileroVad,
+    WhisperTranscriber,
+    load_audio,
+)
 from rafiq.matching import Matcher, get_index
 from rafiq.simulate import Step
 from rafiq.tracking import Tracker
@@ -81,6 +90,24 @@ def degrade(audio: np.ndarray, reverb_s: float, drr_db: float, snr_db: float | N
     return out.astype(np.float32)
 
 
+def display_lags(heard, ready, timeline, join: float) -> list[float | None]:
+    """Seconds from each ayah's start until the screen first shows it (None: never).
+
+    Ayahs that began before listening started, and the first ayah heard
+    (detection needs a few words), are skipped: this measures keeping up.
+    """
+    lags: list[float | None] = []
+    detected = next((ready[i] for i, h in enumerate(heard) if h.state.verse_id), None)
+    if detected is None:
+        return [None for s, _, _ in timeline if s >= join]
+    for start, _, verse in timeline:
+        if start - join < 0 or start - join < detected:
+            continue
+        t = next((ready[i] for i, h in enumerate(heard) if h.state.showing == verse and ready[i] >= start - join), None)
+        lags.append(None if t is None else t - (start - join))
+    return lags
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--surah", type=int, default=78)
@@ -97,6 +124,8 @@ def main() -> int:
     ap.add_argument("--vad", choices=["energy", "silero"], default="energy")
     ap.add_argument("--vad-ratio", type=float, default=None, help="EnergyVad floor_ratio override")
     ap.add_argument("--beam", type=int, default=None, help="Whisper beam size override")
+    ap.add_argument("--partial", type=float, default=0.5, help="live preview every N s of speech (0: off)")
+    ap.add_argument("--verbose", action="store_true", help="also print partial (preview) events")
     ap.add_argument("--seed", type=int, default=0)
     args = ap.parse_args()
 
@@ -118,7 +147,8 @@ def main() -> int:
     else:
         vad = EnergyVad(floor_ratio=args.vad_ratio) if args.vad_ratio else EnergyVad()
     transcriber = WhisperTranscriber(beam_size=args.beam) if args.beam else WhisperTranscriber()
-    listener = Listener(Segmenter(vad), transcriber, tracker)
+    listener = Listener(Segmenter(vad), transcriber, tracker, ListenerConfig(partial_every_s=args.partial))
+    transcriber.load()  # load + warm up outside the timed run, as the server does at connect
 
     block = SAMPLE_RATE // 4  # 250 ms, like a microphone stream
     heard = []
@@ -126,10 +156,23 @@ def main() -> int:
         heard += listener.feed(audio[i : i + block])
     heard += listener.flush()
 
-    # Ground truth for a chunk = every ayah whose audio overlaps it.
+    # Real-time replay: an event is ready once its audio has arrived and the
+    # previous transcription is done; the screen shows its state from then on.
+    ready, clock = [], 0.0
+    for h in heard:
+        clock = max(clock, h.end) + h.asr_ms / 1000
+        ready.append(clock)
+    lags = display_lags(heard, ready, timeline, args.join)
+
+    # Accuracy is scored on finals only: they are what the tracker commits.
     steps, predicted = [], []
     print(f"{'time':>11}  {'asr':>5}  {'truth':<14} {'shown':<8} heard")
     for h in heard:
+        if not h.final:
+            if args.verbose:
+                shown = q.by_id(h.state.verse_id).ref if h.state.verse_id else "-"
+                print(f"{h.start + args.join:5.1f}-{h.end + args.join:5.1f}  {h.asr_ms:>4}ms {'(preview)':<14} {shown:<8} {h.text}")
+            continue
         t0, t1 = h.start + args.join, h.end + args.join
         spoken = tuple(v for s, e, v in timeline if s < t1 - 0.15 and e > t0 + 0.15)
         steps.append(Step(h.text, spoken[-1] if spoken else None, None, spoken))
@@ -147,6 +190,14 @@ def main() -> int:
         f"wrong jumps {r.wrong_jumps} | detected after {r.time_to_lock} chunk(s) | "
         f"ASR {asr_total / duration:.2f}x real time"
     )
+    if lags:
+        shown = [x for x in lags if x is not None]
+        print(
+            f"display lag (ayah starts -> on screen): median {np.median(shown):.1f}s, worst {max(shown):.1f}s, "
+            f"ayahs never shown {lags.count(None)}/{len(lags)}"
+            if shown
+            else f"display lag: no ayah was ever shown ({len(lags)} ayahs)"
+        )
     return 0
 
 

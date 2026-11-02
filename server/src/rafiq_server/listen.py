@@ -5,13 +5,15 @@ Protocol (`/ws/listen?surah=55` or `?juz=30` for an optional hint):
     client -> server   binary frames: float32 little-endian PCM, 16 kHz, mono, any length
                        text {"type": "end"}: no more audio; flush and finish
     server -> client   {"type": "ready"}                 model loaded, start sending
-                       {"type": "heard", ...HeardOut}    one recognised chunk + tracker state
+                       {"type": "partial", ...HeardOut}  live preview while the imam is still reciting
+                       {"type": "heard", ...HeardOut}    final transcript of a chunk + tracker state
                        {"type": "done"}                  after "end" has been processed
                        {"type": "error", "message"}      then the socket closes
 
 The browser resamples to 16 kHz before sending, so the server never decodes
-audio formats. Recognition runs in a worker thread, one chunk at a time per
-connection, so a slow transcription delays results but never drops audio.
+audio formats. Recognition runs in a worker thread, one call at a time per
+connection. If it falls behind, all audio waiting in the queue is merged into
+one feed, so the next result is about *now*, never a backlog of stale previews.
 """
 
 from __future__ import annotations
@@ -50,13 +52,14 @@ async def listen(ws: WebSocket, surah: int | None = None, juz: int | None = None
     # First connection loads the model (downloads it once, ~150 MB).
     if hasattr(eng.transcriber, "load"):
         await asyncio.to_thread(eng.transcriber.load)
-    listener = Listener(Segmenter(EnergyVad()), eng.transcriber, eng.tracker(hint))
+    listener = Listener(Segmenter(EnergyVad()), eng.transcriber, eng.tracker(hint), eng.listener_config)
     await ws.send_json({"type": "ready"})
 
     queue: asyncio.Queue[np.ndarray | None] = asyncio.Queue()
 
     def heard_json(h: Heard) -> dict:
         out = schemas.HeardOut(
+            type="heard" if h.final else "partial",
             text=h.text,
             start=round(h.start, 2),
             end=round(h.end, 2),
@@ -73,8 +76,19 @@ async def listen(ws: WebSocket, surah: int | None = None, juz: int | None = None
                     await ws.send_json(heard_json(h))
                 await ws.send_json({"type": "done"})
                 return
-            for h in await asyncio.to_thread(listener.feed, samples):
+            # Catch up: merge everything that arrived while we were busy.
+            blocks, end = [samples], False
+            while not queue.empty():
+                nxt = queue.get_nowait()
+                if nxt is None:
+                    end = True
+                    break
+                blocks.append(nxt)
+            merged = blocks[0] if len(blocks) == 1 else np.concatenate(blocks)
+            for h in await asyncio.to_thread(listener.feed, merged):
                 await ws.send_json(heard_json(h))
+            if end:
+                queue.put_nowait(None)
 
     task = asyncio.create_task(worker())
     try:

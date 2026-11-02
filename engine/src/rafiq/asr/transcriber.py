@@ -15,6 +15,8 @@ from typing import Protocol
 
 import numpy as np
 
+from rafiq.asr.audio import SAMPLE_RATE
+
 DEFAULT_MODEL = "OdyAsh/faster-whisper-base-ar-quran"  # Apache-2.0, CTranslate2 build of Tarteel's model
 DEFAULT_REVISION = "8578bafd427d122f671b187706650e76edf6f86f"  # pinned: results must be reproducible
 
@@ -41,14 +43,24 @@ class WhisperTranscriber:
         self._lock = threading.Lock()  # one decode at a time; the server shares one model
 
     def load(self) -> None:
-        """Load (downloading on first use, ~150 MB). Called lazily by `transcribe`."""
+        """Load and warm up (downloads ~150 MB on first use). Called lazily by `transcribe`.
+
+        Each call costs ~0.4 s on a laptop CPU *whatever the audio length*:
+        Whisper always encodes a 30 s window. Latency therefore comes from how
+        often we call it, which is the listener's job to manage.
+        """
         with self._lock:
             if self._model is None:
                 from faster_whisper import WhisperModel
 
-                self._model = WhisperModel(
+                model = WhisperModel(
                     self.model, device=self.device, compute_type=self.compute_type, revision=self.revision
                 )
+                # Warm-up: the first decode allocates buffers and takes ~5x longer.
+                # Pay it here, at load time, not on the listener's first chunk.
+                warm, _ = model.transcribe(np.zeros(SAMPLE_RATE, dtype=np.float32), language="ar")
+                list(warm)  # transcribe() is lazy: decoding happens when the segments are consumed
+                self._model = model
 
     def transcribe(self, audio: np.ndarray) -> str:
         if self._model is None:

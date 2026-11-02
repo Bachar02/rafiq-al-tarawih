@@ -97,6 +97,16 @@ class TrackState:
     candidates: list[Match] = field(default_factory=list)  # this chunk's matches, for debugging/UI
     pending_verse: int | None = None  # a far jump (or a first guess) awaiting confirmation
     alternatives: list[int] = field(default_factory=list)  # other plausible verses, when ambiguous
+    # The displayed ayah has just been recited to its end, so this is where the
+    # imam goes next: the following ayah, or after al-Fatiha, back to his place.
+    # Lets the screen move on the moment he pauses instead of waiting for the
+    # first words of the next ayah to be recognised.
+    upcoming_verse: int | None = None
+
+    @property
+    def showing(self) -> int | None:
+        """The ayah a follow-along screen should highlight now."""
+        return self.upcoming_verse or self.verse_id
 
 
 class Tracker:
@@ -279,6 +289,18 @@ class Tracker:
 
     # -- display policy --------------------------------------------------
 
+    def _upcoming(self, word: int) -> int | None:
+        """The next ayah, if `word` is (within a word of) the end of its ayah."""
+        verse = self.index.verse_at(word)
+        start, end = self.index.verse_span(verse)
+        slack = 1 if end - start >= 4 else 0  # ASR often garbles a long ayah's last word
+        if end - 1 - word > slack:
+            return None
+        if self._in_excursion(word):
+            # After al-Fatiha he resumes where he was; if we never saw that, we cannot know.
+            return self.index.verse_at(self._shown_anchor) if self._shown_anchor is not None else None
+        return verse + 1 if verse < len(self.index.quran) else None
+
     def _is_near(self, a: int, b: int) -> bool:
         t = self.transition(a, b)
         return t > -getattr(self.transition, "far_cost", 1.0)
@@ -337,7 +359,9 @@ class Tracker:
             )
         word = self._shown - 1
         status = TRACKING if confidence >= 0.5 and self._pending is None else UNCERTAIN
+        upcoming = self._upcoming(word) if status == TRACKING else None
         return TrackState(
+            upcoming_verse=upcoming,
             verse_id=self.index.verse_at(word),
             word=word,
             status=status,

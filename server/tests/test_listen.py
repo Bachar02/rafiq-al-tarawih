@@ -6,6 +6,7 @@ import json
 
 import numpy as np
 from fastapi.testclient import TestClient
+from rafiq.asr import ListenerConfig
 from rafiq.matching import get_index
 
 from rafiq_server.app import Engine, create_app
@@ -31,7 +32,14 @@ def silence(seconds: float) -> np.ndarray:
 
 
 def client_with(lines: list[str]) -> TestClient:
-    return TestClient(create_app(Engine(get_index(), transcriber=ScriptedTranscriber(lines))))
+    """Finals only: a scripted transcriber has one line per final chunk."""
+    eng = Engine(get_index(), transcriber=ScriptedTranscriber(lines), listener_config=ListenerConfig(partial_every_s=0))
+    return TestClient(create_app(eng))
+
+
+class ConstantTranscriber:
+    def transcribe(self, audio) -> str:
+        return "والضحى والليل إذا سجى"
 
 
 def run(ws, audio: np.ndarray) -> list[dict]:
@@ -50,9 +58,10 @@ def test_listen_detects_surah_and_ayah_from_audio():
     audio = np.concatenate([tone(2.0), silence(0.6), tone(2.0), silence(0.6)])
     with client.websocket_connect("/ws/listen") as ws:
         heard = run(ws, audio)
-    assert [m["type"] for m in heard] == ["heard", "heard"]
-    assert heard[-1]["state"]["position"]["ref"] == "93:3"
-    assert heard[0]["start"] < heard[0]["end"] <= heard[1]["start"]
+    finals = [m for m in heard if m["type"] == "heard"]
+    assert len(finals) == 2
+    assert finals[-1]["state"]["position"]["ref"] == "93:3"
+    assert finals[0]["start"] < finals[0]["end"] <= finals[1]["start"]
 
 
 def test_listen_accepts_a_hint():
@@ -60,8 +69,18 @@ def test_listen_accepts_a_hint():
     audio = np.concatenate([tone(2.0), silence(0.6), tone(2.0), silence(0.6)])
     with client.websocket_connect("/ws/listen?surah=55") as ws:
         heard = run(ws, audio)
-    state = heard[-1]["state"]
+    state = [m for m in heard if m["type"] == "heard"][-1]["state"]
     assert (state["position"] or state["pending"])["surah"] == 55
+
+
+def test_listen_sends_live_partials_before_the_final():
+    client = TestClient(create_app(Engine(get_index(), transcriber=ConstantTranscriber())))
+    with client.websocket_connect("/ws/listen") as ws:
+        msgs = run(ws, np.concatenate([tone(4.0), silence(0.6)]))
+    types = [m["type"] for m in msgs]
+    assert types[0] == "partial" and types[-1] == "heard"
+    assert types.count("partial") >= 3  # ~every 0.5 s of a 4 s breath
+    assert msgs[0]["state"]["position"]["ref"] == "93:2"  # the screen moves before the pause
 
 
 def test_listen_without_asr_reports_error():

@@ -57,6 +57,7 @@ class StateOut(BaseModel):
     confidence: float
     pending: Position | None  # a first guess or far jump awaiting confirmation
     alternatives: list[Position]  # other plausible positions when the text is ambiguous
+    upcoming: Position | None = None  # the ayah just ended: highlight this one next
     candidates: list[Candidate]
 
 
@@ -109,9 +110,13 @@ class Report(BaseModel):
 
 
 class HeardOut(BaseModel):
-    """One recognised audio chunk, pushed over /ws/listen."""
+    """One recognised audio chunk, pushed over /ws/listen.
 
-    type: Literal["heard"] = "heard"
+    "partial" is a live preview of a chunk still being recited (shown, not
+    committed); "heard" is the final transcript of a chunk that ended in a pause.
+    """
+
+    type: Literal["heard", "partial"] = "heard"
     text: str  # Whisper's transcription, with diacritics
     start: float  # seconds since listening started
     end: float
