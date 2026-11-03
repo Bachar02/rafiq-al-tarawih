@@ -58,7 +58,7 @@ Python can't ship inside Flutter. So:
 | 2 | Eval set + metrics harness | ~10 reciters from EveryAyah, plus ≥2 h of real Taraweeh recordings with ayah timestamps. Harness reports the five metrics below |
 | 3 🟡 | ASR baseline (audio → text → ayah), baseline done | Numbers on the eval set; know where it fails |
 | 4 🟡 | Tracker (text-level done) | Stability and recovery clearly beat Phase 3 |
-| 5 | Flutter MVP + FastAPI WebSocket | Works in a real mosque with a laptop nearby |
+| 5 🟡 | Flutter MVP + FastAPI WebSocket (v1 app built) | Works in a real mosque with a laptop nearby |
 | 6 | On-device (Dart port + sherpa-onnx) | Fully offline on a mid-range Android phone, latency < 3 s |
 
 ## 6. Metrics (from the README)
@@ -150,3 +150,19 @@ Speech recognition runs at ~0.2× real time on a laptop CPU (about 0.8 s per chu
 - The backlog is capped at 15 s (oldest audio dropped, timestamps stay continuous).
 - A 10-minute soak test confirms buffers and timestamps stay bounded.
 - Browser: the AudioContext is created inside the click (Chrome would otherwise leave it suspended), mic sessions auto-reconnect with backoff, and mic permission errors are explained.
+
+## 13. Mobile v1 (2026-11-02)
+
+**Built:** `mobile/`, a Flutter app (Android + iOS). Design: `mobile/docs/DESIGN.md`.
+- **One screen:** status card (surah, ayah, confidence), the surah text with the current ayah highlighted and auto-followed, a mic button, an optional hint (surah or juz), plus settings with *Test connection*.
+- **Recognition sits behind `RecognitionEngine`.** v1 uses the server over `/ws/listen`; Phase 6 swaps in an on-device engine without UI changes.
+- **Robustness:**
+  - Reconnects forever with backoff, keeping the mic running and only the newest 2 s of audio.
+  - Gives a clear "unreachable" error on a wrong address, and waits for the model on first use.
+  - Pauses when the app goes to the background; a generation counter prevents ghost events from old sessions.
+  - Mic-permission and server errors come with the action that fixes them, and the layout is safe at large font sizes.
+- **Quality:** 54 tests (unit, the engine over real sockets, the state machine with fakes, widgets), strict lints, and CI covering format, analyze, test, Android build and Quran-asset sync.
+
+**Toolchain finding:** the mic plugin ships Java 17 bytecode, so the Android build moved to AGP 8.2 / Gradle 8.5 / Kotlin 1.9 and needs JDK 17+.
+
+**Next:** test in a real mosque with a phone and a laptop (Phase 5 exit), then on-device recognition (Phase 6).

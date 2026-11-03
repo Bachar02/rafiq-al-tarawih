@@ -77,7 +77,7 @@ works at all.
 | 2 | Evaluation set of real recitations + product metrics | metrics + simulator done; real audio not started |
 | 3 | ASR baseline: audio→text→ayah | baseline done (Whisper-base Quran, live mic in the playground) |
 | 4 | Position tracker (stateful, windowed) | text-level tracker done |
-| 5 | Flutter MVP against the engine | dev API + web playground done; Flutter not started |
+| 5 | Flutter MVP against the engine | v1 app built (mobile/): live surah + ayah over the server |
 | 6 | On-device inference, real mosque testing | not started |
 
 Phase 1 deliberately contains **no ML**. If `text → ayah` is not rock solid on
@@ -117,7 +117,7 @@ data/     Quran datasets (raw, verbatim) + the build script that derives quran.j
 engine/   the recognition engine — a plain Python library, the heart of the project
 eval/     benchmarks: simulated streams today, real recitations in Phase 2
 server/   thin FastAPI wrapper over the engine + the web playground
-mobile/   Flutter client                                  (Phase 5)
+mobile/   Flutter app (v1: phone records, server recognises) — see mobile/README.md
 ```
 
 ## Getting started
