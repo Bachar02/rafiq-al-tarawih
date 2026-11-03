@@ -14,18 +14,29 @@ import '../../core/recognition/endpoint.dart';
 class ModelStore {
   ModelStore(this.directory);
 
-  static const encoder = 'quran-base-encoder.int8.onnx';
-  static const decoder = 'quran-base-decoder.int8.onnx';
-  static const tokens = 'quran-base-tokens.txt';
+  /// Whisper-base Quran, vocabulary trimmed to the 660 tokens Quran
+  /// transcripts use (tools/whisper_export/trim_vocab.py): identical output,
+  /// 55 MB instead of 160 MB, and far less memory traffic per token.
+  static const model = 'quran-basetrim';
+  static const encoder = '$model-encoder.int8.onnx';
+  static const decoder = '$model-decoder.int8.onnx';
+  static const tokens = '$model-tokens.txt';
   static const files = [encoder, decoder, tokens];
 
   final Directory directory;
 
+  static Future<Directory> _modelsRoot() async => Directory('${(await getApplicationSupportDirectory()).path}/models');
+
   static Future<ModelStore> open() async {
-    final base = await getApplicationSupportDirectory();
-    final dir = Directory('${base.path}/models/quran-base');
+    final dir = Directory('${(await _modelsRoot()).path}/$model');
     await dir.create(recursive: true);
     return ModelStore(dir);
+  }
+
+  /// Remove every downloaded model, including older versions.
+  static Future<void> deleteAll() async {
+    final root = await _modelsRoot();
+    if (root.existsSync()) await root.delete(recursive: true);
   }
 
   String path(String file) => '${directory.path}/$file';
@@ -81,13 +92,6 @@ class ModelStore {
       client.close(force: true);
     }
     return manifest;
-  }
-
-  Future<void> uninstall() async {
-    for (final f in files) {
-      final file = File(path(f));
-      if (file.existsSync()) file.deleteSync();
-    }
   }
 }
 

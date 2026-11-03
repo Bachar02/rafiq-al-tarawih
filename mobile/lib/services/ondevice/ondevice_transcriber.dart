@@ -9,15 +9,16 @@ import 'package:sherpa_onnx/sherpa_onnx.dart' as sherpa;
 /// * sherpa-onnx's Whisper export drops the fixed 30 s window, so a chunk
 ///   costs time in proportion to its length (the server pays ~0.4 s always).
 /// * Without trailing silence the model drops the last word or two (word
-///   accuracy 81% -> 97% with 2 s of silence appended; `tail_paddings` does
-///   not help). Every chunk is therefore padded with [silencePad].
+///   accuracy 81% -> 96% with 0.5 s, 97% with 2 s; `tail_paddings` does not
+///   help). Every chunk is padded with [silencePad]: longer is a little more
+///   accurate and a little slower.
 class OnDeviceTranscriber {
-  OnDeviceTranscriber._(this._recognizer);
+  OnDeviceTranscriber._(this._recognizer, this.silencePad);
 
-  static const silencePad = Duration(seconds: 2);
   static const sampleRate = 16000;
 
   final sherpa.OfflineRecognizer _recognizer;
+  final Duration silencePad;
   static bool _bindings = false;
 
   /// Load the model. Slow (hundreds of ms); do it once, off the UI isolate.
@@ -26,6 +27,7 @@ class OnDeviceTranscriber {
     required String decoder,
     required String tokens,
     int threads = 2,
+    Duration silencePad = const Duration(milliseconds: 500),
   }) {
     if (!_bindings) {
       sherpa.initBindings();
@@ -44,12 +46,12 @@ class OnDeviceTranscriber {
         debug: false,
       ),
     );
-    return OnDeviceTranscriber._(sherpa.OfflineRecognizer(config));
+    return OnDeviceTranscriber._(sherpa.OfflineRecognizer(config), silencePad);
   }
 
   /// Transcribe 16 kHz mono float32 audio.
   String transcribe(Float32List audio) {
-    final padded = Float32List(audio.length + sampleRate * silencePad.inSeconds)..setAll(0, audio);
+    final padded = Float32List(audio.length + sampleRate * silencePad.inMilliseconds ~/ 1000)..setAll(0, audio);
     final stream = _recognizer.createStream();
     try {
       stream.acceptWaveform(samples: padded, sampleRate: sampleRate);
@@ -77,11 +79,18 @@ Future<({int loadMs, List<BenchResult> results})> runBenchmark({
   required String decoder,
   required String tokens,
   required int threads,
+  required Duration silencePad,
   required List<(String, Float32List)> clips,
 }) {
   return Isolate.run(() {
     final load = Stopwatch()..start();
-    final asr = OnDeviceTranscriber.load(encoder: encoder, decoder: decoder, tokens: tokens, threads: threads);
+    final asr = OnDeviceTranscriber.load(
+      encoder: encoder,
+      decoder: decoder,
+      tokens: tokens,
+      threads: threads,
+      silencePad: silencePad,
+    );
     load.stop();
     asr.transcribe(Float32List(sampleRateForWarmup)); // first decode allocates buffers
     final results = <BenchResult>[];

@@ -25,7 +25,7 @@ class AsrBenchScreen extends ConsumerStatefulWidget {
 }
 
 class _AsrBenchScreenState extends ConsumerState<AsrBenchScreen> {
-  String _status = 'Downloads ~160 MB from your Rafiq server the first time (Wi-Fi recommended).';
+  String _status = 'Downloads ~55 MB from your Rafiq server the first time (Wi-Fi recommended).';
   double? _progress;
   bool _busy = false;
   String? _report;
@@ -55,18 +55,22 @@ class _AsrBenchScreenState extends ConsumerState<AsrBenchScreen> {
       final lines = <String>[
         'Rafiq on-device speech benchmark',
         'Device: ${Platform.operatingSystem} ${Platform.operatingSystemVersion}, ${Platform.numberOfProcessors} cores',
-        'Model: quran-base int8 via sherpa-onnx (${(store.installedBytes / 1e6).round()} MB)',
+        'Model: ${ModelStore.model} int8 via sherpa-onnx (${(store.installedBytes / 1e6).round()} MB)',
         'Clips: ${clips.length} (6 reciters, clean + mosque echo)',
         '',
       ];
       int? bestShortMs;
-      for (final threads in [2, 4]) {
-        _set('Transcribing on the phone with $threads threads…', progress: null);
+      // (threads, trailing silence): fewer threads avoid the slow cores of
+      // big.LITTLE phones; shorter padding is faster, slightly less accurate.
+      const configs = [(1, 500), (2, 500), (2, 2000)];
+      for (final (threads, padMs) in configs) {
+        _set('Transcribing on the phone: $threads thread(s), ${padMs / 1000} s padding…', progress: null);
         final run = await runBenchmark(
           encoder: store.path(ModelStore.encoder),
           decoder: store.path(ModelStore.decoder),
           tokens: store.path(ModelStore.tokens),
           threads: threads,
+          silencePad: Duration(milliseconds: padMs),
           clips: clips,
         );
         final byName = {for (final c in manifest.clips) c.name: c};
@@ -79,7 +83,7 @@ class _AsrBenchScreenState extends ConsumerState<AsrBenchScreen> {
         }
         final short = median(shortMs.map((e) => e.toDouble()).toList()).round();
         bestShortMs = bestShortMs == null ? short : math.min(bestShortMs, short);
-        lines.add('$threads threads: word accuracy ${(mean(accs) * 100).toStringAsFixed(1)}% | '
+        lines.add('$threads thr, pad ${padMs / 1000}s: word accuracy ${(mean(accs) * 100).toStringAsFixed(1)}% | '
             'typical chunk (≤6.5 s) $short ms | ${median(perSecond).round()} ms per audio second | '
             'model load ${run.loadMs} ms');
       }
@@ -156,8 +160,8 @@ class _AsrBenchScreenState extends ConsumerState<AsrBenchScreen> {
             onPressed: _busy
                 ? null
                 : () async {
-                    await (await ModelStore.open()).uninstall();
-                    _set('Model deleted from the phone.');
+                    await ModelStore.deleteAll();
+                    _set('Downloaded models deleted from the phone.');
                   },
             child: const Text('Delete downloaded model'),
           ),

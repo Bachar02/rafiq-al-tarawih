@@ -208,3 +208,5 @@ So the Play Store build is on-device. The server stays useful for development, t
 - **Dart port started:** `normalize` is ported and matches the Python engine on 613 golden cases (`tools/golden/`, checked in CI).
 - **Known issue:** 160 MB of int8 model, mostly the token embedding. Vocabulary trimming is the planned fix for size and speed.
 - **Decision rule:** a typical chunk under 1.5 s on mid-range phones means go on-device. Between 1.5 and 3 s, trim the vocabulary first. Over 3 s, use a smaller model or a cloud fallback.
+- **Phone round 1 (Galaxy A32, budget):** 3.6 s per chunk on 2 threads, too slow. Accuracy 96.6% (fine). Whisper-tiny rejected (80% accuracy). The bottleneck is the decoder's full-vocabulary projection.
+- **Fix:** trimmed the vocabulary to 660 tokens. Output is identical, the model is 55 MB instead of 160 MB, and it's ~25% faster on the laptop. Phone round 2 is pending.

@@ -187,9 +187,7 @@ def create_app(engine: Engine | None = None) -> FastAPI:
         if not (DEV_ASR_DIR / "clips.json").exists():
             raise HTTPException(404, "no on-device model exported; run tools/whisper_export")
         files = {
-            f.name: f.stat().st_size
-            for f in DEV_ASR_DIR.glob("quran-base-*")
-            if f.suffix in (".onnx", ".txt")
+            f.name: f.stat().st_size for f in DEV_ASR_DIR.glob("quran-*") if f.suffix in (".onnx", ".txt")
         }
         clips = json.loads((DEV_ASR_DIR / "clips.json").read_text(encoding="utf-8"))
         return {"files": files, "clips": clips}

@@ -3,14 +3,14 @@
     .venv-export/Scripts/python tools/whisper_export/export_quran_whisper.py
 
 Pipeline:
-1. Download Tarteel's whisper-base-ar-quran (Apache-2.0) at a pinned revision.
+1. Download Tarteel's whisper-{base,tiny}-ar-quran (Apache-2.0) at a pinned revision.
 2. Convert the Hugging Face checkpoint to OpenAI's whisper layout (same
    architecture, different parameter names).
 3. Run sherpa-onnx's own export script on it: encoder/decoder ONNX (+ int8),
    tokens. sherpa-onnx's export drops Whisper's fixed 30 s window, so a short
    chunk costs proportionally less — the property on-device latency needs.
 
-Output: build/whisper_onnx/quran-base-{encoder,decoder}[.int8].onnx, quran-base-tokens.txt
+Output: build/whisper_onnx/quran-<size>-{encoder,decoder}[.int8].onnx, quran-<size>-tokens.txt
 Heavy dependencies (torch, openai-whisper) live in .venv-export only.
 """
 
@@ -28,8 +28,11 @@ import whisper
 from huggingface_hub import hf_hub_download
 from whisper.model import ModelDimensions
 
-REPO = "tarteel-ai/whisper-base-ar-quran"
-REVISION = "5c3c53fdf9272c4f6ee0bee09a1e5a4a615ee25c"  # pinned: the export must be reproducible
+# Tarteel's Quran fine-tunes (Apache-2.0), pinned: the export must be reproducible.
+MODELS = {
+    "base": ("tarteel-ai/whisper-base-ar-quran", "5c3c53fdf9272c4f6ee0bee09a1e5a4a615ee25c"),
+    "tiny": ("tarteel-ai/whisper-tiny-ar-quran", "c3d7e624af5c81bef25a10a2af3a5a84cb4dd0f0"),
+}
 ROOT = Path(__file__).resolve().parents[2]
 OUT = ROOT / "build" / "whisper_onnx"
 
@@ -59,11 +62,12 @@ def hf_to_openai(state: dict[str, torch.Tensor]) -> dict[str, torch.Tensor]:
     return out
 
 
-def build_checkpoint(revision: str) -> Path:
+def build_checkpoint(size: str) -> Path:
+    repo, revision = MODELS[size]
     import json
 
-    config = json.loads(Path(hf_hub_download(REPO, "config.json", revision=revision)).read_text())
-    weights = torch.load(hf_hub_download(REPO, "pytorch_model.bin", revision=revision), map_location="cpu")
+    config = json.loads(Path(hf_hub_download(repo, "config.json", revision=revision)).read_text())
+    weights = torch.load(hf_hub_download(repo, "pytorch_model.bin", revision=revision), map_location="cpu")
     dims = ModelDimensions(
         n_mels=config["num_mel_bins"],
         n_audio_ctx=config["max_source_positions"],
@@ -84,7 +88,7 @@ def build_checkpoint(revision: str) -> Path:
     if missing or unexpected:
         raise SystemExit(f"weight mapping failed: missing={missing} unexpected={unexpected}")
     OUT.mkdir(parents=True, exist_ok=True)
-    path = OUT / "quran-base.pt"
+    path = OUT / f"quran-{size}.pt"
     torch.save({"dims": dims.__dict__, "model_state_dict": model.state_dict()}, path)
     print(f"converted checkpoint: {path}")
     return path
@@ -92,10 +96,10 @@ def build_checkpoint(revision: str) -> Path:
 
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--revision", default=REVISION, help="Hugging Face revision of the model")
+    ap.add_argument("--model", choices=sorted(MODELS), default="base")
     args = ap.parse_args()
 
-    checkpoint = build_checkpoint(args.revision)
+    checkpoint = build_checkpoint(args.model)
 
     # sherpa-onnx's script was written for torch's classic (TorchScript) ONNX
     # exporter; recent torch defaults to the dynamo exporter, which handles its
@@ -103,12 +107,12 @@ def main() -> int:
     original_export = torch.onnx.export
     torch.onnx.export = lambda *a, **k: original_export(*a, **{"dynamo": False, **k})
 
-    # sherpa-onnx's script loads a model by name; serve ours under the name "base".
+    # sherpa-onnx's script loads a model by name; serve ours under its size's name.
     original_load = whisper.load_model
     whisper.load_model = lambda name, *a, **k: original_load(str(checkpoint), *a, **k)
     cwd = Path.cwd()
     os.chdir(OUT)
-    sys.argv = ["sherpa_export_onnx.py", "--model", "base"]
+    sys.argv = ["sherpa_export_onnx.py", "--model", args.model]
     try:
         runpy.run_path(str(Path(__file__).with_name("sherpa_export_onnx.py")), run_name="__main__")
     finally:
@@ -116,10 +120,10 @@ def main() -> int:
         whisper.load_model = original_load
         torch.onnx.export = original_export
 
-    for f in OUT.glob("base-*"):
-        target = OUT / f.name.replace("base-", "quran-base-", 1)
+    for f in OUT.glob(f"{args.model}-*"):
+        target = OUT / f.name.replace(f"{args.model}-", f"quran-{args.model}-", 1)
         shutil.move(f, target)
-    for f in sorted(OUT.glob("quran-base-*")):
+    for f in sorted(OUT.glob(f"quran-{args.model}-*")):
         print(f"{f.name:<36} {f.stat().st_size / 1e6:7.1f} MB")
     return 0
 
