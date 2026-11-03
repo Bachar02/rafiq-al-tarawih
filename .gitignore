@@ -3,6 +3,7 @@ __pycache__/
 *.py[cod]
 *.egg-info/
 .venv/
+.venv-export/
 venv/
 .pytest_cache/
 .ruff_cache/
@@ -31,3 +32,6 @@ mobile/.flutter-plugins*
 .idea/
 .DS_Store
 Thumbs.db
+
+# Exported on-device models and validation clips (tools/whisper_export)
+/build/
