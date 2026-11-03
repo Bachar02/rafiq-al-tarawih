@@ -30,3 +30,39 @@ jobs:
         run: python eval/text_benchmark.py --quick --check
       - name: Detection regression gate
         run: python eval/detection_benchmark.py --quick --check
+
+  mobile:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Bundled Quran matches the data pipeline
+        run: |
+          python data/build_quran.py
+          python mobile/tool/sync_quran.py --check
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17" # record_android ships Java 17 bytecode (needs AGP 8 + JDK 17)
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.19.5"
+          channel: stable
+          cache: true
+      - name: Install
+        working-directory: mobile
+        run: flutter pub get
+      - name: Format
+        working-directory: mobile
+        run: dart format -l 120 --set-exit-if-changed lib test
+      - name: Analyze
+        working-directory: mobile
+        run: flutter analyze
+      - name: Test
+        working-directory: mobile
+        run: flutter test
+      - name: Android build
+        working-directory: mobile
+        run: flutter build apk --debug
