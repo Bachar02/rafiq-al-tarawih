@@ -5,6 +5,7 @@ import '../../app/providers.dart';
 import '../../app/theme.dart';
 import '../../core/recognition/endpoint.dart';
 import '../../services/server_health.dart';
+import '../bench/asr_bench_screen.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -133,12 +134,22 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             selected: {settings.themeMode},
             onSelectionChanged: (v) => update((s) => s.copyWith(themeMode: v.first)),
           ),
+          const _Section('Developer'),
+          ListTile(
+            contentPadding: EdgeInsets.zero,
+            leading: const Icon(Icons.speed_rounded),
+            title: const Text('On-device speech benchmark'),
+            subtitle: const Text('Can this phone recognise the imam without the laptop?'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const AsrBenchScreen())),
+          ),
           const _Section('About'),
           Text(
             'Rafiq al-Tarawih follows the imam and shows the current surah and ayah.\n\n'
-            'Quran text: Tanzil Project (tanzil.net), Simple Clean v1.1, CC BY 3.0.\n'
+            'Quran text: Tanzil Project (tanzil.net), Uthmani and Simple Clean v1.1, CC BY 3.0.\n'
             'Font: Amiri Quran, SIL Open Font License 1.1.\n'
-            'Speech model: Tarteel whisper-base-ar-quran, Apache 2.0 (runs on the server).',
+            'Speech model: Tarteel whisper-base-ar-quran, Apache 2.0.\n'
+            'On-device runtime: sherpa-onnx (k2-fsa), Apache 2.0.',
             style: context.text.bodySmall?.copyWith(color: context.colors.muted),
           ),
         ],

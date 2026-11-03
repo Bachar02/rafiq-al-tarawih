@@ -199,3 +199,12 @@ So the Play Store build is on-device. The server stays useful for development, t
 - **Polish:** Arabic UI (localization), crash reporting, then an internal test track, a closed beta with real imams, and public release before Ramadan.
 
 **Order of work:** Dart tracker port with golden parity tests → on-device model, benchmarked on 3 phone tiers → `OnDeviceRecognitionEngine` → store preparation.
+
+## 16. Step 3: on-device feasibility (in progress, 2026-11-03)
+- **Model export:** the server's exact model exported for sherpa-onnx (`tools/whisper_export/`, pinned revision, vendored upstream exporter). On the same audio, word accuracy is 97.4% vs 98.6% for the server model.
+- **Fix found:** chunks need 2 s of trailing silence (81% → 97% accuracy).
+- **Speed:** cost scales with chunk length (no fixed 30 s window), about 0.7 s per typical chunk on 2 laptop threads.
+- **Runs on Android:** the app downloads the model from the dev server and transcribes in a background isolate (Settings → Developer → On-device speech benchmark). On the emulator: 96.9% accuracy and 1.5 s per typical chunk, verdict "borderline". **Real phone numbers pending.**
+- **Dart port started:** `normalize` is ported and matches the Python engine on 613 golden cases (`tools/golden/`, checked in CI).
+- **Known issue:** 160 MB of int8 model, mostly the token embedding. Vocabulary trimming is the planned fix for size and speed.
+- **Decision rule:** a typical chunk under 1.5 s on mid-range phones means go on-device. Between 1.5 and 3 s, trim the vocabulary first. Over 3 s, use a smaller model or a cloud fallback.

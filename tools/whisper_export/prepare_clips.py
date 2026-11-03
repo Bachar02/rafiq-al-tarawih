@@ -67,15 +67,17 @@ def main() -> int:
             t = time.perf_counter()
             text = asr.transcribe(audio)
             ms = (time.perf_counter() - t) * 1000
-            rows.append({
-                "name": name,
-                "verse_id": q.verse(surah, ayah).id,
-                "ref": f"{surah}:{ayah}",
-                "room": room_name,
-                "seconds": round(len(audio) / SAMPLE_RATE, 2),
-                "server_text": text,
-                "server_ms": round(ms),
-            })
+            rows.append(
+                {
+                    "name": name,
+                    "verse_id": q.verse(surah, ayah).id,
+                    "ref": f"{surah}:{ayah}",
+                    "room": room_name,
+                    "seconds": round(len(audio) / SAMPLE_RATE, 2),
+                    "server_text": text,
+                    "server_ms": round(ms),
+                }
+            )
             print(f"{name:<34} {rows[-1]['seconds']:5.1f}s  {ms:6.0f} ms  {text}")
     (OUT.parent / "clips.json").write_text(json.dumps(rows, ensure_ascii=False, indent=1), encoding="utf-8")
     print(f"{len(rows)} clips -> {OUT}")

@@ -95,3 +95,28 @@ def test_simulate_validation(client, payload):
 def test_playground_is_served(client):
     res = client.get("/")
     assert res.status_code == 200 and "Rafiq Playground" in res.text
+
+
+def test_dev_asr_manifest(tmp_path, monkeypatch):
+    import json as _json
+
+    from rafiq_server import app as app_module
+
+    (tmp_path / "quran-base-encoder.int8.onnx").write_bytes(b"x" * 10)
+    (tmp_path / "quran-base-tokens.txt").write_bytes(b"a 0\n")
+    (tmp_path / "clips.json").write_text(_json.dumps([{"name": "c1", "verse_id": 1}]))
+    (tmp_path / "clips").mkdir()
+    (tmp_path / "clips" / "c1.wav").write_bytes(b"RIFF")
+    monkeypatch.setattr(app_module, "DEV_ASR_DIR", tmp_path)
+    client = TestClient(app_module.create_app())
+    body = client.get("/dev/asr/manifest").json()
+    assert body["files"] == {"quran-base-encoder.int8.onnx": 10, "quran-base-tokens.txt": 4}
+    assert body["clips"][0]["name"] == "c1"
+    assert client.get("/dev/asr/files/clips/c1.wav").content == b"RIFF"
+
+
+def test_dev_asr_manifest_absent(tmp_path, monkeypatch):
+    from rafiq_server import app as app_module
+
+    monkeypatch.setattr(app_module, "DEV_ASR_DIR", tmp_path / "nothing")
+    assert TestClient(app_module.create_app()).get("/dev/asr/manifest").status_code == 404

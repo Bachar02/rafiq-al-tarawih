@@ -10,6 +10,8 @@ connection, because audio cannot be replayed cheaply.
 
 from __future__ import annotations
 
+import json
+import os
 from dataclasses import dataclass, field, replace
 from functools import cached_property
 from pathlib import Path
@@ -27,6 +29,12 @@ from rafiq.tracking import Tracker, TrackState
 from rafiq_server import schemas
 
 STATIC = Path(__file__).parent / "static"
+# Dev only: the on-device model export and its validation clips
+# (tools/whisper_export). Served so the app's benchmark can fetch them over
+# Wi-Fi instead of shipping 160 MB of model and research audio in the APK.
+DEV_ASR_DIR = Path(
+    os.environ.get("RAFIQ_DEV_ASR_DIR", Path(__file__).resolve().parents[3] / "build" / "whisper_onnx")
+)
 
 
 @dataclass
@@ -172,6 +180,22 @@ def create_app(engine: Engine | None = None) -> FastAPI:
     app.state.engine = eng
     app.include_router(listen_router)
     app.mount("/static", StaticFiles(directory=STATIC), name="static")
+
+    @app.get("/dev/asr/manifest")
+    def dev_asr_manifest() -> dict:
+        """What the in-app on-device benchmark can download (404 if nothing was exported)."""
+        if not (DEV_ASR_DIR / "clips.json").exists():
+            raise HTTPException(404, "no on-device model exported; run tools/whisper_export")
+        files = {
+            f.name: f.stat().st_size
+            for f in DEV_ASR_DIR.glob("quran-base-*")
+            if f.suffix in (".onnx", ".txt")
+        }
+        clips = json.loads((DEV_ASR_DIR / "clips.json").read_text(encoding="utf-8"))
+        return {"files": files, "clips": clips}
+
+    if DEV_ASR_DIR.is_dir():
+        app.mount("/dev/asr/files", StaticFiles(directory=DEV_ASR_DIR), name="dev-asr")
 
     @app.get("/", include_in_schema=False)
     def playground():

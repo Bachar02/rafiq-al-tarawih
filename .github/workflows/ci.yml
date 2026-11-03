@@ -38,10 +38,12 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - name: Bundled Quran matches the data pipeline
+      - name: Bundled Quran and Dart-port golden files match the Python engine
         run: |
+          pip install -e engine
           python data/build_quran.py
           python mobile/tool/sync_quran.py --check
+          python tools/golden/make_golden.py --check
       - uses: actions/setup-java@v4
         with:
           distribution: temurin

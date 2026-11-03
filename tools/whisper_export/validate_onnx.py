@@ -52,10 +52,13 @@ def recognizer(precision: str, threads: int) -> sherpa_onnx.OfflineRecognizer:
     )
 
 
+SILENCE_PAD_S = 2.0  # without trailing silence the model drops the last word(s); see README
+
+
 def transcribe(rec: sherpa_onnx.OfflineRecognizer, audio: np.ndarray) -> tuple[str, float]:
     t = time.perf_counter()
     stream = rec.create_stream()
-    stream.accept_waveform(16000, audio)
+    stream.accept_waveform(16000, np.concatenate([audio, np.zeros(int(SILENCE_PAD_S * 16000), np.float32)]))
     rec.decode_stream(stream)
     return stream.result.text.strip(), (time.perf_counter() - t) * 1000
 
@@ -74,7 +77,8 @@ def main() -> int:
     server_found = sum(found(c["server_text"], c["verse_id"]) for c in clips)
     server_ms = statistics.median(c["server_ms"] for c in clips)
     print(f"{'variant':<16} {'word acc':>8} {'ayah found':>10} {'median ms':>9} {'ms per audio s':>14}")
-    print(f"{'server (CT2 cpu)':<16} {server_acc:>8.1%} {server_found:>6}/{len(clips):<3} {server_ms:>9.0f} {'(fixed 30 s)':>14}")
+    found_col = f"{server_found:>6}/{len(clips):<3}"
+    print(f"{'server (CT2 cpu)':<16} {server_acc:>8.1%} {found_col} {server_ms:>9.0f} {'(fixed 30 s)':>14}")
 
     detail = {}
     for precision in ("fp32", "int8"):
@@ -90,8 +94,10 @@ def main() -> int:
                 times.append(ms)
                 per_sec.append(ms / c["seconds"])
                 detail.setdefault(c["name"], {})[f"{precision}-{threads}t"] = (text, round(ms))
-            print(f"{precision + ' ' + str(threads) + ' thr':<16} {statistics.fmean(accs):>8.1%} "
-                  f"{hits:>6}/{len(clips):<3} {statistics.median(times):>9.0f} {statistics.median(per_sec):>14.0f}")  # fmt: skip
+            label = f"{precision} {threads} thr"
+            found_col = f"{hits:>6}/{len(clips):<3}"
+            timing = f"{statistics.median(times):>9.0f} {statistics.median(per_sec):>14.0f}"
+            print(f"{label:<16} {statistics.fmean(accs):>8.1%} {found_col} {timing}")
 
     print("\nper clip (int8, 2 threads vs server):")
     for c in clips:

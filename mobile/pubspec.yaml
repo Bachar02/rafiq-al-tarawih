@@ -40,6 +40,8 @@ dependencies:
   web_socket_channel: ^3.0.3
   shared_preferences: ^2.2.3
   wakelock_plus: ^1.2.8
+  sherpa_onnx: ^1.13.4
+  path_provider: ^2.1.4
 
 dev_dependencies:
   flutter_test:

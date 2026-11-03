@@ -97,6 +97,12 @@ def main() -> int:
 
     checkpoint = build_checkpoint(args.revision)
 
+    # sherpa-onnx's script was written for torch's classic (TorchScript) ONNX
+    # exporter; recent torch defaults to the dynamo exporter, which handles its
+    # dynamic axes and KV caches differently. Ask for the classic one.
+    original_export = torch.onnx.export
+    torch.onnx.export = lambda *a, **k: original_export(*a, **{"dynamo": False, **k})
+
     # sherpa-onnx's script loads a model by name; serve ours under the name "base".
     original_load = whisper.load_model
     whisper.load_model = lambda name, *a, **k: original_load(str(checkpoint), *a, **k)
@@ -108,6 +114,7 @@ def main() -> int:
     finally:
         os.chdir(cwd)
         whisper.load_model = original_load
+        torch.onnx.export = original_export
 
     for f in OUT.glob("base-*"):
         target = OUT / f.name.replace("base-", "quran-base-", 1)
