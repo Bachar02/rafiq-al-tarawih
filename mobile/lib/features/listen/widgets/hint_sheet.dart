@@ -86,14 +86,18 @@ class _HintSheetState extends State<_HintSheet> {
     final q = _query.trim().toLowerCase();
     final surahs = widget.quran.surahs.where((s) {
       if (q.isEmpty) return true;
-      return '${s.index}' == q || s.nameTranslit.toLowerCase().contains(q) || s.nameEn.toLowerCase().contains(q) || s.nameAr.contains(_query.trim());
+      return '${s.index}' == q ||
+          s.nameTranslit.toLowerCase().contains(q) ||
+          s.nameEn.toLowerCase().contains(q) ||
+          s.nameAr.contains(_query.trim());
     }).toList();
     final selected = widget.current is SurahHint ? (widget.current! as SurahHint).surah : null;
     return Column(
       children: [
         TextField(
           autofocus: false,
-          decoration: const InputDecoration(prefixIcon: Icon(Icons.search), hintText: 'Search by name or number', isDense: true),
+          decoration: const InputDecoration(
+              prefixIcon: Icon(Icons.search), hintText: 'Search by name or number', isDense: true),
           onChanged: (v) => setState(() => _query = v),
         ),
         const SizedBox(height: 8),

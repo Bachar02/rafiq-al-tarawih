@@ -66,8 +66,10 @@ class ErrorPanel extends StatelessWidget {
                 IconButton(onPressed: onDismiss, icon: const Icon(Icons.close, size: 18), tooltip: 'Dismiss'),
               ],
             ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
+            // Wrap, not Row: with large system fonts the buttons stack instead of overflowing.
+            Wrap(
+              alignment: WrapAlignment.end,
+              spacing: 8,
               children: [
                 if (error == ListenError.unreachable)
                   TextButton(onPressed: onOpenSettings, child: const Text('Server settings')),

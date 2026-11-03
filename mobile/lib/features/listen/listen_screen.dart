@@ -74,7 +74,8 @@ class _ListenScreenState extends ConsumerState<ListenScreen> with WidgetsBinding
           IconButton(
             tooltip: 'Help the app (hint)',
             onPressed: () => _chooseHint(state),
-            icon: Icon(state.hint == null ? Icons.tune_rounded : Icons.tune, color: state.hint == null ? null : context.scheme.primary),
+            icon: Icon(state.hint == null ? Icons.tune_rounded : Icons.tune,
+                color: state.hint == null ? null : context.scheme.primary),
           ),
           IconButton(tooltip: 'Settings', onPressed: _openSettings, icon: const Icon(Icons.settings_outlined)),
         ],
@@ -103,7 +104,10 @@ class _ListenScreenState extends ConsumerState<ListenScreen> with WidgetsBinding
                   if (state.warning != null)
                     _Notice(icon: Icons.info_outline, text: state.warning!, color: context.colors.uncertain),
                   if (state.phase == SessionPhase.failed && state.error != null)
+                    // Takes the space it needs (up to most of the region): when
+                    // something is wrong, fixing it matters more than the text.
                     Flexible(
+                      flex: 6,
                       child: SingleChildScrollView(
                         padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
                         child: ErrorPanel(
@@ -229,9 +233,15 @@ class _EmptyState extends StatelessWidget {
             Text(
               'بِسْمِ اللَّهِ',
               textDirection: TextDirection.rtl,
-              style: TextStyle(fontFamily: quranFont, fontSize: 40, color: context.colors.muted.withOpacity(0.5)),
+              // Amiri's diacritics reach far below the baseline: give them room.
+              style: TextStyle(
+                fontFamily: quranFont,
+                fontSize: 40,
+                height: 1.8,
+                color: context.colors.muted.withOpacity(0.5),
+              ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 20),
             Text(
               listening
                   ? 'Keep the phone where it can hear the imam. The surah appears after a few words.'

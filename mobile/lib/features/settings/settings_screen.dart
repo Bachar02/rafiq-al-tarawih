@@ -14,8 +14,7 @@ class SettingsScreen extends ConsumerStatefulWidget {
 }
 
 class _SettingsScreenState extends ConsumerState<SettingsScreen> {
-  late final TextEditingController _address =
-      TextEditingController(text: ref.read(settingsProvider).serverAddress);
+  late final TextEditingController _address = TextEditingController(text: ref.read(settingsProvider).serverAddress);
   String? _addressError;
   ServerHealth? _health;
   bool _testing = false;
@@ -172,7 +171,8 @@ class _HealthText extends StatelessWidget {
       return Text(health.error ?? 'Failed', style: context.text.bodySmall?.copyWith(color: context.colors.lost));
     }
     final ms = health.latency!.inMilliseconds;
-    final asr = health.asr ? 'speech model ${health.device ?? 'ready on first use'}' : 'speech recognition NOT installed';
+    final asr =
+        health.asr ? 'speech model ${health.device ?? 'ready on first use'}' : 'speech recognition NOT installed';
     return Text(
       'Connected · $ms ms · $asr',
       style: context.text.bodySmall?.copyWith(color: health.asr ? context.colors.following : context.colors.uncertain),

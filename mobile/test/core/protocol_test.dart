@@ -31,7 +31,8 @@ void main() {
     });
 
     test('partial is a non-final heard', () {
-      const raw = '{"type":"partial","text":"x","start":0,"end":1,"asr_ms":1,"state":{"position":null,"status":"idle"}}';
+      const raw =
+          '{"type":"partial","text":"x","start":0,"end":1,"asr_ms":1,"state":{"position":null,"status":"idle"}}';
       final heard = decodeServerMessage(raw)! as Heard;
       expect(heard.isFinal, isFalse);
       expect(heard.state.position, isNull);
@@ -39,7 +40,8 @@ void main() {
     });
 
     test('warning, error, done', () {
-      expect((decodeServerMessage('{"type":"warning","message":"skipped 2 s"}')! as EngineWarning).message, 'skipped 2 s');
+      expect(
+          (decodeServerMessage('{"type":"warning","message":"skipped 2 s"}')! as EngineWarning).message, 'skipped 2 s');
       final failure = decodeServerMessage('{"type":"error","message":"model failed"}')! as EngineFailure;
       expect(failure.message, 'model failed');
       expect(failure.kind, FailureKind.server);

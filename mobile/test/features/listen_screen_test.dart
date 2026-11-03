@@ -50,7 +50,9 @@ void main() {
     expect(find.text('Ad-Dhuhaa'), findsOneWidget);
     expect(find.textContaining('Ayah 3 of 11'), findsOneWidget);
     expect(find.text('Following'), findsOneWidget);
-    expect(find.bySemanticsLabel('Ayah 3'), findsOneWidget);
+    final highlighted = find.byWidgetPredicate((w) => w is Semantics && w.properties.selected == true);
+    expect(highlighted, findsOneWidget);
+    expect((tester.widget(highlighted) as Semantics).properties.label, 'Ayah 3');
     expect(find.bySemanticsLabel('Stop following'), findsOneWidget);
   });
 
@@ -84,10 +86,12 @@ void main() {
     await launch(tester);
     await tester.tap(find.bySemanticsLabel('Start following the imam'));
     await settle(tester);
-    h.engine.emit(const EngineFailure('Cannot reach the recognition server at 10.0.2.2:8765', kind: FailureKind.unreachable));
+    h.engine.emit(
+        const EngineFailure('Cannot reach the recognition server at 10.0.2.2:8765', kind: FailureKind.unreachable));
     await settle(tester);
     expect(find.text('Cannot reach the server'), findsOneWidget);
     expect(find.text('Server settings'), findsOneWidget);
+    await tester.ensureVisible(find.text('Server settings'));
     await tester.tap(find.text('Server settings'));
     await settle(tester);
     expect(find.text('Settings'), findsOneWidget);
@@ -108,6 +112,7 @@ void main() {
     await settle(tester);
     await tester.tap(find.text('Juz'));
     await settle(tester);
+    await tester.scrollUntilVisible(find.text('Juz 30'), 200, scrollable: find.byType(Scrollable).last);
     await tester.tap(find.text('Juz 30'));
     await settle(tester);
     expect(find.text('Tonight: Juz 30'), findsOneWidget);

@@ -175,9 +175,7 @@ class _AyahBlock extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bg = highlighted
-        ? context.colors.highlight.withOpacity(confident ? 1 : 0.5)
-        : Colors.transparent;
+    final bg = highlighted ? context.colors.highlight.withOpacity(confident ? 1 : 0.5) : Colors.transparent;
     return Semantics(
       label: 'Ayah ${verse.ayah}',
       selected: highlighted,
@@ -206,5 +204,4 @@ class _AyahBlock extends StatelessWidget {
 }
 
 /// 29 -> ٢٩
-String arabicDigits(int n) =>
-    n.toString().split('').map((d) => String.fromCharCode(0x0660 + int.parse(d))).join();
+String arabicDigits(int n) => n.toString().split('').map((d) => String.fromCharCode(0x0660 + int.parse(d))).join();

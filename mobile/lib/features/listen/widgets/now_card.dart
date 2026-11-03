@@ -26,12 +26,14 @@ class NowCard extends StatelessWidget {
             AnimatedOpacity(
               duration: const Duration(milliseconds: 250),
               opacity: shown == null || status.confident ? 1 : 0.55,
-              child: shown == null ? _Placeholder(state: state, status: status, quran: quran) : _Position(shown, quran, state),
+              child: shown == null
+                  ? _Placeholder(state: state, status: status, quran: quran)
+                  : _Position(shown, quran, state),
             ),
             const SizedBox(height: 14),
             Row(
               children: [
-                StatusChip(status: status, reconnectAttempt: state.reconnectAttempt),
+                Flexible(child: StatusChip(status: status, reconnectAttempt: state.reconnectAttempt)),
                 const SizedBox(width: 12),
                 Expanded(child: _ConfidenceBar(value: status == DisplayStatus.idle ? 0 : state.track.confidence)),
               ],
@@ -56,27 +58,33 @@ class _Position extends StatelessWidget {
     final upcoming = state.track.upcoming == position;
     return Semantics(
       label: 'Surah ${surah.nameTranslit}, ayah ${position.ayah}',
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.end,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(surah.nameTranslit, style: context.text.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
-                const SizedBox(height: 2),
-                Text(
-                  'Ayah ${position.ayah} of ${surah.ayahCount} · Juz ${quran.juzOf(position.verseId)}'
-                  '${upcoming ? ' · next' : ''}',
-                  style: context.text.bodySmall?.copyWith(color: context.colors.muted),
-                ),
-              ],
+          // The Arabic name scales down rather than wrapping or overflowing,
+          // whatever the surah or the user's font-size setting.
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: AlignmentDirectional.centerEnd,
+            child: Text(
+              surah.nameAr,
+              textDirection: TextDirection.rtl,
+              maxLines: 1,
+              style: TextStyle(fontFamily: quranFont, fontSize: 38, height: 1.3, color: context.scheme.onSurface),
             ),
           ),
           Text(
-            surah.nameAr,
-            textDirection: TextDirection.rtl,
-            style: TextStyle(fontFamily: quranFont, fontSize: 38, height: 1.2, color: context.scheme.onSurface),
+            surah.nameTranslit,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: context.text.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+          ),
+          Text(
+            'Ayah ${position.ayah} of ${surah.ayahCount} · Juz ${quran.juzOf(position.verseId)}'
+            '${upcoming ? ' · next' : ''}',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: context.text.bodySmall?.copyWith(color: context.colors.muted),
           ),
         ],
       ),
@@ -106,9 +114,19 @@ class _Placeholder extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(title, style: context.text.headlineSmall?.copyWith(fontWeight: FontWeight.w600)),
+        Text(
+          title,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: context.text.headlineSmall?.copyWith(fontWeight: FontWeight.w600),
+        ),
         const SizedBox(height: 4),
-        Text(guess ?? subtitle, style: context.text.bodyMedium?.copyWith(color: context.colors.muted)),
+        Text(
+          guess ?? subtitle,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          style: context.text.bodyMedium?.copyWith(color: context.colors.muted),
+        ),
       ],
     );
   }
@@ -134,7 +152,14 @@ class StatusChip extends StatelessWidget {
         children: [
           Container(width: 8, height: 8, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
           const SizedBox(width: 6),
-          Text(label, style: context.text.labelMedium?.copyWith(color: color, fontWeight: FontWeight.w600)),
+          Flexible(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: context.text.labelMedium?.copyWith(color: color, fontWeight: FontWeight.w600),
+            ),
+          ),
         ],
       ),
     );

@@ -4,7 +4,12 @@ import 'package:rafiq/core/recognition/models.dart';
 
 void main() {
   test('addresses as people type them', () {
-    for (final address in ['192.168.1.5:8765', 'http://192.168.1.5:8765', 'ws://192.168.1.5:8765/', ' 192.168.1.5:8765 ']) {
+    for (final address in [
+      '192.168.1.5:8765',
+      'http://192.168.1.5:8765',
+      'ws://192.168.1.5:8765/',
+      ' 192.168.1.5:8765 '
+    ]) {
       expect(listenUri(address).toString(), 'ws://192.168.1.5:8765/ws/listen', reason: address);
       expect(healthUri(address).toString(), 'http://192.168.1.5:8765/api/health', reason: address);
     }

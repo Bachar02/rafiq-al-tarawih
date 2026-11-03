@@ -140,7 +140,8 @@ class Harness {
 }
 
 /// A tracker state at `surah:ayah` (verse ids computed from the real Quran).
-TrackState at(int surah, int ayah, {TrackStatus status = TrackStatus.tracking, double confidence = 0.9, Position? upcoming}) {
+TrackState at(int surah, int ayah,
+    {TrackStatus status = TrackStatus.tracking, double confidence = 0.9, Position? upcoming}) {
   final s = loadQuran().surah(surah);
   return TrackState(
     position: Position(verseId: s.firstVerseId + ayah - 1, surah: surah, ayah: ayah),
