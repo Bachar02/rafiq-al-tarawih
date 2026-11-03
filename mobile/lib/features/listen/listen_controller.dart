@@ -53,6 +53,10 @@ class ListenController extends Notifier<ListenState> {
     state = ListenState(
       phase: SessionPhase.connecting,
       hint: state.hint,
+      lock: state.lock,
+      readerSurah: state.readerSurah,
+      browsing: state.browsing,
+      track: state.track,
       startedAt: DateTime.now(),
     );
 
@@ -73,6 +77,7 @@ class ListenController extends Notifier<ListenState> {
     final engine = ref.read(engineFactoryProvider)(settings.serverAddress);
     _engine = engine;
     _events = engine.events.listen((event) => _onEvent(generation, event));
+    if (state.lock != null) engine.lock(state.lock);
     unawaited(engine.start(hint: state.hint));
 
     try {
@@ -124,6 +129,39 @@ class ListenController extends Notifier<ListenState> {
     state = state.copyWith(hint: hint, phase: wasActive ? SessionPhase.idle : null);
     if (wasActive) await start();
   }
+
+  /// "This is the right surah": recognition never looks anywhere else
+  /// (al-Fatiha excepted) until [unlock].
+  void lockTo(Hint scope) {
+    _engine?.lock(scope);
+    state = state.copyWith(
+      lock: scope,
+      readerSurah: scope is SurahHint ? scope.surah : state.readerSurah,
+      browsing: false,
+    );
+  }
+
+  void unlock() {
+    _engine?.lock(null);
+    state = state.copyWith(lock: null);
+  }
+
+  /// "The imam is here." Shown at once; the server continues from there.
+  void setPosition(Position position) {
+    _engine?.setPosition(position.verseId);
+    state = state.copyWith(
+      track: TrackState(position: position, status: TrackStatus.tracking, confidence: 1),
+      readerSurah: position.surah,
+      browsing: false,
+    );
+  }
+
+  /// Open a surah by hand (index, next/previous). Following pauses.
+  void browse(int surah) => state = state.copyWith(readerSurah: surah, browsing: true);
+
+  /// Back to following the imam.
+  void followImam() =>
+      state = state.copyWith(browsing: false, readerSurah: state.track.showing?.surah ?? state.readerSurah);
 
   void dismissError() {
     if (state.phase == SessionPhase.failed) {
@@ -177,12 +215,22 @@ class ListenController extends Notifier<ListenState> {
       isFinal: heard.isFinal,
     );
     var transcript = state.transcript;
-    if (heard.isFinal) {
+    if (heard.isFinal && heard.text.isNotEmpty) {
       transcript = [...transcript, line];
       if (transcript.length > _maxTranscript) transcript = transcript.sublist(transcript.length - _maxTranscript);
     }
     final firstDetection = state.detectedAfter == null && heard.state.position != null && state.startedAt != null;
+    // The reader moves to another surah only on a confident result (or the
+    // server confirming a user correction): an unsure guess must not yank
+    // the text away. While browsing, the user decides.
+    var reader = state.readerSurah;
+    final shown = heard.state.showing;
+    if (!state.browsing && shown != null) {
+      final confident = heard.state.status == TrackStatus.tracking;
+      if (reader == null || confident) reader = shown.surah;
+    }
     state = state.copyWith(
+      readerSurah: reader,
       phase: state.phase == SessionPhase.stopping ? null : SessionPhase.listening,
       track: heard.state,
       transcript: transcript,

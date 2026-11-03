@@ -8,6 +8,7 @@ licensed **Creative Commons Attribution 3.0**.
 | File | What it is | Origin |
 |------|-----------|--------|
 | `raw/quran-simple-clean.txt` | 6236 verses, `surah\|ayah\|text`, diacritics stripped | Tanzil Quran Text, Simple Clean, v1.1 |
+| `raw/quran-uthmani.txt` | 6236 verses, Uthmani script with full tashkeel (display text) | Tanzil Quran Text, Uthmani, v1.1 |
 | `raw/quran-data.xml` | Surah names, ayah counts, juz/hizb/page/sajda boundaries | `tanzil.net/res/text/metadata/quran-data.xml` |
 
 **These files are verbatim and must not be edited.** Tanzil's terms permit
@@ -23,11 +24,11 @@ Quranic orthography removed, which makes it the right basis for **matching**:
 ASR output will never carry correct tashkeel, so an index built on the Uthmani
 script would force us to strip it anyway.
 
-The tradeoff is that Simple Clean is not suitable for **display** — users
-expect the Uthmani mushaf script. Phase 5 will add `raw/quran-uthmani.txt`
-as a parallel display text, keyed by the same `(surah, ayah)`. Matching and
-display stay deliberately separate: one is optimised for recall, the other for
-being correct on screen.
+The tradeoff is that Simple Clean is not suitable for **display**: users
+expect the Uthmani mushaf script. So `raw/quran-uthmani.txt` is carried in
+parallel and every verse gets both `text` (Simple Clean, for matching) and
+`text_uthmani` (for screens), keyed by the same `(surah, ayah)`. The build
+checks that the two files line up verse for verse.
 
 ## Build
 
@@ -59,6 +60,12 @@ those ayahs, and leaving it in would put 113 copies of the phrase in the matchin
 index, making every surah opening ambiguous. The build strips it (and aborts if
 it is not there to strip) and records `has_basmala` on the surah instead.
 Al-Fatiha keeps it as ayah 1, and 27:30 keeps it mid-verse.
+
+The Uthmani file is split the same way, and each surah keeps its own verbatim
+Uthmani basmala as `basmala_uthmani`. Tanzil prints it as بِّسْمِ, with a shadda
+on the ba, in surahs 95 and 97 (as the Madinah mushaf does). Both forms are
+accepted. The reference form is taken from ayah 1:1 rather than typed into the
+script, because the order of its combining marks matters.
 
 ## Shape of `quran.json`
 

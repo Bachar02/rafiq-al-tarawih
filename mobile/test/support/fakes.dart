@@ -75,6 +75,15 @@ class FakeEngine implements RecognitionEngine {
   @override
   void addAudio(Float32List s) => samples += s.length;
 
+  final locks = <Hint?>[];
+  final positions = <int>[];
+
+  @override
+  void lock(Hint? scope) => locks.add(scope);
+
+  @override
+  void setPosition(int verseId) => positions.add(verseId);
+
   @override
   Future<void> finish() async {
     finished = true;

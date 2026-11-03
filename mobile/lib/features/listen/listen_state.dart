@@ -60,6 +60,9 @@ class ListenState {
     this.livePartial,
     this.startedAt,
     this.detectedAfter,
+    this.lock,
+    this.readerSurah,
+    this.browsing = false,
   });
 
   final SessionPhase phase;
@@ -94,6 +97,17 @@ class ListenState {
   /// How long after starting the first position appeared.
   final Duration? detectedAfter;
 
+  /// The user locked recognition to this surah/juz ("this is the right surah").
+  final Hint? lock;
+
+  /// The surah the reader shows. Changes only on a confident result, a user
+  /// correction, or browsing, so an unsure guess never yanks the text away.
+  final int? readerSurah;
+
+  /// The user navigated to a surah themselves; following is paused until
+  /// they choose "Follow the imam".
+  final bool browsing;
+
   bool get isActive => switch (phase) {
         SessionPhase.connecting || SessionPhase.listening || SessionPhase.reconnecting || SessionPhase.stopping => true,
         _ => false,
@@ -113,6 +127,9 @@ class ListenState {
     Object? livePartial = _keep,
     Object? startedAt = _keep,
     Object? detectedAfter = _keep,
+    Object? lock = _keep,
+    Object? readerSurah = _keep,
+    bool? browsing,
   }) =>
       ListenState(
         phase: phase ?? this.phase,
@@ -128,6 +145,9 @@ class ListenState {
         livePartial: identical(livePartial, _keep) ? this.livePartial : livePartial as TranscriptLine?,
         startedAt: identical(startedAt, _keep) ? this.startedAt : startedAt as DateTime?,
         detectedAfter: identical(detectedAfter, _keep) ? this.detectedAfter : detectedAfter as Duration?,
+        lock: identical(lock, _keep) ? this.lock : lock as Hint?,
+        readerSurah: identical(readerSurah, _keep) ? this.readerSurah : readerSurah as int?,
+        browsing: browsing ?? this.browsing,
       );
 }
 

@@ -113,10 +113,11 @@ class HeardOut(BaseModel):
     """One recognised audio chunk, pushed over /ws/listen.
 
     "partial" is a live preview of a chunk still being recited (shown, not
-    committed); "heard" is the final transcript of a chunk that ended in a pause.
+    committed); "heard" is the final transcript of a chunk that ended in a pause;
+    "position" acknowledges the user's "the imam is here" (no audio, text "").
     """
 
-    type: Literal["heard", "partial"] = "heard"
+    type: Literal["heard", "partial", "position"] = "heard"
     text: str  # Whisper's transcription, with diacritics
     start: float  # seconds since listening started
     end: float

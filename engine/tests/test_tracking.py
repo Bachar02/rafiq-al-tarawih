@@ -158,3 +158,54 @@ def test_end_to_end_on_noisy_stream(tracker, index, vid):
     _, report = evaluation.run(tracker, steps)
     assert report.acceptable >= 0.95
     assert report.wrong_jumps == 0
+
+
+# -- user control: lock the surah, "the imam is here" ------------------------
+
+
+def test_lock_keeps_the_tracker_in_the_surah(tracker, q, vid):
+    """The refrain exists 31 times in Ar-Rahman but also resembles text elsewhere;
+    locked to surah 55, nothing outside it can ever be shown."""
+    s = q.surah(55)
+    tracker.lock(s.first_verse_id, s.last_verse_id)
+    for chunk in ["فبأي آلاء ربكما تكذبان", "الله لا إله إلا هو الحي القيوم", "لا تأخذه سنة ولا نوم"]:
+        state = tracker.update(chunk)
+        shown = state.verse_id or state.pending_verse
+        assert shown is None or q.by_id(shown).surah == 55
+    assert tracker.locked == (s.first_verse_id, s.last_verse_id)
+
+
+def test_lock_still_allows_fatiha(tracker, q, vid):
+    s = q.surah(113)
+    tracker.lock(s.first_verse_id, s.last_verse_id)
+    for chunk in [
+        "قل أعوذ برب الفلق",
+        "من شر ما خلق",
+        "الحمد لله رب العالمين",
+        "الرحمن الرحيم مالك يوم الدين",
+    ]:
+        state = tracker.update(chunk)
+    assert state.verse_id == vid(1, 4)
+
+
+def test_lock_survives_reset_and_unlocks(tracker, q):
+    s = q.surah(2)
+    tracker.lock(s.first_verse_id, s.last_verse_id)
+    tracker.reset()
+    assert tracker.locked is not None
+    tracker.lock(None)
+    assert tracker.locked is None
+
+
+def test_set_position_shows_it_and_continues_from_there(tracker, vid):
+    feed(tracker, "قل أعوذ برب الفلق")  # tracker somewhere else entirely
+    state = tracker.set_position(vid(93, 4))
+    assert state.verse_id == vid(93, 4) and state.status == TRACKING
+    state = tracker.update("ولسوف يعطيك ربك فترضى")  # the imam continues: 93:5
+    assert state.verse_id == vid(93, 5)
+
+
+def test_set_position_beats_an_ambiguous_refrain(tracker, vid):
+    tracker.set_position(vid(55, 40))
+    state = tracker.update("فبأي آلاء ربكما تكذبان")  # 55:40 is itself a refrain ayah
+    assert vid(55, 40) <= state.verse_id <= vid(55, 42)

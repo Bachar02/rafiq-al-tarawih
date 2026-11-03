@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -7,6 +8,38 @@ import 'package:rafiq/features/listen/listen_screen.dart';
 import 'package:rafiq/services/server_health.dart';
 
 import '../support/fakes.dart';
+
+/// Verse ids whose text is highlighted in the mushaf reader.
+List<int> highlightedAyahs(WidgetTester tester) {
+  final quran = loadQuran();
+  final ids = <int>[];
+  for (final rich in tester.widgetList<RichText>(find.byType(RichText))) {
+    rich.text.visitChildren((span) {
+      if (span is TextSpan && span.style?.background != null && span.text != null) {
+        final v = quran.verses.where((v) => v.uthmani == span.text).firstOrNull;
+        if (v != null) ids.add(v.id);
+      }
+      return true;
+    });
+  }
+  return ids;
+}
+
+/// Tap the given ayah's text inside the reader.
+Future<void> tapAyah(WidgetTester tester, int surah, int ayah) async {
+  final verse = loadQuran().surahVerses(surah)[ayah - 1];
+  final rich = find.byWidgetPredicate((w) => w is RichText && w.text.toPlainText().contains(verse.uthmani));
+  final span = find.byWidgetPredicate((w) => w is RichText && w.text.toPlainText().contains(verse.uthmani));
+  expect(span, findsOneWidget);
+  // Fire the ayah's own tap recognizer (what a real tap on its text does).
+  final widget = tester.widget<RichText>(rich);
+  TapGestureRecognizer? recognizer;
+  widget.text.visitChildren((s) {
+    if (s is TextSpan && s.text == verse.uthmani) recognizer = s.recognizer as TapGestureRecognizer?;
+    return recognizer == null;
+  });
+  recognizer!.onTap!();
+}
 
 void main() {
   late Harness h;
@@ -50,9 +83,7 @@ void main() {
     expect(find.text('Ad-Dhuhaa'), findsOneWidget);
     expect(find.textContaining('Ayah 3 of 11'), findsOneWidget);
     expect(find.text('Following'), findsOneWidget);
-    final highlighted = find.byWidgetPredicate((w) => w is Semantics && w.properties.selected == true);
-    expect(highlighted, findsOneWidget);
-    expect((tester.widget(highlighted) as Semantics).properties.label, 'Ayah 3');
+    expect(highlightedAyahs(tester), [loadQuran().surah(93).firstVerseId + 2]);
     expect(find.bySemanticsLabel('Stop following'), findsOneWidget);
   });
 
@@ -145,5 +176,76 @@ void main() {
     await settle(tester);
     expect(find.textContaining('Enter the address'), findsOneWidget);
     expect(h.prefs.getString('server_address'), isNull);
+  });
+
+  testWidgets('tap an ayah: "the imam is here" jumps there and tells the server', (tester) async {
+    await launch(tester);
+    await tester.tap(find.bySemanticsLabel('Start following the imam'));
+    await settle(tester);
+    h.engine.emit(const EngineReady());
+    h.engine.emit(heard(at(93, 2)));
+    await settle(tester);
+
+    await tapAyah(tester, 93, 6);
+    await settle(tester);
+    await tester.tap(find.text('The imam is here'));
+    await settle(tester);
+    expect(h.engine.positions, [pos(93, 6).verseId]);
+    expect(highlightedAyahs(tester), [pos(93, 6).verseId]);
+    expect(find.textContaining('Ayah 6 of 11'), findsOneWidget);
+  });
+
+  testWidgets('lock the surah from the status card, then unlock', (tester) async {
+    await launch(tester);
+    await tester.tap(find.bySemanticsLabel('Start following the imam'));
+    await settle(tester);
+    h.engine.emit(const EngineReady());
+    h.engine.emit(heard(at(55, 13)));
+    await settle(tester);
+
+    await tester.tap(find.byTooltip('Stay on this surah'));
+    await settle(tester);
+    expect(h.engine.locks, [const SurahHint(55)]);
+    expect(find.text('Ar-Rahmaan'), findsWidgets);
+
+    await tester.tap(find.byType(ActionChip));
+    await settle(tester);
+    expect(h.engine.locks.last, isNull);
+  });
+
+  testWidgets('an unsure guess does not yank the reader to another surah', (tester) async {
+    await launch(tester);
+    await tester.tap(find.bySemanticsLabel('Start following the imam'));
+    await settle(tester);
+    h.engine.emit(const EngineReady());
+    h.engine.emit(heard(at(93, 3)));
+    await settle(tester);
+    h.engine.emit(heard(at(2, 255, status: TrackStatus.uncertain)));
+    await settle(tester);
+    expect(find.textContaining('سُورَةُ'), findsOneWidget);
+    expect(find.textContaining('الضحى'), findsWidgets); // still Ad-Duha on the page
+  });
+
+  testWidgets('browse any surah from the index, then follow the imam again', (tester) async {
+    await launch(tester);
+    await tester.tap(find.bySemanticsLabel('Start following the imam'));
+    await settle(tester);
+    h.engine.emit(const EngineReady());
+    h.engine.emit(heard(at(93, 3)));
+    await settle(tester);
+
+    await tester.tap(find.byTooltip('Surahs'));
+    await settle(tester);
+    await tester.enterText(find.byType(TextField), 'Yaseen');
+    await settle(tester);
+    await tester.tap(find.widgetWithText(ListTile, 'Yaseen'));
+    await settle(tester);
+    expect(find.textContaining('Browsing'), findsOneWidget);
+    expect(find.textContaining('يس'), findsWidgets);
+
+    await tester.tap(find.text('Follow the imam'));
+    await settle(tester);
+    expect(find.textContaining('Browsing'), findsNothing);
+    expect(highlightedAyahs(tester), [pos(93, 3).verseId]);
   });
 }

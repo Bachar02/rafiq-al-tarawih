@@ -4,9 +4,14 @@ Protocol (`/ws/listen?surah=55` or `?juz=30` for an optional hint):
 
     client -> server   binary frames: float32 little-endian PCM, 16 kHz, mono, any length
                        text {"type": "end"}: no more audio; flush and finish
+                       text {"type": "lock", "surah": 55} or {"type": "lock", "juz": 27}:
+                            the user says the imam is in this surah/juz; never look elsewhere
+                       text {"type": "unlock"}
+                       text {"type": "position", "verse_id": 4927}: the user says "the imam is here"
     server -> client   {"type": "ready", "device"}           model loaded, start sending
                        {"type": "partial", ...HeardOut}      live preview while the imam is still reciting
                        {"type": "heard", ...HeardOut}        final transcript of a chunk + tracker state
+                       {"type": "position", ...HeardOut}     acknowledges a "position" control (new state)
                        {"type": "warning", "message"}        something was skipped; the session goes on
                        {"type": "done"}                      after "end" has been processed
                        {"type": "error", "message"}          unrecoverable; the socket then closes
@@ -17,6 +22,10 @@ connection. If it falls behind, all audio waiting in the queue is merged into
 one feed, so the next result is about *now*; if even that exceeds
 `MAX_BACKLOG_S`, the oldest audio is dropped. Bad input from a client (a
 malformed frame, NaNs) is repaired or skipped with a warning, never fatal.
+
+Control messages travel through the same queue as audio, so they apply in
+order and only between transcriptions (never while the tracker is in use by
+the worker thread).
 """
 
 from __future__ import annotations
@@ -24,6 +33,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+from dataclasses import dataclass
 
 import numpy as np
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
@@ -50,23 +60,71 @@ def decode_frame(data: bytes) -> np.ndarray:
     return np.clip(samples, -1.0, 1.0, out=samples)
 
 
-def take_backlog(first: np.ndarray, queue: asyncio.Queue) -> tuple[np.ndarray, int, bool]:
-    """Merge everything queued behind `first`; keep at most MAX_BACKLOG_S of the newest.
+@dataclass(frozen=True)
+class Control:
+    """A user correction: lock to a verse range, unlock, or set the position."""
 
-    Returns (audio to feed, samples dropped, end-of-stream seen).
+    kind: str  # "lock" | "unlock" | "position"
+    first: int | None = None
+    last: int | None = None
+    verse_id: int | None = None
+
+
+def parse_control(message: dict, quran) -> Control:
+    """Client JSON -> Control. Raises ValueError with a client-readable reason."""
+    kind = message.get("type")
+    if kind == "unlock":
+        return Control("unlock")
+    if kind == "lock":
+        surah, juz = message.get("surah"), message.get("juz")
+        if isinstance(surah, int) and 1 <= surah <= 114:
+            s = quran.surah(surah)
+            return Control("lock", s.first_verse_id, s.last_verse_id)
+        if isinstance(juz, int) and 1 <= juz <= 30:
+            first, last = quran.juz_span(juz)
+            return Control("lock", first, last)
+        raise ValueError("lock needs a surah (1-114) or a juz (1-30)")
+    if kind == "position":
+        verse_id = message.get("verse_id")
+        if isinstance(verse_id, int) and 1 <= verse_id <= len(quran):
+            return Control("position", verse_id=verse_id)
+        raise ValueError(f"position needs a verse_id between 1 and {len(quran)}")
+    raise ValueError(f"unknown message type {kind!r}")
+
+
+def apply_control(tracker, control: Control):
+    """Apply to the session's tracker; returns the new state for "position"."""
+    if control.kind == "unlock":
+        tracker.lock(None)
+    elif control.kind == "lock":
+        tracker.lock(control.first, control.last)
+    elif control.kind == "position":
+        return tracker.set_position(control.verse_id)
+    return None
+
+
+_DRAINED = object()  # take_backlog: the queue ran empty (no control or end behind the audio)
+
+
+def take_backlog(first: np.ndarray, queue: asyncio.Queue) -> tuple[np.ndarray, int, object]:
+    """Merge the audio queued behind `first`; keep at most MAX_BACKLOG_S of the newest.
+
+    Stops at the first non-audio item (end of stream or a control message) so
+    those keep their place in the order. Returns (audio, samples dropped,
+    the item that stopped the merge or `_DRAINED`).
     """
-    blocks, end = [first], False
+    blocks, stop = [first], _DRAINED
     while not queue.empty():
         nxt = queue.get_nowait()
-        if nxt is None:
-            end = True
+        if not isinstance(nxt, np.ndarray):
+            stop = nxt
             break
         blocks.append(nxt)
     merged = blocks[0] if len(blocks) == 1 else np.concatenate(blocks)
     limit = int(MAX_BACKLOG_S * SAMPLE_RATE)
     if len(merged) > limit:
-        return merged[-limit:], len(merged) - limit, end
-    return merged, 0, end
+        return merged[-limit:], len(merged) - limit, stop
+    return merged, 0, stop
 
 
 async def close_with_error(ws: WebSocket, message: str) -> None:
@@ -132,14 +190,25 @@ async def listen(ws: WebSocket, surah: int | None = None, juz: int | None = None
             return None
 
     async def worker() -> None:
+        carry = _DRAINED  # a non-audio item that stopped the last merge, handled next
         while True:
-            first = await queue.get()
+            first = await queue.get() if carry is _DRAINED else carry
+            carry = _DRAINED
+            if isinstance(first, Control):
+                state = apply_control(listener.tracker, first)
+                if state is not None:
+                    out = schemas.HeardOut(
+                        type="position", text="", start=0, end=0, asr_ms=0, state=eng.state(state)
+                    )
+                    if not await send(out.model_dump()):
+                        return
+                continue
             if first is None:
                 events = await run(listener.flush)
                 if events is not None and all([await send(heard_json(h)) for h in events]):
                     await send({"type": "done"})
                 return
-            audio, dropped, end = take_backlog(first, queue)
+            audio, dropped, carry = take_backlog(first, queue)
             if dropped:
                 listener.skip(dropped)
                 skipped = f"fell behind: skipped {dropped / SAMPLE_RATE:.1f} s of audio"
@@ -151,8 +220,6 @@ async def listen(ws: WebSocket, surah: int | None = None, juz: int | None = None
             for h in events:
                 if not await send(heard_json(h)):
                     return
-            if end:
-                queue.put_nowait(None)
 
     task = asyncio.create_task(worker())
     try:
@@ -167,13 +234,18 @@ async def listen(ws: WebSocket, surah: int | None = None, juz: int | None = None
                     await ws.send_json({"type": "warning", "message": str(e)})
             elif msg.get("text"):
                 try:
-                    kind = json.loads(msg["text"]).get("type")
+                    message = json.loads(msg["text"])
+                    kind = message.get("type")
                 except (json.JSONDecodeError, AttributeError):
-                    kind = None
+                    message, kind = {}, None
                 if kind == "end":
                     queue.put_nowait(None)
                     await task
                     break
+                try:
+                    queue.put_nowait(parse_control(message, eng.quran))
+                except ValueError as e:
+                    await ws.send_json({"type": "warning", "message": str(e)})
     except (WebSocketDisconnect, RuntimeError):
         pass
     finally:

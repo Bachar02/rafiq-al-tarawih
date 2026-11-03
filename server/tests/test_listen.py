@@ -180,7 +180,63 @@ def test_backlog_keeps_only_the_newest_audio():
     for _ in range(40):  # 40 s waiting behind the current block
         queue.put_nowait(silence(1.0))
     queue.put_nowait(None)
-    audio, dropped, end = take_backlog(silence(1.0), queue)
+    audio, dropped, stop = take_backlog(silence(1.0), queue)
     assert len(audio) == MAX_BACKLOG_S * SR
     assert dropped == (41 - MAX_BACKLOG_S) * SR
-    assert end
+    assert stop is None  # end of stream, kept for the worker
+
+
+# -- user control: lock, unlock, "the imam is here" ---------------------------
+
+
+def test_backlog_merge_stops_at_a_control_message():
+    import asyncio
+
+    from rafiq_server.listen import Control, take_backlog
+
+    queue: asyncio.Queue = asyncio.Queue()
+    queue.put_nowait(silence(1.0))
+    queue.put_nowait(Control("unlock"))
+    queue.put_nowait(silence(1.0))  # must not be merged ahead of the control
+    audio, _, stop = take_backlog(silence(1.0), queue)
+    assert len(audio) == 2 * SR
+    assert stop == Control("unlock")
+    assert queue.qsize() == 1
+
+
+def test_position_is_acknowledged_with_the_new_state():
+    client = client_with([])
+    with client.websocket_connect("/ws/listen") as ws:
+        assert ws.receive_json()["type"] == "ready"
+        ws.send_text(json.dumps({"type": "position", "verse_id": get_index().quran.verse(93, 3).id}))
+        msg = ws.receive_json()
+    assert msg["type"] == "position"
+    assert msg["state"]["position"]["ref"] == "93:3"
+    assert msg["state"]["status"] == "tracking"
+
+
+def test_bad_control_messages_are_warnings():
+    client = client_with([])
+    with client.websocket_connect("/ws/listen") as ws:
+        assert ws.receive_json()["type"] == "ready"
+        for bad in ({"type": "lock", "surah": 200}, {"type": "position", "verse_id": 0}, {"type": "dance"}):
+            ws.send_text(json.dumps(bad))
+            msg = ws.receive_json()
+            assert msg["type"] == "warning", bad
+
+
+def test_lock_keeps_the_session_in_the_surah():
+    # Locked to Ad-Duha, then the "imam" recites Ayat al-Kursi: it must not jump there.
+    client = client_with(["والضحى والليل إذا سجى", "الله لا إله إلا هو الحي القيوم لا تأخذه سنة ولا نوم"])
+    audio = np.concatenate([tone(2.0), silence(0.6), tone(2.0), silence(0.6)])
+    with client.websocket_connect("/ws/listen") as ws:
+        assert ws.receive_json()["type"] == "ready"
+        ws.send_text(json.dumps({"type": "lock", "surah": 93}))
+        for i in range(0, len(audio), 4000):
+            ws.send_bytes(audio[i : i + 4000].tobytes())
+        ws.send_text(json.dumps({"type": "end"}))
+        msgs = []
+        while (m := ws.receive_json())["type"] != "done":
+            msgs.append(m)
+    shown = [m["state"]["position"] for m in msgs if m["type"] == "heard" and m["state"]["position"]]
+    assert shown and all(p["surah"] == 93 for p in shown)

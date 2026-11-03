@@ -23,7 +23,8 @@ class Verse:
     id: int  # global 1-based index, 1..6236
     surah: int
     ayah: int
-    text: str
+    text: str  # Simple Clean: what matching uses
+    text_uthmani: str = ""  # Uthmani with full tashkeel: what screens show
 
     @property
     def ref(self) -> str:
@@ -46,6 +47,7 @@ class Surah:
     rukus: int
     first_verse_id: int
     has_basmala: bool = False  # recited before ayah 1 (not part of it); false for 1 and 9
+    basmala_uthmani: str = ""  # this surah's basmala as printed (95 and 97 differ)
 
     @property
     def last_verse_id(self) -> int:

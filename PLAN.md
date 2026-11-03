@@ -166,3 +166,36 @@ Speech recognition runs at ~0.2× real time on a laptop CPU (about 0.8 s per chu
 **Toolchain finding:** the mic plugin ships Java 17 bytecode, so the Android build moved to AGP 8.2 / Gradle 8.5 / Kotlin 1.9 and needs JDK 17+.
 
 **Next:** test in a real mosque with a phone and a laptop (Phase 5 exit), then on-device recognition (Phase 6).
+
+## 14. Mobile v1.1: reader and user control (2026-11-03)
+- **Quran text:** Uthmani with full tashkeel (Tanzil Uthmani v1.1, verbatim in `data/raw/`, cross-checked against Simple Clean by the build). Matching still uses Simple Clean.
+- **Reader:** a mushaf-style page with the current ayah highlighted, recited ayahs dimmed, every ayah tappable, and a surah index.
+- **User control:** *Stay on this surah* (`Tracker.lock`, a hard limit with al-Fatiha excepted) and *The imam is here* (`Tracker.set_position`). New `/ws/listen` messages: `lock`, `unlock`, `position`. The engine re-sends the lock after reconnects.
+
+## 15. Going to the Play Store: how it will work
+
+**Today:** the phone records, and a laptop on the same Wi-Fi recognises. That's fine for development, but it can't ship.
+
+**Shipping target: everything on the phone (Phase 6).** The Quran text is already on the phone. The two remaining pieces move there too:
+1. **Speech model on-device:** the same Quran-tuned Whisper, exported to ONNX (int8, roughly 60–80 MB), run with sherpa-onnx (it has a Flutter plugin). If mid-range phones are too slow, switch to whisper-tiny or a streaming CTC model.
+2. **Tracker in Dart:** normalize, match and track are about 1.5k lines of plain logic. Shared golden test files (input → expected output) are run against both Python and Dart so the two never drift.
+3. **No UI change:** this ships as an `OnDeviceRecognitionEngine` behind the existing `RecognitionEngine` interface.
+
+| | On-device (recommended) | Cloud server |
+|---|---|---|
+| Works in the mosque without internet | ✅ | ❌ needs reliable 4G or Wi-Fi |
+| Running cost | none, at any number of users | ~1 CPU core (or a GPU slice) per listener, and Taraweeh puts *every* user online in the same hour |
+| Privacy | audio never leaves the phone | recitation audio uploaded |
+| Latency | independent of the network | network + server |
+| Risk | speed and battery on cheap phones; app size | cost at peak; outages |
+
+So the Play Store build is on-device. The server stays useful for development, the benchmarks, and possibly an optional cloud fallback for very old phones (hosted with `wss://`).
+
+**Play Store checklist (when Phase 6 works):**
+- **Build:** release signing (Play App Signing), app bundle, current target API level, and the model delivered with Play Asset Delivery to keep the download small.
+- **Security:** remove `usesCleartextTraffic`.
+- **Policy:** a privacy policy URL (required for mic apps) and the Data safety form ("audio processed on device, not collected"). The microphone use is explained in-app (done).
+- **Attribution:** Tanzil (CC BY 3.0), Amiri Quran (OFL), and the model (Apache 2.0), shown in About (done).
+- **Polish:** Arabic UI (localization), crash reporting, then an internal test track, a closed beta with real imams, and public release before Ramadan.
+
+**Order of work:** Dart tracker port with golden parity tests → on-device model, benchmarked on 3 phone tiers → `OnDeviceRecognitionEngine` → store preparation.

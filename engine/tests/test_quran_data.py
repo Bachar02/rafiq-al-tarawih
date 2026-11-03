@@ -314,6 +314,18 @@ def test_juz_boundaries(quran: Quran):
     assert quran.juz_of(quran.verse(114, 6).id) == 30
 
 
+def test_uthmani_display_text_is_parallel(quran: Quran):
+    """Every verse has Uthmani text, split from the basmala like the matching text."""
+    assert all(v.text_uthmani for v in quran)
+    assert quran.verse(1, 1).text_uthmani.startswith("بِسْمِ")
+    assert quran.verse(2, 1).text_uthmani == "الٓمٓ"
+    assert not any(v.text_uthmani.startswith(("بِسْمِ", "بِّسْمِ")) for v in quran if v.ref != "1:1")
+    # Each surah keeps its verbatim basmala; 95 and 97 carry a shadda on the ba.
+    assert quran.surah(95).basmala_uthmani.startswith("بّ")
+    assert quran.surah(93).basmala_uthmani == quran.verse(1, 1).text_uthmani
+    assert quran.surah(9).basmala_uthmani == ""
+
+
 def test_juz_span(quran: Quran):
     assert quran.juz_span(1) == (1, quran.verse(2, 141).id)
     assert quran.juz_span(30) == (quran.verse(78, 1).id, 6236)

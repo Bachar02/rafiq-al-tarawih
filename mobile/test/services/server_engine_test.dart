@@ -193,4 +193,29 @@ void main() {
     expect(server.receivedSamples, isEmpty);
     await engine.dispose();
   });
+
+  test('the lock is re-sent after a reconnect; a position made offline is delivered', () async {
+    final engine = engineFor(server.address);
+    final events = engine.events.asBroadcastStream();
+    final ready = next<EngineReady>(events);
+    engine.lock(const SurahHint(55)); // before connecting: remembered
+    await engine.start();
+    await ready;
+    await Future<void>.delayed(const Duration(milliseconds: 50));
+    expect(server.textMessages, ['{"type":"lock","surah":55}']);
+
+    final reconnecting = next<EngineReconnecting>(events);
+    await server.dropAll();
+    await reconnecting;
+    engine.setPosition(4927); // while disconnected
+    final readyAgain = next<EngineReady>(events);
+    await readyAgain;
+    await Future<void>.delayed(const Duration(milliseconds: 50));
+    expect(server.textMessages.skip(1), ['{"type":"lock","surah":55}', '{"type":"position","verse_id":4927}']);
+
+    engine.lock(null);
+    await Future<void>.delayed(const Duration(milliseconds: 50));
+    expect(server.textMessages.last, '{"type":"unlock"}');
+    await engine.dispose();
+  });
 }

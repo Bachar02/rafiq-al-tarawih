@@ -8,10 +8,14 @@ import '../listen_state.dart';
 
 /// The answer to "where are we?": surah, ayah, and how sure the app is.
 class NowCard extends StatelessWidget {
-  const NowCard({super.key, required this.state, required this.quran});
+  const NowCard({super.key, required this.state, required this.quran, this.onLock, this.onUnlock});
 
   final ListenState state;
   final Quran quran;
+
+  /// "This is the right surah" (null when there is no surah to lock to).
+  final VoidCallback? onLock;
+  final VoidCallback? onUnlock;
 
   @override
   Widget build(BuildContext context) {
@@ -36,6 +40,8 @@ class NowCard extends StatelessWidget {
                 Flexible(child: StatusChip(status: status, reconnectAttempt: state.reconnectAttempt)),
                 const SizedBox(width: 12),
                 Expanded(child: _ConfidenceBar(value: status == DisplayStatus.idle ? 0 : state.track.confidence)),
+                const SizedBox(width: 8),
+                _LockButton(lock: state.lock, quran: quran, onLock: onLock, onUnlock: onUnlock),
               ],
             ),
           ],
@@ -128,6 +134,42 @@ class _Placeholder extends StatelessWidget {
           style: context.text.bodyMedium?.copyWith(color: context.colors.muted),
         ),
       ],
+    );
+  }
+}
+
+/// Lock recognition to the surah on screen, or show that it is locked.
+class _LockButton extends StatelessWidget {
+  const _LockButton({required this.lock, required this.quran, this.onLock, this.onUnlock});
+
+  final Hint? lock;
+  final Quran quran;
+  final VoidCallback? onLock;
+  final VoidCallback? onUnlock;
+
+  @override
+  Widget build(BuildContext context) {
+    final locked = lock;
+    if (locked == null) {
+      return IconButton(
+        tooltip: 'Stay on this surah',
+        visualDensity: VisualDensity.compact,
+        onPressed: onLock,
+        icon: const Icon(Icons.lock_open_rounded, size: 20),
+      );
+    }
+    final label = switch (locked) {
+      SurahHint(:final surah) => quran.surah(surah).nameTranslit,
+      JuzHint(:final juz) => 'Juz $juz',
+    };
+    return Tooltip(
+      message: 'Locked to $label. Tap to unlock.',
+      child: ActionChip(
+        visualDensity: VisualDensity.compact,
+        avatar: Icon(Icons.lock_rounded, size: 16, color: context.scheme.primary),
+        label: Text(label, overflow: TextOverflow.ellipsis),
+        onPressed: onUnlock,
+      ),
     );
   }
 }

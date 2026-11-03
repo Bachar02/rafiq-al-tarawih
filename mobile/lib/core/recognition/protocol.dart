@@ -14,6 +14,16 @@ import 'models.dart';
 
 const endOfStreamMessage = '{"type":"end"}';
 
+/// "The imam is in this surah/juz: never look elsewhere" (null: unlock).
+String lockMessage(Hint? scope) => switch (scope) {
+      SurahHint(:final surah) => jsonEncode({'type': 'lock', 'surah': surah}),
+      JuzHint(:final juz) => jsonEncode({'type': 'lock', 'juz': juz}),
+      null => jsonEncode({'type': 'unlock'}),
+    };
+
+/// "The imam is here."
+String positionMessage(int verseId) => jsonEncode({'type': 'position', 'verse_id': verseId});
+
 /// Query string for an optional hint, e.g. `?surah=55`.
 String hintQuery(Hint? hint) => switch (hint) {
       SurahHint(:final surah) => '?surah=$surah',
@@ -44,7 +54,8 @@ RecognitionEvent? decodeServerMessage(String raw) {
   switch (message['type']) {
     case 'ready':
       return EngineReady(device: message['device'] as String?);
-    case 'heard' || 'partial':
+    // "position" acknowledges the user's "the imam is here" with the new state.
+    case 'heard' || 'partial' || 'position':
       final state = message['state'];
       if (state is! Map<String, dynamic>) return null;
       return Heard(
@@ -53,7 +64,7 @@ RecognitionEvent? decodeServerMessage(String raw) {
         end: _num(message['end']),
         asrMs: _num(message['asr_ms']).round(),
         state: decodeTrackState(state),
-        isFinal: message['type'] == 'heard',
+        isFinal: message['type'] != 'partial',
       );
     case 'warning':
       return EngineWarning((message['message'] as String?) ?? 'warning');

@@ -54,6 +54,8 @@ class ServerRecognitionEngine implements RecognitionEngine {
   Timer? _readyTimer;
   Completer<void>? _done;
   Hint? _hint;
+  Hint? _lock; // re-sent after every (re)connect: each server session starts fresh
+  int? _pendingPosition; // a "the imam is here" made while not connected
 
   bool _active = false; // between start() and finish()/cancel()
   bool _finishing = false;
@@ -81,6 +83,21 @@ class ServerRecognitionEngine implements RecognitionEngine {
       if (frame != null) _send(encodeAudioFrame(frame));
     } else {
       _batcher.trimTo(maxBufferedSeconds * sampleRate);
+    }
+  }
+
+  @override
+  void lock(Hint? scope) {
+    _lock = scope;
+    if (_ready) _send(lockMessage(scope));
+  }
+
+  @override
+  void setPosition(int verseId) {
+    if (_ready) {
+      _send(positionMessage(verseId));
+    } else {
+      _pendingPosition = verseId;
     }
   }
 
@@ -151,6 +168,11 @@ class ServerRecognitionEngine implements RecognitionEngine {
         _everReady = true;
         _attempt = 0;
         _emit(event);
+        if (_lock != null) _send(lockMessage(_lock));
+        if (_pendingPosition != null) {
+          _send(positionMessage(_pendingPosition!));
+          _pendingPosition = null;
+        }
         final frame = _batcher.takeAll(); // audio captured while connecting
         if (frame.isNotEmpty) _send(encodeAudioFrame(frame));
       case EngineFailure():

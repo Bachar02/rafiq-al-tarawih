@@ -53,6 +53,7 @@ class TrackerConfig:
     full_evidence_words: int = 3  # chunks shorter than this count as proportionally weaker evidence
     unknown_exit_cost: float = 0.3  # leaving al-Fatiha when we never saw where the reciter was before
     hint_bonus: float = 0.3  # emission bonus inside the user's hint while searching (soft, never a filter)
+    user_position_score: float = 2.5  # weight of "the imam is here" from the user (~ a long confident run)
     lost_after: int = 4  # consecutive noise chunks before reporting "lost"
     excursions: tuple[tuple[int, int], ...] = ((1, 7),)  # verse-id ranges: al-Fatiha
 
@@ -122,6 +123,7 @@ class Tracker:
         transition: TransitionModel | None = None,
     ) -> None:
         self._hint: tuple[int, int] | None = None  # stream range [lo, hi); survives reset()
+        self._lock: tuple[int, int] | None = None  # hard search limit set by the user; survives reset()
         self.matcher = matcher
         self.index = matcher.index
         self.config = config
@@ -157,6 +159,48 @@ class Tracker:
             return
         last_verse = last_verse or first_verse
         self._hint = (self.index.verse_span(first_verse)[0], self.index.verse_span(last_verse)[1])
+
+    def lock(self, first_verse: int | None, last_verse: int | None = None) -> None:
+        """The user says "the imam is in this surah": never look anywhere else.
+
+        Unlike `hint`, this is a hard limit: candidates outside the range are
+        discarded, so recognition can no longer wander to a similar passage in
+        another surah. Excursions (al-Fatiha, recited every rak'ah) stay
+        allowed. Pass `None` to unlock. It survives `reset()`.
+        """
+        if first_verse is None:
+            self._lock = None
+            return
+        last_verse = last_verse or first_verse
+        self._lock = (self.index.verse_span(first_verse)[0], self.index.verse_span(last_verse)[1])
+
+    @property
+    def locked(self) -> tuple[int, int] | None:
+        """The locked verse range (first, last), if any."""
+        if self._lock is None:
+            return None
+        return self.index.verse_at(self._lock[0]), self.index.verse_at(self._lock[1] - 1)
+
+    def set_position(self, verse_id: int) -> TrackState:
+        """The user says "the imam is here": continue from the start of `verse_id`.
+
+        Replaces every hypothesis with this one and shows it at once. The next
+        chunks are then scored as a continuation from here, so recognition
+        resumes from the user's correction instead of searching again.
+        """
+        start, _ = self.index.verse_span(verse_id)
+        self._hyps = [Hypothesis(end=start, score=self.config.user_position_score, emission=1.0)]
+        self._shown = start + 1  # display: the verse containing word `start`
+        self._shown_anchor = None
+        self._pending, self._pending_count = None, 0
+        self._misses = 0
+        self._state = TrackState(verse_id, start, TRACKING, 1.0)
+        return self._state
+
+    def _allowed(self, pos: int) -> bool:
+        if self._lock is None:
+            return True
+        return self._lock[0] <= pos < self._lock[1] or self._in_excursion(pos)
 
     @property
     def searching(self) -> bool:
@@ -219,7 +263,13 @@ class Tracker:
         if not tokens:
             return []
         cfg = self.config
-        found = self.matcher.match_tokens(tokens, k=cfg.candidates)
+        if self._lock is None:
+            found = self.matcher.match_tokens(tokens, k=cfg.candidates)
+        else:
+            # Search only where the user said the imam is, plus al-Fatiha.
+            found = self.matcher.match_tokens(tokens, k=cfg.candidates, lo=self._lock[0], hi=self._lock[1])
+            for lo, hi in self._excursion_spans:
+                found += self.matcher.match_tokens(tokens, k=cfg.candidates, lo=lo, hi=hi)
         if hint:
             found += self.matcher.match_tokens(tokens, k=cfg.candidates, lo=hint[0], hi=hint[1])
         # Always check "right where I expect", so a poor global ranking can
@@ -231,6 +281,8 @@ class Tracker:
                     found.append(local)
         unique: dict[tuple[int, int], Match] = {}
         for m in found:
+            if not self._allowed(m.start):
+                continue
             if (m.start, m.end) not in unique or m.score > unique[(m.start, m.end)].score:
                 unique[(m.start, m.end)] = m
         return sorted(unique.values(), key=lambda m: m.score, reverse=True)

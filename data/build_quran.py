@@ -20,12 +20,13 @@ from pathlib import Path
 DATA_DIR = Path(__file__).resolve().parent
 TEXT_SRC = DATA_DIR / "raw" / "quran-simple-clean.txt"
 META_SRC = DATA_DIR / "raw" / "quran-data.xml"
+UTHMANI_SRC = DATA_DIR / "raw" / "quran-uthmani.txt"
 DEFAULT_OUT = DATA_DIR / "quran.json"
 
 TOTAL_VERSES = 6236
 TOTAL_SURAHS = 114
 
-SOURCE_NOTE = "Tanzil Quran Text (Simple Clean, v1.1) + Tanzil metadata, https://tanzil.net"
+SOURCE_NOTE = "Tanzil Quran Text (Simple Clean, v1.1; Uthmani, v1.1) + Tanzil metadata, https://tanzil.net"
 LICENSE_NOTE = "Creative Commons Attribution 3.0 — Copyright (C) Tanzil Project"
 
 
@@ -174,8 +175,52 @@ def split_basmala(verses: list[dict], surahs: list[dict]) -> None:
         verse["text"] = verse["text"][len(BASMALA) :].strip()
 
 
-def build(text_src: Path, meta_src: Path) -> dict:
-    for p in (text_src, meta_src):
+# The Uthmani basmala is ayah 1:1 itself, taken from the file rather than typed
+# here (its combining marks have a precise codepoint order). Tanzil writes it
+# with a shadda on the ba (بِّسْمِ) in surahs 95 and 97, as the Madinah mushaf
+# prints it, so that form is accepted too, and each surah keeps its own
+# verbatim basmala for display.
+SHADDA = "ّ"
+
+
+def uthmani_basmalas(uthmani: list[dict]) -> tuple[str, ...]:
+    plain = next(u["text"] for u in uthmani if (u["surah"], u["ayah"]) == (1, 1))
+    return plain, plain[0] + SHADDA + plain[1:]
+
+
+def add_uthmani(verses: list[dict], uthmani: list[dict], surahs: list[dict]) -> None:
+    """Attach the Uthmani display text to each verse, split like the matching text.
+
+    Matching uses Simple Clean (ASR never produces Uthmani orthography);
+    screens show Uthmani, which is what a mushaf looks like. The two files are
+    independent publications, so their ayah numbering is cross-checked and
+    any disagreement aborts the build.
+    """
+    if len(uthmani) != len(verses):
+        raise BuildError(f"Uthmani text has {len(uthmani)} verses, Simple Clean has {len(verses)}")
+    for simple, u in zip(verses, uthmani, strict=True):
+        if (simple["surah"], simple["ayah"]) != (u["surah"], u["ayah"]):
+            raise BuildError(
+                f"Uthmani verse {u['surah']}:{u['ayah']} lines up with "
+                f"Simple Clean {simple['surah']}:{simple['ayah']}"
+            )
+        simple["text_uthmani"] = u["text"]
+
+    basmalas = uthmani_basmalas(uthmani)
+    first = {v["surah"]: v for v in verses if v["ayah"] == 1}
+    for s in surahs:
+        if not s["has_basmala"]:
+            continue
+        verse = first[s["index"]]
+        prefix = next((b for b in basmalas if verse["text_uthmani"].startswith(b + " ")), None)
+        if prefix is None:
+            raise BuildError(f"surah {s['index']}: Uthmani ayah 1 does not start with a known basmala")
+        verse["text_uthmani"] = verse["text_uthmani"][len(prefix) :].strip()
+        s["basmala_uthmani"] = prefix
+
+
+def build(text_src: Path, meta_src: Path, uthmani_src: Path = UTHMANI_SRC) -> dict:
+    for p in (text_src, meta_src, uthmani_src):
         if not p.exists():
             raise BuildError(f"missing source file: {p}")
 
@@ -183,6 +228,7 @@ def build(text_src: Path, meta_src: Path) -> dict:
     meta = parse_metadata(meta_src)
     validate(verses, meta)
     split_basmala(verses, meta["surahs"])
+    add_uthmani(verses, parse_text(uthmani_src), meta["surahs"])
 
     surahs = []
     for s in meta["surahs"]:
@@ -194,7 +240,9 @@ def build(text_src: Path, meta_src: Path) -> dict:
         "meta": {
             "source": SOURCE_NOTE,
             "license": LICENSE_NOTE,
-            "text_variant": "simple-clean, basmala split from ayah 1",
+            "text_variant": (
+                "text: simple-clean (matching); text_uthmani: uthmani (display); basmala split from ayah 1"
+            ),
             "note": "Derived artifact. Do not edit by hand; rebuild with data/build_quran.py.",
             "verse_count": len(verses),
             "surah_count": len(surahs),

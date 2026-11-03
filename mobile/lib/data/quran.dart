@@ -15,6 +15,8 @@ class Surah {
     required this.ayahCount,
     required this.firstVerseId,
     required this.hasBasmala,
+    this.basmalaUthmani = '',
+    this.revelationType = '',
   });
 
   factory Surah.fromJson(Map<String, dynamic> j) => Surah(
@@ -25,6 +27,8 @@ class Surah {
         ayahCount: j['ayah_count'] as int,
         firstVerseId: j['first_verse_id'] as int,
         hasBasmala: (j['has_basmala'] as bool?) ?? false,
+        basmalaUthmani: (j['basmala_uthmani'] as String?) ?? '',
+        revelationType: (j['revelation_type'] as String?) ?? '',
       );
 
   final int index;
@@ -37,16 +41,28 @@ class Surah {
   /// The basmala is recited before ayah 1 (it is not part of it). False for 1 and 9.
   final bool hasBasmala;
 
+  /// This surah's basmala as printed (95 and 97 differ slightly). Empty if none.
+  final String basmalaUthmani;
+
+  /// "Meccan" or "Medinan".
+  final String revelationType;
+
   int get lastVerseId => firstVerseId + ayahCount - 1;
 }
 
 class Verse {
-  const Verse({required this.id, required this.surah, required this.ayah, required this.text});
+  const Verse({required this.id, required this.surah, required this.ayah, required this.text, String? uthmani})
+      : uthmani = uthmani ?? text;
 
   final int id;
   final int surah;
   final int ayah;
+
+  /// Simple Clean (no diacritics): what matching uses.
   final String text;
+
+  /// Uthmani script with full tashkeel: what the reader shows.
+  final String uthmani;
 }
 
 class Quran {
@@ -63,6 +79,7 @@ class Quran {
           surah: v['surah'] as int,
           ayah: v['ayah'] as int,
           text: v['text'] as String,
+          uthmani: v['text_uthmani'] as String?,
         ),
     ];
     if (surahs.length != 114 || verses.length != 6236) {

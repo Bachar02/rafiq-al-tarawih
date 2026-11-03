@@ -74,4 +74,16 @@ void main() {
     expect(hintQuery(const SurahHint(55)), '?surah=55');
     expect(hintQuery(const JuzHint(30)), '?juz=30');
   });
+
+  test('control messages', () {
+    expect(lockMessage(const SurahHint(55)), '{"type":"lock","surah":55}');
+    expect(lockMessage(const JuzHint(30)), '{"type":"lock","juz":30}');
+    expect(lockMessage(null), '{"type":"unlock"}');
+    expect(positionMessage(4927), '{"type":"position","verse_id":4927}');
+    const ack = '{"type":"position","text":"","start":0,"end":0,"asr_ms":0,'
+        '"state":{"position":{"verse_id":4927,"surah":55,"ayah":13},"status":"tracking","confidence":1}}';
+    final heard = decodeServerMessage(ack)! as Heard;
+    expect(heard.isFinal, isTrue);
+    expect(heard.state.position!.ref, '55:13');
+  });
 }

@@ -18,6 +18,8 @@ class RafiqColors extends ThemeExtension<RafiqColors> {
     required this.muted,
     required this.highlight,
     required this.surfaceRaised,
+    required this.paper,
+    required this.recited,
   });
 
   /// Status: confidently following the imam.
@@ -41,14 +43,22 @@ class RafiqColors extends ThemeExtension<RafiqColors> {
   /// Cards on top of the page background.
   final Color surfaceRaised;
 
+  /// The mushaf page.
+  final Color paper;
+
+  /// Ayahs the imam has already recited (gently dimmed text).
+  final Color recited;
+
   static const dark = RafiqColors(
     following: Color(0xFF4ADE80),
     uncertain: Color(0xFFFBBF24),
     lost: Color(0xFFF87171),
     gold: Color(0xFFD4B483),
     muted: Color(0xFF93A39B),
-    highlight: Color(0xFF173E3A),
+    highlight: Color(0xFF1B4A44),
     surfaceRaised: Color(0xFF18201D),
+    paper: Color(0xFF141B18),
+    recited: Color(0xFF7F8C86),
   );
 
   static const light = RafiqColors(
@@ -57,8 +67,10 @@ class RafiqColors extends ThemeExtension<RafiqColors> {
     lost: Color(0xFFB91C1C),
     gold: Color(0xFF9A7440),
     muted: Color(0xFF66706A),
-    highlight: Color(0xFFD5EEEA),
+    highlight: Color(0xFFCDEBE5),
     surfaceRaised: Color(0xFFFFFFFF),
+    paper: Color(0xFFFBF7EC),
+    recited: Color(0xFF8A8F86),
   );
 
   @override
@@ -70,6 +82,8 @@ class RafiqColors extends ThemeExtension<RafiqColors> {
     Color? muted,
     Color? highlight,
     Color? surfaceRaised,
+    Color? paper,
+    Color? recited,
   }) =>
       RafiqColors(
         following: following ?? this.following,
@@ -79,6 +93,8 @@ class RafiqColors extends ThemeExtension<RafiqColors> {
         muted: muted ?? this.muted,
         highlight: highlight ?? this.highlight,
         surfaceRaised: surfaceRaised ?? this.surfaceRaised,
+        paper: paper ?? this.paper,
+        recited: recited ?? this.recited,
       );
 
   @override
@@ -92,6 +108,8 @@ class RafiqColors extends ThemeExtension<RafiqColors> {
       muted: Color.lerp(muted, other.muted, t)!,
       highlight: Color.lerp(highlight, other.highlight, t)!,
       surfaceRaised: Color.lerp(surfaceRaised, other.surfaceRaised, t)!,
+      paper: Color.lerp(paper, other.paper, t)!,
+      recited: Color.lerp(recited, other.recited, t)!,
     );
   }
 }

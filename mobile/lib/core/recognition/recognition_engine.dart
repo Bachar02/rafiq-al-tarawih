@@ -21,6 +21,13 @@ abstract interface class RecognitionEngine {
   /// 16 kHz mono float32 samples, any length. Buffered while not connected.
   void addAudio(Float32List samples);
 
+  /// Keep recognition inside this surah/juz (null: search everywhere again).
+  /// Remembered for the whole session, including reconnects.
+  void lock(Hint? scope);
+
+  /// The user says the imam is at [verseId]; recognition continues from there.
+  void setPosition(int verseId);
+
   /// Stop sending audio, let the engine finish, then close. Emits EngineDone.
   Future<void> finish();
 

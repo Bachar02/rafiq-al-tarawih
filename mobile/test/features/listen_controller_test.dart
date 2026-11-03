@@ -161,4 +161,57 @@ void main() {
     await controller().start();
     expect(h.awake.enabled, isFalse);
   });
+
+  group('user control', () {
+    test('a lock is sent with every session and kept across restarts', () async {
+      controller().lockTo(const SurahHint(55));
+      await controller().start();
+      expect(h.engine.locks, [const SurahHint(55)]);
+      await controller().stop();
+      await controller().start();
+      expect(h.engine.locks, [const SurahHint(55)]); // the new engine got it too
+      controller().unlock();
+      expect(h.engine.locks.last, isNull);
+      expect(state().lock, isNull);
+    });
+
+    test('"the imam is here" shows at once and reaches the engine', () async {
+      await controller().start();
+      controller().setPosition(pos(7, 29));
+      expect(h.engine.positions, [pos(7, 29).verseId]);
+      expect(state().track.position, pos(7, 29));
+      expect(state().track.status, TrackStatus.tracking);
+      expect(state().readerSurah, 7);
+    });
+
+    test('the reader only changes surah on a confident result', () async {
+      await controller().start();
+      h.engine.emit(const EngineReady());
+      h.engine.emit(heard(at(93, 3)));
+      expect(state().readerSurah, 93);
+      h.engine.emit(heard(at(2, 255, status: TrackStatus.uncertain)));
+      expect(state().readerSurah, 93); // unsure: stay
+      h.engine.emit(heard(at(2, 255)));
+      expect(state().readerSurah, 2); // confident: move
+    });
+
+    test('browsing pauses following until the user asks for it', () async {
+      await controller().start();
+      h.engine.emit(const EngineReady());
+      h.engine.emit(heard(at(93, 3)));
+      controller().browse(36);
+      h.engine.emit(heard(at(93, 4)));
+      expect(state().readerSurah, 36);
+      expect(state().browsing, isTrue);
+      controller().followImam();
+      expect(state().readerSurah, 93);
+      expect(state().browsing, isFalse);
+    });
+
+    test('a position acknowledgement (no text) is not added to the transcript', () async {
+      await controller().start();
+      h.engine.emit(heard(at(93, 3), text: ''));
+      expect(state().transcript, isEmpty);
+    });
+  });
 }

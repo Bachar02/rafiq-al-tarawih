@@ -73,6 +73,18 @@ model, latency), keep screen awake, text size, show diagnostics, about and attri
 
 **Diagnostics (opt-in):** a live transcript feed under the surah text, for field testing.
 
+### 2.2b Reader and user control (v1.1)
+- **The whole Quran is on the phone** (Uthmani text with tashkeel, offline). The server only says *where*;
+  the app opens that place in its own copy. A surah index lets the user browse anywhere.
+- **Mushaf reader:** ornamental surah header, the surah's own basmala, one flowing justified paragraph
+  with ayah-end ornaments (۝ + Arabic numeral). The current ayah is highlighted and recited ayahs are
+  dimmed. Auto-follow scrolls to the exact line of the ayah.
+- **No flicker:** the reader changes surah only on a *confident* result, a user correction, or browsing.
+  An unsure guess appears as "Maybe …" in the status card and never replaces the text.
+- **User control:** tap any ayah, then *The imam is here* (the tracker continues from it) or
+  *Stay on this surah* (a hard lock: recognition never searches other surahs, al-Fatiha excepted).
+  The lock button on the status card does the same, and the lock survives reconnects.
+
 ### 2.3 Visual language
 - **Color:** dark by default (Taraweeh is at night). A deep green-teal primary, a warm
   gold for ayah markers, amber for uncertain and red for lost. Light theme supported.
