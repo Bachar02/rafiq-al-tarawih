@@ -1262,6 +1262,180 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Page {page} of {total} · {percent}%'**
   String khatmProgress(int page, int total, int percent);
+
+  /// No description provided for @navRead.
+  ///
+  /// In en, this message translates to:
+  /// **'Read'**
+  String get navRead;
+
+  /// No description provided for @navSurahs.
+  ///
+  /// In en, this message translates to:
+  /// **'Surahs'**
+  String get navSurahs;
+
+  /// No description provided for @navBookmarks.
+  ///
+  /// In en, this message translates to:
+  /// **'Bookmarks'**
+  String get navBookmarks;
+
+  /// No description provided for @navMore.
+  ///
+  /// In en, this message translates to:
+  /// **'More'**
+  String get navMore;
+
+  /// No description provided for @continueReading.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue reading'**
+  String get continueReading;
+
+  /// No description provided for @bookmarksCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{Bookmarks} =1{1 bookmark} other{{count} bookmarks}}'**
+  String bookmarksCount(int count);
+
+  /// No description provided for @sortBookmarks.
+  ///
+  /// In en, this message translates to:
+  /// **'Sort bookmarks'**
+  String get sortBookmarks;
+
+  /// No description provided for @sortNewest.
+  ///
+  /// In en, this message translates to:
+  /// **'Newest first'**
+  String get sortNewest;
+
+  /// No description provided for @sortQuranOrder.
+  ///
+  /// In en, this message translates to:
+  /// **'In Quran order'**
+  String get sortQuranOrder;
+
+  /// No description provided for @noBookmarksHint.
+  ///
+  /// In en, this message translates to:
+  /// **'No bookmarks yet. While reading, press and hold an ayah to bookmark it.'**
+  String get noBookmarksHint;
+
+  /// No description provided for @scrubberLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Go through the Quran'**
+  String get scrubberLabel;
+
+  /// No description provided for @tooltipOpenSurahs.
+  ///
+  /// In en, this message translates to:
+  /// **'Surahs, juz and pages'**
+  String get tooltipOpenSurahs;
+
+  /// No description provided for @comingSoon.
+  ///
+  /// In en, this message translates to:
+  /// **'Coming soon'**
+  String get comingSoon;
+
+  /// No description provided for @soon.
+  ///
+  /// In en, this message translates to:
+  /// **'Soon'**
+  String get soon;
+
+  /// No description provided for @soonRecitation.
+  ///
+  /// In en, this message translates to:
+  /// **'Recitation audio'**
+  String get soonRecitation;
+
+  /// No description provided for @soonRecitationDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'Listen to an ayah, a page or a surah'**
+  String get soonRecitationDetail;
+
+  /// No description provided for @soonTranslation.
+  ///
+  /// In en, this message translates to:
+  /// **'Translations'**
+  String get soonTranslation;
+
+  /// No description provided for @soonTranslationDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'The meaning beside the Arabic, in your language'**
+  String get soonTranslationDetail;
+
+  /// No description provided for @soonTafsir.
+  ///
+  /// In en, this message translates to:
+  /// **'Tafsir'**
+  String get soonTafsir;
+
+  /// No description provided for @soonTafsirDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'Commentary on each ayah'**
+  String get soonTafsirDetail;
+
+  /// No description provided for @soonKhatm.
+  ///
+  /// In en, this message translates to:
+  /// **'Khatm planner'**
+  String get soonKhatm;
+
+  /// No description provided for @soonKhatmDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'Plan a complete reading and follow it day by day'**
+  String get soonKhatmDetail;
+
+  /// No description provided for @soonNotes.
+  ///
+  /// In en, this message translates to:
+  /// **'Notes'**
+  String get soonNotes;
+
+  /// No description provided for @soonNotesDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'Your own notes on an ayah'**
+  String get soonNotesDetail;
+
+  /// No description provided for @soonOffline.
+  ///
+  /// In en, this message translates to:
+  /// **'Taraweeh without a computer'**
+  String get soonOffline;
+
+  /// No description provided for @soonOfflineDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'Recognition on the phone itself'**
+  String get soonOfflineDetail;
+
+  /// No description provided for @listen.
+  ///
+  /// In en, this message translates to:
+  /// **'Listen'**
+  String get listen;
+
+  /// No description provided for @translation.
+  ///
+  /// In en, this message translates to:
+  /// **'Translation'**
+  String get translation;
+
+  /// No description provided for @tafsir.
+  ///
+  /// In en, this message translates to:
+  /// **'Tafsir'**
+  String get tafsir;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

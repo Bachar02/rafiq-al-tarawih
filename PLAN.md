@@ -432,3 +432,31 @@ Built on `feat/quran-reader`, in five commits, each with tests and goldens.
 3. **The A32 scroll benchmark** (R2) is still pending. It should now also cover the page view.
 4. **Native review** of the new French and Arabic strings.
 5. **Next build:** 0.3, Taraweeh on the phone (§17 M1–M2), the critical path to the beta.
+
+## 20. Navigation and bookmarks redesign (2026-11-05)
+
+**Why:** after trying 0.2 on the emulator, finding a surah, moving through the Quran and bookmarking were all too hard:
+- Navigation hid behind unlabelled icons.
+- There was no fast way through 604 pages.
+- Bookmarks were invisible in the text and buried in a tab of Go to.
+
+**What changed** (simple patterns, nothing new underneath):
+- **A labelled bottom bar: Read · Surahs · Bookmarks · Taraweeh · More.**
+  - Taraweeh stays a one-tap button that starts listening, as approved in §18.
+  - Settings moved to More.
+  - The floating Taraweeh button over the text is gone.
+- **Surahs tab:** the surah list (with a filter), juz and pages. Tapping the surah name (now with a ▾) in the reader opens it.
+- **Scrubber:** a handle on the edge that flies through the pages, with a bubble naming the page, surah and juz. It works the same in scroll and page view.
+- **Bookmarks:**
+  - A ribbon in the text marks bookmarked ayahs.
+  - Press and hold an ayah to toggle its bookmark at once, with Undo.
+  - The Bookmarks tab lists *Continue reading* and *Where Taraweeh ended*, then the bookmarks, sorted newest first or in Quran order (remembered).
+  - Swipe to delete, with Undo restoring the original date.
+  - A removal that fails to save stays visible and says so.
+- **Placeholders**, shown and visibly disabled:
+  - In More: recitation audio, translations, tafsir, a khatm planner, notes, Taraweeh without a computer.
+  - In the ayah sheet: Listen, Translation and Tafsir.
+- **Design rule:** other tabs open places in the reader through `readerRequestsProvider`, never by reaching into its widget state.
+- **Accessibility:** a screen reader announced the page view's long-press area as an unlabelled node. It is now hidden from screen readers, who bookmark through each ayah's sheet.
+
+**Totals:** 212 tests, 29 golden screenshots, and the Android debug build passes.

@@ -32,6 +32,7 @@ class AppSettings {
     this.language = AppLanguage.system,
     this.readingLayout = ReadingLayout.scroll,
     this.dailyGoalPages = 0,
+    this.bookmarksInQuranOrder = false,
   });
 
   /// The daily reading goals offered, in pages; 0 is off. 20 pages is a juz
@@ -74,6 +75,9 @@ class AppSettings {
   /// Pages a day, or 0 for no goal.
   final int dailyGoalPages;
 
+  /// The Bookmarks tab lists in Quran order (else newest first).
+  final bool bookmarksInQuranOrder;
+
   AppSettings copyWith({
     String? serverAddress,
     bool? keepScreenOn,
@@ -85,6 +89,7 @@ class AppSettings {
     AppLanguage? language,
     ReadingLayout? readingLayout,
     int? dailyGoalPages,
+    bool? bookmarksInQuranOrder,
   }) =>
       AppSettings(
         serverAddress: serverAddress ?? this.serverAddress,
@@ -97,6 +102,7 @@ class AppSettings {
         language: language ?? this.language,
         readingLayout: readingLayout ?? this.readingLayout,
         dailyGoalPages: dailyGoalPages ?? this.dailyGoalPages,
+        bookmarksInQuranOrder: bookmarksInQuranOrder ?? this.bookmarksInQuranOrder,
       );
 }
 
@@ -116,6 +122,7 @@ class SettingsStore {
   static const _language = 'language';
   static const _layout = 'reading_layout';
   static const _goal = 'daily_goal_pages';
+  static const _bookmarkOrder = 'bookmarks_quran_order';
 
   AppSettings load() {
     const d = AppSettings();
@@ -132,6 +139,7 @@ class SettingsStore {
       language: AppLanguage.values.asNameMap()[_prefs.getString(_language)] ?? d.language,
       readingLayout: ReadingLayout.values.asNameMap()[_prefs.getString(_layout)] ?? d.readingLayout,
       dailyGoalPages: _knownGoal(_prefs.getInt(_goal)) ?? d.dailyGoalPages,
+      bookmarksInQuranOrder: _prefs.getBool(_bookmarkOrder) ?? d.bookmarksInQuranOrder,
     );
   }
 
@@ -146,6 +154,7 @@ class SettingsStore {
     await _prefs.setString(_language, s.language.name);
     await _prefs.setString(_layout, s.readingLayout.name);
     await _prefs.setInt(_goal, s.dailyGoalPages);
+    await _prefs.setBool(_bookmarkOrder, s.bookmarksInQuranOrder);
   }
 
   static int? _knownGoal(int? pages) => AppSettings.dailyGoals.contains(pages) ? pages : null;

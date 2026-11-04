@@ -11,18 +11,16 @@ import '../../../data/settings.dart';
 class ReaderBar extends ConsumerWidget {
   const ReaderBar({
     super.key,
-    required this.onNavigate,
-    required this.onSettings,
+    required this.onOpenSurahs,
     this.onSearch,
     this.onToggleLayout,
   });
 
-  /// Surahs, juz, pages and bookmarks.
-  final VoidCallback onNavigate;
+  /// The Surahs tab (surahs, juz, pages).
+  final VoidCallback onOpenSurahs;
   final VoidCallback? onSearch;
-  final VoidCallback onSettings;
 
-  /// Switch between scroll and pages (shown when the bar has room).
+  /// Switch between scroll and pages.
   final VoidCallback? onToggleLayout;
 
   @override
@@ -35,9 +33,6 @@ class ReaderBar extends ConsumerWidget {
     final surah = quran.surah(verse.surah);
     final juz = quran.juzOf(verse.id), page = quran.pageOf(verse.id);
     final pages = ref.watch(settingsProvider.select((s) => s.readingLayout)) == ReadingLayout.pages;
-    // On a narrow phone the place (juz, page) keeps the room; the layout
-    // stays one tap away in Settings.
-    final roomy = MediaQuery.sizeOf(context).width >= 360;
     final goal = ref.watch(settingsProvider.select((s) => s.dailyGoalPages));
     ref.watch(readingProgressProvider);
     final read = goal == 0 ? 0 : ref.read(readingProgressProvider.notifier).today;
@@ -48,14 +43,9 @@ class ReaderBar extends ConsumerWidget {
         : '${l.juzPage(juz, page)} · ${MediaQuery.sizeOf(context).width >= 360 ? l.todayProgress(read, goal) : '$read/$goal'}';
 
     final bar = Padding(
-      padding: const EdgeInsetsDirectional.fromSTEB(RubricSpace.s1, RubricSpace.s1, RubricSpace.s1, 0),
+      padding: const EdgeInsetsDirectional.fromSTEB(RubricSpace.s2, RubricSpace.s1, RubricSpace.s1, 0),
       child: Row(
         children: [
-          IconButton(
-            tooltip: l.tooltipNavigate,
-            onPressed: onNavigate,
-            icon: const Icon(Icons.toc),
-          ),
           Expanded(
             child: Semantics(
               button: true,
@@ -64,7 +54,7 @@ class ReaderBar extends ConsumerWidget {
                   : '${l.semReaderBar(names.of(surah.index), verse.ayah, juz, page)}. ${l.semTodayProgress(read, goal)}',
               excludeSemantics: true,
               child: InkWell(
-                onTap: onNavigate,
+                onTap: onOpenSurahs,
                 borderRadius: BorderRadius.circular(RubricRadius.sm),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: RubricSpace.s2, vertical: RubricSpace.s1),
@@ -86,6 +76,10 @@ class ReaderBar extends ConsumerWidget {
                                 text: '  ${names.of(surah.index)}',
                                 style: RubricText.caption.copyWith(color: c.inkSecondary),
                               ),
+                            WidgetSpan(
+                              alignment: PlaceholderAlignment.middle,
+                              child: Icon(Icons.expand_more, size: 20, color: c.inkSecondary),
+                            ),
                           ],
                         ),
                         maxLines: 1,
@@ -103,7 +97,7 @@ class ReaderBar extends ConsumerWidget {
               ),
             ),
           ),
-          if (onToggleLayout != null && roomy)
+          if (onToggleLayout != null)
             IconButton(
               tooltip: pages ? l.tooltipScrollView : l.tooltipPageView,
               onPressed: onToggleLayout,
@@ -111,7 +105,6 @@ class ReaderBar extends ConsumerWidget {
             ),
           if (onSearch != null)
             IconButton(tooltip: l.tooltipSearch, onPressed: onSearch, icon: const Icon(Icons.search)),
-          IconButton(tooltip: l.settings, onPressed: onSettings, icon: const Icon(Icons.settings_outlined)),
         ],
       ),
     );

@@ -22,7 +22,7 @@ class RubricGroup extends StatelessWidget {
             padding: const EdgeInsets.only(top: RubricSpace.s6, bottom: RubricSpace.s2),
             child: Semantics(
               header: true,
-              child: Text(label!.toUpperCase(), style: RubricText.overline.copyWith(color: c.inkSecondary)),
+              child: Text(label!.toUpperCase(), style: RubricText.overlineFor(context).copyWith(color: c.inkSecondary)),
             ),
           ),
         ClipRRect(

@@ -10,8 +10,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:rafiq/app/app.dart';
 import 'package:rafiq/app/components/quran_text.dart';
 import 'package:rafiq/core/recognition/models.dart';
-import 'package:rafiq/features/reader/widgets/taraweeh_entry.dart';
 
+import '../support/app_nav.dart';
 import '../support/fakes.dart';
 import '../support/golden.dart';
 
@@ -47,7 +47,7 @@ void main() {
     await tester.pumpWidget(ProviderScope(overrides: h.overrides, child: const RafiqApp()));
     await tester.pump();
     if (taraweeh) {
-      await tester.tap(find.byType(TaraweehEntry)); // in any language
+      await tester.tap(find.byIcon(Icons.mic_none)); // in any language
       await settle(tester);
     }
   }
@@ -158,8 +158,7 @@ void main() {
 
     testWidgets('French interface: settings', (tester) async {
       await launch(tester, prefs: {'language': 'fr', 'theme_mode': 'light'}, taraweeh: false);
-      await tester.tap(find.byTooltip('Réglages'));
-      await settle(tester);
+      await openSettings(tester, more: 'Plus', settings: 'Réglages');
       await expectGolden(tester, 'fr_settings');
     });
 
@@ -175,7 +174,7 @@ void main() {
     });
 
     testWidgets('go to: bookmarks and where Taraweeh ended, light', (tester) async {
-      final at = DateTime.now().toUtc().toIso8601String();
+      const at = '2026-11-04T18:00:00Z';
       final quran = loadQuran();
       await launch(
         tester,
@@ -188,11 +187,30 @@ void main() {
         },
         taraweeh: false,
       );
-      await tester.tap(find.byTooltip('Surahs, juz and bookmarks'));
+      await tapNav(tester, 'Bookmarks');
+      await expectGolden(tester, 'bookmarks');
+    });
+
+    testWidgets('Surahs tab, dark', (tester) async {
+      await launch(tester, prefs: {...readingAt(18, 10), 'theme_mode': 'dark'}, taraweeh: false);
+      await tapNav(tester, 'Surahs');
+      await expectGolden(tester, 'surahs');
+    });
+
+    testWidgets('More: settings and what is coming, light', (tester) async {
+      await launch(tester, prefs: {'theme_mode': 'light'}, taraweeh: false);
+      await tapNav(tester, 'More');
+      await expectGolden(tester, 'more');
+    });
+
+    testWidgets('ayah sheet: bookmark, share, copy, and what is coming', (tester) async {
+      await launch(tester, prefs: {...readingAt(2, 255), 'theme_mode': 'dark'}, taraweeh: false);
       await settle(tester);
-      await tester.tap(find.text('Bookmarks'));
+      final quran = loadQuran();
+      final ayah = find.byWidgetPredicate((w) => w is AyahBlock && w.verse.id == quran.verseId(2, 255));
+      tester.widget<AyahBlock>(ayah.first).onTap!();
       await settle(tester);
-      await expectGolden(tester, 'navigate_bookmarks');
+      await expectGolden(tester, 'ayah_sheet');
     });
 
     testWidgets('reader: 320×568 at the largest Quran text, in juz 30', (tester) async {

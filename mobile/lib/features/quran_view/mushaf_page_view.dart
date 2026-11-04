@@ -37,7 +37,9 @@ class MushafPageView extends StatefulWidget {
     this.controller,
     this.textScale = 1.0,
     this.highlightedVerse,
+    this.bookmarkedVerses = const {},
     this.onAyahTap,
+    this.onAyahLongPress,
     this.onPageChanged,
     this.onUserScroll,
     this.bottomPadding = 0,
@@ -51,7 +53,11 @@ class MushafPageView extends StatefulWidget {
   final MushafPageController? controller;
   final double textScale;
   final int? highlightedVerse;
+
+  /// Ayahs that carry the bookmark ribbon.
+  final Set<int> bookmarkedVerses;
   final ValueChanged<Verse>? onAyahTap;
+  final ValueChanged<Verse>? onAyahLongPress;
 
   /// A new page settled into view (1..604).
   final ValueChanged<int>? onPageChanged;
@@ -122,7 +128,9 @@ class _MushafPageViewState extends State<MushafPageView> {
           page: i + 1,
           fontSize: MushafPageView.baseFontSize * widget.textScale,
           highlightedVerse: widget.highlightedVerse,
+          bookmarkedVerses: widget.bookmarkedVerses,
           onAyahTap: widget.onAyahTap,
+          onAyahLongPress: widget.onAyahLongPress,
           onUserScroll: widget.onUserScroll,
           bottomPadding: widget.bottomPadding,
         ),
@@ -140,7 +148,9 @@ class _MushafPage extends StatefulWidget {
     required this.page,
     required this.fontSize,
     required this.highlightedVerse,
+    required this.bookmarkedVerses,
     required this.onAyahTap,
+    required this.onAyahLongPress,
     required this.onUserScroll,
     required this.bottomPadding,
   });
@@ -150,7 +160,9 @@ class _MushafPage extends StatefulWidget {
   final int page;
   final double fontSize;
   final int? highlightedVerse;
+  final Set<int> bookmarkedVerses;
   final ValueChanged<Verse>? onAyahTap;
+  final ValueChanged<Verse>? onAyahLongPress;
   final ValueChanged<ScrollDirection>? onUserScroll;
   final double bottomPadding;
 
@@ -187,26 +199,57 @@ class _MushafPageState extends State<_MushafPage> {
     return runs;
   }
 
-  TextSpan _paragraph(List<Verse> verses, Color ink, Color mark) {
+  /// Which ayah each span of the page's text is, for a long press.
+  final _spanVerse = Map<InlineSpan, Verse>.identity();
+
+  /// One key per paragraph (runs are fixed for a page), to find its text.
+  final _runKeys = <int, GlobalKey>{};
+
+  TextSpan _paragraph(List<Verse> verses, Color ink, Color mark, Color ribbon) {
     final spans = <InlineSpan>[];
     for (final v in verses) {
       final tap = widget.onAyahTap;
       final recognizer = tap == null ? null : (TapGestureRecognizer()..onTap = () => tap(v));
       if (recognizer != null) _recognizers.add(recognizer);
+      if (widget.bookmarkedVerses.contains(v.id)) {
+        spans.add(WidgetSpan(
+          alignment: PlaceholderAlignment.middle,
+          child: Padding(
+            padding: const EdgeInsetsDirectional.only(end: 2),
+            child: Icon(Icons.bookmark, size: widget.fontSize * 0.55, color: ribbon),
+          ),
+        ));
+      }
       final style = v.id == widget.highlightedVerse ? TextStyle(backgroundColor: mark) : null;
-      spans.add(TextSpan(
+      final span = TextSpan(
         text: '${displayAyahText(v.uthmani)}${ayahEndMarker(v.ayah)} ',
         recognizer: recognizer,
         style: style,
-      ));
+      );
+      _spanVerse[span] = v;
+      spans.add(span);
     }
     return TextSpan(
-        style: RubricText.quranBody.copyWith(fontSize: widget.fontSize, height: 2.0, color: ink), children: spans);
+      style: RubricText.quranBody.copyWith(fontSize: widget.fontSize, height: 2.0, color: ink),
+      children: spans,
+    );
+  }
+
+  /// A long press on paragraph [run]: the ayah under the finger, found by
+  /// the text's own hit test.
+  void _longPress(int run, Offset global) {
+    final hold = widget.onAyahLongPress;
+    final paragraph = _runKeys[run]?.currentContext?.findRenderObject();
+    if (hold == null || paragraph is! RenderParagraph) return;
+    final position = paragraph.getPositionForOffset(paragraph.globalToLocal(global));
+    final verse = _spanVerse[paragraph.text.getSpanForPosition(position)];
+    if (verse != null) hold(verse);
   }
 
   @override
   Widget build(BuildContext context) {
     _disposeRecognizers();
+    _spanVerse.clear();
     final c = context.colors;
     final l = context.l10n;
     final quran = widget.quran;
@@ -245,7 +288,7 @@ class _MushafPageState extends State<_MushafPage> {
                     ],
                   ),
                   Divider(color: c.hairline),
-                  for (final run in _runs()) ...[
+                  for (final (i, run) in _runs().indexed) ...[
                     if (run.first.ayah == 1)
                       SurahHeader(
                         quran: quran,
@@ -255,10 +298,18 @@ class _MushafPageState extends State<_MushafPage> {
                       ),
                     Padding(
                       padding: const EdgeInsets.symmetric(vertical: RubricSpace.s1),
-                      child: Text.rich(
-                        _paragraph(run, c.ink, c.mark),
-                        textAlign: justify ? TextAlign.justify : TextAlign.start,
-                        textScaler: TextScaler.noScaling,
+                      child: GestureDetector(
+                        // Screen readers bookmark through each ayah's sheet
+                        // (its span is a link); this is the sighted shortcut.
+                        excludeFromSemantics: true,
+                        onLongPressStart:
+                            widget.onAyahLongPress == null ? null : (d) => _longPress(i, d.globalPosition),
+                        child: Text.rich(
+                          _paragraph(run, c.ink, c.mark, c.inkSecondary),
+                          key: _runKeys.putIfAbsent(i, GlobalKey.new),
+                          textAlign: justify ? TextAlign.justify : TextAlign.start,
+                          textScaler: TextScaler.noScaling,
+                        ),
                       ),
                     ),
                   ],

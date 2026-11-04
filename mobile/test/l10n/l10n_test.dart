@@ -11,13 +11,14 @@ import 'package:rafiq/features/reader/reader_screen.dart';
 import 'package:rafiq/l10n/l10n.dart';
 
 import '../support/fakes.dart';
+import '../support/app_nav.dart';
 
 Map<String, dynamic> arb(String locale) =>
     jsonDecode(File('lib/l10n/app_$locale.arb').readAsStringSync()) as Map<String, dynamic>;
 
-/// `{name}` placeholders of a message (plural branches included).
-Set<String> placeholders(String message) =>
-    {for (final m in RegExp(r'\{(\w+)[,}]').allMatches(message)) m[1]!}..removeAll({'count', 'days'});
+/// `{name}` placeholders of a message. Placeholders are lower-camel
+/// identifiers; plural branch texts (`=0{Bookmarks}`) are not.
+Set<String> placeholders(String message) => {for (final m in RegExp(r'\{([a-z]\w*)[,}]').allMatches(message)) m[1]!};
 
 void main() {
   group('translations', () {
@@ -81,7 +82,7 @@ void main() {
       expect(find.bySemanticsLabel(RegExp('^الفاتحة، الآية 1. الجزء 1، الصفحة 1')), findsOneWidget);
       expect(find.byTooltip('البحث في القرآن'), findsOneWidget);
 
-      await tester.tap(find.bySemanticsLabel('التراويح: متابعة الإمام'));
+      await tester.tap(taraweehButton);
       for (var i = 0; i < 10; i++) {
         await tester.pump(const Duration(milliseconds: 100));
       }
@@ -93,7 +94,7 @@ void main() {
     testWidgets('French: the reader and Taraweeh mode', (tester) async {
       await launch(tester, 'fr');
       expect(find.bySemanticsLabel(RegExp('^Al-Fatiha, verset 1. Juz 1, page 1')), findsOneWidget);
-      await tester.tap(find.bySemanticsLabel('Tarawih : suivre l’imam'));
+      await tester.tap(taraweehButton);
       for (var i = 0; i < 10; i++) {
         await tester.pump(const Duration(milliseconds: 100));
       }
@@ -102,13 +103,12 @@ void main() {
 
     testWidgets('choosing a language in settings applies at once and is kept', (tester) async {
       await launch(tester, 'system');
-      await tester.tap(find.byTooltip('Settings'));
-      await tester.pumpAndSettle();
+      await openSettings(tester);
       await tester.tap(find.text('Language'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('العربية'));
       await tester.pumpAndSettle();
-      expect(find.text('الإعدادات'), findsOneWidget);
+      expect(find.text('الإعدادات'), findsWidgets);
       expect(h.prefs.getString('language'), 'ar');
       final container = ProviderScope.containerOf(tester.element(find.byType(ReaderScreen, skipOffstage: false)));
       expect(container.read(surahNamesProvider).of(2), 'البقرة');
@@ -120,7 +120,7 @@ void main() {
         addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
         await launch(tester, language, size: const Size(960, 1704)); // 320 × 568
         expect(tester.takeException(), isNull);
-        await tester.tap(find.byType(IconButton).at(0)); // the index
+        await tapNav(tester, switch (language) { 'ar' => 'السور', 'fr' => 'Sourates', _ => 'Surahs' });
         await tester.pumpAndSettle();
         expect(tester.takeException(), isNull);
       });

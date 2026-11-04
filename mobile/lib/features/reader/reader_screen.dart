@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/providers.dart';
@@ -11,18 +10,22 @@ import '../../data/quran.dart';
 import '../quran_view/quran_view.dart';
 import 'reader_ayah_sheet.dart';
 import 'widgets/reader_bar.dart';
-import 'widgets/taraweeh_entry.dart';
 import '../../l10n/l10n.dart';
 import '../quran_view/mushaf_page_view.dart';
 import '../../data/settings.dart';
 import 'share_ayah_sheet.dart';
+import 'package:flutter/services.dart';
+import '../../app/navigation.dart';
+import 'widgets/page_scrubber.dart';
 
-/// Home: the Quran, open where the user stopped reading.
+/// The Read tab: the Quran, open where the user stopped reading.
 ///
-/// The text is the shared [QuranView]. The verse at its top is the personal
-/// reading position (saved a moment after scrolling stops, and whenever the
-/// app leaves the foreground). The bar above names the place; the Taraweeh
-/// button floats over the text and steps aside while reading down.
+/// The text is the shared [QuranView] (or the page view). The verse at its
+/// top is the personal reading position (saved a moment after scrolling
+/// stops, and whenever the app leaves the foreground). The bar above names
+/// the place; a scrubber on the edge flies through the pages. Tap an ayah
+/// for its sheet; press and hold to bookmark or un-bookmark it at once.
+/// Other tabs open places here through [readerRequestsProvider].
 class ReaderScreen extends ConsumerStatefulWidget {
   const ReaderScreen({super.key});
 
@@ -38,7 +41,8 @@ class ReaderScreenState extends ConsumerState<ReaderScreen> with WidgetsBindingO
   int? _highlighted;
   Timer? _clearHighlight;
 
-  bool _entryVisible = true;
+  /// Pinged whenever the text moves: the scrubber shows.
+  final _activity = ValueNotifier<int>(0);
 
   @override
   void initState() {
@@ -53,6 +57,7 @@ class ReaderScreenState extends ConsumerState<ReaderScreen> with WidgetsBindingO
   @override
   void dispose() {
     _clearHighlight?.cancel();
+    _activity.dispose();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
@@ -83,9 +88,39 @@ class ReaderScreenState extends ConsumerState<ReaderScreen> with WidgetsBindingO
     });
   }
 
-  Future<void> _navigate() async {
-    final verse = await AppRoutes.navigate(context, current: ref.read(readingPositionProvider));
-    if (verse != null && mounted) openAt(verse, mark: false);
+  /// The scrubber is over [page]: show its first ayah.
+  void _scrubTo(int page) => openAt(ref.read(quranProvider).pages.start(page), mark: false);
+
+  /// Press and hold: bookmark the ayah, or remove its bookmark, at once.
+  Future<void> _toggleBookmark(Verse verse) async {
+    final bookmarks = ref.read(bookmarksProvider.notifier);
+    final names = ref.read(surahNamesProvider);
+    final messenger = ScaffoldMessenger.of(context);
+    final l = context.l10n;
+    unawaited(HapticFeedback.selectionClick());
+    final existing = ref.read(bookmarksProvider).where((b) => b.verseId == verse.id).firstOrNull;
+    final reference = '${names.of(verse.surah)} ${verse.surah}:${verse.ayah}';
+    if (existing != null) {
+      final ok = await bookmarks.remove(verse.id);
+      messenger
+        ..hideCurrentSnackBar()
+        ..showSnackBar(ok
+            ? SnackBar(
+                content: Text(l.bookmarkRemoved),
+                action: SnackBarAction(label: l.undo, onPressed: () => bookmarks.restore(existing)),
+              )
+            : SnackBar(content: Text(l.bookmarkRemoveFailed)));
+    } else {
+      final ok = await bookmarks.add(verse.id);
+      messenger
+        ..hideCurrentSnackBar()
+        ..showSnackBar(ok
+            ? SnackBar(
+                content: Text(l.bookmarked(reference)),
+                action: SnackBarAction(label: l.undo, onPressed: () => bookmarks.remove(verse.id)),
+              )
+            : SnackBar(content: Text(l.bookmarkFailed)));
+    }
   }
 
   Future<void> _search() async {
@@ -134,10 +169,7 @@ class ReaderScreenState extends ConsumerState<ReaderScreen> with WidgetsBindingO
             readingLayout: s.readingLayout == ReadingLayout.pages ? ReadingLayout.scroll : ReadingLayout.pages),
       );
 
-  void _onUserScroll(ScrollDirection direction) {
-    final visible = direction != ScrollDirection.reverse;
-    if (visible != _entryVisible) setState(() => _entryVisible = visible);
-  }
+  void _moved() => _activity.value++;
 
   @override
   Widget build(BuildContext context) {
@@ -150,6 +182,11 @@ class ReaderScreenState extends ConsumerState<ReaderScreen> with WidgetsBindingO
     final opening = ref.read(readingPositionProvider);
     final progress = ref.read(readingProgressProvider.notifier);
     final position = ref.read(readingPositionProvider.notifier);
+    final bookmarked = {for (final b in ref.watch(bookmarksProvider)) b.verseId};
+    // Another tab asked for a place: open it here.
+    ref.listen(readerRequestsProvider, (_, request) {
+      if (request != null) openAt(request.verseId, mark: request.mark);
+    });
 
     return Scaffold(
       body: SafeArea(
@@ -157,10 +194,9 @@ class ReaderScreenState extends ConsumerState<ReaderScreen> with WidgetsBindingO
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             ReaderBar(
-              onNavigate: _navigate,
+              onOpenSurahs: () => ref.read(homeTabProvider.notifier).select(HomeTab.surahs),
               onToggleLayout: _toggleLayout,
               onSearch: _search,
-              onSettings: () => AppRoutes.settings(context),
             ),
             Expanded(
               child: Stack(
@@ -175,13 +211,16 @@ class ReaderScreenState extends ConsumerState<ReaderScreen> with WidgetsBindingO
                             controller: _pages,
                             textScale: textScale,
                             highlightedVerse: _highlighted,
+                            bookmarkedVerses: bookmarked,
                             onAyahTap: _onAyahTap,
+                            onAyahLongPress: _toggleBookmark,
                             onPageChanged: (page) {
                               position.update(quran.pages.start(page));
                               progress.movedTo(page);
+                              _moved();
                             },
-                            onUserScroll: _onUserScroll,
-                            bottomPadding: TaraweehEntry.height + RubricSpace.s4,
+                            onUserScroll: (_) => _moved(),
+                            bottomPadding: RubricSpace.s4,
                           )
                         : QuranView(
                             key: const ValueKey(ReadingLayout.scroll),
@@ -191,23 +230,26 @@ class ReaderScreenState extends ConsumerState<ReaderScreen> with WidgetsBindingO
                             controller: _view,
                             textScale: textScale,
                             highlightedVerse: _highlighted,
+                            bookmarkedVerses: bookmarked,
                             onAyahTap: _onAyahTap,
+                            onAyahLongPress: _toggleBookmark,
                             onTopVerseChanged: (verse) {
                               position.update(verse);
                               progress.movedTo(quran.pageOf(verse));
+                              _moved();
                             },
-                            onUserScroll: _onUserScroll,
-                            bottomPadding: TaraweehEntry.height + RubricSpace.s4,
+                            bottomPadding: RubricSpace.s4,
                           ),
                   ),
-                  Positioned(
-                    left: 0,
-                    right: 0,
-                    bottom: RubricSpace.s4,
-                    child: Center(
-                      child: TaraweehEntry(
-                        visible: _entryVisible,
-                        onPressed: () => AppRoutes.taraweeh(context),
+                  Positioned.fill(
+                    child: Consumer(
+                      // Only the scrubber follows the position as it moves.
+                      builder: (context, ref, _) => PageScrubber(
+                        quran: quran,
+                        names: names,
+                        page: quran.pageOf(ref.watch(readingPositionProvider)),
+                        activity: _activity,
+                        onScrub: _scrubTo,
                       ),
                     ),
                   ),

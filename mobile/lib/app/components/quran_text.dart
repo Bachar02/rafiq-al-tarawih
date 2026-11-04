@@ -44,6 +44,7 @@ class AyahBlock extends StatelessWidget {
     this.fontSize = 26,
     this.justify = true,
     this.highlighted = false,
+    this.bookmarked = false,
     this.onTap,
     this.onLongPress,
   });
@@ -61,6 +62,9 @@ class AyahBlock extends StatelessWidget {
   /// The reader's [RafiqColors.mark] wash: the ayah a sheet acts on, or the
   /// one a search or bookmark just opened.
   final bool highlighted;
+
+  /// A small ribbon in the inline-start margin: this ayah is bookmarked.
+  final bool bookmarked;
 
   /// Opens the ayah's actions (in Taraweeh mode: "The imam is here", a
   /// deliberate two-step correction).
@@ -132,6 +136,19 @@ class AyahBlock extends StatelessWidget {
         ],
       );
     }
+    if (bookmarked) {
+      block = Stack(
+        clipBehavior: Clip.none,
+        children: [
+          block,
+          PositionedDirectional(
+            start: -2,
+            top: fontSize * 0.55,
+            child: Icon(Icons.bookmark, size: 14, color: c.inkSecondary),
+          ),
+        ],
+      );
+    }
     if (highlighted) {
       block = DecoratedBox(
         decoration: BoxDecoration(color: c.mark, borderRadius: BorderRadius.circular(RubricRadius.sm)),
@@ -142,7 +159,7 @@ class AyahBlock extends StatelessWidget {
     final live = tone != AyahTone.reading;
     final l = context.l10n;
     return Semantics(
-      label: current ? l.semAyahImamHere(verse.ayah) : l.semAyah(verse.ayah),
+      label: '${current ? l.semAyahImamHere(verse.ayah) : l.semAyah(verse.ayah)}${bookmarked ? ', ${l.bookmark}' : ''}',
       onTapHint: onTap == null ? null : (live ? l.hintMarkImam : l.hintAyahActions),
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,

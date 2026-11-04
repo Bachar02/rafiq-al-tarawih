@@ -500,6 +500,24 @@ class AppTheme {
           minimumSize: const WidgetStatePropertyAll(Size(0, 44)),
         ),
       ),
+      navigationBarTheme: NavigationBarThemeData(
+        backgroundColor: c.surface,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        height: 64,
+        indicatorColor: c.surfaceRaised,
+        indicatorShape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(RubricRadius.md)),
+        labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+        iconTheme: WidgetStateProperty.resolveWith(
+          (s) => IconThemeData(color: s.contains(WidgetState.selected) ? c.ink : c.inkSecondary, size: 24),
+        ),
+        labelTextStyle: WidgetStateProperty.resolveWith(
+          (s) => RubricText.caption.copyWith(
+            color: s.contains(WidgetState.selected) ? c.ink : c.inkSecondary,
+            fontWeight: s.contains(WidgetState.selected) ? FontWeight.w500 : null,
+          ),
+        ),
+      ),
       tabBarTheme: TabBarThemeData(
         labelColor: c.ink,
         unselectedLabelColor: c.inkSecondary,

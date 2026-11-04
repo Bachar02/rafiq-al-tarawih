@@ -11,6 +11,7 @@ import '../../data/surah_names.dart';
 import 'book_index.dart';
 import 'book_items.dart';
 import '../../l10n/l10n.dart';
+import 'package:flutter/foundation.dart';
 
 /// Commands for a [QuranView]: jumps, and the way back to the followed ayah.
 ///
@@ -78,6 +79,7 @@ class QuranView extends StatefulWidget {
     this.unsure = false,
     this.followVerse,
     this.highlightedVerse,
+    this.bookmarkedVerses = const {},
     this.onAyahTap,
     this.onAyahLongPress,
     this.onTopVerseChanged,
@@ -112,6 +114,9 @@ class QuranView extends StatefulWidget {
 
   /// The reader's [RafiqColors.mark] wash on one ayah.
   final int? highlightedVerse;
+
+  /// Ayahs that carry the bookmark ribbon.
+  final Set<int> bookmarkedVerses;
 
   final ValueChanged<Verse>? onAyahTap;
   final ValueChanged<Verse>? onAyahLongPress;
@@ -199,7 +204,8 @@ class _QuranViewState extends State<QuranView> {
         old.live != widget.live ||
         old.current?.verseId != widget.current?.verseId ||
         old.unsure != widget.unsure ||
-        old.highlightedVerse != widget.highlightedVerse) {
+        old.highlightedVerse != widget.highlightedVerse ||
+        !setEquals(old.bookmarkedVerses, widget.bookmarkedVerses)) {
       _invalidate();
     }
 
@@ -436,6 +442,7 @@ class _QuranViewState extends State<QuranView> {
         fontSize: RubricText.quranBody.fontSize! * widget.textScale,
         justify: _justify,
         highlighted: verse.id == widget.highlightedVerse,
+        bookmarked: widget.bookmarkedVerses.contains(verse.id),
         // Read at tap time: a parent's new closure must not rebuild the text.
         onTap: () => widget.onAyahTap?.call(verse),
         onLongPress: widget.onAyahLongPress == null ? null : () => widget.onAyahLongPress?.call(verse),

@@ -13,6 +13,16 @@ String verseReference(Verse verse, SurahNames names) => '${names.of(verse.surah)
 String verseLocation(AppLocalizations l, Quran quran, int verseId) =>
     l.juzPage(quran.juzOf(verseId), quran.pageOf(verseId));
 
+/// "today", "yesterday", "3 days ago".
+String relativeDay(AppLocalizations l, DateTime at, DateTime now) {
+  final days = DateTime(now.year, now.month, now.day).difference(DateTime(at.year, at.month, at.day)).inDays;
+  return switch (days) {
+    <= 0 => l.today,
+    1 => l.yesterday,
+    _ => l.daysAgo(days),
+  };
+}
+
 /// A place in the Quran in a list: a title, a quiet line, and optionally the
 /// opening of the ayah in the Quran's own script.
 class PlaceTile extends StatelessWidget {

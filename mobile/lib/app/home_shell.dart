@@ -1,0 +1,109 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../features/bookmarks/bookmarks_screen.dart';
+import '../features/more/more_screen.dart';
+import '../features/navigate/navigate_screen.dart';
+import '../features/reader/reader_screen.dart';
+import '../l10n/l10n.dart';
+import 'navigation.dart';
+import 'providers.dart';
+import 'routes.dart';
+
+/// The app's frame: a labelled bar at the bottom. Read · Surahs · Bookmarks ·
+/// Taraweeh · More.
+///
+/// The reader is always alive underneath (its place and scroll survive a
+/// visit elsewhere); the other tabs are built fresh on each visit, so their
+/// lists open at the current place. Taraweeh is a button, not a tab: it opens
+/// the full-screen mode and starts listening. Back from any tab returns to
+/// the reader; back from the reader leaves the app.
+class HomeShell extends ConsumerWidget {
+  const HomeShell({super.key});
+
+  /// Bar positions; Taraweeh sits between Bookmarks and More.
+  static const _taraweeh = 3;
+
+  static int _indexOf(HomeTab tab) => switch (tab) {
+        HomeTab.read => 0,
+        HomeTab.surahs => 1,
+        HomeTab.bookmarks => 2,
+        HomeTab.more => 4,
+      };
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l = context.l10n;
+    final tab = ref.watch(homeTabProvider);
+    final tabs = ref.read(homeTabProvider.notifier);
+
+    return PopScope(
+      canPop: tab == HomeTab.read,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) tabs.select(HomeTab.read);
+      },
+      child: Scaffold(
+        body: Stack(
+          children: [
+            Offstage(
+              offstage: tab != HomeTab.read,
+              child: TickerMode(enabled: tab == HomeTab.read, child: const ReaderScreen()),
+            ),
+            if (tab == HomeTab.surahs) const _SurahsTab(),
+            if (tab == HomeTab.bookmarks) const BookmarksScreen(),
+            if (tab == HomeTab.more) const MoreScreen(),
+          ],
+        ),
+        bottomNavigationBar: NavigationBar(
+          selectedIndex: _indexOf(tab),
+          onDestinationSelected: (i) => switch (i) {
+            0 => tabs.select(HomeTab.read),
+            1 => tabs.select(HomeTab.surahs),
+            2 => tabs.select(HomeTab.bookmarks),
+            _taraweeh => AppRoutes.taraweeh(context),
+            _ => tabs.select(HomeTab.more),
+          },
+          destinations: [
+            NavigationDestination(
+              icon: const Icon(Icons.menu_book_outlined),
+              selectedIcon: const Icon(Icons.menu_book),
+              label: l.navRead,
+            ),
+            NavigationDestination(
+              icon: const Icon(Icons.format_list_bulleted),
+              label: l.navSurahs,
+            ),
+            NavigationDestination(
+              icon: const Icon(Icons.bookmarks_outlined),
+              selectedIcon: const Icon(Icons.bookmarks),
+              label: l.navBookmarks,
+            ),
+            NavigationDestination(
+              icon: const Icon(Icons.mic_none),
+              label: l.taraweeh,
+              tooltip: l.semTaraweehEntry,
+            ),
+            NavigationDestination(
+              icon: const Icon(Icons.more_horiz),
+              label: l.navMore,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// The Surahs tab: the index, opening the chosen place in the reader.
+class _SurahsTab extends ConsumerWidget {
+  const _SurahsTab();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) => Scaffold(
+        appBar: AppBar(automaticallyImplyLeading: false, title: Text(context.l10n.navSurahs)),
+        body: QuranIndex(
+          current: ref.read(readingPositionProvider),
+          onOpen: (verse) => ref.read(readerRequestsProvider.notifier).open(verse),
+        ),
+      );
+}

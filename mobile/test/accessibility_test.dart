@@ -8,9 +8,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:rafiq/app/app.dart';
 import 'package:rafiq/core/recognition/models.dart';
-import 'package:rafiq/features/reader/widgets/taraweeh_entry.dart';
 
 import 'support/fakes.dart';
+import 'support/app_nav.dart';
 
 void main() {
   late Harness h;
@@ -53,11 +53,13 @@ void main() {
 
       testWidgets('Go to and search', (tester) async {
         await launch(tester, {'theme_mode': theme});
-        await tester.tap(find.byTooltip('Surahs, juz and bookmarks'));
-        await settle(tester);
+        await tapNav(tester, 'Surahs');
         await meetsGuidelines(tester);
-        await tester.pageBack();
-        await settle(tester);
+        await tapNav(tester, 'Bookmarks');
+        await meetsGuidelines(tester);
+        await tapNav(tester, 'More');
+        await meetsGuidelines(tester);
+        await tapNav(tester, 'Read');
         await tester.tap(find.byTooltip('Search the Quran'));
         await settle(tester);
         await tester.enterText(find.byType(TextField), 'الحي القيوم');
@@ -67,14 +69,13 @@ void main() {
 
       testWidgets('settings', (tester) async {
         await launch(tester, {'theme_mode': theme});
-        await tester.tap(find.byTooltip('Settings'));
-        await settle(tester);
+        await openSettings(tester);
         await meetsGuidelines(tester);
       });
 
       testWidgets('Taraweeh mode, following', (tester) async {
         await launch(tester, {'theme_mode': theme, 'dark_during_taraweeh': theme == 'dark'});
-        await tester.tap(find.byType(TaraweehEntry));
+        await tester.tap(find.byIcon(Icons.mic_none));
         await settle(tester);
         h.engine.emit(const EngineReady());
         h.engine.emit(heard(at(93, 3)));
@@ -89,14 +90,21 @@ void main() {
     addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
     await launch(tester, {'daily_goal_pages': 20});
     expect(tester.takeException(), isNull, reason: 'reader');
-    for (final tooltip in ['Surahs, juz and bookmarks', 'Search the Quran', 'Settings']) {
-      await tester.tap(find.byTooltip(tooltip));
-      await settle(tester);
-      expect(tester.takeException(), isNull, reason: tooltip);
-      await tester.pageBack();
-      await settle(tester);
+    for (final tab in ['Surahs', 'Bookmarks', 'More', 'Read']) {
+      await tapNav(tester, tab);
+      expect(tester.takeException(), isNull, reason: tab);
     }
-    await tester.tap(find.byType(TaraweehEntry));
+    await tester.tap(find.byTooltip('Search the Quran'));
+    await settle(tester);
+    expect(tester.takeException(), isNull, reason: 'search');
+    await tester.pageBack();
+    await settle(tester);
+    await openSettings(tester);
+    expect(tester.takeException(), isNull, reason: 'settings');
+    await tester.pageBack();
+    await settle(tester);
+    await tapNav(tester, 'Read');
+    await tester.tap(find.byIcon(Icons.mic_none));
     await settle(tester);
     h.engine.emit(const EngineReady());
     h.engine.emit(heard(at(2, 282)));

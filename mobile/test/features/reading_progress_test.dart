@@ -9,6 +9,7 @@ import 'package:rafiq/features/reader/reader_screen.dart';
 import 'package:rafiq/features/reader/reading_progress.dart';
 
 import '../support/fakes.dart';
+import '../support/app_nav.dart';
 
 void main() {
   final quran = loadQuran();
@@ -142,8 +143,7 @@ void main() {
     testWidgets('the goal is chosen in settings', (tester) async {
       h = await Harness.create();
       await launch(tester);
-      await tester.tap(find.byTooltip('Settings'));
-      await tester.pumpAndSettle();
+      await openSettings(tester);
       await tester.tap(find.text('Daily reading goal'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('20 pages'));
@@ -151,6 +151,7 @@ void main() {
       expect(h.prefs.getInt('daily_goal_pages'), 20);
       await tester.pageBack();
       await tester.pumpAndSettle();
+      await tapNav(tester, 'Read');
       expect(find.textContaining('Today 0/20'), findsOneWidget);
     });
   });

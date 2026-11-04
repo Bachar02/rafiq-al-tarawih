@@ -703,4 +703,100 @@ class AppLocalizationsEn extends AppLocalizations {
   String khatmProgress(int page, int total, int percent) {
     return 'Page $page of $total · $percent%';
   }
+
+  @override
+  String get navRead => 'Read';
+
+  @override
+  String get navSurahs => 'Surahs';
+
+  @override
+  String get navBookmarks => 'Bookmarks';
+
+  @override
+  String get navMore => 'More';
+
+  @override
+  String get continueReading => 'Continue reading';
+
+  @override
+  String bookmarksCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count bookmarks',
+      one: '1 bookmark',
+      zero: 'Bookmarks',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get sortBookmarks => 'Sort bookmarks';
+
+  @override
+  String get sortNewest => 'Newest first';
+
+  @override
+  String get sortQuranOrder => 'In Quran order';
+
+  @override
+  String get noBookmarksHint => 'No bookmarks yet. While reading, press and hold an ayah to bookmark it.';
+
+  @override
+  String get scrubberLabel => 'Go through the Quran';
+
+  @override
+  String get tooltipOpenSurahs => 'Surahs, juz and pages';
+
+  @override
+  String get comingSoon => 'Coming soon';
+
+  @override
+  String get soon => 'Soon';
+
+  @override
+  String get soonRecitation => 'Recitation audio';
+
+  @override
+  String get soonRecitationDetail => 'Listen to an ayah, a page or a surah';
+
+  @override
+  String get soonTranslation => 'Translations';
+
+  @override
+  String get soonTranslationDetail => 'The meaning beside the Arabic, in your language';
+
+  @override
+  String get soonTafsir => 'Tafsir';
+
+  @override
+  String get soonTafsirDetail => 'Commentary on each ayah';
+
+  @override
+  String get soonKhatm => 'Khatm planner';
+
+  @override
+  String get soonKhatmDetail => 'Plan a complete reading and follow it day by day';
+
+  @override
+  String get soonNotes => 'Notes';
+
+  @override
+  String get soonNotesDetail => 'Your own notes on an ayah';
+
+  @override
+  String get soonOffline => 'Taraweeh without a computer';
+
+  @override
+  String get soonOfflineDetail => 'Recognition on the phone itself';
+
+  @override
+  String get listen => 'Listen';
+
+  @override
+  String get translation => 'Translation';
+
+  @override
+  String get tafsir => 'Tafsir';
 }

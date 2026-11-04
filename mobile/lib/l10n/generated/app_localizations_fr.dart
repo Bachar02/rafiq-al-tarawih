@@ -705,4 +705,101 @@ class AppLocalizationsFr extends AppLocalizations {
   String khatmProgress(int page, int total, int percent) {
     return 'Page $page sur $total · $percent %';
   }
+
+  @override
+  String get navRead => 'Lire';
+
+  @override
+  String get navSurahs => 'Sourates';
+
+  @override
+  String get navBookmarks => 'Signets';
+
+  @override
+  String get navMore => 'Plus';
+
+  @override
+  String get continueReading => 'Reprendre la lecture';
+
+  @override
+  String bookmarksCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count signets',
+      one: '1 signet',
+      zero: 'Signets',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get sortBookmarks => 'Trier les signets';
+
+  @override
+  String get sortNewest => 'Plus récents d’abord';
+
+  @override
+  String get sortQuranOrder => 'Dans l’ordre du Coran';
+
+  @override
+  String get noBookmarksHint =>
+      'Aucun signet pour l’instant. Pendant la lecture, appuyez longuement sur un verset pour l’ajouter.';
+
+  @override
+  String get scrubberLabel => 'Parcourir le Coran';
+
+  @override
+  String get tooltipOpenSurahs => 'Sourates, juz et pages';
+
+  @override
+  String get comingSoon => 'Bientôt';
+
+  @override
+  String get soon => 'Bientôt';
+
+  @override
+  String get soonRecitation => 'Récitation audio';
+
+  @override
+  String get soonRecitationDetail => 'Écouter un verset, une page ou une sourate';
+
+  @override
+  String get soonTranslation => 'Traductions';
+
+  @override
+  String get soonTranslationDetail => 'Le sens à côté de l’arabe, dans votre langue';
+
+  @override
+  String get soonTafsir => 'Tafsir';
+
+  @override
+  String get soonTafsirDetail => 'Le commentaire de chaque verset';
+
+  @override
+  String get soonKhatm => 'Plan de khatm';
+
+  @override
+  String get soonKhatmDetail => 'Planifier une lecture complète et la suivre jour après jour';
+
+  @override
+  String get soonNotes => 'Notes';
+
+  @override
+  String get soonNotesDetail => 'Vos propres notes sur un verset';
+
+  @override
+  String get soonOffline => 'Tarawih sans ordinateur';
+
+  @override
+  String get soonOfflineDetail => 'La reconnaissance sur le téléphone lui-même';
+
+  @override
+  String get listen => 'Écouter';
+
+  @override
+  String get translation => 'Traduction';
+
+  @override
+  String get tafsir => 'Tafsir';
 }

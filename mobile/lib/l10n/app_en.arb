@@ -531,5 +531,41 @@
         "type": "int"
       }
     }
-  }
+  },
+  "navRead": "Read",
+  "navSurahs": "Surahs",
+  "navBookmarks": "Bookmarks",
+  "navMore": "More",
+  "continueReading": "Continue reading",
+  "bookmarksCount": "{count, plural, =0{Bookmarks} =1{1 bookmark} other{{count} bookmarks}}",
+  "@bookmarksCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "sortBookmarks": "Sort bookmarks",
+  "sortNewest": "Newest first",
+  "sortQuranOrder": "In Quran order",
+  "noBookmarksHint": "No bookmarks yet. While reading, press and hold an ayah to bookmark it.",
+  "scrubberLabel": "Go through the Quran",
+  "tooltipOpenSurahs": "Surahs, juz and pages",
+  "comingSoon": "Coming soon",
+  "soon": "Soon",
+  "soonRecitation": "Recitation audio",
+  "soonRecitationDetail": "Listen to an ayah, a page or a surah",
+  "soonTranslation": "Translations",
+  "soonTranslationDetail": "The meaning beside the Arabic, in your language",
+  "soonTafsir": "Tafsir",
+  "soonTafsirDetail": "Commentary on each ayah",
+  "soonKhatm": "Khatm planner",
+  "soonKhatmDetail": "Plan a complete reading and follow it day by day",
+  "soonNotes": "Notes",
+  "soonNotesDetail": "Your own notes on an ayah",
+  "soonOffline": "Taraweeh without a computer",
+  "soonOfflineDetail": "Recognition on the phone itself",
+  "listen": "Listen",
+  "translation": "Translation",
+  "tafsir": "Tafsir"
 }

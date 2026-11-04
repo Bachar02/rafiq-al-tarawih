@@ -6,49 +6,57 @@ import '../../app/components/surah_tile.dart';
 import '../../app/providers.dart';
 import '../../app/theme.dart';
 import '../../data/quran.dart';
-import '../../data/reading_store.dart';
 import '../../data/surah_names.dart';
 import '../../l10n/l10n.dart';
 
-/// Where to read: surahs, juz, pages and bookmarks, each list opened at the
-/// current place. Pops with the chosen verse id.
-class NavigateScreen extends ConsumerWidget {
-  const NavigateScreen({super.key, required this.current, this.initialTab = 0});
+/// Where to read: surahs, juz and pages, each list opened at the current
+/// place. The Surahs tab of the home shell, and Taraweeh mode's picker.
+class QuranIndex extends ConsumerWidget {
+  const QuranIndex({super.key, required this.current, required this.onOpen});
 
   /// The verse the reader shows now (marked in each list).
   final int current;
-  final int initialTab;
+
+  /// A place was chosen: its first verse.
+  final ValueChanged<int> onOpen;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final quran = ref.watch(quranProvider);
     final names = ref.watch(surahNamesProvider);
-    void open(int verseId) => Navigator.of(context).pop(verseId);
     final l = context.l10n;
-
     return DefaultTabController(
-      length: 4,
-      initialIndex: initialTab,
-      child: Scaffold(
-        appBar: AppBar(
-          title: Text(l.goTo),
-          bottom: TabBar(
-            isScrollable: true,
-            tabAlignment: TabAlignment.start,
-            tabs: [Tab(text: l.tabSurahs), Tab(text: l.tabJuz), Tab(text: l.tabPages), Tab(text: l.tabBookmarks)],
+      length: 3,
+      child: Column(
+        children: [
+          TabBar(tabs: [Tab(text: l.tabSurahs), Tab(text: l.tabJuz), Tab(text: l.tabPages)]),
+          Expanded(
+            child: TabBarView(
+              children: [
+                _SurahList(quran: quran, names: names, current: current, onOpen: onOpen),
+                _JuzList(quran: quran, names: names, current: current, onOpen: onOpen),
+                _PageList(quran: quran, names: names, current: current, onOpen: onOpen),
+              ],
+            ),
           ),
-        ),
-        body: TabBarView(
-          children: [
-            _SurahList(quran: quran, names: names, current: current, onOpen: open),
-            _JuzList(quran: quran, names: names, current: current, onOpen: open),
-            _PageList(quran: quran, names: names, current: current, onOpen: open),
-            _Bookmarks(quran: quran, names: names, onOpen: open),
-          ],
-        ),
+        ],
       ),
     );
   }
+}
+
+/// [QuranIndex] as a screen of its own that pops with the chosen verse id
+/// (Taraweeh mode's "Surahs").
+class NavigateScreen extends StatelessWidget {
+  const NavigateScreen({super.key, required this.current});
+
+  final int current;
+
+  @override
+  Widget build(BuildContext context) => Scaffold(
+        appBar: AppBar(title: Text(context.l10n.goTo)),
+        body: QuranIndex(current: current, onOpen: (verse) => Navigator.of(context).pop(verse)),
+      );
 }
 
 /// The surah list, filtered by name or number, opened at the current surah.
@@ -228,82 +236,4 @@ class _UniformListState extends State<_UniformList> {
         itemCount: widget.count,
         itemBuilder: (context, i) => widget.row(i),
       );
-}
-
-/// Where Taraweeh last ended, then the bookmarks, newest first. Removing one
-/// can be undone.
-class _Bookmarks extends ConsumerWidget {
-  const _Bookmarks({required this.quran, required this.names, required this.onOpen});
-
-  final Quran quran;
-  final SurahNames names;
-  final ValueChanged<int> onOpen;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final c = context.colors;
-    final l = context.l10n;
-    final bookmarks = ref.watch(bookmarksProvider);
-    final taraweeh = ref.watch(taraweehPositionProvider);
-
-    Future<void> remove(Bookmark bookmark) async {
-      final controller = ref.read(bookmarksProvider.notifier);
-      final messenger = ScaffoldMessenger.of(context);
-      final ok = await controller.remove(bookmark.verseId);
-      messenger
-        ..hideCurrentSnackBar()
-        ..showSnackBar(
-          ok
-              ? SnackBar(
-                  content: Text(l.bookmarkRemoved),
-                  action: SnackBarAction(label: l.undo, onPressed: () => controller.restore(bookmark)),
-                )
-              : SnackBar(content: Text(l.bookmarkRemoveFailed)),
-        );
-    }
-
-    return ListView(
-      children: [
-        if (taraweeh != null)
-          PlaceTile(
-            leading: Icon(Icons.mic_none, color: c.inkSecondary),
-            title: l.whereTaraweehEnded,
-            subtitle: '${verseReference(quran.verse(taraweeh.verseId), names)} · ${_when(l, taraweeh.savedAt)}',
-            onTap: () => onOpen(taraweeh.verseId),
-          ),
-        if (bookmarks.isEmpty)
-          Padding(
-            padding: const EdgeInsets.all(RubricSpace.s6),
-            child: Text(
-              l.noBookmarks,
-              textAlign: TextAlign.center,
-              style: RubricText.label.copyWith(color: c.inkSecondary),
-            ),
-          )
-        else
-          for (final b in bookmarks)
-            PlaceTile(
-              title: verseReference(quran.verse(b.verseId), names),
-              subtitle: verseLocation(l, quran, b.verseId),
-              verse: quran.verse(b.verseId),
-              onTap: () => onOpen(b.verseId),
-              trailing: IconButton(
-                tooltip: l.removeBookmark,
-                icon: const Icon(Icons.bookmark_remove_outlined),
-                onPressed: () => remove(b),
-              ),
-            ),
-      ],
-    );
-  }
-
-  static String _when(AppLocalizations l, DateTime at) {
-    final now = DateTime.now();
-    final days = DateTime(now.year, now.month, now.day).difference(DateTime(at.year, at.month, at.day)).inDays;
-    return switch (days) {
-      <= 0 => l.today,
-      1 => l.yesterday,
-      _ => l.daysAgo(days),
-    };
-  }
 }

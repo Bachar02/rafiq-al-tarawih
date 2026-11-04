@@ -15,6 +15,7 @@ import 'package:rafiq/features/settings/settings_screen.dart';
 import 'package:rafiq/services/server_health.dart';
 
 import '../support/fakes.dart';
+import '../support/app_nav.dart';
 
 /// Verse ids of the ayahs marked as the imam's current one in the reader.
 List<int> currentAyahs(WidgetTester tester) => [
@@ -75,7 +76,7 @@ void main() {
     await tester.pumpWidget(ProviderScope(overrides: h.overrides, child: const RafiqApp()));
     await tester.pump();
     // The reader is home; Taraweeh mode is one tap away and starts following.
-    await tester.tap(find.bySemanticsLabel('Taraweeh: follow the imam'));
+    await tester.tap(taraweehButton);
     await settle(tester);
     return ProviderScope.containerOf(tester.element(find.byType(ListenScreen)));
   }
@@ -444,7 +445,7 @@ void main() {
     expect(h.prefs.getBool('taraweeh_intro_seen'), isTrue);
 
     await tapAndFinish(tester, find.byTooltip('Back to reading'));
-    await tester.tap(find.bySemanticsLabel('Taraweeh: follow the imam'));
+    await tester.tap(taraweehButton);
     await settle(tester);
     expect(find.text('Taraweeh mode'), findsNothing);
     expect(find.text('Connecting…'), findsOneWidget);

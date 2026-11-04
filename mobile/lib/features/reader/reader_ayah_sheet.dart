@@ -60,6 +60,8 @@ Future<ReaderAyahAction?> showReaderAyahSheet(
               icon: const Icon(Icons.copy_outlined, size: 20),
               label: Text(context.l10n.copyAyah),
             ),
+            const SizedBox(height: RubricSpace.s2),
+            const _ComingSoon(),
           ],
         ),
       ),
@@ -71,3 +73,54 @@ String ayahClipboardText(Verse verse, SurahNames names) =>
 
 Future<void> copyAyah(Verse verse, SurahNames names) =>
     Clipboard.setData(ClipboardData(text: ayahClipboardText(verse, names)));
+
+/// Listen, translation and tafsir will live here: shown, visibly not yet
+/// working, so the sheet does not change shape when they arrive.
+class _ComingSoon extends StatelessWidget {
+  const _ComingSoon();
+
+  @override
+  Widget build(BuildContext context) {
+    final l = context.l10n;
+    final c = context.colors;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Divider(color: c.hairline),
+        Row(
+          children: [
+            for (final (icon, label) in [
+              (Icons.play_arrow_outlined, l.listen),
+              (Icons.translate, l.translation),
+              (Icons.menu_book_outlined, l.tafsir),
+            ])
+              Expanded(
+                // Icon over label, so three fit side by side in any language.
+                child: TextButton(
+                  onPressed: null,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(icon, size: 20),
+                      const SizedBox(height: RubricSpace.s1),
+                      Text(
+                        label,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: RubricText.caption,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+          ],
+        ),
+        Text(
+          l.comingSoon,
+          textAlign: TextAlign.center,
+          style: RubricText.caption.copyWith(color: c.inkSecondary),
+        ),
+      ],
+    );
+  }
+}

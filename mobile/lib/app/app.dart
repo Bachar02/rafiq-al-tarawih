@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../features/reader/reader_screen.dart';
+import 'home_shell.dart';
 import '../l10n/l10n.dart';
 import 'providers.dart';
 import 'theme.dart';
@@ -48,7 +48,7 @@ class _RafiqAppState extends ConsumerState<RafiqApp> with WidgetsBindingObserver
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
-      home: const ReaderScreen(),
+      home: const HomeShell(),
     );
   }
 }

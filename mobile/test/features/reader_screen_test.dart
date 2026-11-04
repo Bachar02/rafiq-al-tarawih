@@ -16,6 +16,9 @@ import 'package:rafiq/features/reader/share_ayah_sheet.dart';
 import 'package:rafiq/features/reader/reading_position.dart';
 
 import '../support/fakes.dart';
+import 'package:rafiq/features/navigate/navigate_screen.dart';
+import 'package:rafiq/features/reader/widgets/page_scrubber.dart';
+import '../support/app_nav.dart';
 
 /// A store whose writes fail (a full disk): reads still work.
 class FailingStore implements ReadingStore {
@@ -131,8 +134,7 @@ void main() {
 
   testWidgets('the surah index opens a surah at its header', (tester) async {
     final container = await launch(tester);
-    await tester.tap(find.byTooltip('Surahs, juz and bookmarks'));
-    await tester.pumpAndSettle();
+    await tapNav(tester, 'Surahs');
     await tester.enterText(find.byType(TextField), 'Kahf');
     await tester.pumpAndSettle();
     await tester.tap(find.text('Al-Kahf'));
@@ -194,7 +196,7 @@ void main() {
     openAt(tester, id(2, 255));
     await tester.pump();
     await tester.pump();
-    await tester.tap(find.bySemanticsLabel('Taraweeh: follow the imam'));
+    await tester.tap(taraweehButton);
     await tester.pumpAndSettle();
     expect(find.byType(ListenScreen), findsOneWidget);
     await tester.tap(find.byTooltip('Back to reading'));
@@ -252,8 +254,7 @@ void main() {
 
   testWidgets('go to a juz, then to a page', (tester) async {
     final container = await launch(tester);
-    await tester.tap(find.byTooltip('Surahs, juz and bookmarks'));
-    await tester.pumpAndSettle();
+    await tapNav(tester, 'Surahs');
     await tester.ensureVisible(find.text('Juz'));
     await tester.tap(find.text('Juz'));
     await tester.pumpAndSettle();
@@ -261,8 +262,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(container.read(readingPositionProvider), id(2, 142));
 
-    await tester.tap(find.byTooltip('Surahs, juz and bookmarks'));
-    await tester.pumpAndSettle();
+    await tapNav(tester, 'Surahs');
     await tester.ensureVisible(find.text('Pages'));
     await tester.tap(find.text('Pages'));
     await tester.pumpAndSettle();
@@ -277,32 +277,123 @@ void main() {
     expect(bar('Al-Baqarah, ayah 253. Juz 3, page 42'), findsOneWidget);
   });
 
-  testWidgets('bookmarks: listed after where Taraweeh ended, opened, removed and restored', (tester) async {
-    final at = DateTime.now().toUtc().toIso8601String();
+  testWidgets('the Bookmarks tab: continue reading, where Taraweeh ended, then bookmarks', (tester) async {
     h = await Harness.create(prefs: {
-      PrefsReadingStore.bookmarksKey: '{"v":1,"items":[{"verse":${id(18, 10)},"at":"$at"}]}',
-      PrefsReadingStore.taraweehKey: '{"v":1,"verse":${id(5, 81)},"at":"$at"}',
+      PrefsReadingStore.bookmarksKey: '{"v":1,"items":[{"verse":${id(18, 10)},"at":"2026-11-04T18:00:00Z"},'
+          '{"verse":${id(2, 255)},"at":"2026-11-02T18:00:00Z"}]}',
+      PrefsReadingStore.taraweehKey: '{"v":1,"verse":${id(5, 81)},"at":"2026-11-03T21:00:00Z"}',
+      PrefsReadingStore.readingKey: '{"v":1,"verse":${id(36, 1)},"at":"2026-11-04T08:00:00Z"}',
     });
     final container = await launch(tester);
-    await tester.tap(find.byTooltip('Surahs, juz and bookmarks'));
-    await tester.pumpAndSettle();
-    await tester.ensureVisible(find.text('Bookmarks'));
-    await tester.tap(find.text('Bookmarks'));
-    await tester.pumpAndSettle();
+    await tapNav(tester, 'Bookmarks');
+    expect(find.text('CONTINUE READING'), findsOneWidget);
+    expect(find.text('Ya-Sin 36:1'), findsOneWidget);
     expect(find.text('Where Taraweeh ended'), findsOneWidget);
-    expect(find.text("Al-Ma'idah 5:81 · today"), findsOneWidget);
+    expect(find.text("Al-Ma'idah 5:81 · yesterday"), findsOneWidget);
+    expect(find.text('2 BOOKMARKS'), findsOneWidget);
+    // Newest first.
+    expect(tester.getTopLeft(find.text('Al-Kahf 18:10')).dy,
+        lessThan(tester.getTopLeft(find.text('Al-Baqarah 2:255')).dy));
 
-    await tester.tap(find.byTooltip('Remove bookmark'));
+    // Tap: read there, marked.
+    await tester.tap(find.text('Al-Kahf 18:10'));
+    await tester.pumpAndSettle(const Duration(milliseconds: 100));
+    expect(container.read(readingPositionProvider), id(18, 10));
+    expect(tester.widget<AyahBlock>(ayah(id(18, 10))).highlighted, isTrue);
+  });
+
+  testWidgets('bookmarks: in Quran order, swipe to remove, undo puts it back as it was', (tester) async {
+    h = await Harness.create(prefs: {
+      PrefsReadingStore.bookmarksKey: '{"v":1,"items":[{"verse":${id(18, 10)},"at":"2026-11-04T18:00:00Z"},'
+          '{"verse":${id(2, 255)},"at":"2026-11-02T18:00:00Z"}]}',
+    });
+    await launch(tester);
+    await tapNav(tester, 'Bookmarks');
+    await tester.tap(find.byTooltip('Sort bookmarks'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('In Quran order'));
+    await tester.pumpAndSettle();
+    expect(h.prefs.getBool('bookmarks_quran_order'), isTrue);
+    expect(tester.getTopLeft(find.text('Al-Baqarah 2:255')).dy,
+        lessThan(tester.getTopLeft(find.text('Al-Kahf 18:10')).dy));
+
+    await tester.drag(find.text('Al-Kahf 18:10'), const Offset(-500, 0));
     await tester.pumpAndSettle();
     expect(find.text('Al-Kahf 18:10'), findsNothing);
-    expect(PrefsReadingStore(h.prefs).bookmarks(), isEmpty);
+    expect([for (final b in PrefsReadingStore(h.prefs).bookmarks()) b.verseId], [id(2, 255)]);
     await tester.tap(find.text('Undo'));
     await tester.pumpAndSettle();
-    expect([for (final b in PrefsReadingStore(h.prefs).bookmarks()) b.verseId], [id(18, 10)]);
+    final back = PrefsReadingStore(h.prefs).bookmarks();
+    expect([for (final b in back) b.verseId], [id(18, 10), id(2, 255)]);
+    expect(back.first.createdAt.toUtc(), DateTime.utc(2026, 11, 4, 18), reason: 'restored with its own date');
+  });
 
-    await tester.tap(find.text('Al-Kahf 18:10'));
+  testWidgets('a removal that cannot be saved stays in the list', (tester) async {
+    h = await Harness.create(prefs: {
+      PrefsReadingStore.bookmarksKey: '{"v":1,"items":[{"verse":${id(18, 10)},"at":"2026-11-04T18:00:00Z"}]}',
+    });
+    h.readingStore = FailingStore(PrefsReadingStore(h.prefs));
+    await launch(tester);
+    await tapNav(tester, 'Bookmarks');
+    await tester.drag(find.text('Al-Kahf 18:10'), const Offset(-500, 0));
     await tester.pumpAndSettle();
-    expect(container.read(readingPositionProvider), id(18, 10));
+    expect(find.text('Al-Kahf 18:10'), findsOneWidget);
+    expect(find.text('Could not remove the bookmark. Try again.'), findsOneWidget);
+  });
+
+  testWidgets('press and hold an ayah: bookmarked at once, marked in the text, undo', (tester) async {
+    final container = await launch(tester);
+    final block = tester.widget<AyahBlock>(ayah(3));
+    expect(block.bookmarked, isFalse);
+    block.onLongPress!();
+    await tester.pumpAndSettle();
+    expect([for (final b in container.read(bookmarksProvider)) b.verseId], [3]);
+    expect(tester.widget<AyahBlock>(ayah(3)).bookmarked, isTrue, reason: 'the ribbon shows in the text');
+    expect(find.text('Bookmarked Al-Fatiha 1:3'), findsOneWidget);
+
+    // Hold again: removed, with undo.
+    tester.widget<AyahBlock>(ayah(3)).onLongPress!();
+    await tester.pumpAndSettle();
+    expect(container.read(bookmarksProvider), isEmpty);
+    await tester.tap(find.text('Undo'));
+    await tester.pumpAndSettle();
+    expect([for (final b in PrefsReadingStore(h.prefs).bookmarks()) b.verseId], [3]);
+  });
+
+  testWidgets('the surah name in the bar opens the Surahs tab; back returns to reading', (tester) async {
+    await launch(tester);
+    await tester.tap(bar('Al-Fatiha, ayah 1'));
+    await tester.pumpAndSettle();
+    expect(find.byType(QuranIndex), findsOneWidget);
+    await tester.binding.handlePopRoute(); // the system back gesture
+    await tester.pumpAndSettle();
+    expect(find.byType(QuranIndex), findsNothing);
+    expect(find.byType(ReaderScreen), findsOneWidget);
+  });
+
+  testWidgets('the scrubber flies through the pages', (tester) async {
+    final container = await launch(tester);
+    // It shows once the text moves.
+    await tester.drag(find.byType(QuranView), const Offset(0, -100));
+    await tester.pump();
+    final strip = find.descendant(of: find.byType(PageScrubber), matching: find.byType(GestureDetector));
+    final rect = tester.getRect(strip);
+    await tester.dragFrom(rect.topCenter + const Offset(0, 30), Offset(0, rect.height * 0.5));
+    await tester.pumpAndSettle();
+    final page = quran.pageOf(container.read(readingPositionProvider));
+    expect(page, inInclusiveRange(250, 350), reason: 'about halfway through 604 pages');
+  });
+
+  testWidgets('More: settings, and what is coming, not yet working', (tester) async {
+    await launch(tester);
+    await tapNav(tester, 'More');
+    expect(find.text('COMING SOON'), findsOneWidget);
+    for (final soon in ['Recitation audio', 'Translations', 'Tafsir', 'Khatm planner', 'Notes']) {
+      expect(find.text(soon), findsOneWidget);
+    }
+    await tester.tap(find.text('Settings'));
+    await tester.pumpAndSettle();
+    expect(find.text('Quran text size'), findsOneWidget);
   });
 
   group('page view', () {
@@ -379,6 +470,22 @@ void main() {
       await tester.pumpAndSettle(const Duration(milliseconds: 100));
       expect(quran.pageOf(container.read(readingPositionProvider)), quran.pageOf(id(18, 10)));
       expect(pageSpans(tester)[id(18, 10)]!.style?.backgroundColor, isNotNull);
+    });
+
+    testWidgets('press and hold an ayah on the page: bookmarked, with a ribbon in the text', (tester) async {
+      h = await Harness.create(prefs: {'reading_layout': 'pages'});
+      final container = await launch(tester);
+      final firstWords = displayAyahText(quran.verse(2).uthmani).trim();
+      final paragraph = find.byWidgetPredicate((w) => w is RichText && w.text.toPlainText().contains(firstWords));
+      await tester.longPressAt(tester.getCenter(paragraph));
+      await tester.pumpAndSettle();
+      final saved = [for (final b in container.read(bookmarksProvider)) b.verseId];
+      expect(saved, hasLength(1));
+      expect(quran.pageOf(saved.single), 1);
+      expect(
+        find.descendant(of: find.byType(MushafPageView), matching: find.byIcon(Icons.bookmark)),
+        findsOneWidget,
+      );
     });
 
     testWidgets('the layout is kept after a restart', (tester) async {

@@ -706,4 +706,103 @@ class AppLocalizationsAr extends AppLocalizations {
   String khatmProgress(int page, int total, int percent) {
     return 'الصفحة $page من $total · $percent٪';
   }
+
+  @override
+  String get navRead => 'القراءة';
+
+  @override
+  String get navSurahs => 'السور';
+
+  @override
+  String get navBookmarks => 'العلامات';
+
+  @override
+  String get navMore => 'المزيد';
+
+  @override
+  String get continueReading => 'متابعة القراءة';
+
+  @override
+  String bookmarksCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count علامة',
+      many: '$count علامة',
+      few: '$count علامات',
+      two: 'علامتان',
+      one: 'علامة واحدة',
+      zero: 'العلامات',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get sortBookmarks => 'ترتيب العلامات';
+
+  @override
+  String get sortNewest => 'الأحدث أولًا';
+
+  @override
+  String get sortQuranOrder => 'بترتيب المصحف';
+
+  @override
+  String get noBookmarksHint => 'لا توجد علامات بعد. أثناء القراءة، اضغط مطوّلًا على آية لإضافة علامة.';
+
+  @override
+  String get scrubberLabel => 'التنقل في القرآن';
+
+  @override
+  String get tooltipOpenSurahs => 'السور والأجزاء والصفحات';
+
+  @override
+  String get comingSoon => 'قريبًا';
+
+  @override
+  String get soon => 'قريبًا';
+
+  @override
+  String get soonRecitation => 'التلاوة الصوتية';
+
+  @override
+  String get soonRecitationDetail => 'الاستماع إلى آية أو صفحة أو سورة';
+
+  @override
+  String get soonTranslation => 'الترجمات';
+
+  @override
+  String get soonTranslationDetail => 'المعنى بجانب النص العربي، بلغتك';
+
+  @override
+  String get soonTafsir => 'التفسير';
+
+  @override
+  String get soonTafsirDetail => 'تفسير كل آية';
+
+  @override
+  String get soonKhatm => 'خطة الختمة';
+
+  @override
+  String get soonKhatmDetail => 'خطط لختمة كاملة وتابعها يومًا بيوم';
+
+  @override
+  String get soonNotes => 'الملاحظات';
+
+  @override
+  String get soonNotesDetail => 'ملاحظاتك الخاصة على آية';
+
+  @override
+  String get soonOffline => 'التراويح دون حاسوب';
+
+  @override
+  String get soonOfflineDetail => 'التعرّف على الهاتف نفسه';
+
+  @override
+  String get listen => 'استماع';
+
+  @override
+  String get translation => 'ترجمة';
+
+  @override
+  String get tafsir => 'تفسير';
 }

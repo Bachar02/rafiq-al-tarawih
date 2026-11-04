@@ -40,27 +40,44 @@ the same interface later (§4.2), without UI changes. The reader needs no server
 ### 2.2 Screens
 
 ```
-Reader (home) ──☰──▶ Go to: Surahs · Juz · Pages · Bookmarks (+ where Taraweeh ended)
-      │ ──🔍──▶ Search
-      │ ──⚙──▶ Settings
-      └──Taraweeh──▶ Taraweeh mode (full screen, dark) ──☰/Surahs──▶ the same Go to
-                                     └──⚙──▶ Settings (stays dark)
+┌ Read ─ Surahs ─ Bookmarks ─ (Taraweeh) ─ More ┐   a labelled bar at the bottom of every screen
+Read       the Quran (scroll or pages), the place in the bar; the surah name ▾ opens Surahs
+Surahs     surahs (filter by name or number), juz, the 604 pages; a choice opens Read there
+Bookmarks  continue reading · where Taraweeh ended · bookmarks (newest first or Quran order)
+Taraweeh   a button, not a tab: the full-screen mode, listening at once (one tap)
+More       Settings, and what is coming (shown, visibly not yet working)
 ```
-Routes live in `lib/app/routes.dart`; screens never build each other's routes.
+`lib/app/home_shell.dart`. The reader stays alive under the other tabs (its place and scroll
+survive); the other tabs are rebuilt on each visit so their lists open at the current place. Back
+from any tab returns to Read; back from Read leaves the app. Other tabs open places in the reader
+through `readerRequestsProvider` (`lib/app/navigation.dart`), never by reaching into its state.
 
-**Reader (home):**
+**Read:**
 ```
 ┌───────────────────────────────┐
-│ ☰  البقرة Al-Baqarah     🔍  ⚙ │  bar: name; juz and page alone on the 2nd line
-│    Juz 1 · Page 21            │   (the only widget that rebuilds while scrolling)
-│        … ayahs, full ink …    │  QuranView: the whole Quran, continuous
-│ ─────── Juz 2 · Page 22 ───── │  marks: page, hizb quarter, juz starts
-│        … ayahs …              │
-│         ( 🎤 Taraweeh )       │  floats; steps aside while reading down
+│ البقرة Al-Baqarah ▾     📖  🔍 │  name ▾ → Surahs · layout · search
+│ Juz 1 · Page 21 · Today 4/20  │  where; today's pages when a goal is set
+│        … ayahs, full ink …  ▌ │  the scrubber: shows while the text moves;
+│ ─────── Juz 2 · Page 22 ───── │   drag it, a bubble names page · surah · juz
+│ ▮ ayah with a bookmark ribbon │
 └───────────────────────────────┘
 ```
-Tap an ayah: Bookmark / Remove bookmark, Share, Copy (text + reference). The ayah is marked with the
-`mark` wash while its sheet is open, and for two seconds after a jump from search or Go to.
+- **Tap an ayah:** its sheet: Bookmark / Remove bookmark, Share, Copy; then Listen, Translation and
+  Tafsir, disabled under "Coming soon". The ayah is marked with the `mark` wash while its sheet is open,
+  and for two seconds after a jump from search, Surahs or Bookmarks.
+- **Press and hold an ayah:** bookmark it (or remove its bookmark) at once, with a light haptic tick
+  and Undo. Bookmarked ayahs carry a small ribbon in the margin (in pages, before the ayah).
+- **The scrubber:** a handle on the trailing edge, in pages (1..604) so it means the same in both
+  layouts. Hidden until the text moves; a page per step while dragged; screen readers get it as a
+  slider (ten pages a step).
+
+**Bookmarks:** *Continue reading* (the reading position), *Where Taraweeh ended*, then the bookmarks
+with their opening words, place and date. Sort: newest first or Quran order (remembered). Swipe or
+the remove button deletes, with Undo that restores the bookmark with its own date; a removal that
+cannot be saved stays in the list and says so.
+
+**More:** Settings; *Coming soon*: recitation audio, translations, tafsir, a khatm planner, notes,
+Taraweeh without a computer. Shown where they will live, disabled and labelled "Soon".
 
 **Two layouts** (Settings → Reading → Layout, and a toggle in the bar on screens 360 dp and wider):
 - *Scroll:* the whole Quran as one text (`QuranView`, §2.2b).
