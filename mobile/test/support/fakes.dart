@@ -12,6 +12,7 @@ import 'package:rafiq/core/recognition/models.dart';
 import 'package:rafiq/core/recognition/recognition_engine.dart';
 import 'package:rafiq/data/quran.dart';
 import 'package:rafiq/data/settings.dart';
+import 'package:rafiq/data/surah_names.dart';
 import 'package:rafiq/services/screen_awake.dart';
 import 'package:rafiq/services/server_health.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -113,6 +114,10 @@ class FakeScreenAwake implements ScreenAwake {
 Quran? _quran;
 Quran loadQuran() => _quran ??= Quran.fromJson(File('assets/quran/quran.json').readAsStringSync());
 
+SurahNames? _names;
+SurahNames loadSurahNames() =>
+    _names ??= SurahNames.fromJson(File('assets/data/surah-names.json').readAsStringSync(), loadQuran());
+
 /// Everything a test needs, wired the way main.dart wires the real app.
 class Harness {
   Harness._(this.prefs);
@@ -133,6 +138,7 @@ class Harness {
 
   List<Override> get overrides => [
         quranProvider.overrideWithValue(loadQuran()),
+        surahNamesProvider.overrideWithValue(loadSurahNames()),
         settingsStoreProvider.overrideWithValue(SettingsStore(prefs)),
         audioSourceProvider.overrideWithValue(audio),
         screenAwakeProvider.overrideWithValue(awake),
