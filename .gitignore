@@ -35,3 +35,6 @@ Thumbs.db
 
 # Exported on-device models and validation clips (tools/whisper_export)
 /build/
+
+# Design handoff archives (kept outside the repo)
+/*.zip
