@@ -64,8 +64,33 @@ flutter:
 
   assets:
     - assets/quran/quran.json
+    - assets/data/surah-names.json
+    - assets/brand/wordmark-ar-small.png
 
+  # Rubric identity (docs/DESIGN.md §2.3). Licences beside each file (OFL-*.txt).
+  # The two variable fonts are renamed from the handoff's `Family[axes].ttf`:
+  # brackets and commas are not safe in asset paths.
   fonts:
+    # The Book: Quran text and ayah-end markers only.
     - family: AmiriQuran
       fonts:
         - asset: assets/fonts/AmiriQuran-Regular.ttf
+    # The Title (Arabic): surah names.
+    - family: Amiri
+      fonts:
+        - asset: assets/fonts/Amiri-Regular.ttf
+        - asset: assets/fonts/Amiri-Bold.ttf
+          weight: 700
+    # The Title (Latin): the ayah numeral, screen titles. Variable (opsz, wght).
+    - family: Newsreader
+      fonts:
+        - asset: assets/fonts/Newsreader-Variable.ttf
+    # The Interface. Variable (wdth, wght) Latin, static Arabic.
+    - family: IBMPlexSans
+      fonts:
+        - asset: assets/fonts/IBMPlexSans-Variable.ttf
+    - family: IBMPlexSansArabic
+      fonts:
+        - asset: assets/fonts/IBMPlexSansArabic-Regular.ttf
+        - asset: assets/fonts/IBMPlexSansArabic-Medium.ttf
+          weight: 500
