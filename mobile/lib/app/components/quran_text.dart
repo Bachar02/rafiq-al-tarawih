@@ -5,7 +5,11 @@ import '../../data/quran.dart';
 import '../theme.dart';
 
 /// Where an ayah stands relative to the imam: luminance, not boxes, shows it.
+/// Outside Taraweeh mode every ayah is [reading].
 enum AyahTone {
+  /// The reader: full `ink`, no imam, nothing animates.
+  reading,
+
   /// Already recited: resting (`ink-recited`).
   recited,
 
@@ -38,7 +42,9 @@ class AyahBlock extends StatelessWidget {
     this.unsure = false,
     this.fontSize = 26,
     this.justify = true,
+    this.highlighted = false,
     this.onTap,
+    this.onLongPress,
   });
 
   final Verse verse;
@@ -51,8 +57,14 @@ class AyahBlock extends StatelessWidget {
   final double fontSize;
   final bool justify;
 
-  /// A tap opens "The imam is here": a deliberate two-step correction.
+  /// The reader's [RafiqColors.mark] wash: the ayah a sheet acts on, or the
+  /// one a search or bookmark just opened.
+  final bool highlighted;
+
+  /// Opens the ayah's actions (in Taraweeh mode: "The imam is here", a
+  /// deliberate two-step correction).
   final VoidCallback? onTap;
+  final VoidCallback? onLongPress;
 
   static const ruleWidth = 2.0;
 
@@ -61,40 +73,49 @@ class AyahBlock extends StatelessWidget {
     final c = context.colors;
     final current = tone == AyahTone.current;
     final textColor = switch (tone) {
+      AyahTone.reading => c.ink,
       AyahTone.recited => c.inkRecited,
       AyahTone.current => unsure ? c.inkUpcoming : c.ink,
       AyahTone.upcoming => c.inkUpcoming,
     };
     final markerColor = current ? c.rubric : textColor;
 
-    final block = Directionality(
-      textDirection: TextDirection.rtl,
-      child: Stack(
-        children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: RubricSpace.quranInline),
-            child: TweenAnimationBuilder<Color?>(
-              tween: ColorTween(end: textColor),
+    Widget text(Color text, Color marker) => Text.rich(
+          TextSpan(
+            text: displayAyahText(verse.uthmani),
+            children: [TextSpan(text: ayahEndMarker(verse.ayah), style: TextStyle(color: marker))],
+          ),
+          textAlign: justify ? TextAlign.justify : TextAlign.start,
+          // The app's own text-size setting (0.85–1.6, validated with
+          // this font) sizes the Quran, not the system font scale.
+          textScaler: TextScaler.noScaling,
+          style: RubricText.quranBody.copyWith(fontSize: fontSize, color: text),
+        );
+
+    // Reading tone never changes, so it skips the crossfade machinery: one
+    // less pair of animation builders per ayah while scrolling on slow phones.
+    final Widget body = tone == AyahTone.reading
+        ? text(textColor, markerColor)
+        : TweenAnimationBuilder<Color?>(
+            tween: ColorTween(end: textColor),
+            duration: RubricMotion.settle,
+            curve: RubricMotion.standard,
+            builder: (context, t, _) => TweenAnimationBuilder<Color?>(
+              tween: ColorTween(end: markerColor),
               duration: RubricMotion.settle,
               curve: RubricMotion.standard,
-              builder: (context, text, _) => TweenAnimationBuilder<Color?>(
-                tween: ColorTween(end: markerColor),
-                duration: RubricMotion.settle,
-                curve: RubricMotion.standard,
-                builder: (context, marker, _) => Text.rich(
-                  TextSpan(
-                    text: displayAyahText(verse.uthmani),
-                    children: [TextSpan(text: ayahEndMarker(verse.ayah), style: TextStyle(color: marker))],
-                  ),
-                  textAlign: justify ? TextAlign.justify : TextAlign.start,
-                  // The app's own text-size setting (0.85–1.6, validated with
-                  // this font) sizes the Quran, not the system font scale.
-                  textScaler: TextScaler.noScaling,
-                  style: RubricText.quranBody.copyWith(fontSize: fontSize, color: text),
-                ),
-              ),
+              builder: (context, m, _) => text(t!, m!),
             ),
-          ),
+          );
+
+    Widget block = Padding(
+      padding: const EdgeInsets.symmetric(horizontal: RubricSpace.quranInline),
+      child: body,
+    );
+    if (tone != AyahTone.reading) {
+      block = Stack(
+        children: [
+          block,
           PositionedDirectional(
             start: 0,
             top: 0,
@@ -108,13 +129,25 @@ class AyahBlock extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
+      );
+    }
+    if (highlighted) {
+      block = DecoratedBox(
+        decoration: BoxDecoration(color: c.mark, borderRadius: BorderRadius.circular(RubricRadius.sm)),
+        child: block,
+      );
+    }
 
+    final live = tone != AyahTone.reading;
     return Semantics(
       label: 'Ayah ${verse.ayah}${current ? ', the imam is here' : ''}',
-      onTapHint: onTap == null ? null : 'mark where the imam is',
-      child: GestureDetector(behavior: HitTestBehavior.opaque, onTap: onTap, child: block),
+      onTapHint: onTap == null ? null : (live ? 'mark where the imam is' : 'ayah actions'),
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: onTap,
+        onLongPress: onLongPress,
+        child: Directionality(textDirection: TextDirection.rtl, child: block),
+      ),
     );
   }
 }

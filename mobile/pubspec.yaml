@@ -49,6 +49,12 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  # SDK packages (no third-party code): on-device profile benchmarks
+  # (integration_test/, test_driver/), e.g. the QuranView scroll spike.
+  integration_test:
+    sdk: flutter
+  flutter_driver:
+    sdk: flutter
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is

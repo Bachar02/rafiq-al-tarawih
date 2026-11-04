@@ -282,3 +282,59 @@ So the Play Store build is on-device. The server stays useful for development, t
 1. M0: commit the Rubric work, reword the misnamed commit, add golden screenshot tests.
 2. M0: upgrade Flutter and dependencies; keep all tests green.
 3. M1: run phone round 2 and record the go/no-go decision.
+
+## 18. Product direction: a Quran reader with Taraweeh mode (approved 2026-11-04)
+
+**Decision:** Rafiq becomes a Quran reading app first, and live Taraweeh tracking is its signature mode. The reader is the home screen. Taraweeh mode is a full-screen mode one tap away, built on the same Quran view. Approved choices:
+1. **Continuous scrolling through the whole Quran**, kept only if the A32 benchmark passes.
+2. **Two independent positions:** personal reading, and the last Taraweeh position.
+3. **One tap starts listening**, after first-run onboarding (shown once) and the microphone permission.
+4. **System theme by default**, with "Dark during Taraweeh" on.
+
+Hafs only. The engine, server, protocol and Quran text are unchanged.
+
+**Roadmap:** R1 data → R2 `QuranView` spike → R3 reader and app shell → R4 Taraweeh on `QuranView` → R5 navigation, search, bookmarks → R6 polish, localization, docs.
+
+### R1: page and hizb-quarter data (done)
+- `quran.json` gains `pages` (604 page starts, Madinah mushaf) and `hizb_quarters` (240). Every existing field is unchanged.
+- The build checks that each division is a complete, ordered partition starting at 1:1, and that every juz starts at its first quarter.
+- Engine tests pin hand-written anchors from the printed mushaf: juz start pages (including the irregular 121 and 201), Ayat al-Kursi on page 42, al-Kahf on 293, Ya-Sin on 440.
+- Dart `Divisions` does binary-search lookups (`juzs`, `pages`, `quarters`), checked against a linear scan of all 6,236 verses.
+- Page marks are **starts only**: the text flows, it is not a page facsimile, and the app never claims to be one.
+
+### R2: `QuranView` spike
+**Architecture:** one lazily built list of 6,350 items (114 surah headers and 6,236 ayahs).
+- **Jumps:** the list is anchored with the two-sliver "center" technique (items after the anchor grow down, items before it grow up). Any jump is an exact re-anchor in constant time, with no extent estimation and no new dependency.
+- **Follow-scroll:** ported with the same constants (comfort zone 25–60%, anchor 38%).
+- **Measuring positions:** in scroll space, because scroll notifications arrive before layout, and paint positions are a frame stale exactly when a drag ends (a bug the tests caught).
+- **No needless rebuilds:** item delegates are rebuilt only when what the items show changes, so the Taraweeh screen's 80 ms mic-level updates rebuild no ayah. A test checks this.
+- **Reading tone** skips the tone crossfade machinery, which is cheaper per ayah while scrolling.
+
+**Why continuous rather than per surah:** per-frame scroll cost is the same either way, because only items on screen exist. The thing that matters is virtualization. A per-surah fallback would only remove reading across surah boundaries (a juz crosses them), not cost.
+
+**Host proxy** (`RAFIQ_PERF=1 flutter test test/perf/quran_view_cost_test.dart`): real fonts, a debug-mode laptop, so only the ratios mean anything.
+
+| Text size | Old eager column, Al-Baqarah frame | `QuranView` open | Scroll frame, median / p90 | Jump, median |
+|---|---|---|---|---|
+| 1.0 | 313 ms | 19 ms | 2.2 / 9.9 ms | 11 ms |
+| 1.6 | 250 ms | 11 ms | 1.1 / 5.6 ms | 6 ms |
+
+**Deciding run, pending: the A32.** It needs a phone (the local emulators are 32-bit x86, which Flutter no longer runs).
+
+```
+flutter drive --profile -d <A32> --driver=test_driver/perf_driver.dart --target=integration_test/quran_view_perf_test.dart
+py tool/perf_report.py --markdown
+```
+
+It covers Al-Baqarah flings, juz 30 across surahs, 20 far jumps and Taraweeh follow, each at text size 1.0 and 1.6.
+
+**Budgets:**
+- **Scrolling:** frame build and raster p90 ≤ 16 ms, build p99 ≤ 33 ms, ≤ 5% of frames over budget.
+- **Jumps:** p90 ≤ 250 ms.
+
+**If scrolling misses the budget**, the levers in order are:
+1. Cache shaped paragraphs per ayah and text size.
+2. Split long ayahs into line-range items.
+3. Lower `cacheExtent`.
+
+The list architecture stays in every case.

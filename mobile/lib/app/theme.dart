@@ -25,6 +25,7 @@ class RafiqColors extends ThemeExtension<RafiqColors> {
     required this.rubric,
     required this.signal,
     required this.scrim,
+    required this.mark,
   });
 
   /// The page behind the Quran and every screen.
@@ -60,6 +61,12 @@ class RafiqColors extends ThemeExtension<RafiqColors> {
   /// Behind sheets and dialogs. Darkens, never brightens.
   final Color scrim;
 
+  /// The reader's quiet wash behind an ayah the user chose: the one an
+  /// open ayah sheet acts on, a search result or a bookmark just opened.
+  /// A background only, never text; and never the imam's position, which
+  /// stays [rubric].
+  final Color mark;
+
   /// Microphone level bars, lit. Deliberately neutral: the mic is never cinnabar.
   Color get levelOn => inkSecondary;
 
@@ -78,6 +85,7 @@ class RafiqColors extends ThemeExtension<RafiqColors> {
     rubric: Color(0xFFD9603F),
     signal: Color(0xFF93A9D6),
     scrim: Color(0xA0000000),
+    mark: Color(0xFF26201A),
   );
 
   static const light = RafiqColors(
@@ -92,6 +100,7 @@ class RafiqColors extends ThemeExtension<RafiqColors> {
     rubric: Color(0xFFB33E24),
     signal: Color(0xFF3D5A99),
     scrim: Color(0x521C1915),
+    mark: Color(0xFFE5DBC8),
   );
 
   @override
@@ -107,6 +116,7 @@ class RafiqColors extends ThemeExtension<RafiqColors> {
     Color? rubric,
     Color? signal,
     Color? scrim,
+    Color? mark,
   }) =>
       RafiqColors(
         ground: ground ?? this.ground,
@@ -120,6 +130,7 @@ class RafiqColors extends ThemeExtension<RafiqColors> {
         rubric: rubric ?? this.rubric,
         signal: signal ?? this.signal,
         scrim: scrim ?? this.scrim,
+        mark: mark ?? this.mark,
       );
 
   @override
@@ -138,6 +149,7 @@ class RafiqColors extends ThemeExtension<RafiqColors> {
       rubric: l(rubric, other.rubric),
       signal: l(signal, other.signal),
       scrim: l(scrim, other.scrim),
+      mark: l(mark, other.mark),
     );
   }
 }
