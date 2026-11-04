@@ -1,14 +1,11 @@
 {
   "@@locale": "fr",
-
   "appName": "Rafiq",
-
   "needsYourAction": "Action requise",
   "dismiss": "Fermer",
   "undo": "Annuler",
   "clear": "Effacer",
   "settings": "Réglages",
-
   "statusReady": "Prêt à suivre",
   "statusStopped": "Suivi arrêté",
   "statusConnecting": "Connexion…",
@@ -21,7 +18,6 @@
   "statusNotMatching": "Ne correspond pas au Coran",
   "statusReconnecting": "Reconnexion…",
   "statusStopping": "Arrêt…",
-
   "captionReady": "Lancez le suivi quand l’imam commence. Aucun réglage nécessaire.",
   "captionStopped": "La dernière position reste affichée.",
   "captionConnecting": "La première fois, le serveur de reconnaissance charge son modèle vocal.",
@@ -34,7 +30,6 @@
   "captionNotMatching": "Le dernier verset sûr reste affiché. Cela arrive pendant les douʿâʾ ou quand les mots ne sont pas clairs.",
   "captionReconnecting": "Le micro continue d’écouter pendant ce temps.",
   "repeatedText": "Texte répété — peut aussi être {refs}",
-
   "overlineAyah": "VERSET",
   "overlineLastSure": "DERNIER SÛR",
   "semNoPosition": "Aucune position pour l’instant",
@@ -42,7 +37,6 @@
   "semSurahAyahNotSure": "Sourate {surah}, verset {ayah}, pas sûr",
   "hintOpenSurahList": "ouvrir la liste des sourates",
   "tooltipSurahs": "Sourates",
-
   "juzNumber": "Juz {juz}",
   "pageNumber": "Page {page}",
   "juzPage": "Juz {juz} · Page {page}",
@@ -53,7 +47,6 @@
   "ayahCount": "{count, plural, =1{1 verset} other{{count} versets}}",
   "surahHeaderMeta": "{name} · {number} · {ayahs}",
   "semSurahHeader": "Sourate {name}, {number}",
-
   "tooltipStayOnSurah": "Rester sur cette sourate",
   "tooltipLocked": "Limité à {scope}. Touchez pour libérer.",
   "tooltipTonight": "Point de départ de ce soir",
@@ -62,7 +55,6 @@
   "hintTonightSurah": "Ce soir : {surah}",
   "hintTonightJuz": "Ce soir : Juz {juz}",
   "lastNightEnded": "Hier soir, arrêt à {place}.",
-
   "noticePausedTitle": "Suivi en pause",
   "noticePausedBody": "L’application est passée en arrière-plan. La dernière position reste affichée.",
   "actionResume": "Reprendre",
@@ -78,7 +70,6 @@
   "emptyListening": "Placez le téléphone là où il entend l’imam.",
   "emptyIdle": "Rafiq écoute l’imam et affiche la sourate et le verset, en direct.",
   "browseSurahs": "Parcourir les sourates",
-
   "controlPreparing": "Préparation…",
   "controlFinishing": "Fin des derniers mots…",
   "controlStop": "Arrêter le suivi",
@@ -88,7 +79,6 @@
   "veryLittleSound": "Très peu de son",
   "backToImam": "Retour à l’imam",
   "backToImamAt": "Retour à l’imam · {ref}",
-
   "ayahSheetTitle": "{surah} · verset {ayah}",
   "imamJumpExplanation": "Rafiq passe à ce verset et continue le suivi à partir de là.",
   "startFirstExplanation": "Lancez d’abord le suivi, puis touchez le verset où se trouve l’imam.",
@@ -97,7 +87,6 @@
   "stayOnSurah": "Rester sur {surah}",
   "stayOnThisSurah": "Rester sur cette sourate",
   "lockExplanation": "Rafiq ne cherchera pas dans d’autres sourates tant que vous ne libérez pas. Al-Fatiha reste reconnue à chaque rakʿa.",
-
   "hintSheetTitle": "Point de départ de ce soir",
   "hintSheetExplanation": "Facultatif. Rafiq trouve l’imam sans cela ; une indication fait seulement apparaître le premier verset plus tôt.",
   "hintSheetRestarts": "La modifier relance l’écoute.",
@@ -106,7 +95,6 @@
   "hintJuz": "Juz",
   "hintNoneExplanation": "Sans indication : Rafiq cherche dans tout le Coran.",
   "searchByNameOrNumber": "Chercher par nom ou numéro",
-
   "introTitle": "Mode Tarawih",
   "introLead": "Rafiq écoute l’imam et affiche le verset récité, en direct.",
   "introMic": "Le micro n’est utilisé que pendant le suivi. L’écran reste allumé.",
@@ -114,18 +102,15 @@
   "introHafs": "Il suit uniquement la récitation Ḥafṣ ʿan ʿĀṣim.",
   "introCorrect": "S’il se trompe, touchez le verset où se trouve l’imam. Quand il n’est pas sûr, il le dit au lieu de deviner.",
   "notNow": "Plus tard",
-
   "semAyah": "Verset {ayah}",
   "semAyahImamHere": "Verset {ayah}, l’imam est ici",
   "hintMarkImam": "indiquer où est l’imam",
   "hintAyahActions": "actions sur le verset",
-
   "tooltipNavigate": "Sourates, juz et signets",
   "tooltipSearch": "Chercher dans le Coran",
   "semReaderBar": "{surah}, verset {ayah}. Juz {juz}, page {page}. Ouvrir l’index",
   "taraweeh": "Tarawih",
   "semTaraweehEntry": "Tarawih : suivre l’imam",
-
   "bookmark": "Ajouter un signet",
   "removeBookmark": "Retirer le signet",
   "copyAyah": "Copier le verset",
@@ -134,7 +119,6 @@
   "bookmarkRemoved": "Signet retiré",
   "bookmarkRemoveFailed": "Le signet n’a pas pu être retiré. Réessayez.",
   "copied": "Copié : {ref}",
-
   "goTo": "Aller à",
   "tabSurahs": "Sourates",
   "tabJuz": "Juz",
@@ -147,7 +131,6 @@
   "yesterday": "hier",
   "daysAgo": "{days, plural, =1{il y a 1 jour} other{il y a {days} jours}}",
   "noBookmarks": "Aucun signet pour l’instant. Pendant la lecture, touchez un verset pour l’ajouter.",
-
   "searchHint": "Sourate, 2:255, page 50 ou mots en arabe",
   "searchFirstOf": "Les {shown} premiers versets sur {total}",
   "searchTooShort": "Tapez au moins {count} lettres pour chercher dans le texte.",
@@ -158,7 +141,6 @@
   "searchHelpPlace": "Une page ou un juz : page 50, juz 30",
   "searchHelpWords": "Des mots du Coran, en arabe : ٱلْحَمْدُ لِلَّهِ (avec ou sans voyelles)",
   "surahNumberAyahs": "Sourate {number} · {ayahs}",
-
   "groupReading": "Lecture",
   "quranTextSize": "Taille du texte coranique",
   "appearance": "Apparence",
@@ -194,5 +176,11 @@
   "healthFailed": "Échec",
   "healthConnected": "Connecté · {ms} ms · modèle vocal {device}",
   "healthReadyOnFirstUse": "prêt à la première utilisation",
-  "healthNoAsr": "Connecté · {ms} ms · reconnaissance vocale NON installée"
+  "healthNoAsr": "Connecté · {ms} ms · reconnaissance vocale NON installée",
+  "layout": "Disposition",
+  "layoutExplanation": "Défilement : le Coran comme un texte continu. Pages : les 604 pages du mushaf de Médine.",
+  "layoutScroll": "Défilement",
+  "layoutPages": "Pages",
+  "tooltipPageView": "Lire page par page",
+  "tooltipScrollView": "Lire en défilement continu"
 }

@@ -102,6 +102,23 @@ void main() {
       await expectGolden(tester, 'reader_light');
     });
 
+    testWidgets('page view: page 42, light', (tester) async {
+      await launch(
+        tester,
+        prefs: {...readingAt(2, 253), 'reading_layout': 'pages', 'theme_mode': 'light'},
+        taraweeh: false,
+      );
+      await settle(tester);
+      await expectGolden(tester, 'reader_pages');
+    });
+
+    testWidgets('page view: page 582 opens juz 30, dark', (tester) async {
+      await launch(tester,
+          prefs: {...readingAt(78, 1), 'reading_layout': 'pages', 'theme_mode': 'dark'}, taraweeh: false);
+      await settle(tester);
+      await expectGolden(tester, 'reader_pages_dark');
+    });
+
     testWidgets('Arabic interface: the reader, right to left', (tester) async {
       await launch(tester, prefs: {...readingAt(2, 140), 'language': 'ar', 'theme_mode': 'dark'}, taraweeh: false);
       await settle(tester);

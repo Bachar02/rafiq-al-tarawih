@@ -633,4 +633,23 @@ class AppLocalizationsEn extends AppLocalizations {
   String healthNoAsr(int ms) {
     return 'Connected · $ms ms · speech recognition NOT installed';
   }
+
+  @override
+  String get layout => 'Layout';
+
+  @override
+  String get layoutExplanation =>
+      'Scroll reads the Quran as one continuous text. Pages turn the 604 pages of the Madinah mushaf.';
+
+  @override
+  String get layoutScroll => 'Scroll';
+
+  @override
+  String get layoutPages => 'Pages';
+
+  @override
+  String get tooltipPageView => 'Read page by page';
+
+  @override
+  String get tooltipScrollView => 'Read as one scroll';
 }

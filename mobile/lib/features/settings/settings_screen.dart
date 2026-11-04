@@ -101,6 +101,18 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     if (mode != null) await ref.read(settingsProvider.notifier).update((s) => s.copyWith(themeMode: mode));
   }
 
+  Future<void> _chooseLayout(ReadingLayout current) async {
+    final l = context.l10n;
+    final layout = await _choose(
+      title: l.layout,
+      explanation: l.layoutExplanation,
+      options: ReadingLayout.values,
+      current: current,
+      label: (r) => layoutLabel(l, r),
+    );
+    if (layout != null) await ref.read(settingsProvider.notifier).update((s) => s.copyWith(readingLayout: layout));
+  }
+
   Future<void> _chooseLanguage(AppLanguage current) async {
     final l = context.l10n;
     final language = await _choose(
@@ -132,6 +144,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 label: l.quranTextSize,
                 value: '${(settings.textScale * 100).round()}%',
                 onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const TextSizeScreen())),
+              ),
+              RubricRow(
+                label: l.layout,
+                value: layoutLabel(l, settings.readingLayout),
+                onTap: () => _chooseLayout(settings.readingLayout),
               ),
               RubricRow(
                 label: l.appearance,
@@ -271,6 +288,11 @@ String appearanceLabel(AppLocalizations l, ThemeMode mode) => switch (mode) {
       ThemeMode.dark => l.themeDark,
       ThemeMode.light => l.themeLight,
       ThemeMode.system => l.themeSystem,
+    };
+
+String layoutLabel(AppLocalizations l, ReadingLayout layout) => switch (layout) {
+      ReadingLayout.scroll => l.layoutScroll,
+      ReadingLayout.pages => l.layoutPages,
     };
 
 /// Each language by its own name, so anyone can find theirs.

@@ -13,6 +13,8 @@ import 'reader_ayah_sheet.dart';
 import 'widgets/reader_bar.dart';
 import 'widgets/taraweeh_entry.dart';
 import '../../l10n/l10n.dart';
+import '../quran_view/mushaf_page_view.dart';
+import '../../data/settings.dart';
 
 /// Home: the Quran, open where the user stopped reading.
 ///
@@ -29,9 +31,7 @@ class ReaderScreen extends ConsumerStatefulWidget {
 
 class ReaderScreenState extends ConsumerState<ReaderScreen> with WidgetsBindingObserver {
   final _view = QuranViewController();
-
-  /// Read once: afterwards the view owns its scroll position.
-  late final int _initialVerse = ref.read(readingPositionProvider);
+  final _pages = MushafPageController();
 
   /// The ayah the user chose (an open sheet acts on it, or a jump landed on it).
   int? _highlighted;
@@ -59,7 +59,11 @@ class ReaderScreenState extends ConsumerState<ReaderScreen> with WidgetsBindingO
 
   /// Open the text at [verseId] and mark it for a moment, so the eye finds it.
   void openAt(int verseId, {bool mark = true}) {
-    _view.jumpToVerse(verseId);
+    if (_layout == ReadingLayout.pages) {
+      _pages.jumpToVerse(verseId);
+    } else {
+      _view.jumpToVerse(verseId);
+    }
     ref.read(readingPositionProvider.notifier).update(verseId);
     if (!mark) return;
     _clearHighlight?.cancel();
@@ -111,6 +115,13 @@ class ReaderScreenState extends ConsumerState<ReaderScreen> with WidgetsBindingO
     }
   }
 
+  ReadingLayout get _layout => ref.read(settingsProvider).readingLayout;
+
+  void _toggleLayout() => ref.read(settingsProvider.notifier).update(
+        (s) => s.copyWith(
+            readingLayout: s.readingLayout == ReadingLayout.pages ? ReadingLayout.scroll : ReadingLayout.pages),
+      );
+
   void _onUserScroll(ScrollDirection direction) {
     final visible = direction != ScrollDirection.reverse;
     if (visible != _entryVisible) setState(() => _entryVisible = visible);
@@ -121,6 +132,10 @@ class ReaderScreenState extends ConsumerState<ReaderScreen> with WidgetsBindingO
     final quran = ref.watch(quranProvider);
     final names = ref.watch(surahNamesProvider);
     final textScale = ref.watch(settingsProvider.select((s) => s.textScale));
+    final layout = ref.watch(settingsProvider.select((s) => s.readingLayout));
+    // Each view opens where the other left off: the reading position is
+    // read (not watched) when the view is created, then the view owns it.
+    final opening = ref.read(readingPositionProvider);
     final position = ref.read(readingPositionProvider.notifier);
 
     return Scaffold(
@@ -130,6 +145,7 @@ class ReaderScreenState extends ConsumerState<ReaderScreen> with WidgetsBindingO
           children: [
             ReaderBar(
               onNavigate: _navigate,
+              onToggleLayout: _toggleLayout,
               onSearch: _search,
               onSettings: () => AppRoutes.settings(context),
             ),
@@ -137,18 +153,33 @@ class ReaderScreenState extends ConsumerState<ReaderScreen> with WidgetsBindingO
               child: Stack(
                 children: [
                   Positioned.fill(
-                    child: QuranView(
-                      quran: quran,
-                      names: names,
-                      initialVerse: _initialVerse,
-                      controller: _view,
-                      textScale: textScale,
-                      highlightedVerse: _highlighted,
-                      onAyahTap: _onAyahTap,
-                      onTopVerseChanged: position.update,
-                      onUserScroll: _onUserScroll,
-                      bottomPadding: TaraweehEntry.height + RubricSpace.s4,
-                    ),
+                    child: layout == ReadingLayout.pages
+                        ? MushafPageView(
+                            key: const ValueKey(ReadingLayout.pages),
+                            quran: quran,
+                            names: names,
+                            initialVerse: opening,
+                            controller: _pages,
+                            textScale: textScale,
+                            highlightedVerse: _highlighted,
+                            onAyahTap: _onAyahTap,
+                            onPageChanged: (page) => position.update(quran.pages.start(page)),
+                            onUserScroll: _onUserScroll,
+                            bottomPadding: TaraweehEntry.height + RubricSpace.s4,
+                          )
+                        : QuranView(
+                            key: const ValueKey(ReadingLayout.scroll),
+                            quran: quran,
+                            names: names,
+                            initialVerse: opening,
+                            controller: _view,
+                            textScale: textScale,
+                            highlightedVerse: _highlighted,
+                            onAyahTap: _onAyahTap,
+                            onTopVerseChanged: position.update,
+                            onUserScroll: _onUserScroll,
+                            bottomPadding: TaraweehEntry.height + RubricSpace.s4,
+                          ),
                   ),
                   Positioned(
                     left: 0,

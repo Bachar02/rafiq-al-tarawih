@@ -634,4 +634,22 @@ class AppLocalizationsAr extends AppLocalizations {
   String healthNoAsr(int ms) {
     return 'متصل · $ms مللي ثانية · التعرّف الصوتي غير مثبّت';
   }
+
+  @override
+  String get layout => 'طريقة العرض';
+
+  @override
+  String get layoutExplanation => 'التمرير: القرآن نصًا متصلًا. الصفحات: صفحات مصحف المدينة الـ604.';
+
+  @override
+  String get layoutScroll => 'تمرير';
+
+  @override
+  String get layoutPages => 'صفحات';
+
+  @override
+  String get tooltipPageView => 'القراءة صفحة صفحة';
+
+  @override
+  String get tooltipScrollView => 'القراءة بالتمرير المتصل';
 }

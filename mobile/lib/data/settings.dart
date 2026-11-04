@@ -15,6 +15,10 @@ enum AppLanguage {
   final Locale? locale;
 }
 
+/// How the reader shows the Quran: one continuous scroll, or the 604
+/// Madinah-mushaf pages turned one at a time.
+enum ReadingLayout { scroll, pages }
+
 /// User settings. Immutable; changed through [SettingsStore].
 class AppSettings {
   const AppSettings({
@@ -26,6 +30,7 @@ class AppSettings {
     this.darkDuringTaraweeh = true,
     this.taraweehIntroSeen = false,
     this.language = AppLanguage.system,
+    this.readingLayout = ReadingLayout.scroll,
   });
 
   /// The Android emulator's alias for the host machine. On a real phone this
@@ -59,6 +64,8 @@ class AppSettings {
 
   final AppLanguage language;
 
+  final ReadingLayout readingLayout;
+
   AppSettings copyWith({
     String? serverAddress,
     bool? keepScreenOn,
@@ -68,6 +75,7 @@ class AppSettings {
     bool? darkDuringTaraweeh,
     bool? taraweehIntroSeen,
     AppLanguage? language,
+    ReadingLayout? readingLayout,
   }) =>
       AppSettings(
         serverAddress: serverAddress ?? this.serverAddress,
@@ -78,6 +86,7 @@ class AppSettings {
         darkDuringTaraweeh: darkDuringTaraweeh ?? this.darkDuringTaraweeh,
         taraweehIntroSeen: taraweehIntroSeen ?? this.taraweehIntroSeen,
         language: language ?? this.language,
+        readingLayout: readingLayout ?? this.readingLayout,
       );
 }
 
@@ -95,6 +104,7 @@ class SettingsStore {
   static const _darkTaraweeh = 'dark_during_taraweeh';
   static const _introSeen = 'taraweeh_intro_seen';
   static const _language = 'language';
+  static const _layout = 'reading_layout';
 
   AppSettings load() {
     const d = AppSettings();
@@ -109,6 +119,7 @@ class SettingsStore {
       darkDuringTaraweeh: _prefs.getBool(_darkTaraweeh) ?? d.darkDuringTaraweeh,
       taraweehIntroSeen: _prefs.getBool(_introSeen) ?? d.taraweehIntroSeen,
       language: AppLanguage.values.asNameMap()[_prefs.getString(_language)] ?? d.language,
+      readingLayout: ReadingLayout.values.asNameMap()[_prefs.getString(_layout)] ?? d.readingLayout,
     );
   }
 
@@ -121,5 +132,6 @@ class SettingsStore {
     await _prefs.setBool(_darkTaraweeh, s.darkDuringTaraweeh);
     await _prefs.setBool(_introSeen, s.taraweehIntroSeen);
     await _prefs.setString(_language, s.language.name);
+    await _prefs.setString(_layout, s.readingLayout.name);
   }
 }

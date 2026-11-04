@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../app/providers.dart';
 import '../../../app/theme.dart';
 import '../../../l10n/l10n.dart';
+import '../../../data/settings.dart';
 
 /// Where the reader is (surah, juz, page) and the reader's actions. The only
 /// part of the reader that rebuilds as the text scrolls.
@@ -13,12 +14,16 @@ class ReaderBar extends ConsumerWidget {
     required this.onNavigate,
     required this.onSettings,
     this.onSearch,
+    this.onToggleLayout,
   });
 
   /// Surahs, juz, pages and bookmarks.
   final VoidCallback onNavigate;
   final VoidCallback? onSearch;
   final VoidCallback onSettings;
+
+  /// Switch between scroll and pages (shown when the bar has room).
+  final VoidCallback? onToggleLayout;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -29,6 +34,10 @@ class ReaderBar extends ConsumerWidget {
     final verse = quran.verse(ref.watch(readingPositionProvider));
     final surah = quran.surah(verse.surah);
     final juz = quran.juzOf(verse.id), page = quran.pageOf(verse.id);
+    final pages = ref.watch(settingsProvider.select((s) => s.readingLayout)) == ReadingLayout.pages;
+    // On a narrow phone the place (juz, page) keeps the room; the layout
+    // stays one tap away in Settings.
+    final roomy = MediaQuery.sizeOf(context).width >= 360;
     final where = l.juzPage(juz, page);
 
     return Padding(
@@ -85,6 +94,12 @@ class ReaderBar extends ConsumerWidget {
               ),
             ),
           ),
+          if (onToggleLayout != null && roomy)
+            IconButton(
+              tooltip: pages ? l.tooltipScrollView : l.tooltipPageView,
+              onPressed: onToggleLayout,
+              icon: Icon(pages ? Icons.view_day_outlined : Icons.auto_stories_outlined),
+            ),
           if (onSearch != null)
             IconButton(tooltip: l.tooltipSearch, onPressed: onSearch, icon: const Icon(Icons.search)),
           IconButton(tooltip: l.settings, onPressed: onSettings, icon: const Icon(Icons.settings_outlined)),

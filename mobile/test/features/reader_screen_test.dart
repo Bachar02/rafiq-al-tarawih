@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:rafiq/core/text/quran_display.dart';
+import 'package:rafiq/features/quran_view/mushaf_page_view.dart';
 import 'package:rafiq/app/app.dart';
 import 'package:rafiq/app/components/quran_text.dart';
 import 'package:rafiq/app/providers.dart';
@@ -295,5 +298,90 @@ void main() {
     await tester.tap(find.text('Al-Kahf 18:10'));
     await tester.pumpAndSettle();
     expect(container.read(readingPositionProvider), id(18, 10));
+  });
+
+  group('page view', () {
+    /// The ayah spans of the page on screen, by verse id.
+    Map<int, TextSpan> pageSpans(WidgetTester tester) {
+      final spans = <int, TextSpan>{};
+      final quran = loadQuran();
+      for (final rich in tester.widgetList<RichText>(find.descendant(
+        of: find.byType(MushafPageView),
+        matching: find.byType(RichText),
+      ))) {
+        rich.text.visitChildren((span) {
+          if (span is TextSpan && span.recognizer != null) {
+            final text = span.text ?? '';
+            for (var id = 1; id <= 6236; id++) {
+              if (text.startsWith(displayAyahText(quran.verse(id).uthmani).trimRight())) {
+                spans[id] = span;
+                break;
+              }
+            }
+          }
+          return true;
+        });
+      }
+      return spans;
+    }
+
+    testWidgets('the bar switches to pages at the same place, and back', (tester) async {
+      final container = await launch(tester);
+      openAt(tester, id(2, 255));
+      await tester.pump();
+      await tester.pump();
+      await tester.tap(find.byTooltip('Read page by page'));
+      await tester.pumpAndSettle();
+      expect(find.byType(MushafPageView), findsOneWidget);
+      expect(h.prefs.getString('reading_layout'), 'pages');
+      // The page 2:255 is on; the reading position becomes where it starts.
+      expect(find.text('٤٢'), findsOneWidget);
+      expect(container.read(readingPositionProvider), lessThanOrEqualTo(id(2, 255)));
+      expect(quran.pageOf(container.read(readingPositionProvider)), 42);
+
+      await tester.tap(find.byTooltip('Read as one scroll'));
+      await tester.pumpAndSettle();
+      expect(find.byType(QuranView), findsOneWidget);
+      expect(quran.pageOf(container.read(readingPositionProvider)), 42);
+    });
+
+    testWidgets('swiping left to right turns to the next page, as a mushaf does', (tester) async {
+      h = await Harness.create(prefs: {'reading_layout': 'pages'});
+      final container = await launch(tester);
+      expect(find.text('١'), findsOneWidget); // page 1
+      await tester.fling(find.byType(MushafPageView), const Offset(200, 0), 800);
+      await tester.pumpAndSettle();
+      expect(container.read(readingPositionProvider), quran.pages.start(2));
+      expect(find.text('٢'), findsOneWidget);
+      await tester.pump(ReadingPositionController.saveDelay);
+      expect(PrefsReadingStore(h.prefs).readingPosition()?.verseId, quran.pages.start(2));
+    });
+
+    testWidgets('an ayah on the page opens its sheet; a search lands on its page, marked', (tester) async {
+      h = await Harness.create(prefs: {'reading_layout': 'pages'});
+      final container = await launch(tester);
+      (pageSpans(tester)[3]!.recognizer! as TapGestureRecognizer).onTap!();
+      await tester.pumpAndSettle();
+      expect(find.text('Bookmark'), findsOneWidget);
+      await tester.tapAt(const Offset(10, 10)); // dismiss the sheet
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byTooltip('Search the Quran'));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField), '18:10');
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Al-Kahf 18:10'));
+      await tester.pumpAndSettle(const Duration(milliseconds: 100));
+      expect(quran.pageOf(container.read(readingPositionProvider)), quran.pageOf(id(18, 10)));
+      expect(pageSpans(tester)[id(18, 10)]!.style?.backgroundColor, isNotNull);
+    });
+
+    testWidgets('the layout is kept after a restart', (tester) async {
+      h = await Harness.create(prefs: {'reading_layout': 'pages'});
+      await launch(tester);
+      expect(find.byType(MushafPageView), findsOneWidget);
+      await restart(tester);
+      expect(find.byType(MushafPageView), findsOneWidget);
+    });
   });
 }

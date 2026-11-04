@@ -1154,6 +1154,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Connected · {ms} ms · speech recognition NOT installed'**
   String healthNoAsr(int ms);
+
+  /// No description provided for @layout.
+  ///
+  /// In en, this message translates to:
+  /// **'Layout'**
+  String get layout;
+
+  /// No description provided for @layoutExplanation.
+  ///
+  /// In en, this message translates to:
+  /// **'Scroll reads the Quran as one continuous text. Pages turn the 604 pages of the Madinah mushaf.'**
+  String get layoutExplanation;
+
+  /// No description provided for @layoutScroll.
+  ///
+  /// In en, this message translates to:
+  /// **'Scroll'**
+  String get layoutScroll;
+
+  /// No description provided for @layoutPages.
+  ///
+  /// In en, this message translates to:
+  /// **'Pages'**
+  String get layoutPages;
+
+  /// No description provided for @tooltipPageView.
+  ///
+  /// In en, this message translates to:
+  /// **'Read page by page'**
+  String get tooltipPageView;
+
+  /// No description provided for @tooltipScrollView.
+  ///
+  /// In en, this message translates to:
+  /// **'Read as one scroll'**
+  String get tooltipScrollView;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

@@ -1,14 +1,11 @@
 {
   "@@locale": "en",
-
   "appName": "Rafiq",
-
   "needsYourAction": "Needs your action",
   "dismiss": "Dismiss",
   "undo": "Undo",
   "clear": "Clear",
   "settings": "Settings",
-
   "statusReady": "Ready to follow",
   "statusStopped": "Not following",
   "statusConnecting": "Connecting…",
@@ -21,7 +18,6 @@
   "statusNotMatching": "Not matching the Quran",
   "statusReconnecting": "Reconnecting…",
   "statusStopping": "Stopping…",
-
   "captionReady": "Start following when the imam begins. No setup needed.",
   "captionStopped": "Showing the last position.",
   "captionConnecting": "The first time, the recognition server loads its speech model.",
@@ -29,59 +25,187 @@
   "captionNoNewMatch": "Sound is coming in, but nothing new has matched the Quran for over 10 seconds.",
   "captionLittleSound": "The microphone has picked up very little for over 10 seconds.",
   "captionStillShowing": "Still showing ayah {ayah}.",
-  "@captionStillShowing": {"placeholders": {"ayah": {"type": "int"}}},
+  "@captionStillShowing": {
+    "placeholders": {
+      "ayah": {
+        "type": "int"
+      }
+    }
+  },
   "captionStillShowingConfirmed": "Still showing ayah {ayah}, the last confirmed ayah.",
-  "@captionStillShowingConfirmed": {"placeholders": {"ayah": {"type": "int"}}},
+  "@captionStillShowingConfirmed": {
+    "placeholders": {
+      "ayah": {
+        "type": "int"
+      }
+    }
+  },
   "captionNotSure": "Holding the last sure ayah.",
   "captionNotMatching": "Holding the last sure ayah. This happens during duʿāʾ or when the words aren't clear.",
   "captionReconnecting": "The microphone keeps listening meanwhile.",
   "repeatedText": "Repeated text — could also be {refs}",
-  "@repeatedText": {"placeholders": {"refs": {"type": "String"}}},
-
+  "@repeatedText": {
+    "placeholders": {
+      "refs": {
+        "type": "String"
+      }
+    }
+  },
   "overlineAyah": "AYAH",
   "overlineLastSure": "LAST SURE",
   "semNoPosition": "No position yet",
   "semSurahAyah": "Surah {surah}, ayah {ayah}",
-  "@semSurahAyah": {"placeholders": {"surah": {"type": "String"}, "ayah": {"type": "int"}}},
+  "@semSurahAyah": {
+    "placeholders": {
+      "surah": {
+        "type": "String"
+      },
+      "ayah": {
+        "type": "int"
+      }
+    }
+  },
   "semSurahAyahNotSure": "Surah {surah}, ayah {ayah}, not sure",
-  "@semSurahAyahNotSure": {"placeholders": {"surah": {"type": "String"}, "ayah": {"type": "int"}}},
+  "@semSurahAyahNotSure": {
+    "placeholders": {
+      "surah": {
+        "type": "String"
+      },
+      "ayah": {
+        "type": "int"
+      }
+    }
+  },
   "hintOpenSurahList": "open the surah list",
   "tooltipSurahs": "Surahs",
-
   "juzNumber": "Juz {juz}",
-  "@juzNumber": {"placeholders": {"juz": {"type": "int"}}},
+  "@juzNumber": {
+    "placeholders": {
+      "juz": {
+        "type": "int"
+      }
+    }
+  },
   "pageNumber": "Page {page}",
-  "@pageNumber": {"placeholders": {"page": {"type": "int"}}},
+  "@pageNumber": {
+    "placeholders": {
+      "page": {
+        "type": "int"
+      }
+    }
+  },
   "juzPage": "Juz {juz} · Page {page}",
-  "@juzPage": {"placeholders": {"juz": {"type": "int"}, "page": {"type": "int"}}},
+  "@juzPage": {
+    "placeholders": {
+      "juz": {
+        "type": "int"
+      },
+      "page": {
+        "type": "int"
+      }
+    }
+  },
   "hizbStart": "Hizb {hizb}",
-  "@hizbStart": {"placeholders": {"hizb": {"type": "int"}}},
+  "@hizbStart": {
+    "placeholders": {
+      "hizb": {
+        "type": "int"
+      }
+    }
+  },
   "hizbQuarter": "¼ Hizb {hizb}",
-  "@hizbQuarter": {"placeholders": {"hizb": {"type": "int"}}},
+  "@hizbQuarter": {
+    "placeholders": {
+      "hizb": {
+        "type": "int"
+      }
+    }
+  },
   "hizbHalf": "½ Hizb {hizb}",
-  "@hizbHalf": {"placeholders": {"hizb": {"type": "int"}}},
+  "@hizbHalf": {
+    "placeholders": {
+      "hizb": {
+        "type": "int"
+      }
+    }
+  },
   "hizbThreeQuarters": "¾ Hizb {hizb}",
-  "@hizbThreeQuarters": {"placeholders": {"hizb": {"type": "int"}}},
+  "@hizbThreeQuarters": {
+    "placeholders": {
+      "hizb": {
+        "type": "int"
+      }
+    }
+  },
   "ayahCount": "{count, plural, =1{1 ayah} other{{count} ayahs}}",
-  "@ayahCount": {"placeholders": {"count": {"type": "int"}}},
+  "@ayahCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "surahHeaderMeta": "{name} · {number} · {ayahs}",
-  "@surahHeaderMeta": {"placeholders": {"name": {"type": "String"}, "number": {"type": "int"}, "ayahs": {"type": "String"}}},
+  "@surahHeaderMeta": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "number": {
+        "type": "int"
+      },
+      "ayahs": {
+        "type": "String"
+      }
+    }
+  },
   "semSurahHeader": "Surah {name}, {number}",
-  "@semSurahHeader": {"placeholders": {"name": {"type": "String"}, "number": {"type": "int"}}},
-
+  "@semSurahHeader": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "number": {
+        "type": "int"
+      }
+    }
+  },
   "tooltipStayOnSurah": "Stay on this surah",
   "tooltipLocked": "Locked to {scope}. Tap to unlock.",
-  "@tooltipLocked": {"placeholders": {"scope": {"type": "String"}}},
+  "@tooltipLocked": {
+    "placeholders": {
+      "scope": {
+        "type": "String"
+      }
+    }
+  },
   "tooltipTonight": "Tonight's starting point",
   "tooltipBackToReading": "Back to reading",
   "tooltipRemoveHint": "Remove hint",
   "hintTonightSurah": "Tonight: {surah}",
-  "@hintTonightSurah": {"placeholders": {"surah": {"type": "String"}}},
+  "@hintTonightSurah": {
+    "placeholders": {
+      "surah": {
+        "type": "String"
+      }
+    }
+  },
   "hintTonightJuz": "Tonight: Juz {juz}",
-  "@hintTonightJuz": {"placeholders": {"juz": {"type": "int"}}},
+  "@hintTonightJuz": {
+    "placeholders": {
+      "juz": {
+        "type": "int"
+      }
+    }
+  },
   "lastNightEnded": "Last night ended at {place}.",
-  "@lastNightEnded": {"placeholders": {"place": {"type": "String"}}},
-
+  "@lastNightEnded": {
+    "placeholders": {
+      "place": {
+        "type": "String"
+      }
+    }
+  },
   "noticePausedTitle": "Following paused",
   "noticePausedBody": "The app went to the background. The last position stays on screen.",
   "actionResume": "Resume",
@@ -97,7 +221,6 @@
   "emptyListening": "Keep the phone where it can hear the imam.",
   "emptyIdle": "Rafiq listens to the imam and shows the surah and ayah, live.",
   "browseSurahs": "Browse surahs",
-
   "controlPreparing": "Preparing…",
   "controlFinishing": "Finishing the last words…",
   "controlStop": "Stop following",
@@ -107,19 +230,38 @@
   "veryLittleSound": "Very little sound",
   "backToImam": "Back to the imam",
   "backToImamAt": "Back to the imam · {ref}",
-  "@backToImamAt": {"placeholders": {"ref": {"type": "String"}}},
-
+  "@backToImamAt": {
+    "placeholders": {
+      "ref": {
+        "type": "String"
+      }
+    }
+  },
   "ayahSheetTitle": "{surah} · ayah {ayah}",
-  "@ayahSheetTitle": {"placeholders": {"surah": {"type": "String"}, "ayah": {"type": "int"}}},
+  "@ayahSheetTitle": {
+    "placeholders": {
+      "surah": {
+        "type": "String"
+      },
+      "ayah": {
+        "type": "int"
+      }
+    }
+  },
   "imamJumpExplanation": "Rafiq jumps to this ayah and keeps following from it.",
   "startFirstExplanation": "Start following first, then tap the ayah the imam is on.",
   "imamIsHere": "The imam is here",
   "unlockAll": "Unlock: search the whole Quran again",
   "stayOnSurah": "Stay on {surah}",
-  "@stayOnSurah": {"placeholders": {"surah": {"type": "String"}}},
+  "@stayOnSurah": {
+    "placeholders": {
+      "surah": {
+        "type": "String"
+      }
+    }
+  },
   "stayOnThisSurah": "Stay on this surah",
   "lockExplanation": "Rafiq will not look in other surahs until you unlock. Al-Fatiha is still recognised at each rakʿah.",
-
   "hintSheetTitle": "Tonight's starting point",
   "hintSheetExplanation": "Optional. Rafiq finds the imam without it; a hint only makes the first ayah appear sooner.",
   "hintSheetRestarts": "Changing it restarts listening.",
@@ -128,7 +270,6 @@
   "hintJuz": "Juz",
   "hintNoneExplanation": "No hint: Rafiq searches the whole Quran.",
   "searchByNameOrNumber": "Search by name or number",
-
   "introTitle": "Taraweeh mode",
   "introLead": "Rafiq listens to the imam and shows the ayah being recited, live.",
   "introMic": "It uses the microphone only while following. The screen stays on.",
@@ -136,63 +277,150 @@
   "introHafs": "It follows recitation in Ḥafṣ ʿan ʿĀṣim only.",
   "introCorrect": "If it is ever wrong, tap the ayah the imam is on. When unsure, it says so rather than guess.",
   "notNow": "Not now",
-
   "semAyah": "Ayah {ayah}",
-  "@semAyah": {"placeholders": {"ayah": {"type": "int"}}},
+  "@semAyah": {
+    "placeholders": {
+      "ayah": {
+        "type": "int"
+      }
+    }
+  },
   "semAyahImamHere": "Ayah {ayah}, the imam is here",
-  "@semAyahImamHere": {"placeholders": {"ayah": {"type": "int"}}},
+  "@semAyahImamHere": {
+    "placeholders": {
+      "ayah": {
+        "type": "int"
+      }
+    }
+  },
   "hintMarkImam": "mark where the imam is",
   "hintAyahActions": "ayah actions",
-
   "tooltipNavigate": "Surahs, juz and bookmarks",
   "tooltipSearch": "Search the Quran",
   "semReaderBar": "{surah}, ayah {ayah}. Juz {juz}, page {page}. Open the index",
-  "@semReaderBar": {"placeholders": {"surah": {"type": "String"}, "ayah": {"type": "int"}, "juz": {"type": "int"}, "page": {"type": "int"}}},
+  "@semReaderBar": {
+    "placeholders": {
+      "surah": {
+        "type": "String"
+      },
+      "ayah": {
+        "type": "int"
+      },
+      "juz": {
+        "type": "int"
+      },
+      "page": {
+        "type": "int"
+      }
+    }
+  },
   "taraweeh": "Taraweeh",
   "semTaraweehEntry": "Taraweeh: follow the imam",
-
   "bookmark": "Bookmark",
   "removeBookmark": "Remove bookmark",
   "copyAyah": "Copy the ayah",
   "bookmarked": "Bookmarked {ref}",
-  "@bookmarked": {"placeholders": {"ref": {"type": "String"}}},
+  "@bookmarked": {
+    "placeholders": {
+      "ref": {
+        "type": "String"
+      }
+    }
+  },
   "bookmarkFailed": "Could not save the bookmark. Try again.",
   "bookmarkRemoved": "Bookmark removed",
   "bookmarkRemoveFailed": "Could not remove the bookmark. Try again.",
   "copied": "Copied {ref}",
-  "@copied": {"placeholders": {"ref": {"type": "String"}}},
-
+  "@copied": {
+    "placeholders": {
+      "ref": {
+        "type": "String"
+      }
+    }
+  },
   "goTo": "Go to",
   "tabSurahs": "Surahs",
   "tabJuz": "Juz",
   "tabPages": "Pages",
   "tabBookmarks": "Bookmarks",
   "fromPlacePage": "From {place} · Page {page}",
-  "@fromPlacePage": {"placeholders": {"place": {"type": "String"}, "page": {"type": "int"}}},
+  "@fromPlacePage": {
+    "placeholders": {
+      "place": {
+        "type": "String"
+      },
+      "page": {
+        "type": "int"
+      }
+    }
+  },
   "fromPlaceJuz": "From {place} · Juz {juz}",
-  "@fromPlaceJuz": {"placeholders": {"place": {"type": "String"}, "juz": {"type": "int"}}},
+  "@fromPlaceJuz": {
+    "placeholders": {
+      "place": {
+        "type": "String"
+      },
+      "juz": {
+        "type": "int"
+      }
+    }
+  },
   "whereTaraweehEnded": "Where Taraweeh ended",
   "today": "today",
   "yesterday": "yesterday",
   "daysAgo": "{days, plural, =1{1 day ago} other{{days} days ago}}",
-  "@daysAgo": {"placeholders": {"days": {"type": "int"}}},
+  "@daysAgo": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
   "noBookmarks": "No bookmarks yet. Tap an ayah while reading to bookmark it.",
-
   "searchHint": "Surah, 2:255, page 50, or Arabic words",
   "searchFirstOf": "First {shown} of {total} ayahs",
-  "@searchFirstOf": {"placeholders": {"shown": {"type": "int"}, "total": {"type": "int"}}},
+  "@searchFirstOf": {
+    "placeholders": {
+      "shown": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
   "searchTooShort": "Type at least {count} letters to search the text.",
-  "@searchTooShort": {"placeholders": {"count": {"type": "int"}}},
+  "@searchTooShort": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "searchNothing": "Nothing found for “{query}”.",
-  "@searchNothing": {"placeholders": {"query": {"type": "String"}}},
+  "@searchNothing": {
+    "placeholders": {
+      "query": {
+        "type": "String"
+      }
+    }
+  },
   "searchBy": "Search by",
   "searchHelpSurah": "A surah: Al-Kahf, الكهف, or 18",
   "searchHelpAyah": "An ayah: 2:255",
   "searchHelpPlace": "A page or juz: page 50, juz 30",
   "searchHelpWords": "Words of the Quran, in Arabic: ٱلْحَمْدُ لِلَّهِ (with or without tashkeel)",
   "surahNumberAyahs": "Surah {number} · {ayahs}",
-  "@surahNumberAyahs": {"placeholders": {"number": {"type": "int"}, "ayahs": {"type": "String"}}},
-
+  "@surahNumberAyahs": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      },
+      "ayahs": {
+        "type": "String"
+      }
+    }
+  },
   "groupReading": "Reading",
   "quranTextSize": "Quran text size",
   "appearance": "Appearance",
@@ -227,8 +455,29 @@
   "textSizeNote": "The ayah numbers and line spacing scale with the text.",
   "healthFailed": "Failed",
   "healthConnected": "Connected · {ms} ms · speech model {device}",
-  "@healthConnected": {"placeholders": {"ms": {"type": "int"}, "device": {"type": "String"}}},
+  "@healthConnected": {
+    "placeholders": {
+      "ms": {
+        "type": "int"
+      },
+      "device": {
+        "type": "String"
+      }
+    }
+  },
   "healthReadyOnFirstUse": "ready on first use",
   "healthNoAsr": "Connected · {ms} ms · speech recognition NOT installed",
-  "@healthNoAsr": {"placeholders": {"ms": {"type": "int"}}}
+  "@healthNoAsr": {
+    "placeholders": {
+      "ms": {
+        "type": "int"
+      }
+    }
+  },
+  "layout": "Layout",
+  "layoutExplanation": "Scroll reads the Quran as one continuous text. Pages turn the 604 pages of the Madinah mushaf.",
+  "layoutScroll": "Scroll",
+  "layoutPages": "Pages",
+  "tooltipPageView": "Read page by page",
+  "tooltipScrollView": "Read as one scroll"
 }

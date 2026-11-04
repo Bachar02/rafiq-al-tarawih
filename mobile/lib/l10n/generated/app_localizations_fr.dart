@@ -635,4 +635,23 @@ class AppLocalizationsFr extends AppLocalizations {
   String healthNoAsr(int ms) {
     return 'Connecté · $ms ms · reconnaissance vocale NON installée';
   }
+
+  @override
+  String get layout => 'Disposition';
+
+  @override
+  String get layoutExplanation =>
+      'Défilement : le Coran comme un texte continu. Pages : les 604 pages du mushaf de Médine.';
+
+  @override
+  String get layoutScroll => 'Défilement';
+
+  @override
+  String get layoutPages => 'Pages';
+
+  @override
+  String get tooltipPageView => 'Lire page par page';
+
+  @override
+  String get tooltipScrollView => 'Lire en défilement continu';
 }
