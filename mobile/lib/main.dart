@@ -6,8 +6,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'app/app.dart';
 import 'app/providers.dart';
+import 'app/theme.dart';
 import 'data/quran.dart';
 import 'data/settings.dart';
+import 'data/surah_names.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -15,11 +17,13 @@ Future<void> main() async {
     // ~1 MB of JSON: parse off the UI thread so startup never janks.
     final raw = await rootBundle.loadString('assets/quran/quran.json');
     final quran = await compute(Quran.fromJson, raw);
+    final names = SurahNames.fromJson(await rootBundle.loadString('assets/data/surah-names.json'), quran);
     final prefs = await SharedPreferences.getInstance();
     runApp(
       ProviderScope(
         overrides: [
           quranProvider.overrideWithValue(quran),
+          surahNamesProvider.overrideWithValue(names),
           settingsStoreProvider.overrideWithValue(SettingsStore(prefs)),
         ],
         child: const RafiqApp(),
@@ -38,6 +42,7 @@ class _StartupError extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => MaterialApp(
+        theme: AppTheme.dark(),
         home: Scaffold(
           body: Center(
             child: Padding(

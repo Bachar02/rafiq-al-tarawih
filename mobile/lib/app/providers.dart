@@ -8,6 +8,7 @@ import '../core/audio/audio_source.dart';
 import '../core/recognition/recognition_engine.dart';
 import '../data/quran.dart';
 import '../data/settings.dart';
+import '../data/surah_names.dart';
 import '../features/listen/listen_controller.dart';
 import '../features/listen/listen_state.dart';
 import '../services/mic_audio_source.dart';
@@ -17,6 +18,10 @@ import '../services/server_recognition_engine.dart';
 
 /// Loaded once at startup (see main.dart) and injected with an override.
 final quranProvider = Provider<Quran>((ref) => throw UnimplementedError('quranProvider must be overridden'));
+
+/// Curated surah display names. main.dart overrides this with the bundled
+/// table; without it, the Quran data's own transliteration is used.
+final surahNamesProvider = Provider<SurahNames>((ref) => SurahNames.fallback(ref.watch(quranProvider)));
 
 /// Loaded once at startup (see main.dart) and injected with an override.
 final settingsStoreProvider =

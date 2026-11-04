@@ -18,8 +18,12 @@ class AppSettings {
   final String serverAddress;
   final bool keepScreenOn;
 
-  /// Multiplier for Quran text size, 0.8 .. 1.6.
+  /// Multiplier for Quran text size, [minTextScale] .. [maxTextScale]: the
+  /// range validated with the Quran font (shaping, marks, line breaks).
   final double textScale;
+
+  static const minTextScale = 0.85;
+  static const maxTextScale = 1.6;
 
   /// Show the live transcript feed (for field testing).
   final bool showDiagnostics;
@@ -60,7 +64,9 @@ class SettingsStore {
     return AppSettings(
       serverAddress: _prefs.getString(_server) ?? d.serverAddress,
       keepScreenOn: _prefs.getBool(_keepOn) ?? d.keepScreenOn,
-      textScale: (_prefs.getDouble(_scale) ?? d.textScale).clamp(0.8, 1.6).toDouble(),
+      textScale: (_prefs.getDouble(_scale) ?? d.textScale)
+          .clamp(AppSettings.minTextScale, AppSettings.maxTextScale)
+          .toDouble(),
       showDiagnostics: _prefs.getBool(_diag) ?? d.showDiagnostics,
       themeMode: ThemeMode.values.asNameMap()[_prefs.getString(_theme)] ?? d.themeMode,
     );
