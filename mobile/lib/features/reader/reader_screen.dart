@@ -73,6 +73,11 @@ class ReaderScreenState extends ConsumerState<ReaderScreen> with WidgetsBindingO
     if (verse != null && mounted) openAt(verse, mark: false);
   }
 
+  Future<void> _search() async {
+    final verse = await AppRoutes.search(context);
+    if (verse != null && mounted) openAt(verse);
+  }
+
   Future<void> _onAyahTap(Verse verse) async {
     final names = ref.read(surahNamesProvider);
     final bookmarks = ref.read(bookmarksProvider.notifier);
@@ -123,6 +128,7 @@ class ReaderScreenState extends ConsumerState<ReaderScreen> with WidgetsBindingO
           children: [
             ReaderBar(
               onNavigate: _navigate,
+              onSearch: _search,
               onSettings: () => AppRoutes.settings(context),
             ),
             Expanded(

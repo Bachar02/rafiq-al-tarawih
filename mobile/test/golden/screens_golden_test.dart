@@ -101,6 +101,38 @@ void main() {
       await expectGolden(tester, 'reader_light');
     });
 
+    testWidgets('search: Arabic words, without tashkeel', (tester) async {
+      await launch(tester, prefs: {'theme_mode': 'dark'}, taraweeh: false);
+      await tester.tap(find.byTooltip('Search the Quran'));
+      await settle(tester);
+      await tester.enterText(find.byType(TextField), 'الحي القيوم');
+      await settle(tester);
+      FocusManager.instance.primaryFocus?.unfocus();
+      await settle(tester);
+      await expectGolden(tester, 'search');
+    });
+
+    testWidgets('go to: bookmarks and where Taraweeh ended, light', (tester) async {
+      final at = DateTime.now().toUtc().toIso8601String();
+      final quran = loadQuran();
+      await launch(
+        tester,
+        prefs: {
+          ...readingAt(18, 10),
+          'theme_mode': 'light',
+          'bookmarks.v1': '{"v":1,"items":[{"verse":${quran.verseId(18, 10)},"at":"$at"},'
+              '{"verse":${quran.verseId(2, 255)},"at":"$at"}]}',
+          'taraweeh_position.v1': '{"v":1,"verse":${quran.verseId(5, 81)},"at":"$at"}',
+        },
+        taraweeh: false,
+      );
+      await tester.tap(find.byTooltip('Surahs, juz and bookmarks'));
+      await settle(tester);
+      await tester.tap(find.text('Bookmarks'));
+      await settle(tester);
+      await expectGolden(tester, 'navigate_bookmarks');
+    });
+
     testWidgets('reader: 320×568 at the largest Quran text, in juz 30', (tester) async {
       await launch(tester, prefs: {...readingAt(78, 1), 'text_scale': 1.6}, size: smallPhone, taraweeh: false);
       await settle(tester);

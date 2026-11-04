@@ -62,6 +62,9 @@ void main() {
       tester.state<ReaderScreenState>(find.byType(ReaderScreen)).openAt(verseId, mark: false);
 
   /// Ayah [verseId] in the reader's text (not a sheet's preview of it).
+  /// The reader bar, as a screen reader announces it.
+  Finder bar(String start) => find.bySemanticsLabel(RegExp('^${RegExp.escape(start)}'));
+
   Finder ayah(int verseId) => find.descendant(
         of: find.byType(QuranView),
         matching: find.byWidgetPredicate((w) => w is AyahBlock && w.verse.id == verseId),
@@ -72,7 +75,7 @@ void main() {
     expect(find.byType(ReaderScreen), findsOneWidget);
     expect(find.byType(ListenScreen), findsNothing);
     expect(container.read(readingPositionProvider), 1);
-    expect(find.text('Al-Fatiha · Juz 1 · Page 1'), findsOneWidget);
+    expect(bar('Al-Fatiha, ayah 1. Juz 1, page 1'), findsOneWidget);
   });
 
   testWidgets('scrolling moves the reading position; it is saved and restored after a restart', (tester) async {
@@ -84,7 +87,7 @@ void main() {
     await tester.pumpAndSettle();
     final top = container.read(readingPositionProvider);
     expect(top, greaterThan(id(2, 100)));
-    expect(find.textContaining('Al-Baqarah · Juz'), findsOneWidget);
+    expect(bar('Al-Baqarah, ayah'), findsOneWidget);
 
     // Saved a moment after scrolling stops.
     expect(h.prefs.getString(PrefsReadingStore.readingKey), isNull);
@@ -127,7 +130,7 @@ void main() {
     await tester.tap(find.text('Al-Kahf'));
     await tester.pumpAndSettle();
     expect(container.read(readingPositionProvider), id(18, 1));
-    expect(find.text('Al-Kahf · Juz 15 · Page 293'), findsOneWidget);
+    expect(bar('Al-Kahf, ayah 1. Juz 15, page 293'), findsOneWidget);
   });
 
   testWidgets('tap an ayah: bookmark it, then remove it', (tester) async {
@@ -196,5 +199,101 @@ void main() {
     expect(find.byType(ListenScreen), findsNothing);
     expect(container.read(readingPositionProvider), id(2, 255));
     expect(ayah(id(2, 255)), findsOneWidget);
+  });
+
+  testWidgets('search a reference: opens there and marks the ayah', (tester) async {
+    final container = await launch(tester);
+    await tester.tap(find.byTooltip('Search the Quran'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField), '2:255');
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Al-Baqarah 2:255'));
+    await tester.pump();
+    await tester.pump();
+    expect(container.read(readingPositionProvider), id(2, 255));
+    expect(tester.widget<AyahBlock>(ayah(id(2, 255))).highlighted, isTrue);
+    await tester.pump(const Duration(seconds: 3));
+    expect(tester.widget<AyahBlock>(ayah(id(2, 255))).highlighted, isFalse, reason: 'the mark fades');
+  });
+
+  testWidgets('search Arabic words: results in mushaf order, tap one to read it', (tester) async {
+    final container = await launch(tester);
+    await tester.tap(find.byTooltip('Search the Quran'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField), 'الحي القيوم');
+    await tester.pumpAndSettle();
+    // 2:255 and 3:2. (20:111 reads لِلْحَىِّ: "to the Living", a different word form.)
+    expect(find.text('2 AYAHS'), findsOneWidget);
+    await tester.tap(find.text('Al Imran 3:2'));
+    await tester.pump();
+    await tester.pump();
+    expect(container.read(readingPositionProvider), id(3, 2));
+  });
+
+  testWidgets('search: too short, and nothing found, say so', (tester) async {
+    await launch(tester);
+    await tester.tap(find.byTooltip('Search the Quran'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField), 'ق');
+    await tester.pumpAndSettle();
+    expect(find.text('Type at least 2 letters to search the text.'), findsOneWidget);
+    await tester.enterText(find.byType(TextField), 'zzzz');
+    await tester.pumpAndSettle();
+    expect(find.text('Nothing found for “zzzz”.'), findsOneWidget);
+  });
+
+  testWidgets('go to a juz, then to a page', (tester) async {
+    final container = await launch(tester);
+    await tester.tap(find.byTooltip('Surahs, juz and bookmarks'));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Juz'));
+    await tester.tap(find.text('Juz'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Juz 2'));
+    await tester.pumpAndSettle();
+    expect(container.read(readingPositionProvider), id(2, 142));
+
+    await tester.tap(find.byTooltip('Surahs, juz and bookmarks'));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Pages'));
+    await tester.tap(find.text('Pages'));
+    await tester.pumpAndSettle();
+    // The list opens at the current page (22, juz 2's start).
+    final pages =
+        find.byWidget(tester.widget(find.ancestor(of: find.text('Page 22'), matching: find.byType(ListView))));
+    await tester.dragUntilVisible(find.text('Page 42'), pages, const Offset(0, -300));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Page 42'));
+    await tester.pumpAndSettle();
+    expect(container.read(readingPositionProvider), quran.pages.start(42));
+    expect(bar('Al-Baqarah, ayah 253. Juz 3, page 42'), findsOneWidget);
+  });
+
+  testWidgets('bookmarks: listed after where Taraweeh ended, opened, removed and restored', (tester) async {
+    final at = DateTime.now().toUtc().toIso8601String();
+    h = await Harness.create(prefs: {
+      PrefsReadingStore.bookmarksKey: '{"v":1,"items":[{"verse":${id(18, 10)},"at":"$at"}]}',
+      PrefsReadingStore.taraweehKey: '{"v":1,"verse":${id(5, 81)},"at":"$at"}',
+    });
+    final container = await launch(tester);
+    await tester.tap(find.byTooltip('Surahs, juz and bookmarks'));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Bookmarks'));
+    await tester.tap(find.text('Bookmarks'));
+    await tester.pumpAndSettle();
+    expect(find.text('Where Taraweeh ended'), findsOneWidget);
+    expect(find.text("Al-Ma'idah 5:81 · today"), findsOneWidget);
+
+    await tester.tap(find.byTooltip('Remove bookmark'));
+    await tester.pumpAndSettle();
+    expect(find.text('Al-Kahf 18:10'), findsNothing);
+    expect(PrefsReadingStore(h.prefs).bookmarks(), isEmpty);
+    await tester.tap(find.text('Undo'));
+    await tester.pumpAndSettle();
+    expect([for (final b in PrefsReadingStore(h.prefs).bookmarks()) b.verseId], [id(18, 10)]);
+
+    await tester.tap(find.text('Al-Kahf 18:10'));
+    await tester.pumpAndSettle();
+    expect(container.read(readingPositionProvider), id(18, 10));
   });
 }

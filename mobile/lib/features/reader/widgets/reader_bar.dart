@@ -26,7 +26,7 @@ class ReaderBar extends ConsumerWidget {
     final names = ref.watch(surahNamesProvider);
     final verse = quran.verse(ref.watch(readingPositionProvider));
     final surah = quran.surah(verse.surah);
-    final meta = '${names.of(surah.index)} · Juz ${quran.juzOf(verse.id)} · Page ${quran.pageOf(verse.id)}';
+    final where = 'Juz ${quran.juzOf(verse.id)} · Page ${quran.pageOf(verse.id)}';
 
     return Padding(
       padding: const EdgeInsetsDirectional.fromSTEB(RubricSpace.s1, RubricSpace.s1, RubricSpace.s1, 0),
@@ -52,14 +52,26 @@ class ReaderBar extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text(
-                        surah.nameAr,
+                      // The name on one line; where in the Quran, which
+                      // matters most on a narrow phone, alone on the next.
+                      Text.rich(
+                        TextSpan(
+                          children: [
+                            TextSpan(
+                              text: surah.nameAr,
+                              style: RubricText.surahAr.copyWith(fontSize: 22, height: 1.3, color: c.ink),
+                            ),
+                            TextSpan(
+                              text: '  ${names.of(surah.index)}',
+                              style: RubricText.caption.copyWith(color: c.inkSecondary),
+                            ),
+                          ],
+                        ),
                         maxLines: 1,
-                        textDirection: TextDirection.rtl,
-                        style: RubricText.surahAr.copyWith(fontSize: 22, height: 1.3, color: c.ink),
+                        overflow: TextOverflow.ellipsis,
                       ),
                       Text(
-                        meta,
+                        where,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: RubricText.caption.copyWith(color: c.inkSecondary),

@@ -48,3 +48,18 @@ class SurahNames {
   String of(int index, [NameLanguage language = NameLanguage.en]) =>
       (language == NameLanguage.fr ? _fr : _en)[index - 1];
 }
+
+/// Surahs matching [query]: number, display name, the data's
+/// transliteration or English meaning, or the Arabic name.
+List<Surah> searchSurahs(Quran quran, SurahNames names, String query) {
+  final q = query.trim().toLowerCase();
+  if (q.isEmpty) return quran.surahs;
+  return quran.surahs
+      .where((s) =>
+          '${s.index}' == q ||
+          names.of(s.index).toLowerCase().contains(q) ||
+          s.nameTranslit.toLowerCase().contains(q) ||
+          s.nameEn.toLowerCase().contains(q) ||
+          s.nameAr.contains(query.trim()))
+      .toList();
+}

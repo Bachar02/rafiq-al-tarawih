@@ -7,7 +7,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../features/listen/listen_screen.dart';
-import '../features/listen/widgets/surah_index.dart';
+import '../features/navigate/navigate_screen.dart';
+import '../features/search/search_screen.dart';
 import '../features/settings/settings_screen.dart';
 import 'providers.dart';
 import 'theme.dart';
@@ -16,6 +17,7 @@ abstract final class AppRoutes {
   static const settingsName = '/settings';
   static const taraweehName = '/taraweeh';
   static const navigateName = '/navigate';
+  static const searchName = '/search';
 
   /// A route that keeps the theme it was opened from: settings opened in
   /// (dark) Taraweeh mode stay dark, as do their sheets and dialogs.
@@ -35,18 +37,13 @@ abstract final class AppRoutes {
         ),
       );
 
-  /// Choose a place to read; returns its verse id, or null.
-  static Future<int?> navigate(BuildContext context, {required int current}) async {
-    final container = ProviderScope.containerOf(context, listen: false);
-    final quran = container.read(quranProvider);
-    final surah = await showSurahIndex(
-      context,
-      quran: quran,
-      names: container.read(surahNamesProvider),
-      current: quran.verse(current).surah,
-    );
-    return surah == null ? null : quran.surah(surah).firstVerseId;
-  }
+  /// Choose a place (surah, juz, page, bookmark); returns its verse id.
+  static Future<int?> navigate(BuildContext context, {required int current}) =>
+      Navigator.of(context).push<int>(_route<int>(context, navigateName, (_) => NavigateScreen(current: current)));
+
+  /// Search the Quran; returns the chosen verse id.
+  static Future<int?> search(BuildContext context) =>
+      Navigator.of(context).push<int>(_route<int>(context, searchName, (_) => const SearchScreen()));
 }
 
 /// Taraweeh mode's theme: dark whatever the reader uses, unless the user

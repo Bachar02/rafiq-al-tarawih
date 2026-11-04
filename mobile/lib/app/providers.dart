@@ -15,6 +15,7 @@ import '../features/listen/listen_state.dart';
 import '../features/listen/taraweeh_position.dart';
 import '../features/reader/bookmarks.dart';
 import '../features/reader/reading_position.dart';
+import '../features/search/quran_search.dart';
 import '../services/mic_audio_source.dart';
 import '../services/screen_awake.dart';
 import '../services/server_health.dart';
@@ -39,6 +40,10 @@ final readingStoreProvider =
 
 /// The personal reading position (verse id at the top of the reader).
 final readingPositionProvider = NotifierProvider<ReadingPositionController, int>(ReadingPositionController.new);
+
+/// Search over the bundled Quran (its text index is built on first use).
+final quranSearchProvider =
+    Provider<QuranSearch>((ref) => QuranSearch(ref.watch(quranProvider), ref.watch(surahNamesProvider)));
 
 /// Bookmarked ayahs, newest first.
 final bookmarksProvider = NotifierProvider<BookmarksController, List<Bookmark>>(BookmarksController.new);

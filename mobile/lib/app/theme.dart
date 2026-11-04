@@ -496,6 +496,17 @@ class AppTheme {
           minimumSize: const WidgetStatePropertyAll(Size(0, 44)),
         ),
       ),
+      tabBarTheme: TabBarThemeData(
+        labelColor: c.ink,
+        unselectedLabelColor: c.inkSecondary,
+        labelStyle: RubricText.label.weighted(500),
+        unselectedLabelStyle: RubricText.label,
+        indicatorColor: c.ink,
+        indicatorSize: TabBarIndicatorSize.label,
+        dividerColor: c.hairline,
+        overlayColor: const WidgetStatePropertyAll(Colors.transparent),
+        splashFactory: NoSplash.splashFactory,
+      ),
       bottomSheetTheme: BottomSheetThemeData(
         backgroundColor: c.surfaceRaised,
         modalBackgroundColor: c.surfaceRaised,

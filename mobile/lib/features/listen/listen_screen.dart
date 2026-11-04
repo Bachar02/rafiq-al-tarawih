@@ -21,7 +21,6 @@ import '../quran_view/quran_view.dart';
 import 'widgets/position_header.dart';
 import 'widgets/return_to_imam.dart';
 import 'widgets/status_line.dart';
-import 'widgets/surah_index.dart';
 import 'widgets/taraweeh_intro.dart';
 
 /// Taraweeh mode: follow the imam, live, in the same Quran text as the reader.
@@ -134,16 +133,17 @@ class _ListenScreenState extends ConsumerState<ListenScreen> with WidgetsBinding
     }
   }
 
+  /// The same navigator as the reader's. Browsing pauses following until
+  /// "Back to the imam".
   Future<void> _openIndex(ListenState state) async {
-    final surah = await showSurahIndex(
-      context,
-      quran: ref.read(quranProvider),
-      names: ref.read(surahNamesProvider),
-      current: state.readerSurah,
-    );
-    if (surah == null) return;
-    ref.read(listenControllerProvider.notifier).browse(surah);
-    _view.jumpToSurah(surah);
+    final quran = ref.read(quranProvider);
+    final here =
+        state.displayed?.verseId ?? (state.readerSurah == null ? 1 : quran.surah(state.readerSurah!).firstVerseId);
+    final verse = await AppRoutes.navigate(context, current: here);
+    if (verse == null || !mounted) return;
+    ref.read(listenControllerProvider.notifier).browse(quran.verse(verse).surah);
+    // After the frame: the view mounts when the first surah is chosen.
+    WidgetsBinding.instance.addPostFrameCallback((_) => _view.jumpToVerse(verse));
   }
 
   /// Lock to the imam's surah (after a confirming sheet), or unlock.

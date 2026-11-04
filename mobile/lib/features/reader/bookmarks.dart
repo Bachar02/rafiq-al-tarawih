@@ -19,6 +19,12 @@ class BookmarksController extends Notifier<List<Bookmark>> {
 
   Future<bool> remove(int verseId) => _commit([...state.where((b) => b.verseId != verseId)]);
 
+  /// Put back a removed bookmark as it was (Undo), keeping its date and order.
+  Future<bool> restore(Bookmark bookmark) => _commit(
+        [...state.where((b) => b.verseId != bookmark.verseId), bookmark]
+          ..sort((a, b) => b.createdAt.compareTo(a.createdAt)),
+      );
+
   Future<bool> _commit(List<Bookmark> next) async {
     final ok = await ref.read(readingStoreProvider).saveBookmarks(next);
     if (ok) state = List.unmodifiable(next);
