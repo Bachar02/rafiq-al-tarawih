@@ -210,3 +210,62 @@ So the Play Store build is on-device. The server stays useful for development, t
 - **Decision rule:** a typical chunk under 1.5 s on mid-range phones means go on-device. Between 1.5 and 3 s, trim the vocabulary first. Over 3 s, use a smaller model or a cloud fallback.
 - **Phone round 1 (Galaxy A32, budget):** 3.6 s per chunk on 2 threads, too slow. Accuracy 96.6% (fine). Whisper-tiny rejected (80% accuracy). The bottleneck is the decoder's full-vocabulary projection.
 - **Fix:** trimmed the vocabulary to 660 tokens. Output is identical, the model is 55 MB instead of 160 MB, and it's ~25% faster on the laptop. Phone round 2 is pending.
+
+## 17. Roadmap to a shippable product (planned 2026-11-03)
+
+**Hard deadline:** Ramadan 2027 starts around 8 February 2027 (to confirm by moon sighting). A closed beta must be in real mosques before then, so the release candidate is due **mid-January 2027**. Taraweeh audio only exists during Ramadan; until then, the daily *jahrī* prayers (Maghrib, ʿIshāʾ, Fajr) supply real mosque audio.
+
+**Principles:** the engine stays the moat and is measured, not guessed. One `RecognitionEngine` interface, two builds (server and on-device). Every number that matters is gated in CI. Never claim more than the app does.
+
+### M0 — Secure the base (first session, ~1 day)
+- **Rubric design work** (76 files, uncommitted when this was written): review the diff, commit it on a branch, open a PR, merge.
+- **Git history:** the latest commit's message ("Phase 0: …") does not describe its content (the model-size change). Reword it before anything is pushed on top. The earlier "switch to Whisper-tiny" commit is no longer in the history; the code uses `quran-basetrim`.
+- **Golden screenshot tests with the real fonts:** dark/light, 320 px at text size 1.3, Not sure, Al-Fatiha, settings. Rendering with the real fonts found missing ʿ/Ḥ glyphs and an overflow that the Ahem-font widget tests missed.
+- **Flutter upgrade:** 3.19.5 → current stable, *before* the big work (Dart 3.3 lacks features already needed; packages are 2.5 years behind). Then update CI to the same version.
+
+### M1 — On-device go/no-go (week 1)
+- Phone round 2 with `quran-basetrim` (55 MB), on three tiers: budget (Galaxy A32), mid-range and flagship. Apply the §16 rule: under 1.5 s per typical chunk → go.
+- If still too slow: try a 4-thread setting, CPU affinity, and NNAPI/XNNPACK. Otherwise a smaller distilled Quran model, or a streaming CTC model.
+- **Output:** a written decision, with numbers, in this file.
+
+### M2 — On-device engine (weeks 2–5)
+- **Dart port** of `match` and `track` (normalize is done) with golden parity tests against Python in CI; the port must never drift.
+- **On-device audio path:** a Dart VAD/segmenter (the loudness VAD with an adaptive floor, §10), live partials, and catch-up without backlog (§11), all running in a background isolate.
+- **`OnDeviceRecognitionEngine`** behind the existing interface, so the UI does not change. The fake-engine tests run against both engines.
+- **Model delivery:** Play Asset Delivery (install-time pack) or a first-run download with checksum, resume and storage checks. The "Preparing the speech model" state from the brand book.
+- **Build flavors:** `server` (development) and `ondevice` (store). The on-device flavor drops all server/Wi-Fi copy and settings, and removes `usesCleartextTraffic`.
+- **Budgets, measured on the three phones:** latency under 3 s, a battery and thermal budget for a 2-hour session, and memory.
+
+### M3 — Real-world evaluation (starts now, runs in parallel)
+- **Recording protocol and consent:** record jahrī prayers in 3+ mosques (different acoustics) with the phone in realistic positions; label ayah timestamps. This is Phase 2's eval set (§5), still missing.
+- Replay recordings through **both** engines with `eval/audio_bench.py`, and gate accuracy, wrong jumps per hour and latency in CI (audio stays out of git; manifests only).
+- **Calibrate** with the data: the 10 s inferred-state windows, `quietLevel`, and the qunūt false-match risk.
+
+### M4 — Product completeness (weeks 4–8)
+- **Localization:** English, French and Arabic via `flutter_localizations` + ARB files, full RTL, and native-speaker review of the handoff copy and the French surah names.
+- **First-run onboarding:** microphone rationale, the Ḥafṣ-only statement, and how to place the phone. A privacy policy page.
+- **Open Rubric decisions:**
+  - an "Open settings" action for a denied mic (`permission_handler` or `app_settings`);
+  - Lucide icons;
+  - where browsing lives;
+  - copy written outside the spec;
+  - the coming-ayah colour at low brightness;
+  - Flutter justification on sparse lines (55:14).
+- **Accessibility pass:** TalkBack/VoiceOver, large text, reduced motion, contrast on real phones.
+
+### M5 — Release engineering (in parallel from week 3)
+- **Signing:** a release keystore (out of git, in CI secrets) and Play App Signing. Versioning from tags.
+- **CI/CD:** a GitHub Actions pipeline producing a signed app bundle and APKs per tag; upload to the internal track (Fastlane or the Gradle Play Publisher). iOS: TestFlight, which needs a Mac or a macOS CI runner.
+- **Observability:** opt-in, privacy-preserving crash reporting (no audio, no transcripts), plus a local session log the user can export for bug reports.
+- **Store listing:** Data safety form ("audio processed on device, not collected") and screenshots from the golden renders.
+
+### M6 — Beta and launch
+- **Internal track** by mid-December 2026.
+- **Closed beta** with imams and regular worshippers by **mid-January 2027**.
+- **Fix window**, then public release in the week before Ramadan 2027.
+- **During Ramadan:** collect opt-in Taraweeh recordings to improve the next version.
+
+### First session agenda
+1. M0: commit the Rubric work, reword the misnamed commit, add golden screenshot tests.
+2. M0: upgrade Flutter and dependencies; keep all tests green.
+3. M1: run phone round 2 and record the go/no-go decision.

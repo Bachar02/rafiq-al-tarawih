@@ -51,4 +51,7 @@ python tool/sync_quran.py                      # after rebuilding data/quran.jso
 
 ## Licenses
 Quran text: Tanzil Project, CC BY 3.0 (`assets/quran/NOTICE.txt`).
-Font: Amiri Quran, SIL OFL 1.1 (`assets/fonts/OFL.txt`).
+Fonts (all SIL OFL 1.1, licence beside each in `assets/fonts/`): Amiri Quran (`OFL.txt`),
+Amiri (`OFL-Amiri.txt`), Newsreader (`OFL-Newsreader.txt`), IBM Plex Sans (`OFL-IBMPlexSans.txt`),
+IBM Plex Sans Arabic (`OFL-IBMPlexSansArabic.txt`).
+Brand assets (wordmark, app icon) and the surah display-name table: Rubric Phase 3 handoff.

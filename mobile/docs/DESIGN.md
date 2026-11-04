@@ -23,7 +23,7 @@ recognition replaces the server behind the same interface later (§4.2), without
 ### 2.1 Principles
 1. **One tap to follow.** No setup on the hot path. The server address is remembered.
 2. **Never confidently wrong.** Show nothing rather than a wrong ayah. Uncertainty is
-   visible (dimmed text, "not sure" chip, alternatives), never hidden.
+   visible (hollow marker, dimmed number, dashed rule, alternatives), never hidden.
 3. **Readable in a dark mosque, at arm's length.** Large Arabic, dark theme by default,
    high contrast, the screen kept awake while listening.
 4. **Glanceable.** The current ayah is always on screen, and the answer to "where are we?"
@@ -31,67 +31,93 @@ recognition replaces the server behind the same interface later (§4.2), without
 
 ### 2.2 Screens
 
-**Listen (home):** the whole app on one screen.
+**Listen (home):** the whole app on one screen (Rubric, brand book §6a).
 
 ```
 ┌───────────────────────────────┐
-│ رفيق             ● Live   ⚙   │  app bar: connection dot, settings
-├───────────────────────────────┤
-│  ┌─────────────────────────┐  │
-│  │  الأعراف                 │  │  Now card
-│  │  Al-A'raf · ayah 29/206  │  │   surah (Amiri, large)
-│  │  ● Following   ▂▂▂▂▂▂░   │  │   status chip + confidence
-│  └─────────────────────────┘  │
-│  could also be 26:127 · 26:145│  alternatives (only when ambiguous)
-│ ┌───────────────────────────┐ │
-│ │  …وَأَقِيمُوا وُجُوهَكُمْ ﴿٢٩﴾ │ │  Surah text, RTL, current ayah
-│ │  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ │ │   highlighted, auto-scrolled
-│ │  فَرِيقًا هَدَىٰ ﴿٣٠﴾        │ │   ("Back to imam" if user scrolls)
-│ └───────────────────────────┘ │
-│   [ Tonight: Juz 8  ✕ ]       │  optional hint chip
-│            ( 🎤 )             │  big mic button with level ring
+│ رفيق                    🔓  ⚙ │  monochrome wordmark · hint (before following)
+│                               │   or surah lock (while following) · settings
+│ AYAH                   الضحى  │  position header: numeral (Newsreader) opposite
+│ 3        Ad-Duha · 93 · Juz 30│   the surah (Amiri) and its meta line
+│ ◆ Following the imam          │  status line: the only place state is put in words
+│                               │
+│        بِسْمِ ٱللَّهِ ...          │  Quran column: one block per ayah, no cards;
+│   وَٱلضُّحَىٰ ۝١                 │   recited · current · coming by luminance;
+│ ┃ مَا وَدَّعَكَ ... ۝٣             │   cinnabar margin rule + marker on the current
+│   وَلَلْـَٔاخِرَةُ ... ۝٤           │   ayah; 40px fade at the bottom
+│   ( ◆ Back to the imam · 93:3 )│  only after scrolling/browsing away
+│ [notice, when something needs you]
+│ ▁▂▃ Hearing sound             │  mic level: neutral, never cinnabar
+│ (        Stop following      )│  the one control, a full-width pill
 └───────────────────────────────┘
 ```
 
-**States** shown in the Now card and status chip:
+**States** (one vocabulary for the status line, the marker and the header; brand book §7).
+Precedence, highest first: error → paused → lost → uncertain → No new match yet → Little
+sound → Al-Fatiha → Following. Every state differs in marker shape *and* words.
 
-| State | Chip | Now card |
-|---|---|---|
-| idle | — | "Tap the microphone when the imam begins" |
-| connecting | Connecting… | "Loading the speech model…" after 3 s |
-| searching | Listening | "Listening… finding the surah" |
-| following | ● Following (green) | surah + ayah, full contrast |
-| uncertain | Not sure (amber) | last good ayah, dimmed |
-| lost | Lost (red) | last ayah, dimmed, "can't hear clearly" |
-| reconnecting | Reconnecting… | last ayah kept, banner with attempt count |
-| error | — | explanation + action (Retry / Open settings / Server settings) |
+| Source | Status line | Marker | Header |
+|---|---|---|---|
+| idle | Ready to follow / Not following | — / hollow | — / last position |
+| connecting | Connecting… | hollow if a position is held | |
+| listening, no position | Listening for the imam | — | — |
+| `tracking`, confirmed < 10 s ago | Following the imam | filled | ayah in `ink` |
+| ayah 1:x inside another surah | Al-Fatiha | filled | imam's surah and last ayah kept |
+| app-inferred: sound, no confirmed update ≥ 10 s | No new match yet | hollow | stays `ink` |
+| app-inferred: mic below the quiet level ≥ 10 s | Little sound | hollow | stays `ink` |
+| `uncertain` | Not sure | hollow | LAST SURE, dimmed, number held |
+| `lost` | Not matching the Quran | hollow | LAST SURE, dimmed, number held |
+| reconnecting (server build) | Reconnecting… | hollow | kept |
+| paused / error | (the Notice speaks) | — | kept |
+| `pending` | nothing: unconfirmed guesses are never shown | | |
 
-**Hint sheet:** Nothing (default) / Surah (searchable list) / Juz (1–30 grid).
+The 10-second windows and the quiet level (`quietLevel`, `inferredStateAfter` in
+`listen_state.dart`) are uncalibrated starting values.
 
-**Settings:** server address with a *Test connection* button (shows reachable, speech
-model, latency), keep screen awake, text size, show diagnostics, about and attribution.
+**Notices** (lapis `signal`, icon + words + one action, above the control): microphone
+permission, microphone stopped, recognition server unreachable (server build only),
+recognition stopped, following paused, and transient engine warnings.
 
-**Diagnostics (opt-in):** a live transcript feed under the surah text, for field testing.
+**Sheets:** Tonight's starting point (None / Surah / Juz), Stay on this surah, and
+*The imam is here* (tap an ayah). Max 70% of the screen.
+
+**Settings:** grouped rows. Reading (Quran text size with a live 93:3 preview, keep screen
+on, appearance), Recitation (Ḥafṣ ʿan ʿĀṣim; Qālūn and Warsh not supported), Recognition
+server (server build only: address, *Test connection*), Developer (diagnostics, on-device
+benchmark), About.
+
+**Diagnostics (opt-in):** a live transcript feed under the Quran column, for field testing.
 
 ### 2.2b Reader and user control (v1.1)
-- **The whole Quran is on the phone** (Uthmani text with tashkeel, offline). The server only says *where*;
-  the app opens that place in its own copy. A surah index lets the user browse anywhere.
-- **Mushaf reader:** ornamental surah header, the surah's own basmala, one flowing justified paragraph
-  with ayah-end ornaments (۝ + Arabic numeral). The current ayah is highlighted and recited ayahs are
-  dimmed. Auto-follow scrolls to the exact line of the ayah.
-- **No flicker:** the reader changes surah only on a *confident* result, a user correction, or browsing.
-  An unsure guess appears as "Maybe …" in the status card and never replaces the text.
+- **The whole Quran is on the phone** (Uthmani text with tashkeel). The server only says *where*;
+  the app opens that place in its own copy. A surah index (tap the surah name) lets the user browse anywhere.
+- **Quran column:** the surah's own basmala (not for 1 and 9), then one block per ayah with its end
+  marker (۝ + Arabic-Indic numeral). At display time only, a no-break space joins each ayah to its
+  marker and replaces the space before each standalone pause mark (`core/text/quran_display.dart`):
+  no line ever starts with a marker or a pause mark; `quran.json` is never changed.
+- **No flicker:** the reader changes surah only on a *confident* result, a user correction, or browsing,
+  and not for al-Fatiha at each rakʿah. An unsure guess never replaces the text or the number.
+- **Follow-scroll:** only when the current ayah leaves 25–60% of the column; it returns to ~38%.
+  Scrolling by hand detaches following until the ayah is back in view or *Back to the imam* is tapped.
 - **User control:** tap any ayah, then *The imam is here* (the tracker continues from it) or
   *Stay on this surah* (a hard lock: recognition never searches other surahs, al-Fatiha excepted).
-  The lock button on the status card does the same, and the lock survives reconnects.
+  The header's lock button does the same, and the lock survives reconnects.
+- **Display names:** curated English and French surah names (`assets/data/surah-names.json`,
+  checked row by row against `quran.json` at startup); indexes and the Quran data are unchanged.
 
-### 2.3 Visual language
-- **Color:** dark by default (Taraweeh is at night). A deep green-teal primary, a warm
-  gold for ayah markers, amber for uncertain and red for lost. Light theme supported.
-- **Type:** Amiri Quran (OFL, bundled) for Quranic text and surah names; the platform
-  font for UI. The Quran text scales with the text-size setting.
-- **Motion:** only where it carries meaning: the highlight moves to the new ayah, the
-  mic ring pulses with input level. No decorative animation.
+### 2.3 Visual language — Rubric
+Tokens live in `lib/app/theme.dart` (from the Phase 3 handoff `tokens.json`).
+- **Colour:** everything is ink on a dark page (`ground` #100E0C; light theme on paper #F2ECE0).
+  **Cinnabar (`rubric`) has one meaning: the imam's current position** — the position marker, the
+  current ayah's margin rule and end marker, the Return-to-imam marker. Never errors, the
+  microphone, buttons or decoration. Needs-your-action states use lapis (`signal`) with an icon
+  and words. Elevation by lightness only; no shadows, no cards around ayahs.
+- **Type:** Amiri Quran for Quran text only; Amiri (Arabic) and Newsreader (Latin) for titles and
+  the ayah numeral; IBM Plex Sans + IBM Plex Sans Arabic for the interface (Amiri as a last
+  fallback for transliteration letters such as ʿ). The Quran text scales 0.85–1.6 with its own
+  setting, line height 2.2, justified only when column width ÷ font size ≥ 11.5.
+- **Motion:** quiet and short. Ayah change: rule and colours crossfade (320 ms); follow-scroll
+  600 ms; marker fill 160 ms. Nothing pulses or loops. Reduced motion: scrolls jump.
 
 ## 3. Behavior rules
 - **Listening keeps the screen awake** (wakelock). Released on stop.
@@ -100,7 +126,7 @@ model, latency), keep screen awake, text size, show diagnostics, about and attri
 - **Network drop while listening:** keep the mic running, reconnect with backoff
   (0.5 s → 8 s, unlimited while the user is listening), keep only the newest 2 s of
   audio. The last ayah stays on screen, marked as reconnecting.
-- **Mic denied:** explain why the mic is needed, and offer *Open settings*.
+- **Mic denied:** explain why the mic is needed and how to allow it, and offer *Try again*.
 - **Server unreachable at start:** say so and link to server settings.
 
 ## 4. Architecture
