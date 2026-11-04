@@ -509,7 +509,8 @@ class AppTheme {
         filled: true,
         fillColor: c.surface,
         isDense: true,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        // Material 3 adds the outline's gapPadding (4) on each side: 12 + 4 is the 16 dp inset.
+        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
         hintStyle: text.bodyLarge?.copyWith(color: c.inkSecondary),
         labelStyle: text.bodyLarge?.copyWith(color: c.inkSecondary),
         floatingLabelStyle: text.bodySmall?.copyWith(color: c.inkSecondary),
