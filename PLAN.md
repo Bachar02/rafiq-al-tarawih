@@ -401,3 +401,34 @@ The list architecture stays in every case.
    - Localization (drafts).
    - First-run onboarding for Taraweeh.
    - Where browsing lives (the reader is home).
+
+## 19. Build 0.2: reader complete (2026-11-05)
+
+Built on `feat/quran-reader`, in five commits, each with tests and goldens.
+
+- **Page view.** The 604 Madinah-mushaf pages, one per screen, turned right to left like a printed mushaf.
+  - Each page holds exactly Tanzil's ayahs, flowing per surah, with a running head and the page number.
+  - It is never presented as a facsimile: a long page scrolls within itself.
+  - It shares the reading position, ayah taps, marks and text size with the scroll view.
+  - A Layout setting (Scroll / Pages) is saved; the bar toggle shows on screens 360 dp or wider.
+- **Share an ayah**, as an image card (rendered at 3× from its own preview) or as text.
+  - A `Sharer` interface over `share_plus`, the standard Flutter share-sheet plugin (the one new dependency).
+- **Reading progress and a daily goal.**
+  - **What counts:** a page is read when the reader moves forward past it (one or two pages at a time). Jumps never count, and opening the app counts nothing.
+  - **Storage:** a 90-day log, versioned like the other records.
+  - **Goals:** off, 5, 10, 20 or 40 pages. Today's count and a 2 px line show in the reader bar. No streaks.
+  - The Pages tab shows where the reader is in the whole Quran.
+- **Launch screen.** On Android it follows day and night with the Rafiq mark; the app icon stays dark.
+- **Accessibility pass.** Flutter's tap-target, label and contrast guidelines run on every main screen, in both themes, and every screen is checked at 200% system text. The pass found and fixed:
+  - two settings switches that screen readers announced without a name;
+  - a surah-row layout error at large text.
+- **Also:** the Kotlin compiler cache is no longer tracked.
+
+**Totals:** 205 tests, 26 golden screenshots, and the Android debug build passes.
+
+**Open after 0.2:**
+1. **iOS still launches dark.** The storyboard was not changed, because it cannot be verified without a Mac.
+2. **Not yet seen on a device:** the splash and the share sheet. The tests cover the share flow with a fake sharer.
+3. **The A32 scroll benchmark** (R2) is still pending. It should now also cover the page view.
+4. **Native review** of the new French and Arabic strings.
+5. **Next build:** 0.3, Taraweeh on the phone (§17 M1–M2), the critical path to the beta.

@@ -59,8 +59,27 @@ Routes live in `lib/app/routes.dart`; screens never build each other's routes.
 │         ( 🎤 Taraweeh )       │  floats; steps aside while reading down
 └───────────────────────────────┘
 ```
-Tap an ayah: Bookmark / Remove bookmark, Copy (text + reference). The ayah is marked with the
+Tap an ayah: Bookmark / Remove bookmark, Share, Copy (text + reference). The ayah is marked with the
 `mark` wash while its sheet is open, and for two seconds after a jump from search or Go to.
+
+**Two layouts** (Settings → Reading → Layout, and a toggle in the bar on screens 360 dp and wider):
+- *Scroll:* the whole Quran as one text (`QuranView`, §2.2b).
+- *Pages:* the 604 Madinah-mushaf pages, one per screen, turned like a mushaf (the next page comes
+  from the left, in every interface language). Each page holds exactly Tanzil's ayahs for it, flowing
+  inline per surah with surah openings where they fall, a running head (surah, juz) and the page number
+  in Arabic-Indic digits. The text flows, so a long page scrolls within itself: it is never presented as
+  a facsimile. Same taps, sheets, marks and text size as Scroll. Both open at the same reading position
+  (in Pages, the page's first ayah).
+
+**Share** (from the ayah sheet): a preview of an image card (the ayah in Amiri Quran, its reference, the
+wordmark, in the current theme), then *Share as an image* (rendered from the card at 3×, 1080 px wide)
+or *Share as text*.
+
+**Daily reading goal** (Settings → Reading: off, 5, 10, 20, 40 pages). A page counts when the reader
+moves forward past it, scrolling or turning one or two pages at a time; jumps and opening the app count
+nothing; the last page of the Quran counts when reached. With a goal, the bar's second line ends with
+"Today 12/20" (just "12/20" on narrow phones) and a 2 px ink line runs under the bar. No streaks, no
+badges. The Pages tab of Go to says where the reader is in the whole Quran ("Page 42 of 604 · 6%").
 
 **Go to:** four tabs, each list opened at the current place; rows of a kind share one height
 (measured once from a prototype row) so a 604-row list opens exactly at the current page.
@@ -180,6 +199,11 @@ Tokens live in `lib/app/theme.dart` (from the Phase 3 handoff `tokens.json`).
   setting, line height 2.2, justified only when column width ÷ font size ≥ 11.5.
 - **The reader's mark:** `mark`, a quiet wash behind one ayah (an open sheet's ayah, a search or bookmark
   just opened). A background only; never the imam's position, which stays cinnabar.
+- **Launch:** the Android launch window and the Android 12+ splash show the page colour and the Rafiq
+  mark in the theme's ink, day or night; the app icon stays dark in both. (iOS still launches dark.)
+- **Accessibility:** tap targets meet 48 dp (Android) and 44 dp (iOS) and every one has a label;
+  settings rows are announced as one item with their switch; every main screen lays out at 200% system
+  text (checked by `test/accessibility_test.dart`, with text contrast, in both themes).
 - **Three languages:** English, French and Arabic, right to left for Arabic (`lib/l10n/`, gen-l10n). Quran
   text is always Arabic and always right to left. Overlines are Latin capitals with letter-spacing; in
   Arabic they have neither (`RubricText.overlineFor`). Interface Arabic falls to IBM Plex Sans Arabic.
