@@ -63,6 +63,10 @@ class ListenState {
     this.lock,
     this.readerSurah,
     this.browsing = false,
+    this.anchor,
+    this.lastSure,
+    this.confirmedAt,
+    this.lastSoundAt,
   });
 
   final SessionPhase phase;
@@ -108,6 +112,37 @@ class ListenState {
   /// they choose "Follow the imam".
   final bool browsing;
 
+  /// The imam's main position: the last confirmed one outside Al-Fatiha.
+  /// Kept while Al-Fatiha is recited at each rakʿah, so the screen stays on
+  /// the imam's surah.
+  final Position? anchor;
+
+  /// The last position the engine confirmed (`tracking`) or the user set.
+  /// Held while the engine is unsure: the number on screen never changes to
+  /// an unconfirmed one.
+  final Position? lastSure;
+
+  /// When the engine last reported `tracking` (or the user corrected the
+  /// position): the freshness behind a filled position marker.
+  final DateTime? confirmedAt;
+
+  /// When the microphone level was last at or above [quietLevel].
+  final DateTime? lastSoundAt;
+
+  /// The engine's position when it is sure; otherwise the last sure one.
+  Position? get _sure => track.status == TrackStatus.tracking || lastSure == null ? track.showing : lastSure;
+
+  /// Al-Fatiha is being recited inside another surah's session.
+  bool get inFatihaExcursion {
+    final shown = _sure, main = anchor;
+    return shown != null && shown.surah == 1 && main != null && main.surah != 1;
+  }
+
+  /// The position the header and the Quran column show: the engine's sure
+  /// position, except during Al-Fatiha, when the imam's main surah and last
+  /// ayah stay.
+  Position? get displayed => inFatihaExcursion ? anchor : _sure;
+
   bool get isActive => switch (phase) {
         SessionPhase.connecting || SessionPhase.listening || SessionPhase.reconnecting || SessionPhase.stopping => true,
         _ => false,
@@ -130,6 +165,10 @@ class ListenState {
     Object? lock = _keep,
     Object? readerSurah = _keep,
     bool? browsing,
+    Object? anchor = _keep,
+    Object? lastSure = _keep,
+    Object? confirmedAt = _keep,
+    Object? lastSoundAt = _keep,
   }) =>
       ListenState(
         phase: phase ?? this.phase,
@@ -148,7 +187,21 @@ class ListenState {
         lock: identical(lock, _keep) ? this.lock : lock as Hint?,
         readerSurah: identical(readerSurah, _keep) ? this.readerSurah : readerSurah as int?,
         browsing: browsing ?? this.browsing,
+        anchor: identical(anchor, _keep) ? this.anchor : anchor as Position?,
+        lastSure: identical(lastSure, _keep) ? this.lastSure : lastSure as Position?,
+        confirmedAt: identical(confirmedAt, _keep) ? this.confirmedAt : confirmedAt as DateTime?,
+        lastSoundAt: identical(lastSoundAt, _keep) ? this.lastSoundAt : lastSoundAt as DateTime?,
       );
 }
 
 const _keep = Object();
+
+/// Microphone peak level below which the room counts as quiet ("Little
+/// sound"). An uncalibrated starting value: calibrate on real Taraweeh
+/// recordings (hall noise floors) before release.
+const quietLevel = 0.03;
+
+/// How long without sound, or without a confirmed update, before the screen
+/// says so. A starting value, like [quietLevel]: calibrate on rukūʿ and sujūd
+/// lengths in real recordings.
+const inferredStateAfter = Duration(seconds: 10);

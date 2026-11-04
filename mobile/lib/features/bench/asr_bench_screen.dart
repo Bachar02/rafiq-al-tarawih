@@ -117,12 +117,12 @@ class _AsrBenchScreenState extends ConsumerState<AsrBenchScreen> {
     return Scaffold(
       appBar: AppBar(title: const Text('On-device speech benchmark')),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(RubricSpace.gutter),
         children: [
           Text(
             'Tests whether this phone can run the Quran speech model itself, without the laptop. '
             'Uses the server address from Settings to download the model and test audio once.',
-            style: context.text.bodyMedium?.copyWith(color: context.colors.muted),
+            style: context.text.bodyMedium?.copyWith(color: context.colors.inkSecondary),
           ),
           const SizedBox(height: 16),
           FilledButton.icon(
@@ -135,13 +135,17 @@ class _AsrBenchScreenState extends ConsumerState<AsrBenchScreen> {
           if (_busy) ...[const SizedBox(height: 8), LinearProgressIndicator(value: _progress)],
           if (_error != null) ...[
             const SizedBox(height: 12),
-            Text(_error!, style: context.text.bodySmall?.copyWith(color: context.colors.lost)),
+            Text(_error!, style: context.text.bodySmall?.copyWith(color: context.colors.signal)),
           ],
           if (_report != null) ...[
             const SizedBox(height: 16),
             Card(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(RubricRadius.md),
+                side: BorderSide(color: context.colors.hairline),
+              ),
               child: Padding(
-                padding: const EdgeInsets.all(14),
+                padding: const EdgeInsets.all(RubricSpace.s4),
                 child: SelectableText(_report!, style: const TextStyle(fontFamily: 'monospace', fontSize: 12)),
               ),
             ),

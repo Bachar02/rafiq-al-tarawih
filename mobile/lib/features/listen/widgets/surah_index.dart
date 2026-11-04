@@ -2,15 +2,19 @@ import 'package:flutter/material.dart';
 
 import '../../../app/theme.dart';
 import '../../../data/quran.dart';
+import '../../../data/surah_names.dart';
+import 'hint_sheet.dart';
 
 /// The whole Quran is on the phone: browse to any surah.
-Future<int?> showSurahIndex(BuildContext context, {required Quran quran, int? current}) =>
-    Navigator.of(context).push<int>(MaterialPageRoute(builder: (_) => _SurahIndex(quran: quran, current: current)));
+Future<int?> showSurahIndex(BuildContext context, {required Quran quran, required SurahNames names, int? current}) =>
+    Navigator.of(context)
+        .push<int>(MaterialPageRoute(builder: (_) => _SurahIndex(quran: quran, names: names, current: current)));
 
 class _SurahIndex extends StatefulWidget {
-  const _SurahIndex({required this.quran, this.current});
+  const _SurahIndex({required this.quran, required this.names, this.current});
 
   final Quran quran;
+  final SurahNames names;
   final int? current;
 
   @override
@@ -22,49 +26,29 @@ class _SurahIndexState extends State<_SurahIndex> {
 
   @override
   Widget build(BuildContext context) {
-    final q = _query.trim().toLowerCase();
-    final surahs = widget.quran.surahs.where((s) {
-      if (q.isEmpty) return true;
-      return '${s.index}' == q ||
-          s.nameTranslit.toLowerCase().contains(q) ||
-          s.nameEn.toLowerCase().contains(q) ||
-          s.nameAr.contains(_query.trim());
-    }).toList();
+    final surahs = searchSurahs(widget.quran, widget.names, _query);
     return Scaffold(
       appBar: AppBar(title: const Text('Surahs')),
       body: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+            padding: const EdgeInsets.fromLTRB(RubricSpace.s6, 0, RubricSpace.s6, RubricSpace.s2),
             child: TextField(
-              decoration: const InputDecoration(
-                prefixIcon: Icon(Icons.search),
-                hintText: 'Search by name or number',
-                isDense: true,
-                border: OutlineInputBorder(),
-              ),
+              decoration: const InputDecoration(prefixIcon: Icon(Icons.search), hintText: 'Search by name or number'),
               onChanged: (v) => setState(() => _query = v),
             ),
           ),
           Expanded(
             child: ListView.separated(
+              padding: const EdgeInsets.symmetric(horizontal: RubricSpace.s4),
               itemCount: surahs.length,
-              separatorBuilder: (_, __) => const Divider(height: 1, indent: 72),
-              itemBuilder: (context, i) {
-                final s = surahs[i];
-                return ListTile(
-                  selected: s.index == widget.current,
-                  leading: CircleAvatar(
-                    backgroundColor: context.colors.gold.withOpacity(0.15),
-                    foregroundColor: context.colors.gold,
-                    child: Text('${s.index}', style: const TextStyle(fontWeight: FontWeight.w600)),
-                  ),
-                  title: Text(s.nameTranslit),
-                  subtitle: Text('${s.nameEn} · ${s.revelationType} · ${s.ayahCount} ayahs'),
-                  trailing: Text(s.nameAr, style: const TextStyle(fontFamily: quranFont, fontSize: 22)),
-                  onTap: () => Navigator.of(context).pop(s.index),
-                );
-              },
+              separatorBuilder: (_, __) => const Divider(indent: 48),
+              itemBuilder: (context, i) => SurahTile(
+                surah: surahs[i],
+                names: widget.names,
+                selected: surahs[i].index == widget.current,
+                onTap: () => Navigator.of(context).pop(surahs[i].index),
+              ),
             ),
           ),
         ],
