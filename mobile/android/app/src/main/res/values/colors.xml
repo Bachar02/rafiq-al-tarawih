@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Rubric `ground` (dark): the app opens dark, so the window never flashes white. -->
+    <color name="rafiq_ground">#100E0C</color>
+</resources>
