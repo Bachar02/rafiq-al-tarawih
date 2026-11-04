@@ -12,6 +12,7 @@ import '../data/settings.dart';
 import '../data/surah_names.dart';
 import '../features/listen/listen_controller.dart';
 import '../features/listen/listen_state.dart';
+import '../features/listen/taraweeh_position.dart';
 import '../features/reader/bookmarks.dart';
 import '../features/reader/reading_position.dart';
 import '../services/mic_audio_source.dart';
@@ -67,3 +68,7 @@ final screenAwakeProvider = Provider<ScreenAwake>((ref) => const WakelockScreenA
 final healthCheckerProvider = Provider<HealthChecker>((ref) => checkServerHealth);
 
 final listenControllerProvider = NotifierProvider<ListenController, ListenState>(ListenController.new);
+
+/// Where Taraweeh last got to (independent of the reading position).
+final taraweehPositionProvider =
+    NotifierProvider<TaraweehPositionController, SavedPosition?>(TaraweehPositionController.new);

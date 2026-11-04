@@ -37,7 +37,8 @@ void main() {
     Size size = phone,
     bool taraweeh = true,
   }) async {
-    h = await Harness.create(prefs: prefs);
+    // The one-time introduction has been seen: entering starts following.
+    h = await Harness.create(prefs: {'taraweeh_intro_seen': true, ...prefs});
     tester.view.physicalSize = size * ratio;
     tester.view.devicePixelRatio = ratio;
     addTearDown(tester.view.reset);
@@ -49,9 +50,8 @@ void main() {
     }
   }
 
+  /// Entering Taraweeh mode started a session: the engine becomes ready.
   Future<void> startListening(WidgetTester tester) async {
-    await tester.tap(find.bySemanticsLabel('Start following the imam'));
-    await settle(tester);
     h.engine.emit(const EngineReady());
     await settle(tester);
   }
@@ -84,6 +84,11 @@ void main() {
       };
 
   group('Rubric screens', skip: goldenSkipReason, () {
+    testWidgets('Taraweeh introduction, shown once', (tester) async {
+      await launch(tester, prefs: {'taraweeh_intro_seen': false});
+      await expectGolden(tester, 'taraweeh_intro');
+    });
+
     testWidgets('reader: Al-Baqarah opens with its header, dark', (tester) async {
       await launch(tester, prefs: {...readingAt(2, 1), 'theme_mode': 'dark'}, taraweeh: false);
       await settle(tester);
@@ -143,8 +148,6 @@ void main() {
 
     testWidgets('error Notice: the server cannot be reached', (tester) async {
       await launch(tester);
-      await tester.tap(find.bySemanticsLabel('Start following the imam'));
-      await settle(tester);
       h.engine.emit(
           const EngineFailure('Cannot reach the recognition server at 10.0.2.2:8765', kind: FailureKind.unreachable));
       await settle(tester);

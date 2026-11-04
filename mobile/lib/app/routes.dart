@@ -31,7 +31,7 @@ abstract final class AppRoutes {
   static Future<void> taraweeh(BuildContext context) => Navigator.of(context).push(
         MaterialPageRoute<void>(
           settings: const RouteSettings(name: taraweehName),
-          builder: (_) => const TaraweehTheme(child: ListenScreen()),
+          builder: (_) => const TaraweehTheme(child: ListenScreen(autoStart: true)),
         ),
       );
 

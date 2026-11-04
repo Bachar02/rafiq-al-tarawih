@@ -6,7 +6,10 @@ import 'package:rafiq/app/providers.dart';
 import 'package:rafiq/app/components/position_marker.dart';
 import 'package:rafiq/app/components/quran_text.dart';
 import 'package:rafiq/core/recognition/models.dart';
+import 'package:rafiq/data/reading_store.dart';
 import 'package:rafiq/features/listen/listen_screen.dart';
+import 'package:rafiq/features/quran_view/quran_view.dart';
+import 'package:rafiq/features/reader/reader_screen.dart';
 import 'package:rafiq/features/listen/widgets/status_line.dart';
 import 'package:rafiq/features/settings/settings_screen.dart';
 import 'package:rafiq/services/server_health.dart';
@@ -19,8 +22,20 @@ List<int> currentAyahs(WidgetTester tester) => [
         if (b.tone == AyahTone.current) b.verse.id,
     ];
 
-/// The surah the reader shows.
-int readerSurah(WidgetTester tester) => tester.widget<AyahBlock>(find.byType(AyahBlock).first).verse.surah;
+/// The surah the reader shows: the ayah nearest the middle of the text.
+int readerSurah(WidgetTester tester) {
+  final middle = tester.getRect(find.byType(QuranView)).center.dy;
+  final blocks = find.descendant(of: find.byType(QuranView), matching: find.byType(AyahBlock)).evaluate();
+  final nearest = blocks.reduce((a, b) {
+    double d(Element e) {
+      final box = e.renderObject! as RenderBox;
+      return (box.localToGlobal(box.size.center(Offset.zero)).dy - middle).abs();
+    }
+
+    return d(a) <= d(b) ? a : b;
+  });
+  return (nearest.widget as AyahBlock).verse.surah;
+}
 
 /// Tap the given ayah inside the reader (what a real tap on its text does).
 Future<void> tapAyah(WidgetTester tester, int surah, int ayah) async {
@@ -46,18 +61,6 @@ Finder header(String label) => find.bySemanticsLabel(label);
 void main() {
   late Harness h;
 
-  Future<ProviderContainer> launch(WidgetTester tester, {Size size = const Size(1080, 2340)}) async {
-    tester.view.physicalSize = size;
-    tester.view.devicePixelRatio = 3;
-    addTearDown(tester.view.reset);
-    await tester.pumpWidget(ProviderScope(overrides: h.overrides, child: const RafiqApp()));
-    await tester.pump();
-    // The reader is home; Taraweeh mode is one tap away.
-    await tester.tap(find.bySemanticsLabel('Taraweeh: follow the imam'));
-    await tester.pumpAndSettle();
-    return ProviderScope.containerOf(tester.element(find.byType(ListenScreen)));
-  }
-
   /// Settle animations without waiting on indeterminate spinners forever.
   Future<void> settle(WidgetTester tester) async {
     for (var i = 0; i < 10; i++) {
@@ -65,17 +68,46 @@ void main() {
     }
   }
 
-  Future<void> startListening(WidgetTester tester) async {
-    await tester.tap(find.bySemanticsLabel('Start following the imam'));
+  Future<ProviderContainer> launch(WidgetTester tester, {Size size = const Size(1080, 2340)}) async {
+    tester.view.physicalSize = size;
+    tester.view.devicePixelRatio = 3;
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(ProviderScope(overrides: h.overrides, child: const RafiqApp()));
+    await tester.pump();
+    // The reader is home; Taraweeh mode is one tap away and starts following.
+    await tester.tap(find.bySemanticsLabel('Taraweeh: follow the imam'));
     await settle(tester);
+    return ProviderScope.containerOf(tester.element(find.byType(ListenScreen)));
+  }
+
+  /// Tap [finder], then let what it starts finish. Session teardown (stop,
+  /// a new hint, leaving the mode) awaits stream cancels on real futures,
+  /// which the fake test clock alone never completes: alternate real time
+  /// and frames until the chain is done.
+  Future<void> tapAndFinish(WidgetTester tester, Finder finder) async {
+    await tester.tap(finder);
+    for (var i = 0; i < 6; i++) {
+      await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 10)));
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    await settle(tester);
+  }
+
+  /// Entering the mode started a session: the engine becomes ready.
+  Future<void> startListening(WidgetTester tester) async {
     h.engine.emit(const EngineReady());
     await settle(tester);
   }
 
-  setUp(() async => h = await Harness.create());
+  /// The introduction has been seen: entering starts following at once.
+  const introSeen = {'taraweeh_intro_seen': true};
 
-  testWidgets('idle: invites the user to start', (tester) async {
+  setUp(() async => h = await Harness.create(prefs: introSeen));
+
+  testWidgets('stopped before any position: ready to follow again', (tester) async {
     await launch(tester);
+    await startListening(tester);
+    await tapAndFinish(tester, find.bySemanticsLabel('Stop following'));
     expect(find.text('Ready to follow'), findsOneWidget);
     expect(find.text('Start following'), findsOneWidget);
     expect(find.bySemanticsLabel('Start following the imam'), findsOneWidget);
@@ -83,10 +115,8 @@ void main() {
     expect(find.byType(PositionMarker), findsNothing); // no position: no marker, no pill
   });
 
-  testWidgets('tap start: connects, then follows the imam with the ayah marked', (tester) async {
+  testWidgets('one tap from the reader: connects, then follows the imam with the ayah marked', (tester) async {
     await launch(tester);
-    await tester.tap(find.bySemanticsLabel('Start following the imam'));
-    await settle(tester);
     expect(find.text('Connecting…'), findsOneWidget);
     expect(find.text('Preparing…'), findsOneWidget);
 
@@ -165,8 +195,6 @@ void main() {
 
   testWidgets('unreachable server: explains and links to settings', (tester) async {
     await launch(tester);
-    await tester.tap(find.bySemanticsLabel('Start following the imam'));
-    await settle(tester);
     h.engine.emit(
         const EngineFailure('Cannot reach the recognition server at 10.0.2.2:8765', kind: FailureKind.unreachable));
     await settle(tester);
@@ -181,8 +209,6 @@ void main() {
   testWidgets('denied microphone: explains how to allow it', (tester) async {
     h.audio.permission = false;
     await launch(tester);
-    await tester.tap(find.bySemanticsLabel('Start following the imam'));
-    await settle(tester);
     expect(find.text('Rafiq needs the microphone'), findsOneWidget);
     expect(find.text('Try again'), findsOneWidget);
     await tester.tap(find.byTooltip('Dismiss'));
@@ -222,12 +248,11 @@ void main() {
     await tester.tap(find.text('Juz'));
     await settle(tester);
     await tester.scrollUntilVisible(find.text('Juz 30'), 200, scrollable: find.byType(Scrollable).last);
-    await tester.tap(find.text('Juz 30'));
-    await settle(tester);
-    expect(find.text('Tonight: Juz 30'), findsOneWidget);
+    await tapAndFinish(tester, find.text('Juz 30'));
+    expect(find.text('Tonight: Juz 30'), findsOneWidget); // shown while the imam is not found yet
+    expect(h.engine.startedWith, const JuzHint(30)); // the session restarted with it
 
-    await tester.tap(find.byTooltip('Remove hint'));
-    await settle(tester);
+    await tapAndFinish(tester, find.byTooltip('Remove hint'));
     expect(find.text('Tonight: Juz 30'), findsNothing);
   });
 
@@ -291,13 +316,13 @@ void main() {
     h.engine.emit(heard(at(93, 2)));
     await settle(tester);
 
-    await tapAyah(tester, 93, 6);
+    await tapAyah(tester, 93, 4);
     await settle(tester);
     await tester.tap(find.text('The imam is here'));
     await settle(tester);
-    expect(h.engine.positions, [pos(93, 6).verseId]);
-    expect(currentAyahs(tester), [pos(93, 6).verseId]);
-    expect(header('Surah Ad-Duha, ayah 6'), findsOneWidget);
+    expect(h.engine.positions, [pos(93, 4).verseId]);
+    expect(currentAyahs(tester), [pos(93, 4).verseId]);
+    expect(header('Surah Ad-Duha, ayah 4'), findsOneWidget);
   });
 
   testWidgets('lock the surah from the header, then unlock', (tester) async {
@@ -370,7 +395,7 @@ void main() {
     final pill = find.textContaining('Back to the imam').hitTestable();
     expect(pill, findsNothing);
 
-    await tester.drag(find.byType(SingleChildScrollView).last, const Offset(0, -3000));
+    await tester.drag(find.byType(QuranView), const Offset(0, -3000));
     await settle(tester);
     expect(pill, findsOneWidget);
     h.engine.emit(heard(at(2, 256))); // following continues underneath, no auto-scroll back
@@ -386,9 +411,10 @@ void main() {
   });
 
   testWidgets('Taraweeh mode is dark over a light reader, unless turned off', (tester) async {
-    h = await Harness.create(prefs: {'theme_mode': 'light'});
+    h = await Harness.create(prefs: {...introSeen, 'theme_mode': 'light'});
     await launch(tester);
     expect(Theme.of(tester.element(find.byType(ListenScreen))).brightness, Brightness.dark);
+    expect(Theme.of(tester.element(find.byType(ReaderScreen, skipOffstage: false))).brightness, Brightness.light);
     // Settings opened from Taraweeh mode keep its theme.
     await tester.tap(find.byTooltip('Settings'));
     await settle(tester);
@@ -396,12 +422,89 @@ void main() {
   });
 
   testWidgets('light theme renders the same screen', (tester) async {
-    h = await Harness.create(prefs: {'theme_mode': 'light', 'dark_during_taraweeh': false});
+    h = await Harness.create(prefs: {...introSeen, 'theme_mode': 'light', 'dark_during_taraweeh': false});
     await launch(tester);
     await startListening(tester);
     h.engine.emit(heard(at(93, 3)));
     await settle(tester);
     expect(Theme.of(tester.element(find.byType(ListenScreen))).brightness, Brightness.light);
     expect(currentAyahs(tester), [pos(93, 3).verseId]);
+  });
+
+  testWidgets('the introduction shows the first time only; Not now leaves following off', (tester) async {
+    h = await Harness.create();
+    await launch(tester);
+    expect(find.text('Taraweeh mode'), findsOneWidget);
+    expect(find.textContaining('Ḥafṣ ʿan ʿĀṣim only'), findsOneWidget);
+    expect(find.textContaining('same Wi-Fi'), findsOneWidget); // no offline claim in this build
+    expect(h.engines, isEmpty, reason: 'nothing starts behind the introduction');
+    await tester.ensureVisible(find.text('Not now'));
+    await tapAndFinish(tester, find.text('Not now'));
+    expect(find.text('Ready to follow'), findsOneWidget);
+    expect(h.prefs.getBool('taraweeh_intro_seen'), isTrue);
+
+    await tapAndFinish(tester, find.byTooltip('Back to reading'));
+    await tester.tap(find.bySemanticsLabel('Taraweeh: follow the imam'));
+    await settle(tester);
+    expect(find.text('Taraweeh mode'), findsNothing);
+    expect(find.text('Connecting…'), findsOneWidget);
+  });
+
+  testWidgets('the introduction\'s Start following starts at once', (tester) async {
+    h = await Harness.create();
+    await launch(tester);
+    final start = find.descendant(of: find.byType(BottomSheet), matching: find.text('Start following'));
+    await tester.ensureVisible(start);
+    await tester.tap(start);
+    await settle(tester);
+    expect(find.text('Connecting…'), findsOneWidget);
+    expect(h.engines, hasLength(1));
+  });
+
+  testWidgets('leaving stops following, keeps the Taraweeh position, and the reading position is untouched',
+      (tester) async {
+    final container = await launch(tester);
+    final reading = container.read(readingPositionProvider);
+    await startListening(tester);
+    h.engine.emit(heard(at(55, 13)));
+    await settle(tester);
+    h.engine.emit(heard(at(1, 3))); // Al-Fatiha at the next rakʿah is not where Taraweeh got to
+    await settle(tester);
+
+    await tapAndFinish(tester, find.byTooltip('Back to reading'));
+    expect(find.byType(ListenScreen), findsNothing);
+    expect(container.read(listenControllerProvider).isActive, isFalse);
+    expect(h.awake.enabled, isFalse);
+    expect(PrefsReadingStore(h.prefs).taraweehPosition()?.verseId, pos(55, 13).verseId);
+    expect(container.read(readingPositionProvider), reading);
+    expect(PrefsReadingStore(h.prefs).readingPosition(), isNull, reason: 'Taraweeh never writes the reading position');
+  });
+
+  testWidgets('the next night starts near where the last one ended, visibly and removably', (tester) async {
+    final lastNight = DateTime.now().subtract(const Duration(hours: 22)).toUtc().toIso8601String();
+    h = await Harness.create(prefs: {
+      ...introSeen,
+      'taraweeh_position.v1': '{"v":1,"verse":${pos(5, 81).verseId},"at":"$lastNight"}',
+    });
+    await launch(tester);
+    // 5:82 begins juz 7: the ayah after the last one decides.
+    expect(h.engine.startedWith, const JuzHint(7));
+    expect(find.text('Tonight: Juz 7'), findsOneWidget);
+    expect(find.text("Last night ended at Al-Ma'idah 5:81."), findsOneWidget);
+
+    await tapAndFinish(tester, find.byTooltip('Remove hint'));
+    expect(find.text('Tonight: Juz 7'), findsNothing);
+    expect(h.engine.startedWith, isNull);
+  });
+
+  testWidgets('a session from long ago suggests nothing', (tester) async {
+    final old = DateTime.now().subtract(const Duration(days: 30)).toUtc().toIso8601String();
+    h = await Harness.create(prefs: {
+      ...introSeen,
+      'taraweeh_position.v1': '{"v":1,"verse":${pos(5, 81).verseId},"at":"$old"}',
+    });
+    await launch(tester);
+    expect(h.engine.startedWith, isNull);
+    expect(find.textContaining('Tonight:'), findsNothing);
   });
 }

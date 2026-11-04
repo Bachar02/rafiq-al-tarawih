@@ -178,6 +178,7 @@ void main() {
   });
 
   testWidgets('the Taraweeh button opens Taraweeh mode, and back returns to the same place', (tester) async {
+    h = await Harness.create(prefs: {'taraweeh_intro_seen': true});
     final container = await launch(tester);
     openAt(tester, id(2, 255));
     await tester.pump();
@@ -185,7 +186,12 @@ void main() {
     await tester.tap(find.bySemanticsLabel('Taraweeh: follow the imam'));
     await tester.pumpAndSettle();
     expect(find.byType(ListenScreen), findsOneWidget);
-    await tester.binding.handlePopRoute(); // the system back gesture
+    await tester.tap(find.byTooltip('Back to reading'));
+    // Leaving stops the session, whose teardown awaits real futures.
+    for (var i = 0; i < 6; i++) {
+      await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 10)));
+      await tester.pump(const Duration(milliseconds: 100));
+    }
     await tester.pumpAndSettle();
     expect(find.byType(ListenScreen), findsNothing);
     expect(container.read(readingPositionProvider), id(2, 255));

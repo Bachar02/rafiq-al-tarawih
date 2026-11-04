@@ -17,25 +17,38 @@ import 'widgets/ayah_actions.dart';
 import 'widgets/diagnostics_panel.dart';
 import 'widgets/hint_sheet.dart';
 import 'widgets/listen_control.dart';
+import '../quran_view/quran_view.dart';
 import 'widgets/position_header.dart';
-import 'widgets/quran_column.dart';
 import 'widgets/return_to_imam.dart';
 import 'widgets/status_line.dart';
 import 'widgets/surah_index.dart';
+import 'widgets/taraweeh_intro.dart';
 
-/// The whole app on one screen: tap, and follow the imam.
+/// Taraweeh mode: follow the imam, live, in the same Quran text as the reader.
 ///
-/// Top to bottom (brand book §6a): wordmark and header controls · position
-/// header · status line · Quran column · notices · mic level · listen control.
+/// Top to bottom (brand book §6a): back to reading, wordmark and header
+/// controls · position header · status line · the shared [QuranView] in live
+/// tones · notices · mic level · listen control.
+///
+/// Opened from the reader with [autoStart]: listening starts at once (after
+/// the one-time introduction). Leaving the mode stops following and keeps
+/// where the imam got to as the last Taraweeh position; the personal reading
+/// position is never touched.
 class ListenScreen extends ConsumerStatefulWidget {
-  const ListenScreen({super.key});
+  const ListenScreen({super.key, this.autoStart = false});
+
+  /// Start following as soon as the mode opens.
+  final bool autoStart;
 
   @override
   ConsumerState<ListenScreen> createState() => _ListenScreenState();
 }
 
 class _ListenScreenState extends ConsumerState<ListenScreen> with WidgetsBindingObserver {
-  final _column = GlobalKey<QuranColumnState>();
+  final _view = QuranViewController();
+
+  /// Tonight's hint came from where last night ended (said under the chip).
+  bool _hintFromLastNight = false;
 
   /// The user scrolled the current ayah out of view.
   bool _away = false;
@@ -48,6 +61,34 @@ class _ListenScreenState extends ConsumerState<ListenScreen> with WidgetsBinding
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    if (widget.autoStart) WidgetsBinding.instance.addPostFrameCallback((_) => _enter());
+  }
+
+  /// One tap from the reader starts following: the introduction first, the
+  /// one time it has not been seen, and last night's end as a soft hint.
+  Future<void> _enter() async {
+    if (!mounted) return;
+    if (!ref.read(settingsProvider).taraweehIntroSeen) {
+      final start = await showTaraweehIntro(context);
+      await ref.read(settingsProvider.notifier).update((s) => s.copyWith(taraweehIntroSeen: true));
+      if (start != true || !mounted) return;
+    }
+    final controller = ref.read(listenControllerProvider.notifier);
+    if (ref.read(listenControllerProvider).isActive) return;
+    if (ref.read(listenControllerProvider).hint == null) {
+      final hint = ref.read(taraweehPositionProvider.notifier).lastNightHint(ref.read(quranProvider), DateTime.now());
+      if (hint != null) {
+        await controller.setHint(hint);
+        if (mounted) setState(() => _hintFromLastNight = true);
+      }
+    }
+    if (mounted) await controller.start();
+  }
+
+  /// Leaving the mode: stop following and keep where the imam got to.
+  void _leave() {
+    unawaited(ref.read(listenControllerProvider.notifier).stop());
+    unawaited(ref.read(taraweehPositionProvider.notifier).flush());
   }
 
   @override
@@ -61,7 +102,10 @@ class _ListenScreenState extends ConsumerState<ListenScreen> with WidgetsBinding
   void didChangeAppLifecycleState(AppLifecycleState lifecycle) {
     // The OS will not keep the microphone for a backgrounded app anyway; stop
     // cleanly and say so, instead of silently showing a stale ayah.
-    if (lifecycle == AppLifecycleState.paused) ref.read(listenControllerProvider.notifier).pause();
+    if (lifecycle == AppLifecycleState.paused) {
+      ref.read(listenControllerProvider.notifier).pause();
+      unawaited(ref.read(taraweehPositionProvider.notifier).flush());
+    }
   }
 
   void _runClock(bool active) {
@@ -84,7 +128,10 @@ class _ListenScreenState extends ConsumerState<ListenScreen> with WidgetsBinding
       current: state.hint,
       active: state.isActive,
     );
-    if (choice != null) await ref.read(listenControllerProvider.notifier).setHint(choice.hint);
+    if (choice != null) {
+      setState(() => _hintFromLastNight = false);
+      await ref.read(listenControllerProvider.notifier).setHint(choice.hint);
+    }
   }
 
   Future<void> _openIndex(ListenState state) async {
@@ -94,7 +141,9 @@ class _ListenScreenState extends ConsumerState<ListenScreen> with WidgetsBinding
       names: ref.read(surahNamesProvider),
       current: state.readerSurah,
     );
-    if (surah != null) ref.read(listenControllerProvider.notifier).browse(surah);
+    if (surah == null) return;
+    ref.read(listenControllerProvider.notifier).browse(surah);
+    _view.jumpToSurah(surah);
   }
 
   /// Lock to the imam's surah (after a confirming sheet), or unlock.
@@ -135,13 +184,18 @@ class _ListenScreenState extends ConsumerState<ListenScreen> with WidgetsBinding
 
   void _returnToImam(ListenState state) {
     if (state.browsing) ref.read(listenControllerProvider.notifier).followImam();
-    _column.currentState?.returnToImam();
+    unawaited(_view.returnToFollow());
     setState(() => _away = false);
   }
 
   @override
   Widget build(BuildContext context) {
     ref.listen(listenControllerProvider.select((s) => s.isActive), (_, active) => _runClock(active));
+    // The imam's main position (never Al-Fatiha at a rakʿah) is where
+    // Taraweeh got to.
+    ref.listen(listenControllerProvider.select((s) => s.anchor), (_, anchor) {
+      if (anchor != null) ref.read(taraweehPositionProvider.notifier).record(anchor);
+    });
     final state = ref.watch(listenControllerProvider);
     final settings = ref.watch(settingsProvider);
     final quran = ref.watch(quranProvider);
@@ -153,153 +207,180 @@ class _ListenScreenState extends ConsumerState<ListenScreen> with WidgetsBinding
     final controller = ref.read(listenControllerProvider.notifier);
     final sure = status.marker(held: displayed != null) == MarkerFill.filled;
     final showReturn = status.active && displayed != null && (state.browsing || _away);
+    // Follow the imam in the surah the reader shows: an unsure guess or a
+    // lock elsewhere never pulls the text away (the controller decides
+    // which surah that is). Browsing leaves scrolling to the user.
+    final int? follow = reader == null || state.browsing
+        ? null
+        : displayed != null && displayed.surah == reader
+            ? displayed.verseId
+            : quran.surah(reader).firstVerseId;
     final hearing =
         state.lastSoundAt != null && now.difference(state.lastSoundAt!) < const Duration(milliseconds: 1500);
 
-    return Scaffold(
-      body: SafeArea(
-        child: LayoutBuilder(
-          builder: (context, screen) => Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              _TopBar(
-                state: state,
-                status: status,
-                names: names,
-                onHint: () => _chooseHint(state),
-                onLock: () => _toggleLock(state),
-                onSettings: _openSettings,
-              ),
-              // On a small phone with large system text, the header and status
-              // scroll within 40% of the screen rather than push the Quran
-              // column and the control off it.
-              ConstrainedBox(
-                constraints: BoxConstraints(maxHeight: screen.maxHeight * 0.4),
-                child: SingleChildScrollView(
-                  physics: const ClampingScrollPhysics(),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(RubricSpace.gutter, RubricSpace.s2, RubricSpace.gutter, 0),
-                        child: PositionHeader(
-                          position: displayed,
-                          quran: quran,
-                          names: names,
-                          unsure: status.engineUnsure,
-                          onOpenSurahs: () => _openIndex(state),
-                        ),
-                      ),
-                      const SizedBox(height: RubricSpace.s4),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: RubricSpace.gutter),
-                        child: StatusLine(
-                          status: status,
-                          held: displayed != null,
-                          ayah: displayed?.ayah,
-                          reconnectAttempt: state.reconnectAttempt,
-                          note: state.track.alternatives.isNotEmpty && state.isActive
-                              ? 'Repeated text — could also be ${state.track.alternatives.map((p) => p.ref).join(' · ')}'
-                              : null,
-                        ),
-                      ),
-                    ],
-                  ),
+    return PopScope(
+      onPopInvokedWithResult: (didPop, _) {
+        if (didPop) _leave();
+      },
+      child: Scaffold(
+        body: SafeArea(
+          child: LayoutBuilder(
+            builder: (context, screen) => Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _TopBar(
+                  state: state,
+                  status: status,
+                  names: names,
+                  onBack: () => Navigator.of(context).maybePop(),
+                  onHint: () => _chooseHint(state),
+                  onLock: () => _toggleLock(state),
+                  onSettings: _openSettings,
                 ),
-              ),
-              const SizedBox(height: RubricSpace.s6),
-              // Everything between the status line and the control shares one
-              // flexible region: the Quran column gives way first on small
-              // screens or with large system fonts.
-              Expanded(
-                child: LayoutBuilder(
-                  builder: (context, region) => Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Expanded(
-                        child: Stack(
-                          children: [
-                            Positioned.fill(
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: RubricSpace.gutter),
-                                child: reader == null
-                                    ? _EmptyColumn(status: status, onBrowse: () => _openIndex(state))
-                                    : QuranColumn(
-                                        key: _column,
-                                        quran: quran,
-                                        names: names,
-                                        surah: reader,
-                                        current: displayed,
-                                        unsure: status.engineUnsure,
-                                        showTitle: displayed?.surah != reader,
-                                        textScale: settings.textScale,
-                                        bottomPadding: showReturn ? 72 : 0,
-                                        onAyahTap: (verse) => _onAyahTap(verse, state),
-                                        onOpenSurah: controller.browse,
-                                        onAwayChanged: (away) => setState(() => _away = away),
-                                      ),
-                              ),
-                            ),
-                            Positioned(
-                              left: RubricSpace.gutter,
-                              right: RubricSpace.gutter,
-                              bottom: RubricSpace.s4,
-                              child: Center(
-                                child: ReturnToImam(
-                                  visible: showReturn,
-                                  position: displayed,
-                                  sure: sure,
-                                  onTap: () => _returnToImam(state),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      // Directly above the control, never over the Quran column.
-                      // Fixing what stopped the session matters more than the
-                      // text, so a long notice takes up to 60% of the region.
-                      if (state.warning != null || _Notices.has(status, state))
-                        ConstrainedBox(
-                          constraints: BoxConstraints(maxHeight: region.maxHeight * 0.6),
-                          child: SingleChildScrollView(
-                            padding:
-                                const EdgeInsets.fromLTRB(RubricSpace.gutter, RubricSpace.s3, RubricSpace.gutter, 0),
-                            child: _Notices(
-                              state: state,
-                              status: status,
-                              onRetry: controller.start,
-                              onDismiss: controller.dismissError,
-                              onOpenSettings: _openSettings,
-                            ),
+                // On a small phone with large system text, the header and status
+                // scroll within 40% of the screen rather than push the Quran
+                // column and the control off it.
+                ConstrainedBox(
+                  constraints: BoxConstraints(maxHeight: screen.maxHeight * 0.4),
+                  child: SingleChildScrollView(
+                    physics: const ClampingScrollPhysics(),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(RubricSpace.gutter, RubricSpace.s2, RubricSpace.gutter, 0),
+                          child: PositionHeader(
+                            position: displayed,
+                            quran: quran,
+                            names: names,
+                            unsure: status.engineUnsure,
+                            onOpenSurahs: () => _openIndex(state),
                           ),
                         ),
-                    ],
+                        const SizedBox(height: RubricSpace.s4),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: RubricSpace.gutter),
+                          child: StatusLine(
+                            status: status,
+                            held: displayed != null,
+                            ayah: displayed?.ayah,
+                            reconnectAttempt: state.reconnectAttempt,
+                            note: state.track.alternatives.isNotEmpty && state.isActive
+                                ? 'Repeated text — could also be ${state.track.alternatives.map((p) => p.ref).join(' · ')}'
+                                : null,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-              if (settings.showDiagnostics)
-                ConstrainedBox(
-                  constraints: const BoxConstraints(maxHeight: 160),
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.fromLTRB(RubricSpace.gutter, RubricSpace.s2, RubricSpace.gutter, 0),
-                    child: TranscriptPanel(state: state),
+                const SizedBox(height: RubricSpace.s6),
+                // Everything between the status line and the control shares one
+                // flexible region: the Quran column gives way first on small
+                // screens or with large system fonts.
+                Expanded(
+                  child: LayoutBuilder(
+                    builder: (context, region) => Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Expanded(
+                          child: Stack(
+                            children: [
+                              Positioned.fill(
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: RubricSpace.gutter),
+                                  child: reader == null
+                                      ? _EmptyColumn(status: status, onBrowse: () => _openIndex(state))
+                                      : QuranView(
+                                          quran: quran,
+                                          names: names,
+                                          controller: _view,
+                                          initialVerse: follow ?? quran.surah(reader).firstVerseId,
+                                          live: true,
+                                          current: displayed,
+                                          unsure: status.engineUnsure,
+                                          followVerse: follow,
+                                          textScale: settings.textScale,
+                                          horizontalPadding: 0,
+                                          bottomPadding: showReturn ? 72 : 0,
+                                          onAyahTap: (verse) => _onAyahTap(verse, state),
+                                          onAwayChanged: (away) => setState(() => _away = away),
+                                        ),
+                                ),
+                              ),
+                              Positioned(
+                                left: RubricSpace.gutter,
+                                right: RubricSpace.gutter,
+                                bottom: RubricSpace.s4,
+                                child: Center(
+                                  child: ReturnToImam(
+                                    visible: showReturn,
+                                    position: displayed,
+                                    sure: sure,
+                                    onTap: () => _returnToImam(state),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        // Directly above the control, never over the Quran column.
+                        // Fixing what stopped the session matters more than the
+                        // text, so a long notice takes up to 60% of the region.
+                        if (state.warning != null || _Notices.has(status, state))
+                          ConstrainedBox(
+                            constraints: BoxConstraints(maxHeight: region.maxHeight * 0.6),
+                            child: SingleChildScrollView(
+                              padding:
+                                  const EdgeInsets.fromLTRB(RubricSpace.gutter, RubricSpace.s3, RubricSpace.gutter, 0),
+                              child: _Notices(
+                                state: state,
+                                status: status,
+                                onRetry: controller.start,
+                                onDismiss: controller.dismissError,
+                                onOpenSettings: _openSettings,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
                   ),
                 ),
-              _Bottom(
-                state: state,
-                status: status,
-                names: names,
-                hearing: hearing,
-                onToggle: () => _toggle(status),
-                onHint: () => _chooseHint(state),
-                onClearHint: () => controller.setHint(null),
-              ),
-            ],
+                if (settings.showDiagnostics)
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(maxHeight: 160),
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.fromLTRB(RubricSpace.gutter, RubricSpace.s2, RubricSpace.gutter, 0),
+                      child: TranscriptPanel(state: state),
+                    ),
+                  ),
+                _Bottom(
+                  state: state,
+                  status: status,
+                  names: names,
+                  hearing: hearing,
+                  hintNote: _hintFromLastNight ? _lastNightNote() : null,
+                  onToggle: () => _toggle(status),
+                  onHint: () => _chooseHint(state),
+                  onClearHint: () {
+                    setState(() => _hintFromLastNight = false);
+                    controller.setHint(null);
+                  },
+                ),
+              ],
+            ),
           ),
         ),
       ),
     );
+  }
+
+  /// Under the hint it suggested: where last night ended.
+  String? _lastNightNote() {
+    final last = ref.read(taraweehPositionProvider);
+    if (last == null) return null;
+    final verse = ref.read(quranProvider).verse(last.verseId);
+    return 'Last night ended at ${ref.read(surahNamesProvider).of(verse.surah)} ${verse.surah}:${verse.ayah}.';
   }
 }
 
@@ -314,11 +395,13 @@ class _TopBar extends StatelessWidget {
     required this.onHint,
     required this.onLock,
     required this.onSettings,
+    required this.onBack,
   });
 
   final ListenState state;
   final DisplayStatus status;
   final SurahNames names;
+  final VoidCallback onBack;
   final VoidCallback onHint;
   final VoidCallback onLock;
   final VoidCallback onSettings;
@@ -334,9 +417,13 @@ class _TopBar extends StatelessWidget {
       null => null,
     };
     return Padding(
-      padding: const EdgeInsetsDirectional.fromSTEB(RubricSpace.gutter, RubricSpace.s2, RubricSpace.s3, 0),
+      padding: const EdgeInsetsDirectional.fromSTEB(RubricSpace.s1, RubricSpace.s2, RubricSpace.s3, 0),
       child: Row(
         children: [
+          if (Navigator.of(context).canPop())
+            IconButton(tooltip: 'Back to reading', onPressed: onBack, icon: const BackButtonIcon())
+          else
+            const SizedBox(width: RubricSpace.gutter - RubricSpace.s1),
           const Wordmark(),
           const Spacer(),
           if (showLock)
@@ -372,12 +459,16 @@ class _Bottom extends StatelessWidget {
     required this.onToggle,
     required this.onHint,
     required this.onClearHint,
+    this.hintNote,
   });
 
   final ListenState state;
   final DisplayStatus status;
   final SurahNames names;
   final bool hearing;
+
+  /// Where an automatic hint came from.
+  final String? hintNote;
   final VoidCallback onToggle;
   final VoidCallback onHint;
   final VoidCallback onClearHint;
@@ -385,23 +476,34 @@ class _Bottom extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final hint = state.hint;
+    final listening = status.active && status != DisplayStatus.stopping;
+    // A hint helps only until the imam is found: shown until then, also while
+    // listening, so an automatic one is never invisible.
+    final showHint = hint != null && (!listening || state.displayed == null);
     return Padding(
       padding: const EdgeInsets.fromLTRB(RubricSpace.gutter, RubricSpace.s3, RubricSpace.gutter, RubricSpace.s4),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          if (status.active && status != DisplayStatus.stopping)
+          if (showHint)
+            Padding(
+              padding: const EdgeInsets.only(bottom: RubricSpace.s3),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _HintChip(label: hintLabel(hint, names), onTap: onHint, onClear: onClearHint),
+                  if (hintNote != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: RubricSpace.s1),
+                      child: Text(hintNote!, style: RubricText.caption.copyWith(color: context.colors.inkSecondary)),
+                    ),
+                ],
+              ),
+            ),
+          if (listening)
             Padding(
               padding: const EdgeInsets.only(bottom: RubricSpace.s3),
               child: MicLevel(level: state.level, hearing: hearing),
-            )
-          else if (hint != null)
-            Padding(
-              padding: const EdgeInsets.only(bottom: RubricSpace.s3),
-              child: Align(
-                alignment: AlignmentDirectional.centerStart,
-                child: _HintChip(label: hintLabel(hint, names), onTap: onHint, onClear: onClearHint),
-              ),
             ),
           ListenControl(status: status, onPressed: onToggle),
         ],

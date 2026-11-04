@@ -1,6 +1,6 @@
 // Host-side cost proxy for the R2 spike: build + layout + paint time with the
-// real fonts, new QuranView against the old eager QuranColumn, on identical
-// work. Debug JIT on a laptop: absolute numbers mean nothing, ratios do. The
+// real fonts. (The old eager per-surah column it replaced took ~300 ms to lay
+// out Al-Baqarah on the same machine: PLAN.md §18.) Debug JIT on a laptop: absolute numbers mean nothing, ratios do. The
 // deciding numbers come from integration_test/quran_view_perf_test.dart on a
 // phone.
 //
@@ -12,7 +12,6 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:rafiq/app/theme.dart';
-import 'package:rafiq/features/listen/widgets/quran_column.dart';
 import 'package:rafiq/features/quran_view/quran_view.dart';
 
 import '../support/fakes.dart';
@@ -49,24 +48,6 @@ void main() {
       tester.view.physicalSize = const Size(720, 1600); // A32: 720 × 1600
       tester.view.devicePixelRatio = 2;
       addTearDown(tester.view.reset);
-
-      // Old: the whole of Al-Baqarah laid out at once.
-      final old = <Duration>[];
-      for (var i = 0; i < 3; i++) {
-        await tester.pumpWidget(app(const SizedBox()));
-        old.add(await timed(() async {
-          await tester.pumpWidget(app(QuranColumn(
-            quran: quran,
-            names: names,
-            surah: 2,
-            current: pos(2, 1),
-            textScale: scale,
-            onAyahTap: (_) {},
-            onOpenSurah: (_) {},
-          )));
-          await tester.pump();
-        }));
-      }
 
       // New: opening at Al-Baqarah.
       final open = <Duration>[];
@@ -114,7 +95,6 @@ void main() {
 
       // ignore: avoid_print
       print('text size $scale\n'
-          '  old QuranColumn, Al-Baqarah frame: ${ms(old)}\n'
           '  QuranView open at Al-Baqarah:     ${ms(open)}\n'
           '  QuranView scroll frame:           ${ms(scroll)}\n'
           '  QuranView jump:                   ${ms(jumps)}');
