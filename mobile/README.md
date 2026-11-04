@@ -26,11 +26,11 @@ On the emulator, let it hear the laptop's microphone with
 `adb emu avd hostmicon` (off by default).
 
 ## Toolchain
-- Flutter 3.19.5 (Dart 3.3).
-- **JDK 17+ for Android builds.** The microphone plugin ships Java 17 bytecode, so
-  the Android project uses AGP 8.2 / Gradle 8.5 / Kotlin 1.9. If Flutter still uses
-  an older bundled JDK: `flutter config --jdk-dir <path-to-jdk-17-or-newer>`.
-- minSdk 23 (Android 6.0).
+- Flutter 3.47.9 (Dart 3.13), the version CI pins.
+- **JDK 17+ for Android builds.** The Android project uses AGP 8.13 / Gradle 8.14 /
+  Kotlin 2.3, the minimum Flutter 3.47 supports. If Flutter still uses an older
+  bundled JDK: `flutter config --jdk-dir <path-to-jdk-17-or-newer>`.
+- minSdk 24 (Android 7.0): Flutter 3.47's minimum. targetSdk and compileSdk 36.
 
 ## Develop
 ```bash

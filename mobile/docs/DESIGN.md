@@ -163,7 +163,7 @@ treats `error` as fatal and `warning` as informational.
 ### 4.4 Tech choices
 | Concern | Choice | Why |
 |---|---|---|
-| UI | Flutter (3.19, Dart 3.3) | one codebase for Android and iOS |
+| UI | Flutter (3.47, Dart 3.13) | one codebase for Android and iOS |
 | State | flutter_riverpod | testable, no codegen, explicit dependencies |
 | Mic | record (PCM16 stream at 16 kHz) | native resampling, Android and iOS |
 | Socket | web_socket_channel | standard; wrapped behind `RecognitionEngine` |
