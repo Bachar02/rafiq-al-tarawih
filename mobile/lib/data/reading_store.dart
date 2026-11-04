@@ -80,6 +80,60 @@ abstract interface class ReadingStore {
   /// Newest first.
   List<Bookmark> bookmarks();
   Future<bool> saveBookmarks(List<Bookmark> bookmarks);
+
+  /// Pages read on each day (local `yyyy-mm-dd`).
+  ReadingLog readingLog();
+  Future<bool> saveReadingLog(ReadingLog log);
+}
+
+/// The pages read on each day, for the daily goal. Immutable.
+@immutable
+class ReadingLog {
+  const ReadingLog([this.days = const {}]);
+
+  /// Days older than this are dropped when saving.
+  static const keepDays = 90;
+
+  final Map<String, Set<int>> days;
+
+  static String dayKey(DateTime local) =>
+      '${local.year.toString().padLeft(4, '0')}-${local.month.toString().padLeft(2, '0')}-'
+      '${local.day.toString().padLeft(2, '0')}';
+
+  Set<int> on(DateTime local) => days[dayKey(local)] ?? const {};
+
+  /// This log with [pages] added to [local]'s day, and days older than
+  /// [keepDays] before it dropped.
+  ReadingLog adding(DateTime local, Iterable<int> pages) {
+    final cutoff = dayKey(local.subtract(const Duration(days: keepDays)));
+    final key = dayKey(local);
+    return ReadingLog({
+      for (final e in days.entries)
+        if (e.key.compareTo(cutoff) > 0 && e.key != key) e.key: e.value,
+      key: {...on(local), ...pages},
+    });
+  }
+
+  Map<String, Object> toJson() => {
+        'v': 1,
+        'days': {
+          for (final e in days.entries) e.key: ([...e.value]..sort()),
+        },
+      };
+
+  static ReadingLog? fromJson(Object? json) {
+    if (json is! Map || json['v'] != 1 || json['days'] is! Map) return null;
+    final days = <String, Set<int>>{};
+    for (final e in (json['days'] as Map).entries) {
+      final pages = e.value;
+      if (e.key is! String || pages is! List) return null;
+      days[e.key as String] = {
+        for (final p in pages)
+          if (p is int && p >= 1 && p <= 604) p
+      };
+    }
+    return ReadingLog(days);
+  }
 }
 
 class PrefsReadingStore implements ReadingStore {
@@ -90,6 +144,7 @@ class PrefsReadingStore implements ReadingStore {
   static const readingKey = 'reading_position.v1';
   static const taraweehKey = 'taraweeh_position.v1';
   static const bookmarksKey = 'bookmarks.v1';
+  static const logKey = 'reading_log.v1';
 
   /// The prefix of the keys an unreadable record is copied to, untouched
   /// (one per occurrence, suffixed with the time it was found).
@@ -142,6 +197,18 @@ class PrefsReadingStore implements ReadingStore {
         'v': 1,
         'items': [for (final b in bookmarks) b.toJson()]
       });
+
+  @override
+  ReadingLog readingLog() {
+    final json = _readJson(logKey);
+    if (json == null) return const ReadingLog();
+    final log = ReadingLog.fromJson(json);
+    if (log == null) _setAside(logKey);
+    return log ?? const ReadingLog();
+  }
+
+  @override
+  Future<bool> saveReadingLog(ReadingLog log) => _write(logKey, log.toJson());
 
   SavedPosition? _readPosition(String key) {
     final json = _readJson(key);

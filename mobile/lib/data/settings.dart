@@ -31,7 +31,12 @@ class AppSettings {
     this.taraweehIntroSeen = false,
     this.language = AppLanguage.system,
     this.readingLayout = ReadingLayout.scroll,
+    this.dailyGoalPages = 0,
   });
+
+  /// The daily reading goals offered, in pages; 0 is off. 20 pages is a juz
+  /// a day: the whole Quran in a month.
+  static const dailyGoals = [0, 5, 10, 20, 40];
 
   /// The Android emulator's alias for the host machine. On a real phone this
   /// becomes the laptop's Wi-Fi address (the server prints it).
@@ -66,6 +71,9 @@ class AppSettings {
 
   final ReadingLayout readingLayout;
 
+  /// Pages a day, or 0 for no goal.
+  final int dailyGoalPages;
+
   AppSettings copyWith({
     String? serverAddress,
     bool? keepScreenOn,
@@ -76,6 +84,7 @@ class AppSettings {
     bool? taraweehIntroSeen,
     AppLanguage? language,
     ReadingLayout? readingLayout,
+    int? dailyGoalPages,
   }) =>
       AppSettings(
         serverAddress: serverAddress ?? this.serverAddress,
@@ -87,6 +96,7 @@ class AppSettings {
         taraweehIntroSeen: taraweehIntroSeen ?? this.taraweehIntroSeen,
         language: language ?? this.language,
         readingLayout: readingLayout ?? this.readingLayout,
+        dailyGoalPages: dailyGoalPages ?? this.dailyGoalPages,
       );
 }
 
@@ -105,6 +115,7 @@ class SettingsStore {
   static const _introSeen = 'taraweeh_intro_seen';
   static const _language = 'language';
   static const _layout = 'reading_layout';
+  static const _goal = 'daily_goal_pages';
 
   AppSettings load() {
     const d = AppSettings();
@@ -120,6 +131,7 @@ class SettingsStore {
       taraweehIntroSeen: _prefs.getBool(_introSeen) ?? d.taraweehIntroSeen,
       language: AppLanguage.values.asNameMap()[_prefs.getString(_language)] ?? d.language,
       readingLayout: ReadingLayout.values.asNameMap()[_prefs.getString(_layout)] ?? d.readingLayout,
+      dailyGoalPages: _knownGoal(_prefs.getInt(_goal)) ?? d.dailyGoalPages,
     );
   }
 
@@ -133,5 +145,8 @@ class SettingsStore {
     await _prefs.setBool(_introSeen, s.taraweehIntroSeen);
     await _prefs.setString(_language, s.language.name);
     await _prefs.setString(_layout, s.readingLayout.name);
+    await _prefs.setInt(_goal, s.dailyGoalPages);
   }
+
+  static int? _knownGoal(int? pages) => AppSettings.dailyGoals.contains(pages) ? pages : null;
 }

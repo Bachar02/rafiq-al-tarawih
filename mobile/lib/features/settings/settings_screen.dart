@@ -113,6 +113,18 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     if (layout != null) await ref.read(settingsProvider.notifier).update((s) => s.copyWith(readingLayout: layout));
   }
 
+  Future<void> _chooseGoal(int current) async {
+    final l = context.l10n;
+    final goal = await _choose(
+      title: l.dailyGoal,
+      explanation: l.dailyGoalExplanation,
+      options: AppSettings.dailyGoals,
+      current: current,
+      label: (pages) => goalLabel(l, pages),
+    );
+    if (goal != null) await ref.read(settingsProvider.notifier).update((s) => s.copyWith(dailyGoalPages: goal));
+  }
+
   Future<void> _chooseLanguage(AppLanguage current) async {
     final l = context.l10n;
     final language = await _choose(
@@ -149,6 +161,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 label: l.layout,
                 value: layoutLabel(l, settings.readingLayout),
                 onTap: () => _chooseLayout(settings.readingLayout),
+              ),
+              RubricRow(
+                label: l.dailyGoal,
+                value: goalLabel(l, settings.dailyGoalPages),
+                onTap: () => _chooseGoal(settings.dailyGoalPages),
               ),
               RubricRow(
                 label: l.appearance,
@@ -289,6 +306,8 @@ String appearanceLabel(AppLocalizations l, ThemeMode mode) => switch (mode) {
       ThemeMode.light => l.themeLight,
       ThemeMode.system => l.themeSystem,
     };
+
+String goalLabel(AppLocalizations l, int pages) => pages == 0 ? l.dailyGoalOff : l.pagesCount(pages);
 
 String layoutLabel(AppLocalizations l, ReadingLayout layout) => switch (layout) {
       ReadingLayout.scroll => l.layoutScroll,

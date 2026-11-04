@@ -148,6 +148,9 @@ class Harness {
   /// Replace before launching to test storage failures.
   ReadingStore? readingStore;
 
+  /// The time the app sees (change it to cross midnight).
+  DateTime now = DateTime(2026, 11, 4, 20);
+
   FakeEngine get engine => engines.last;
 
   static Future<Harness> create({Map<String, Object> prefs = const {}}) async {
@@ -163,6 +166,7 @@ class Harness {
         audioSourceProvider.overrideWithValue(audio),
         screenAwakeProvider.overrideWithValue(awake),
         sharerProvider.overrideWithValue(sharer),
+        clockProvider.overrideWithValue(() => now),
         healthCheckerProvider.overrideWithValue((_) async => health),
         engineFactoryProvider.overrideWithValue((address) {
           addresses.add(address);

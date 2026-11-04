@@ -103,6 +103,17 @@ void main() {
       await expectGolden(tester, 'reader_light');
     });
 
+    testWidgets('daily goal on a 320 px phone: the page stays in view', (tester) async {
+      await launch(
+        tester,
+        prefs: {...readingAt(78, 1), 'daily_goal_pages': 20, 'theme_mode': 'light'},
+        size: smallPhone,
+        taraweeh: false,
+      );
+      await settle(tester);
+      await expectGolden(tester, 'reader_goal_small_phone');
+    });
+
     testWidgets('page view: page 42, light', (tester) async {
       await launch(
         tester,

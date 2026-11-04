@@ -38,9 +38,16 @@ class ReaderBar extends ConsumerWidget {
     // On a narrow phone the place (juz, page) keeps the room; the layout
     // stays one tap away in Settings.
     final roomy = MediaQuery.sizeOf(context).width >= 360;
-    final where = l.juzPage(juz, page);
+    final goal = ref.watch(settingsProvider.select((s) => s.dailyGoalPages));
+    ref.watch(readingProgressProvider);
+    final read = goal == 0 ? 0 : ref.read(readingProgressProvider.notifier).today;
+    final where = goal == 0
+        ? l.juzPage(juz, page)
+        // On a narrow phone only the count; the line under the bar and the
+        // screen reader say the rest.
+        : '${l.juzPage(juz, page)} · ${MediaQuery.sizeOf(context).width >= 360 ? l.todayProgress(read, goal) : '$read/$goal'}';
 
-    return Padding(
+    final bar = Padding(
       padding: const EdgeInsetsDirectional.fromSTEB(RubricSpace.s1, RubricSpace.s1, RubricSpace.s1, 0),
       child: Row(
         children: [
@@ -52,7 +59,9 @@ class ReaderBar extends ConsumerWidget {
           Expanded(
             child: Semantics(
               button: true,
-              label: l.semReaderBar(names.of(surah.index), verse.ayah, juz, page),
+              label: goal == 0
+                  ? l.semReaderBar(names.of(surah.index), verse.ayah, juz, page)
+                  : '${l.semReaderBar(names.of(surah.index), verse.ayah, juz, page)}. ${l.semTodayProgress(read, goal)}',
               excludeSemantics: true,
               child: InkWell(
                 onTap: onNavigate,
@@ -105,6 +114,29 @@ class ReaderBar extends ConsumerWidget {
           IconButton(tooltip: l.settings, onPressed: onSettings, icon: const Icon(Icons.settings_outlined)),
         ],
       ),
+    );
+    if (goal == 0) return bar;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        bar,
+        // Today's progress toward the goal: ink on the hairline, quiet.
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: RubricSpace.gutter),
+          child: ExcludeSemantics(
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(1),
+              child: LinearProgressIndicator(
+                value: (read / goal).clamp(0.0, 1.0),
+                minHeight: 2,
+                color: c.ink,
+                backgroundColor: c.hairline,
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

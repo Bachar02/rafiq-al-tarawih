@@ -44,6 +44,10 @@ class ReaderScreenState extends ConsumerState<ReaderScreen> with WidgetsBindingO
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    // Opening the app is not reading the page it opens on.
+    ref
+        .read(readingProgressProvider.notifier)
+        .jumpedTo(ref.read(quranProvider).pageOf(ref.read(readingPositionProvider)));
   }
 
   @override
@@ -55,11 +59,16 @@ class ReaderScreenState extends ConsumerState<ReaderScreen> with WidgetsBindingO
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state != AppLifecycleState.resumed) unawaited(ref.read(readingPositionProvider.notifier).flush());
+    if (state != AppLifecycleState.resumed) {
+      unawaited(ref.read(readingPositionProvider.notifier).flush());
+      unawaited(ref.read(readingProgressProvider.notifier).flush());
+    }
   }
 
   /// Open the text at [verseId] and mark it for a moment, so the eye finds it.
   void openAt(int verseId, {bool mark = true}) {
+    // A jump is not reading: nothing between here and there counts.
+    ref.read(readingProgressProvider.notifier).jumpedTo(ref.read(quranProvider).pageOf(verseId));
     if (_layout == ReadingLayout.pages) {
       _pages.jumpToVerse(verseId);
     } else {
@@ -139,6 +148,7 @@ class ReaderScreenState extends ConsumerState<ReaderScreen> with WidgetsBindingO
     // Each view opens where the other left off: the reading position is
     // read (not watched) when the view is created, then the view owns it.
     final opening = ref.read(readingPositionProvider);
+    final progress = ref.read(readingProgressProvider.notifier);
     final position = ref.read(readingPositionProvider.notifier);
 
     return Scaffold(
@@ -166,7 +176,10 @@ class ReaderScreenState extends ConsumerState<ReaderScreen> with WidgetsBindingO
                             textScale: textScale,
                             highlightedVerse: _highlighted,
                             onAyahTap: _onAyahTap,
-                            onPageChanged: (page) => position.update(quran.pages.start(page)),
+                            onPageChanged: (page) {
+                              position.update(quran.pages.start(page));
+                              progress.movedTo(page);
+                            },
                             onUserScroll: _onUserScroll,
                             bottomPadding: TaraweehEntry.height + RubricSpace.s4,
                           )
@@ -179,7 +192,10 @@ class ReaderScreenState extends ConsumerState<ReaderScreen> with WidgetsBindingO
                             textScale: textScale,
                             highlightedVerse: _highlighted,
                             onAyahTap: _onAyahTap,
-                            onTopVerseChanged: position.update,
+                            onTopVerseChanged: (verse) {
+                              position.update(verse);
+                              progress.movedTo(quran.pageOf(verse));
+                            },
                             onUserScroll: _onUserScroll,
                             bottomPadding: TaraweehEntry.height + RubricSpace.s4,
                           ),

@@ -130,6 +130,7 @@ class Quran {
 
   static const verseCount = 6236;
   static const surahCount = 114;
+  static const pageCount = 604;
 
   /// Parse the bundled JSON. Throws [FormatException] if it is not a complete Quran.
   factory Quran.fromJson(String raw) {

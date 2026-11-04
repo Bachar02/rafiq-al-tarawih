@@ -667,4 +667,43 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get shareFailed => 'تعذّرت المشاركة. أعد المحاولة.';
+
+  @override
+  String get dailyGoal => 'هدف القراءة اليومي';
+
+  @override
+  String get dailyGoalExplanation =>
+      'تُحسب الصفحة حين تتجاوزها في القراءة، بالتمرير أو بتقليب الصفحات. الانتقال المباشر لا يُحسب. عشرون صفحة في اليوم جزء كامل: ختمة في شهر.';
+
+  @override
+  String get dailyGoalOff => 'بدون';
+
+  @override
+  String pagesCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count صفحة',
+      many: '$count صفحة',
+      few: '$count صفحات',
+      two: 'صفحتان',
+      one: 'صفحة واحدة',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String todayProgress(int read, int goal) {
+    return 'اليوم $read/$goal';
+  }
+
+  @override
+  String semTodayProgress(int read, int goal) {
+    return 'قُرئت اليوم $read من $goal صفحة';
+  }
+
+  @override
+  String khatmProgress(int page, int total, int percent) {
+    return 'الصفحة $page من $total · $percent٪';
+  }
 }

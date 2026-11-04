@@ -187,5 +187,12 @@
   "shareAyah": "مشاركة الآية",
   "shareAsImage": "مشاركة كصورة",
   "shareAsText": "مشاركة كنص",
-  "shareFailed": "تعذّرت المشاركة. أعد المحاولة."
+  "shareFailed": "تعذّرت المشاركة. أعد المحاولة.",
+  "dailyGoal": "هدف القراءة اليومي",
+  "dailyGoalExplanation": "تُحسب الصفحة حين تتجاوزها في القراءة، بالتمرير أو بتقليب الصفحات. الانتقال المباشر لا يُحسب. عشرون صفحة في اليوم جزء كامل: ختمة في شهر.",
+  "dailyGoalOff": "بدون",
+  "pagesCount": "{count, plural, =1{صفحة واحدة} =2{صفحتان} few{{count} صفحات} many{{count} صفحة} other{{count} صفحة}}",
+  "todayProgress": "اليوم {read}/{goal}",
+  "semTodayProgress": "قُرئت اليوم {read} من {goal} صفحة",
+  "khatmProgress": "الصفحة {page} من {total} · {percent}٪"
 }

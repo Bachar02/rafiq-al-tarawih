@@ -1220,6 +1220,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Could not share. Try again.'**
   String get shareFailed;
+
+  /// No description provided for @dailyGoal.
+  ///
+  /// In en, this message translates to:
+  /// **'Daily reading goal'**
+  String get dailyGoal;
+
+  /// No description provided for @dailyGoalExplanation.
+  ///
+  /// In en, this message translates to:
+  /// **'A page counts when you read past it, scrolling or turning. Jumps don\'t count. 20 pages a day is a juz: the whole Quran in a month.'**
+  String get dailyGoalExplanation;
+
+  /// No description provided for @dailyGoalOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Off'**
+  String get dailyGoalOff;
+
+  /// No description provided for @pagesCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 page} other{{count} pages}}'**
+  String pagesCount(int count);
+
+  /// No description provided for @todayProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'Today {read}/{goal}'**
+  String todayProgress(int read, int goal);
+
+  /// No description provided for @semTodayProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'{read} of {goal} pages read today'**
+  String semTodayProgress(int read, int goal);
+
+  /// No description provided for @khatmProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'Page {page} of {total} · {percent}%'**
+  String khatmProgress(int page, int total, int percent);
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

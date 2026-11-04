@@ -667,4 +667,40 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get shareFailed => 'Could not share. Try again.';
+
+  @override
+  String get dailyGoal => 'Daily reading goal';
+
+  @override
+  String get dailyGoalExplanation =>
+      'A page counts when you read past it, scrolling or turning. Jumps don\'t count. 20 pages a day is a juz: the whole Quran in a month.';
+
+  @override
+  String get dailyGoalOff => 'Off';
+
+  @override
+  String pagesCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count pages',
+      one: '1 page',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String todayProgress(int read, int goal) {
+    return 'Today $read/$goal';
+  }
+
+  @override
+  String semTodayProgress(int read, int goal) {
+    return '$read of $goal pages read today';
+  }
+
+  @override
+  String khatmProgress(int page, int total, int percent) {
+    return 'Page $page of $total · $percent%';
+  }
 }

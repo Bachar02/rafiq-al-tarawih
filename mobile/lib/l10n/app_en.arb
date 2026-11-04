@@ -484,5 +484,52 @@
   "shareAyah": "Share the ayah",
   "shareAsImage": "Share as an image",
   "shareAsText": "Share as text",
-  "shareFailed": "Could not share. Try again."
+  "shareFailed": "Could not share. Try again.",
+  "dailyGoal": "Daily reading goal",
+  "dailyGoalExplanation": "A page counts when you read past it, scrolling or turning. Jumps don't count. 20 pages a day is a juz: the whole Quran in a month.",
+  "dailyGoalOff": "Off",
+  "pagesCount": "{count, plural, =1{1 page} other{{count} pages}}",
+  "@pagesCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "todayProgress": "Today {read}/{goal}",
+  "@todayProgress": {
+    "placeholders": {
+      "read": {
+        "type": "int"
+      },
+      "goal": {
+        "type": "int"
+      }
+    }
+  },
+  "semTodayProgress": "{read} of {goal} pages read today",
+  "@semTodayProgress": {
+    "placeholders": {
+      "read": {
+        "type": "int"
+      },
+      "goal": {
+        "type": "int"
+      }
+    }
+  },
+  "khatmProgress": "Page {page} of {total} · {percent}%",
+  "@khatmProgress": {
+    "placeholders": {
+      "page": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      },
+      "percent": {
+        "type": "int"
+      }
+    }
+  }
 }

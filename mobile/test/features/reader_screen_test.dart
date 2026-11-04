@@ -35,6 +35,10 @@ class FailingStore implements ReadingStore {
   List<Bookmark> bookmarks() => _inner.bookmarks();
   @override
   Future<bool> saveBookmarks(List<Bookmark> b) async => !failing && await _inner.saveBookmarks(b);
+  @override
+  ReadingLog readingLog() => _inner.readingLog();
+  @override
+  Future<bool> saveReadingLog(ReadingLog log) async => !failing && await _inner.saveReadingLog(log);
 }
 
 void main() {

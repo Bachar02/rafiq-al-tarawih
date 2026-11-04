@@ -187,5 +187,12 @@
   "shareAyah": "Partager le verset",
   "shareAsImage": "Partager en image",
   "shareAsText": "Partager en texte",
-  "shareFailed": "Le partage a échoué. Réessayez."
+  "shareFailed": "Le partage a échoué. Réessayez.",
+  "dailyGoal": "Objectif de lecture quotidien",
+  "dailyGoalExplanation": "Une page compte quand vous la dépassez en lisant, par défilement ou en tournant. Les sauts ne comptent pas. 20 pages par jour, c’est un juz : tout le Coran en un mois.",
+  "dailyGoalOff": "Désactivé",
+  "pagesCount": "{count, plural, =1{1 page} other{{count} pages}}",
+  "todayProgress": "Aujourd’hui {read}/{goal}",
+  "semTodayProgress": "{read} pages lues sur {goal} aujourd’hui",
+  "khatmProgress": "Page {page} sur {total} · {percent} %"
 }

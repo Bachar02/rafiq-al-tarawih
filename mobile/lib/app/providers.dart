@@ -23,6 +23,7 @@ import '../services/screen_awake.dart';
 import '../services/server_health.dart';
 import '../services/server_recognition_engine.dart';
 import '../services/sharer.dart';
+import '../features/reader/reading_progress.dart';
 
 /// Loaded once at startup (see main.dart) and injected with an override.
 final quranProvider = Provider<Quran>((ref) => throw UnimplementedError('quranProvider must be overridden'));
@@ -60,6 +61,12 @@ final readingPositionProvider = NotifierProvider<ReadingPositionController, int>
 /// Search over the bundled Quran (its text index is built on first use).
 final quranSearchProvider =
     Provider<QuranSearch>((ref) => QuranSearch(ref.watch(quranProvider), ref.watch(surahNamesProvider)));
+
+/// The time (tests replace it to cross midnight without waiting).
+final clockProvider = Provider<DateTime Function()>((ref) => DateTime.now);
+
+/// Pages read each day, for the daily goal.
+final readingProgressProvider = NotifierProvider<ReadingProgressController, ReadingLog>(ReadingProgressController.new);
 
 /// Bookmarked ayahs, newest first.
 final bookmarksProvider = NotifierProvider<BookmarksController, List<Bookmark>>(BookmarksController.new);

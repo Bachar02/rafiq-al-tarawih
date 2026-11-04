@@ -141,18 +141,32 @@ class _PageList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final here = quran.pageOf(current);
-    return _UniformList(
-      count: quran.pages.count,
-      openAt: here - 1,
-      row: (i) {
-        final start = quran.verse(quran.pages.start(i + 1));
-        return PlaceTile(
-          selected: i + 1 == here,
-          title: context.l10n.pageNumber(i + 1),
-          subtitle: context.l10n.fromPlaceJuz(verseReference(start, names), quran.juzOf(start.id)),
-          onTap: () => onOpen(start.id),
-        );
-      },
+    final percent = (here * 100 / quran.pages.count).floor();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(RubricSpace.s4, RubricSpace.s3, RubricSpace.s4, RubricSpace.s1),
+          child: Text(
+            context.l10n.khatmProgress(here, quran.pages.count, percent),
+            style: RubricText.caption.copyWith(color: context.colors.inkSecondary),
+          ),
+        ),
+        Expanded(
+            child: _UniformList(
+          count: quran.pages.count,
+          openAt: here - 1,
+          row: (i) {
+            final start = quran.verse(quran.pages.start(i + 1));
+            return PlaceTile(
+              selected: i + 1 == here,
+              title: context.l10n.pageNumber(i + 1),
+              subtitle: context.l10n.fromPlaceJuz(verseReference(start, names), quran.juzOf(start.id)),
+              onTap: () => onOpen(start.id),
+            );
+          },
+        )),
+      ],
     );
   }
 }
