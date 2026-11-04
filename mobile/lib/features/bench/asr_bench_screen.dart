@@ -15,7 +15,7 @@ import '../../services/ondevice/ondevice_transcriber.dart';
 /// Phase 6 go/no-go: can this phone run the Quran speech model fast enough?
 ///
 /// Downloads the model and validation clips from the dev server, transcribes
-/// them on the phone with 2 and 4 threads, and reports speed and accuracy next
+/// them on the phone with 1, 2 and 4 threads, and reports speed and accuracy next
 /// to the laptop server's numbers on the very same audio.
 class AsrBenchScreen extends ConsumerStatefulWidget {
   const AsrBenchScreen({super.key});
@@ -61,8 +61,9 @@ class _AsrBenchScreenState extends ConsumerState<AsrBenchScreen> {
       ];
       int? bestShortMs;
       // (threads, trailing silence): fewer threads avoid the slow cores of
-      // big.LITTLE phones; shorter padding is faster, slightly less accurate.
-      const configs = [(1, 500), (2, 500), (2, 2000)];
+      // big.LITTLE phones, more use the big cores flagships have; shorter
+      // padding is faster, slightly less accurate.
+      const configs = [(1, 500), (2, 500), (4, 500), (2, 2000)];
       for (final (threads, padMs) in configs) {
         _set('Transcribing on the phone: $threads thread(s), ${padMs / 1000} s padding…', progress: null);
         final run = await runBenchmark(
@@ -181,7 +182,7 @@ String verdict(int typicalChunkMs) {
     return 'GOOD: on-device recognition is fast enough for live following on this phone.';
   }
   if (typicalChunkMs <= 3000) {
-    return 'BORDERLINE: usable with fewer live previews; the vocabulary-trim optimization should make it comfortable.';
+    return 'BORDERLINE: usable with fewer live previews; needs the next speed-ups (NNAPI/XNNPACK, a smaller model).';
   }
   return 'TOO SLOW for live following: needs a smaller model (or the cloud fallback) on phones like this.';
 }
