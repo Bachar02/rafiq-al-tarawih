@@ -210,6 +210,19 @@ So the Play Store build is on-device. The server stays useful for development, t
 - **Decision rule:** a typical chunk under 1.5 s on mid-range phones means go on-device. Between 1.5 and 3 s, trim the vocabulary first. Over 3 s, use a smaller model or a cloud fallback.
 - **Phone round 1 (Galaxy A32, budget):** 3.6 s per chunk on 2 threads, too slow. Accuracy 96.6% (fine). Whisper-tiny rejected (80% accuracy). The bottleneck is the decoder's full-vocabulary projection.
 - **Fix:** trimmed the vocabulary to 660 tokens. Output is identical, the model is 55 MB instead of 160 MB, and it's ~25% faster on the laptop. Phone round 2 is pending.
+- **Phone round 2, budget tier (2026-11-04, Galaxy A32 4G SM-A325F, Android 13, 8 cores: 2 fast + 6 efficiency):** `quran-basetrim` int8, sherpa-onnx 1.13.4, the same 22 clips; typical chunks are ≤ 6.5 s, median 3.1 s of speech.
+
+  | Threads, padding | Typical chunk | Word accuracy |
+  |---|---|---|
+  | 1, 0.5 s | 4.38 s | 95.2% |
+  | **2, 0.5 s** | **3.11 s** | 95.2% |
+  | 4, 0.5 s | 3.64 s | 95.2% |
+  | 2, 2.0 s | 3.61 s | 96.6% |
+
+  - **§16 rule for this tier: over 3 s → smaller model or cloud fallback.** At best the A32 transcribes a chunk in as long as it took to recite (real-time factor ≈ 1.0), so it can never catch up and every ayah would show more than 3 s late. Accuracy is fine.
+  - **Two threads is the best setting.** Four threads is slower because the work spills onto the efficiency cores.
+  - **The vocabulary trim did not speed up this phone:** round 1 measured 3.6 s and 96.6%, the same as the 2 thread, 2 s padding row here. (Round 1's configuration was not written down; that row is the only one that matches.) The 1.5 s of extra padding costs 0.5 s, so length-proportional work (mostly the encoder) is about 0.33 s per second of audio, and about 1.9 s per chunk is fixed (mostly decoding). The real split must be measured before choosing the next optimization.
+  - **Overall go/no-go is pending the mid-range and flagship phones**, as the rule is decided on mid-range.
 
 ## 17. Roadmap to a shippable product (planned 2026-11-03)
 
