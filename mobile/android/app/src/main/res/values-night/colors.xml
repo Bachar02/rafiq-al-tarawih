@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Rubric tokens, night. -->
+    <color name="rafiq_ground">#100E0C</color>
+    <color name="rafiq_ink">#E8E1D2</color>
+    <color name="rafiq_rubric">#D9603F</color>
+</resources>

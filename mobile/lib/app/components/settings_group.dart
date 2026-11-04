@@ -78,42 +78,46 @@ class RubricRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = context.colors;
     final labelStyle = RubricText.label.copyWith(color: enabled ? c.ink : c.inkSecondary);
-    return Semantics(
-      selected: selected,
-      child: InkWell(
-        onTap: enabled ? onTap : null,
-        highlightColor: c.surfaceRaised,
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(minHeight: 52),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: RubricSpace.s4, vertical: RubricSpace.s2),
-            child: Row(
-              children: [
-                Expanded(
-                  flex: 3,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(label, style: selected ? labelStyle.weighted(500) : labelStyle),
-                      if (detail != null) Text(detail!, style: RubricText.caption.copyWith(color: c.inkSecondary)),
-                    ],
-                  ),
-                ),
-                if (value != null) ...[
-                  const SizedBox(width: RubricSpace.s3),
-                  // Tight, so the value sits at the row's trailing edge.
+    // One item for screen readers: "Keep screen on while following,
+    // Recommended during prayer, switch, on", not a nameless switch.
+    return MergeSemantics(
+      child: Semantics(
+        selected: selected,
+        child: InkWell(
+          onTap: enabled ? onTap : null,
+          highlightColor: c.surfaceRaised,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: 52),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: RubricSpace.s4, vertical: RubricSpace.s2),
+              child: Row(
+                children: [
                   Expanded(
-                    flex: 2,
-                    child: Text(
-                      value!,
-                      textAlign: TextAlign.end,
-                      style: RubricText.label.copyWith(color: c.inkSecondary),
+                    flex: 3,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(label, style: selected ? labelStyle.weighted(500) : labelStyle),
+                        if (detail != null) Text(detail!, style: RubricText.caption.copyWith(color: c.inkSecondary)),
+                      ],
                     ),
                   ),
+                  if (value != null) ...[
+                    const SizedBox(width: RubricSpace.s3),
+                    // Tight, so the value sits at the row's trailing edge.
+                    Expanded(
+                      flex: 2,
+                      child: Text(
+                        value!,
+                        textAlign: TextAlign.end,
+                        style: RubricText.label.copyWith(color: c.inkSecondary),
+                      ),
+                    ),
+                  ],
+                  if (trailing != null) ...[const SizedBox(width: RubricSpace.s3), trailing!],
                 ],
-                if (trailing != null) ...[const SizedBox(width: RubricSpace.s3), trailing!],
-              ],
+              ),
             ),
           ),
         ),

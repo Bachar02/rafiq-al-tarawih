@@ -20,8 +20,8 @@ class SurahTile extends StatelessWidget {
     return ListTile(
       selected: selected,
       contentPadding: const EdgeInsets.symmetric(horizontal: RubricSpace.s2),
-      leading: SizedBox(
-        width: 32,
+      leading: ConstrainedBox(
+        constraints: const BoxConstraints(minWidth: 32),
         child: Text(
           '${surah.index}',
           textAlign: TextAlign.end,
@@ -39,12 +39,23 @@ class SurahTile extends StatelessWidget {
       ),
       subtitle: Text(context.l10n.ayahCount(surah.ayahCount)),
       // In Arabic the title already is the Arabic name.
+      // It echoes the title: with large system text it grows a little, then
+      // shrinks to fit, so the title always keeps its room.
       trailing: names.isArabic
           ? null
-          : Text(
-              surah.nameAr,
-              textDirection: TextDirection.rtl,
-              style: RubricText.surahAr.copyWith(fontSize: 22, height: 1.4, color: selected ? c.ink : c.inkUpcoming),
+          : ConstrainedBox(
+              constraints: BoxConstraints(maxWidth: MediaQuery.sizeOf(context).width * 0.3),
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: AlignmentDirectional.centerEnd,
+                child: Text(
+                  surah.nameAr,
+                  textDirection: TextDirection.rtl,
+                  textScaler: MediaQuery.textScalerOf(context).clamp(maxScaleFactor: 1.3),
+                  style:
+                      RubricText.surahAr.copyWith(fontSize: 22, height: 1.4, color: selected ? c.ink : c.inkUpcoming),
+                ),
+              ),
             ),
       onTap: onTap,
     );
