@@ -9,6 +9,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:rafiq/app/app.dart';
 import 'package:rafiq/core/recognition/models.dart';
+import 'package:rafiq/features/reader/widgets/taraweeh_entry.dart';
 
 import '../support/fakes.dart';
 import '../support/golden.dart';
@@ -45,7 +46,7 @@ void main() {
     await tester.pumpWidget(ProviderScope(overrides: h.overrides, child: const RafiqApp()));
     await tester.pump();
     if (taraweeh) {
-      await tester.tap(find.bySemanticsLabel('Taraweeh: follow the imam'));
+      await tester.tap(find.byType(TaraweehEntry)); // in any language
       await settle(tester);
     }
   }
@@ -99,6 +100,26 @@ void main() {
       await launch(tester, prefs: {...readingAt(2, 140), 'theme_mode': 'light'}, taraweeh: false);
       await settle(tester);
       await expectGolden(tester, 'reader_light');
+    });
+
+    testWidgets('Arabic interface: the reader, right to left', (tester) async {
+      await launch(tester, prefs: {...readingAt(2, 140), 'language': 'ar', 'theme_mode': 'dark'}, taraweeh: false);
+      await settle(tester);
+      await expectGolden(tester, 'ar_reader');
+    });
+
+    testWidgets('Arabic interface: following 93:3', (tester) async {
+      await launch(tester, prefs: {'language': 'ar'});
+      await startListening(tester);
+      await hear(tester, at(93, 3));
+      await expectGolden(tester, 'ar_following');
+    });
+
+    testWidgets('French interface: settings', (tester) async {
+      await launch(tester, prefs: {'language': 'fr', 'theme_mode': 'light'}, taraweeh: false);
+      await tester.tap(find.byTooltip('Réglages'));
+      await settle(tester);
+      await expectGolden(tester, 'fr_settings');
     });
 
     testWidgets('search: Arabic words, without tashkeel', (tester) async {

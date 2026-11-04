@@ -8,6 +8,7 @@ import '../../app/theme.dart';
 import '../../data/quran.dart';
 import '../../data/reading_store.dart';
 import '../../data/surah_names.dart';
+import '../../l10n/l10n.dart';
 
 /// Where to read: surahs, juz, pages and bookmarks, each list opened at the
 /// current place. Pops with the chosen verse id.
@@ -23,17 +24,18 @@ class NavigateScreen extends ConsumerWidget {
     final quran = ref.watch(quranProvider);
     final names = ref.watch(surahNamesProvider);
     void open(int verseId) => Navigator.of(context).pop(verseId);
+    final l = context.l10n;
 
     return DefaultTabController(
       length: 4,
       initialIndex: initialTab,
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Go to'),
-          bottom: const TabBar(
+          title: Text(l.goTo),
+          bottom: TabBar(
             isScrollable: true,
             tabAlignment: TabAlignment.start,
-            tabs: [Tab(text: 'Surahs'), Tab(text: 'Juz'), Tab(text: 'Pages'), Tab(text: 'Bookmarks')],
+            tabs: [Tab(text: l.tabSurahs), Tab(text: l.tabJuz), Tab(text: l.tabPages), Tab(text: l.tabBookmarks)],
           ),
         ),
         body: TabBarView(
@@ -80,7 +82,8 @@ class _SurahListState extends State<_SurahList> {
         Padding(
           padding: const EdgeInsets.fromLTRB(RubricSpace.s4, RubricSpace.s3, RubricSpace.s4, RubricSpace.s2),
           child: TextField(
-            decoration: const InputDecoration(prefixIcon: Icon(Icons.search), hintText: 'Search by name or number'),
+            decoration:
+                InputDecoration(prefixIcon: const Icon(Icons.search), hintText: context.l10n.searchByNameOrNumber),
             onChanged: (v) => setState(() => _query = v),
           ),
         ),
@@ -117,8 +120,8 @@ class _JuzList extends StatelessWidget {
         final start = quran.verse(quran.juzs.start(i + 1));
         return PlaceTile(
           selected: i + 1 == here,
-          title: 'Juz ${i + 1}',
-          subtitle: 'From ${verseReference(start, names)} · Page ${quran.pageOf(start.id)}',
+          title: context.l10n.juzNumber(i + 1),
+          subtitle: context.l10n.fromPlacePage(verseReference(start, names), quran.pageOf(start.id)),
           onTap: () => onOpen(start.id),
         );
       },
@@ -145,8 +148,8 @@ class _PageList extends StatelessWidget {
         final start = quran.verse(quran.pages.start(i + 1));
         return PlaceTile(
           selected: i + 1 == here,
-          title: 'Page ${i + 1}',
-          subtitle: 'From ${verseReference(start, names)} · Juz ${quran.juzOf(start.id)}',
+          title: context.l10n.pageNumber(i + 1),
+          subtitle: context.l10n.fromPlaceJuz(verseReference(start, names), quran.juzOf(start.id)),
           onTap: () => onOpen(start.id),
         );
       },
@@ -225,6 +228,7 @@ class _Bookmarks extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final c = context.colors;
+    final l = context.l10n;
     final bookmarks = ref.watch(bookmarksProvider);
     final taraweeh = ref.watch(taraweehPositionProvider);
 
@@ -237,10 +241,10 @@ class _Bookmarks extends ConsumerWidget {
         ..showSnackBar(
           ok
               ? SnackBar(
-                  content: const Text('Bookmark removed'),
-                  action: SnackBarAction(label: 'Undo', onPressed: () => controller.restore(bookmark)),
+                  content: Text(l.bookmarkRemoved),
+                  action: SnackBarAction(label: l.undo, onPressed: () => controller.restore(bookmark)),
                 )
-              : const SnackBar(content: Text('Could not remove the bookmark. Try again.')),
+              : SnackBar(content: Text(l.bookmarkRemoveFailed)),
         );
     }
 
@@ -249,15 +253,15 @@ class _Bookmarks extends ConsumerWidget {
         if (taraweeh != null)
           PlaceTile(
             leading: Icon(Icons.mic_none, color: c.inkSecondary),
-            title: 'Where Taraweeh ended',
-            subtitle: '${verseReference(quran.verse(taraweeh.verseId), names)} · ${_when(taraweeh.savedAt)}',
+            title: l.whereTaraweehEnded,
+            subtitle: '${verseReference(quran.verse(taraweeh.verseId), names)} · ${_when(l, taraweeh.savedAt)}',
             onTap: () => onOpen(taraweeh.verseId),
           ),
         if (bookmarks.isEmpty)
           Padding(
             padding: const EdgeInsets.all(RubricSpace.s6),
             child: Text(
-              'No bookmarks yet. Tap an ayah while reading to bookmark it.',
+              l.noBookmarks,
               textAlign: TextAlign.center,
               style: RubricText.label.copyWith(color: c.inkSecondary),
             ),
@@ -266,11 +270,11 @@ class _Bookmarks extends ConsumerWidget {
           for (final b in bookmarks)
             PlaceTile(
               title: verseReference(quran.verse(b.verseId), names),
-              subtitle: verseLocation(quran, b.verseId),
+              subtitle: verseLocation(l, quran, b.verseId),
               verse: quran.verse(b.verseId),
               onTap: () => onOpen(b.verseId),
               trailing: IconButton(
-                tooltip: 'Remove bookmark',
+                tooltip: l.removeBookmark,
                 icon: const Icon(Icons.bookmark_remove_outlined),
                 onPressed: () => remove(b),
               ),
@@ -279,13 +283,13 @@ class _Bookmarks extends ConsumerWidget {
     );
   }
 
-  static String _when(DateTime at) {
+  static String _when(AppLocalizations l, DateTime at) {
     final now = DateTime.now();
     final days = DateTime(now.year, now.month, now.day).difference(DateTime(at.year, at.month, at.day)).inDays;
     return switch (days) {
-      <= 0 => 'today',
-      1 => 'yesterday',
-      _ => '$days days ago',
+      <= 0 => l.today,
+      1 => l.yesterday,
+      _ => l.daysAgo(days),
     };
   }
 }

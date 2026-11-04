@@ -7,6 +7,7 @@ import '../../../app/theme.dart';
 import '../../../core/recognition/models.dart';
 import '../../../data/quran.dart';
 import '../../../data/surah_names.dart';
+import '../../../l10n/l10n.dart';
 
 enum AyahAction { imamIsHere, lockSurah, unlock }
 
@@ -27,6 +28,7 @@ Future<AyahAction?> showAyahActions(
     context,
     builder: (context) {
       final c = context.colors;
+      final l = context.l10n;
       return SingleChildScrollView(
         // Scrolls rather than overflowing with large system fonts.
         padding: const EdgeInsets.fromLTRB(RubricSpace.s6, 0, RubricSpace.s6, RubricSpace.s6),
@@ -35,10 +37,8 @@ Future<AyahAction?> showAyahActions(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             SheetHeader(
-              title: '$name · ayah ${verse.ayah}',
-              explanation: listening
-                  ? 'Rafiq jumps to this ayah and keeps following from it.'
-                  : 'Start following first, then tap the ayah the imam is on.',
+              title: l.ayahSheetTitle(name, verse.ayah),
+              explanation: listening ? l.imamJumpExplanation : l.startFirstExplanation,
             ),
             const SizedBox(height: RubricSpace.s2),
             ConstrainedBox(
@@ -59,18 +59,18 @@ Future<AyahAction?> showAyahActions(
                 disabledBackgroundColor: Colors.transparent,
                 side: listening ? null : BorderSide(color: c.hairline),
               ),
-              child: const Text('The imam is here'),
+              child: Text(l.imamIsHere),
             ),
             const SizedBox(height: RubricSpace.s2),
             if (lockedHere)
               TextButton(
                 onPressed: () => Navigator.pop(context, AyahAction.unlock),
-                child: const Text('Unlock: search the whole Quran again'),
+                child: Text(l.unlockAll),
               )
             else
               TextButton(
                 onPressed: () => Navigator.pop(context, AyahAction.lockSurah),
-                child: Text('Stay on $name'),
+                child: Text(l.stayOnSurah(name)),
               ),
           ],
         ),
@@ -90,13 +90,12 @@ Future<bool?> showLockSheet(BuildContext context, {required String surahName}) =
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            SheetHeader(
-              title: 'Stay on $surahName',
-              explanation: 'Rafiq will not look in other surahs until you unlock. '
-                  'Al-Fatiha is still recognised at each rakʿah.',
-            ),
+            SheetHeader(title: context.l10n.stayOnSurah(surahName), explanation: context.l10n.lockExplanation),
             const SizedBox(height: RubricSpace.s6),
-            FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Stay on this surah')),
+            FilledButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: Text(context.l10n.stayOnThisSurah),
+            ),
           ],
         ),
       ),

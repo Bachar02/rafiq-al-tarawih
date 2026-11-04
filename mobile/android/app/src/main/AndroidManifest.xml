@@ -8,6 +8,7 @@
          A hosted server must use wss:// and this should then be turned off. -->
     <application
         android:label="Rafiq"
+        android:supportsRtl="true"
         android:usesCleartextTraffic="true"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">

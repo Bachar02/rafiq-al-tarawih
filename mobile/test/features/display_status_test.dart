@@ -1,11 +1,15 @@
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:rafiq/core/recognition/models.dart';
 import 'package:rafiq/features/listen/display_status.dart';
 import 'package:rafiq/features/listen/listen_state.dart';
 
 import '../support/fakes.dart';
+import 'package:rafiq/l10n/l10n.dart';
 
 void main() {
+  final en = lookupAppLocalizations(const Locale('en'));
+
   final t0 = DateTime(2026, 3, 1, 21);
   DateTime after(int seconds) => t0.add(Duration(seconds: seconds));
 
@@ -52,14 +56,14 @@ void main() {
       expect(s, DisplayStatus.noNewMatch);
       expect(s.marker(held: true), MarkerFill.hollow);
       expect(s.engineUnsure, isFalse); // the numeral stays in ink
-      expect(s.caption(3), contains('Still showing ayah 3'));
+      expect(s.caption(en, 3), contains('Still showing ayah 3'));
     });
 
     test('quiet for 10 s: Little sound', () {
       final s = DisplayStatus.of(listening(confirmed: 0, sound: 0), after(11));
       expect(s, DisplayStatus.littleSound);
       expect(s.marker(held: true), MarkerFill.hollow);
-      expect(s.caption(3), contains('the last confirmed ayah'));
+      expect(s.caption(en, 3), contains('the last confirmed ayah'));
     });
 
     test('just under the window: still Following', () {
@@ -82,7 +86,7 @@ void main() {
       expect(DisplayStatus.of(failed, t0), DisplayStatus.failed);
       expect(DisplayStatus.of(paused, t0), DisplayStatus.paused);
       expect(DisplayStatus.failed.marker(held: true), MarkerFill.none); // the Notice speaks
-      expect(DisplayStatus.paused.label, isEmpty);
+      expect(DisplayStatus.paused.label(en), isEmpty);
     });
 
     test('Al-Fatiha inside another surah: its own state, filled marker', () {
@@ -106,7 +110,7 @@ void main() {
 
   test('no state ever claims anything about audio quality', () {
     for (final s in DisplayStatus.values) {
-      final words = '${s.label} ${s.caption(3) ?? ''}'.toLowerCase();
+      final words = '${s.label(en)} ${s.caption(en, 3) ?? ''}'.toLowerCase();
       expect(words, isNot(contains("can't hear")));
       expect(words, isNot(contains('poor audio')));
       expect(words, isNot(contains('waiting for the imam')));

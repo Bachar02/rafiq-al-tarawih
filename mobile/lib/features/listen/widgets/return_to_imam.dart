@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../app/components/position_marker.dart';
 import '../../../app/theme.dart';
 import '../../../core/recognition/models.dart';
+import '../../../l10n/l10n.dart';
 
 /// A floating pill that brings the reader back to the imam's live position
 /// after the user scrolls or browses away. It carries the position marker
@@ -24,7 +25,7 @@ class ReturnToImam extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = context.colors;
     if (position == null) return const SizedBox.shrink();
-    final label = sure ? 'Back to the imam · ${position!.ref}' : 'Back to the imam';
+    final label = sure ? context.l10n.backToImamAt(position!.ref) : context.l10n.backToImam;
     // Stays built while hidden so it can fade out; invisible to taps and
     // screen readers meanwhile.
     return IgnorePointer(

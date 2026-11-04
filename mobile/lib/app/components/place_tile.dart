@@ -4,12 +4,14 @@ import '../../core/text/quran_display.dart';
 import '../../data/quran.dart';
 import '../../data/surah_names.dart';
 import '../theme.dart';
+import '../../l10n/l10n.dart';
 
 /// "Al-Baqarah 2:255": a verse's reference as the app writes it.
 String verseReference(Verse verse, SurahNames names) => '${names.of(verse.surah)} ${verse.surah}:${verse.ayah}';
 
 /// "Juz 3 · Page 42": where a verse falls.
-String verseLocation(Quran quran, int verseId) => 'Juz ${quran.juzOf(verseId)} · Page ${quran.pageOf(verseId)}';
+String verseLocation(AppLocalizations l, Quran quran, int verseId) =>
+    l.juzPage(quran.juzOf(verseId), quran.pageOf(verseId));
 
 /// A place in the Quran in a list: a title, a quiet line, and optionally the
 /// opening of the ayah in the Quran's own script.

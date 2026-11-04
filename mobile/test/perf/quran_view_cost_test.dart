@@ -13,6 +13,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:rafiq/app/theme.dart';
 import 'package:rafiq/features/quran_view/quran_view.dart';
+import 'package:rafiq/l10n/l10n.dart';
 
 import '../support/fakes.dart';
 import '../support/golden.dart';
@@ -41,7 +42,11 @@ void main() {
         'worst ${v.last.toStringAsFixed(1)} ms (n=${v.length})';
   }
 
-  Widget app(Widget child) => MaterialApp(theme: AppTheme.dark(), home: Scaffold(body: child));
+  Widget app(Widget child) => MaterialApp(
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      theme: AppTheme.dark(),
+      home: Scaffold(body: child));
 
   for (final scale in [1.0, 1.6]) {
     testWidgets('cost at text size $scale', (tester) async {

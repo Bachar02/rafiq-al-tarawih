@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../theme.dart';
+import '../../l10n/l10n.dart';
 
 /// A calm block that explains a stopped or blocked session and offers the one
 /// action that fixes it. The only component that uses `signal` (lapis):
@@ -38,7 +39,7 @@ class Notice extends StatelessWidget {
       container: true,
       liveRegion: true,
       // Flutter has one live-region politeness; errors also get a hint.
-      hint: alert ? 'Needs your action' : null,
+      hint: alert ? context.l10n.needsYourAction : null,
       child: Container(
         decoration: BoxDecoration(
           color: c.surface,
@@ -80,7 +81,7 @@ class Notice extends StatelessWidget {
             if (onDismiss != null)
               IconButton(
                 onPressed: onDismiss,
-                tooltip: 'Dismiss',
+                tooltip: context.l10n.dismiss,
                 icon: const Icon(Icons.close, size: 20),
               ),
           ],

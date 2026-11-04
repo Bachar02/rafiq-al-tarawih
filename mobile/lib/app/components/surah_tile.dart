@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../data/quran.dart';
 import '../../data/surah_names.dart';
 import '../theme.dart';
+import '../../l10n/l10n.dart';
 
 /// A surah in a list: number, display name, ayah count, Arabic name.
 class SurahTile extends StatelessWidget {
@@ -36,12 +37,15 @@ class SurahTile extends StatelessWidget {
         overflow: TextOverflow.ellipsis,
         style: selected ? RubricText.label.weighted(500) : null,
       ),
-      subtitle: Text('${surah.ayahCount} ayahs'),
-      trailing: Text(
-        surah.nameAr,
-        textDirection: TextDirection.rtl,
-        style: RubricText.surahAr.copyWith(fontSize: 22, height: 1.4, color: selected ? c.ink : c.inkUpcoming),
-      ),
+      subtitle: Text(context.l10n.ayahCount(surah.ayahCount)),
+      // In Arabic the title already is the Arabic name.
+      trailing: names.isArabic
+          ? null
+          : Text(
+              surah.nameAr,
+              textDirection: TextDirection.rtl,
+              style: RubricText.surahAr.copyWith(fontSize: 22, height: 1.4, color: selected ? c.ink : c.inkUpcoming),
+            ),
       onTap: onTap,
     );
   }

@@ -4,6 +4,7 @@ import '../../../app/theme.dart';
 import '../../../core/recognition/models.dart';
 import '../../../data/quran.dart';
 import '../../../data/surah_names.dart';
+import '../../../l10n/l10n.dart';
 
 /// The large ayah numeral opposite the surah name: what a worshipper reads in
 /// one glance from a phone on a stand or a lap.
@@ -37,6 +38,7 @@ class PositionHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
+    final l = context.l10n;
     final p = position;
     final surah = p == null ? null : quran.surah(p.surah);
     // The numeral is capped so the header never wraps; the meta line wraps.
@@ -48,8 +50,8 @@ class PositionHeader extends StatelessWidget {
       children: [
         ExcludeSemantics(
           child: Text(
-            unsure ? 'LAST SURE' : 'AYAH',
-            style: RubricText.overline.copyWith(color: c.inkSecondary),
+            unsure ? l.overlineLastSure : l.overlineAyah,
+            style: RubricText.overlineFor(context).copyWith(color: c.inkSecondary),
           ),
         ),
         // Newsreader's figures rise above the 60px line box.
@@ -88,7 +90,8 @@ class PositionHeader extends StatelessWidget {
               ),
               Text(
                 // Breaks only between the parts, never inside "Juz 30".
-                '${names.of(surah.index)}$_nbsp· ${surah.index}$_nbsp· Juz$_nbsp${quran.juzOf(p!.verseId)}',
+                '${names.isArabic ? '' : '${names.of(surah.index)}$_nbsp· '}${surah.index}$_nbsp· '
+                '${l.juzNumber(quran.juzOf(p!.verseId)).replaceAll(' ', _nbsp)}',
                 textAlign: TextAlign.end,
                 style: RubricText.label.copyWith(color: c.inkSecondary),
               ),
@@ -99,8 +102,12 @@ class PositionHeader extends StatelessWidget {
     return Semantics(
       container: true,
       button: tappable,
-      label: p == null ? 'No position yet' : 'Surah ${names.of(p.surah)}, ayah ${p.ayah}${unsure ? ', not sure' : ''}',
-      onTapHint: tappable ? 'open the surah list' : null,
+      label: p == null
+          ? l.semNoPosition
+          : unsure
+              ? l.semSurahAyahNotSure(names.of(p.surah), p.ayah)
+              : l.semSurahAyah(names.of(p.surah), p.ayah),
+      onTapHint: tappable ? l.hintOpenSurahList : null,
       onTap: tappable ? onOpenSurahs : null,
       child: ExcludeSemantics(
         child: Row(
@@ -112,7 +119,7 @@ class PositionHeader extends StatelessWidget {
               child: !tappable
                   ? Align(alignment: AlignmentDirectional.bottomEnd, child: title)
                   : Tooltip(
-                      message: 'Surahs',
+                      message: l.tooltipSurahs,
                       child: InkWell(
                         onTap: onOpenSurahs,
                         borderRadius: BorderRadius.circular(RubricRadius.sm),

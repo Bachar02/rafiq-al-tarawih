@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../theme.dart';
+import '../../l10n/l10n.dart';
 
 /// The Arabic wordmark رفيق, in-product: monochrome in `ink-secondary`, dot
 /// included, so that the only cinnabar on a following screen is the position.
@@ -18,7 +19,7 @@ class Wordmark extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Semantics(
-        label: 'Rafiq',
+        label: context.l10n.appName,
         image: true,
         child: Image.asset(
           asset,

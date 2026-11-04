@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../app/theme.dart';
+import '../../../l10n/l10n.dart';
 
 /// The way into Taraweeh mode, floating over the reader. It steps aside
 /// while the user scrolls down through the text and returns when they
@@ -27,7 +28,7 @@ class TaraweehEntry extends StatelessWidget {
           duration: RubricMotion.quick,
           child: Semantics(
             button: true,
-            label: 'Taraweeh: follow the imam',
+            label: context.l10n.semTaraweehEntry,
             excludeSemantics: true,
             onTap: onPressed,
             child: FilledButton.icon(
@@ -37,7 +38,7 @@ class TaraweehEntry extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: RubricSpace.s6),
               ),
               icon: const Icon(Icons.mic_none, size: 20),
-              label: const Text('Taraweeh'),
+              label: Text(context.l10n.taraweeh),
             ),
           ),
         ),

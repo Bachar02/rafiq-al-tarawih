@@ -22,6 +22,7 @@ import 'widgets/position_header.dart';
 import 'widgets/return_to_imam.dart';
 import 'widgets/status_line.dart';
 import 'widgets/taraweeh_intro.dart';
+import '../../l10n/l10n.dart';
 
 /// Taraweeh mode: follow the imam, live, in the same Quran text as the reader.
 ///
@@ -266,7 +267,7 @@ class _ListenScreenState extends ConsumerState<ListenScreen> with WidgetsBinding
                             ayah: displayed?.ayah,
                             reconnectAttempt: state.reconnectAttempt,
                             note: state.track.alternatives.isNotEmpty && state.isActive
-                                ? 'Repeated text — could also be ${state.track.alternatives.map((p) => p.ref).join(' · ')}'
+                                ? context.l10n.repeatedText(state.track.alternatives.map((p) => p.ref).join(' · '))
                                 : null,
                           ),
                         ),
@@ -380,7 +381,7 @@ class _ListenScreenState extends ConsumerState<ListenScreen> with WidgetsBinding
     final last = ref.read(taraweehPositionProvider);
     if (last == null) return null;
     final verse = ref.read(quranProvider).verse(last.verseId);
-    return 'Last night ended at ${ref.read(surahNamesProvider).of(verse.surah)} ${verse.surah}:${verse.ayah}.';
+    return context.l10n.lastNightEnded('${ref.read(surahNamesProvider).of(verse.surah)} ${verse.surah}:${verse.ayah}');
   }
 }
 
@@ -409,11 +410,12 @@ class _TopBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
+    final l = context.l10n;
     final lock = state.lock;
     final showLock = lock != null || (status.active && state.displayed != null);
     final lockLabel = switch (lock) {
       SurahHint(:final surah) => names.of(surah),
-      JuzHint(:final juz) => 'Juz $juz',
+      JuzHint(:final juz) => l.juzNumber(juz),
       null => null,
     };
     return Padding(
@@ -421,14 +423,14 @@ class _TopBar extends StatelessWidget {
       child: Row(
         children: [
           if (Navigator.of(context).canPop())
-            IconButton(tooltip: 'Back to reading', onPressed: onBack, icon: const BackButtonIcon())
+            IconButton(tooltip: l.tooltipBackToReading, onPressed: onBack, icon: const BackButtonIcon())
           else
             const SizedBox(width: RubricSpace.gutter - RubricSpace.s1),
           const Wordmark(),
           const Spacer(),
           if (showLock)
             IconButton(
-              tooltip: lockLabel == null ? 'Stay on this surah' : 'Locked to $lockLabel. Tap to unlock.',
+              tooltip: lockLabel == null ? l.tooltipStayOnSurah : l.tooltipLocked(lockLabel),
               onPressed: onLock,
               isSelected: lock != null,
               icon: const Icon(Icons.lock_open_outlined),
@@ -436,13 +438,13 @@ class _TopBar extends StatelessWidget {
             )
           else
             IconButton(
-              tooltip: "Tonight's starting point",
+              tooltip: l.tooltipTonight,
               onPressed: onHint,
               isSelected: state.hint != null,
               icon: const Icon(Icons.format_list_bulleted),
               selectedIcon: Icon(Icons.format_list_bulleted, color: c.ink),
             ),
-          IconButton(tooltip: 'Settings', onPressed: onSettings, icon: const Icon(Icons.settings_outlined)),
+          IconButton(tooltip: l.settings, onPressed: onSettings, icon: const Icon(Icons.settings_outlined)),
         ],
       ),
     );
@@ -491,7 +493,7 @@ class _Bottom extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _HintChip(label: hintLabel(hint, names), onTap: onHint, onClear: onClearHint),
+                  _HintChip(label: hintLabel(context.l10n, hint, names), onTap: onHint, onClear: onClearHint),
                   if (hintNote != null)
                     Padding(
                       padding: const EdgeInsets.only(top: RubricSpace.s1),
@@ -534,7 +536,7 @@ class _Notices extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final notice = _notice();
+    final notice = _notice(context.l10n);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -545,13 +547,13 @@ class _Notices extends StatelessWidget {
     );
   }
 
-  Widget? _notice() {
+  Widget? _notice(AppLocalizations l) {
     if (status == DisplayStatus.paused) {
       return Notice(
         icon: Icons.info_outline,
-        title: 'Following paused',
-        body: 'The app went to the background. The last position stays on screen.',
-        actionLabel: 'Resume',
+        title: l.noticePausedTitle,
+        body: l.noticePausedBody,
+        actionLabel: l.actionResume,
         onAction: onRetry,
       );
     }
@@ -561,19 +563,18 @@ class _Notices extends StatelessWidget {
     return switch (error) {
       ListenError.micPermission => Notice(
           icon: Icons.mic_off_outlined,
-          title: 'Rafiq needs the microphone',
-          body: "It listens to the imam's recitation to find the ayah. If you denied it before, allow it in your "
-              'phone settings: Apps → Rafiq → Permissions → Microphone.',
-          actionLabel: 'Try again',
+          title: l.noticeMicPermissionTitle,
+          body: l.noticeMicPermissionBody,
+          actionLabel: l.actionTryAgain,
           onAction: onRetry,
           onDismiss: onDismiss,
           alert: true,
         ),
       ListenError.microphone => Notice(
           icon: Icons.mic_off_outlined,
-          title: 'The microphone stopped working',
-          body: message,
-          actionLabel: 'Try again',
+          title: l.noticeMicStoppedTitle,
+          body: l.noticeMicStoppedBody,
+          actionLabel: l.actionTryAgain,
           onAction: onRetry,
           onDismiss: onDismiss,
           alert: true,
@@ -581,19 +582,19 @@ class _Notices extends StatelessWidget {
       // Server build only: removed with on-device recognition.
       ListenError.unreachable => Notice(
           icon: Icons.wifi_off_outlined,
-          title: "Can't reach the recognition server",
-          body: "This build recognises on a computer on the same Wi-Fi. Check that it's running and that the "
-              'address in Settings is right.',
-          actionLabel: 'Test connection',
+          title: l.noticeUnreachableTitle,
+          body: l.noticeUnreachableBody,
+          actionLabel: l.actionTestConnection,
           onAction: onOpenSettings,
           onDismiss: onDismiss,
           alert: true,
         ),
       ListenError.server => Notice(
           icon: Icons.info_outline,
-          title: 'Recognition stopped',
+          title: l.noticeServerStoppedTitle,
+          // The server's own words: what went wrong there.
           body: message,
-          actionLabel: 'Try again',
+          actionLabel: l.actionTryAgain,
           onAction: onRetry,
           onDismiss: onDismiss,
           alert: true,
@@ -629,7 +630,7 @@ class _HintChip extends StatelessWidget {
             ),
           ),
           IconButton(
-            tooltip: 'Remove hint',
+            tooltip: context.l10n.tooltipRemoveHint,
             onPressed: onClear,
             visualDensity: VisualDensity.compact,
             icon: const Icon(Icons.close, size: 18),
@@ -658,9 +659,7 @@ class _EmptyColumn extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              listening
-                  ? 'Keep the phone where it can hear the imam.'
-                  : 'Rafiq listens to the imam and shows the surah and ayah, live.',
+              listening ? context.l10n.emptyListening : context.l10n.emptyIdle,
               textAlign: TextAlign.center,
               style: RubricText.label.copyWith(color: c.inkSecondary),
             ),
@@ -669,7 +668,7 @@ class _EmptyColumn extends StatelessWidget {
               onPressed: onBrowse,
               style: TextButton.styleFrom(foregroundColor: c.inkSecondary),
               icon: const Icon(Icons.menu_book_outlined, size: 20),
-              label: const Text('Browse surahs'),
+              label: Text(context.l10n.browseSurahs),
             ),
           ],
         ),

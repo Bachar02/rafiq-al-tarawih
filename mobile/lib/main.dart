@@ -24,7 +24,7 @@ Future<void> main() async {
       ProviderScope(
         overrides: [
           quranProvider.overrideWithValue(quran),
-          surahNamesProvider.overrideWithValue(names),
+          surahTableProvider.overrideWithValue(names),
           settingsStoreProvider.overrideWithValue(SettingsStore(prefs)),
           readingStoreProvider.overrideWithValue(PrefsReadingStore(prefs)),
         ],

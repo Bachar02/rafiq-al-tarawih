@@ -2,6 +2,7 @@
 /// tests override it with a fake and Phase 6 swaps the engine in one place.
 library;
 
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/audio/audio_source.dart';
@@ -10,6 +11,7 @@ import '../data/quran.dart';
 import '../data/reading_store.dart';
 import '../data/settings.dart';
 import '../data/surah_names.dart';
+import '../l10n/l10n.dart';
 import '../features/listen/listen_controller.dart';
 import '../features/listen/listen_state.dart';
 import '../features/listen/taraweeh_position.dart';
@@ -26,7 +28,20 @@ final quranProvider = Provider<Quran>((ref) => throw UnimplementedError('quranPr
 
 /// Curated surah display names. main.dart overrides this with the bundled
 /// table; without it, the Quran data's own transliteration is used.
-final surahNamesProvider = Provider<SurahNames>((ref) => SurahNames.fallback(ref.watch(quranProvider)));
+final surahTableProvider = Provider<SurahNames>((ref) => SurahNames.fallback(ref.watch(quranProvider)));
+
+/// The interface locale: the user's choice, or the phone's language if
+/// Rafiq has it, else English. The one place the app decides its language.
+final appLocaleProvider = Provider<Locale>((ref) {
+  final chosen = ref.watch(settingsProvider.select((s) => s.language)).locale;
+  return chosen ?? resolveAppLocale(WidgetsBinding.instance.platformDispatcher.locales);
+});
+
+/// Surah names in the interface language (Arabic: each surah's own name).
+final surahNamesProvider = Provider<SurahNames>((ref) {
+  final language = NameLanguage.values.asNameMap()[ref.watch(appLocaleProvider).languageCode] ?? NameLanguage.en;
+  return ref.watch(surahTableProvider).inLanguage(language);
+});
 
 /// Loaded once at startup (see main.dart) and injected with an override.
 final settingsStoreProvider =

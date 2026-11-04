@@ -1,5 +1,5 @@
 name: rafiq
-description: "Follow the imam during Taraweeh: live surah and ayah."
+description: "A Quran reader that can follow the imam during Taraweeh, live."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
@@ -30,6 +30,11 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  # English, French and Arabic (RTL): Flutter's own gen-l10n stack. intl is
+  # the version flutter_localizations pins.
+  flutter_localizations:
+    sdk: flutter
+  intl: any
 
 
   # The following adds the Cupertino Icons font to your application.
@@ -70,6 +75,8 @@ dev_dependencies:
 # The following section is specific to Flutter packages.
 flutter:
   uses-material-design: true
+  # lib/l10n/*.arb -> lib/l10n/generated/ (see l10n.yaml).
+  generate: true
 
   assets:
     - assets/quran/quran.json

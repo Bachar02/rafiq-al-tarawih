@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/text/quran_display.dart';
 import '../../data/quran.dart';
 import '../theme.dart';
+import '../../l10n/l10n.dart';
 
 /// Where an ayah stands relative to the imam: luminance, not boxes, shows it.
 /// Outside Taraweeh mode every ayah is [reading].
@@ -139,9 +140,10 @@ class AyahBlock extends StatelessWidget {
     }
 
     final live = tone != AyahTone.reading;
+    final l = context.l10n;
     return Semantics(
-      label: 'Ayah ${verse.ayah}${current ? ', the imam is here' : ''}',
-      onTapHint: onTap == null ? null : (live ? 'mark where the imam is' : 'ayah actions'),
+      label: current ? l.semAyahImamHere(verse.ayah) : l.semAyah(verse.ayah),
+      onTapHint: onTap == null ? null : (live ? l.hintMarkImam : l.hintAyahActions),
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTap: onTap,

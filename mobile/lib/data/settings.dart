@@ -1,5 +1,19 @@
-import 'package:flutter/material.dart' show ThemeMode;
+import 'package:flutter/material.dart' show Locale, ThemeMode;
 import 'package:shared_preferences/shared_preferences.dart';
+
+/// The interface language. [system] follows the phone (English when the
+/// phone's language is not one Rafiq has).
+enum AppLanguage {
+  system(null),
+  en(Locale('en')),
+  fr(Locale('fr')),
+  ar(Locale('ar'));
+
+  const AppLanguage(this.locale);
+
+  /// Null for [system].
+  final Locale? locale;
+}
 
 /// User settings. Immutable; changed through [SettingsStore].
 class AppSettings {
@@ -11,6 +25,7 @@ class AppSettings {
     this.themeMode = ThemeMode.system,
     this.darkDuringTaraweeh = true,
     this.taraweehIntroSeen = false,
+    this.language = AppLanguage.system,
   });
 
   /// The Android emulator's alias for the host machine. On a real phone this
@@ -42,6 +57,8 @@ class AppSettings {
   /// put the phone) has been shown. It is never shown again.
   final bool taraweehIntroSeen;
 
+  final AppLanguage language;
+
   AppSettings copyWith({
     String? serverAddress,
     bool? keepScreenOn,
@@ -50,6 +67,7 @@ class AppSettings {
     ThemeMode? themeMode,
     bool? darkDuringTaraweeh,
     bool? taraweehIntroSeen,
+    AppLanguage? language,
   }) =>
       AppSettings(
         serverAddress: serverAddress ?? this.serverAddress,
@@ -59,6 +77,7 @@ class AppSettings {
         themeMode: themeMode ?? this.themeMode,
         darkDuringTaraweeh: darkDuringTaraweeh ?? this.darkDuringTaraweeh,
         taraweehIntroSeen: taraweehIntroSeen ?? this.taraweehIntroSeen,
+        language: language ?? this.language,
       );
 }
 
@@ -75,6 +94,7 @@ class SettingsStore {
   static const _theme = 'theme_mode';
   static const _darkTaraweeh = 'dark_during_taraweeh';
   static const _introSeen = 'taraweeh_intro_seen';
+  static const _language = 'language';
 
   AppSettings load() {
     const d = AppSettings();
@@ -88,6 +108,7 @@ class SettingsStore {
       themeMode: ThemeMode.values.asNameMap()[_prefs.getString(_theme)] ?? d.themeMode,
       darkDuringTaraweeh: _prefs.getBool(_darkTaraweeh) ?? d.darkDuringTaraweeh,
       taraweehIntroSeen: _prefs.getBool(_introSeen) ?? d.taraweehIntroSeen,
+      language: AppLanguage.values.asNameMap()[_prefs.getString(_language)] ?? d.language,
     );
   }
 
@@ -99,5 +120,6 @@ class SettingsStore {
     await _prefs.setString(_theme, s.themeMode.name);
     await _prefs.setBool(_darkTaraweeh, s.darkDuringTaraweeh);
     await _prefs.setBool(_introSeen, s.taraweehIntroSeen);
+    await _prefs.setString(_language, s.language.name);
   }
 }

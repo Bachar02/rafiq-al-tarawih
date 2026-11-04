@@ -4,6 +4,7 @@ import '../../app/components/quran_text.dart';
 import '../../app/theme.dart';
 import '../../data/quran.dart';
 import '../../data/surah_names.dart';
+import '../../l10n/l10n.dart';
 
 /// A surah's opening inside the continuous text: its Arabic name, a quiet
 /// meta line, and the basmala (not for 1 and 9).
@@ -20,6 +21,7 @@ class SurahHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
+    final l = context.l10n;
     final basmala = basmalaFor(quran, surah);
     return Padding(
       padding: EdgeInsets.only(top: surah.index == 1 ? RubricSpace.s4 : RubricSpace.s8, bottom: RubricSpace.s2),
@@ -28,7 +30,7 @@ class SurahHeader extends StatelessWidget {
         children: [
           Semantics(
             header: true,
-            label: 'Surah ${names.of(surah.index)}, ${surah.index}',
+            label: l.semSurahHeader(names.of(surah.index), surah.index),
             excludeSemantics: true,
             child: Column(
               children: [
@@ -40,7 +42,9 @@ class SurahHeader extends StatelessWidget {
                 ),
                 const SizedBox(height: RubricSpace.s1),
                 Text(
-                  '${names.of(surah.index)} · ${surah.index} · ${surah.ayahCount} ayahs',
+                  names.isArabic
+                      ? '${surah.index} · ${l.ayahCount(surah.ayahCount)}'
+                      : l.surahHeaderMeta(names.of(surah.index), surah.index, l.ayahCount(surah.ayahCount)),
                   textAlign: TextAlign.center,
                   style: RubricText.caption.copyWith(color: c.inkSecondary),
                 ),
@@ -66,26 +70,34 @@ class DivisionMark extends StatelessWidget {
 
   /// The caption for [verseId], or null if it starts no page, juz or quarter.
   /// Verse 1 starts everything and needs no mark.
-  static String? labelFor(Quran quran, int verseId) {
-    if (verseId == 1) return null;
+  static String? labelFor(Quran quran, int verseId, AppLocalizations l) {
+    if (!marks(quran, verseId)) return null;
     final page = quran.pages.isStart(verseId);
     final quarter = quran.quarters.isStart(verseId);
-    if (!page && !quarter) return null;
     final parts = <String>[];
     if (quran.juzs.isStart(verseId)) {
-      parts.add('Juz ${quran.juzOf(verseId)}');
+      parts.add(l.juzNumber(quran.juzOf(verseId)));
     } else if (quarter) {
-      parts.add(hizbLabel(quran.quarters.of(verseId)));
+      parts.add(hizbLabel(l, quran.quarters.of(verseId)));
     }
-    if (page) parts.add('Page ${quran.pageOf(verseId)}');
+    if (page) parts.add(l.pageNumber(quran.pageOf(verseId)));
     return parts.join(' · ');
   }
 
+  /// [verseId] begins a page or a hizb quarter (so a juz too), and gets a
+  /// mark. Verse 1 begins everything and needs none.
+  static bool marks(Quran quran, int verseId) =>
+      verseId != 1 && (quran.pages.isStart(verseId) || quran.quarters.isStart(verseId));
+
   /// Hizb quarter [quarter] (1..240) as read: "Hizb 3", "¼ Hizb 3", "½ Hizb 3", "¾ Hizb 3".
-  static String hizbLabel(int quarter) {
+  static String hizbLabel(AppLocalizations l, int quarter) {
     final hizb = (quarter - 1) ~/ 4 + 1;
-    const fraction = ['', '¼ ', '½ ', '¾ '];
-    return '${fraction[(quarter - 1) % 4]}Hizb $hizb';
+    return switch ((quarter - 1) % 4) {
+      0 => l.hizbStart(hizb),
+      1 => l.hizbQuarter(hizb),
+      2 => l.hizbHalf(hizb),
+      _ => l.hizbThreeQuarters(hizb),
+    };
   }
 
   @override

@@ -143,7 +143,7 @@ class Harness {
 
   List<Override> get overrides => [
         quranProvider.overrideWithValue(loadQuran()),
-        surahNamesProvider.overrideWithValue(loadSurahNames()),
+        surahTableProvider.overrideWithValue(loadSurahNames()),
         settingsStoreProvider.overrideWithValue(SettingsStore(prefs)),
         readingStoreProvider.overrideWithValue(readingStore ?? PrefsReadingStore(prefs)),
         audioSourceProvider.overrideWithValue(audio),

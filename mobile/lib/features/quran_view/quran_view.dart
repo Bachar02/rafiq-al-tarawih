@@ -10,6 +10,7 @@ import '../../data/quran.dart';
 import '../../data/surah_names.dart';
 import 'book_index.dart';
 import 'book_items.dart';
+import '../../l10n/l10n.dart';
 
 /// Commands for a [QuranView]: jumps, and the way back to the followed ayah.
 ///
@@ -292,7 +293,7 @@ class _QuranViewState extends State<QuranView> {
   /// no sliver of the previous ayah shows over it.
   double _insetFor(int index) => switch (_book.at(index)) {
         SurahHeaderItem() => 0,
-        AyahItem(:final verse) => DivisionMark.labelFor(widget.quran, verse.id) == null ? RubricSpace.quranTop : 0,
+        AyahItem(:final verse) => DivisionMark.marks(widget.quran, verse.id) ? 0 : RubricSpace.quranTop,
       };
 
   /// Put item [index] at [alignment] of the height: a scroll if it is
@@ -419,7 +420,7 @@ class _QuranViewState extends State<QuranView> {
   }
 
   Widget _withMark(int verseId, Widget child) {
-    final label = DivisionMark.labelFor(widget.quran, verseId);
+    final label = DivisionMark.labelFor(widget.quran, verseId, context.l10n);
     if (label == null) return child;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,

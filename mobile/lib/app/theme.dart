@@ -239,6 +239,10 @@ abstract final class RubricText {
   /// Latin only, uppercase. Arabic is never letter-spaced or capitalised.
   static final overline = _ui(12, 16, 500, letterSpacing: 12 * 0.14);
 
+  /// [overline] for the interface language: no letter-spacing in Arabic.
+  static TextStyle overlineFor(BuildContext context) =>
+      Localizations.localeOf(context).languageCode == 'ar' ? overline.copyWith(letterSpacing: 0) : overline;
+
   /// Arabic interface: one line-height step taller than Latin, for the marks.
   static final labelLgAr = _uiAr(17, 28, 500);
   static final labelAr = _uiAr(15, 26, 400);

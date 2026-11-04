@@ -12,6 +12,7 @@ import '../quran_view/quran_view.dart';
 import 'reader_ayah_sheet.dart';
 import 'widgets/reader_bar.dart';
 import 'widgets/taraweeh_entry.dart';
+import '../../l10n/l10n.dart';
 
 /// Home: the Quran, open where the user stopped reading.
 ///
@@ -92,18 +93,19 @@ class ReaderScreenState extends ConsumerState<ReaderScreen> with WidgetsBindingO
     if (!mounted) return;
     setState(() => _highlighted = null);
     final messenger = ScaffoldMessenger.of(context);
+    final l = context.l10n;
     void say(String text) => messenger
       ..hideCurrentSnackBar()
       ..showSnackBar(SnackBar(content: Text(text)));
     final ref_ = '${names.of(verse.surah)} ${verse.surah}:${verse.ayah}';
     switch (action) {
       case ReaderAyahAction.bookmark:
-        say(await bookmarks.add(verse.id) ? 'Bookmarked $ref_' : 'Could not save the bookmark. Try again.');
+        say(await bookmarks.add(verse.id) ? l.bookmarked(ref_) : l.bookmarkFailed);
       case ReaderAyahAction.removeBookmark:
-        say(await bookmarks.remove(verse.id) ? 'Bookmark removed' : 'Could not remove the bookmark. Try again.');
+        say(await bookmarks.remove(verse.id) ? l.bookmarkRemoved : l.bookmarkRemoveFailed);
       case ReaderAyahAction.copy:
         await copyAyah(verse, names);
-        say('Copied $ref_');
+        say(l.copied(ref_));
       case null:
         break;
     }

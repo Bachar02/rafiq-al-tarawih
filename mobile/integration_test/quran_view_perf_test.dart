@@ -18,6 +18,7 @@ import 'package:rafiq/core/recognition/models.dart';
 import 'package:rafiq/data/quran.dart';
 import 'package:rafiq/data/surah_names.dart';
 import 'package:rafiq/features/quran_view/quran_view.dart';
+import 'package:rafiq/l10n/l10n.dart';
 
 void main() {
   final binding = IntegrationTestWidgetsFlutterBinding.ensureInitialized();
@@ -42,6 +43,8 @@ void main() {
   }) async {
     final controller = QuranViewController();
     await tester.pumpWidget(MaterialApp(
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
       theme: AppTheme.dark(),
       debugShowCheckedModeBanner: false,
       home: Scaffold(
@@ -111,6 +114,8 @@ void main() {
       await binding.traceAction(() async {
         for (var ayah = 2; ayah <= 30; ayah++) {
           await tester.pumpWidget(MaterialApp(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
             theme: AppTheme.dark(),
             debugShowCheckedModeBanner: false,
             home: Scaffold(

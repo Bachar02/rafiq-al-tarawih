@@ -7,6 +7,7 @@ import '../../app/theme.dart';
 import '../../data/quran.dart';
 import '../../data/surah_names.dart';
 import 'quran_search.dart';
+import '../../l10n/l10n.dart';
 
 /// Search the Quran: one field for references, pages, juz, surah names and
 /// Arabic text. Pops with the chosen verse id.
@@ -44,21 +45,20 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     final quran = ref.watch(quranProvider);
     final names = ref.watch(surahNamesProvider);
     final c = context.colors;
+    final l = context.l10n;
     final r = _results;
 
     final rows = <Widget>[
-      if (r.textTooShort) _Message('Type at least ${QuranSearch.minLetters} letters to search the text.'),
-      for (final t in r.targets) _target(t, quran, names),
+      if (r.textTooShort) _Message(l.searchTooShort(QuranSearch.minLetters)),
+      for (final t in r.targets) _target(l, t, quran, names),
       if (r.ayahs.isNotEmpty)
         Padding(
           padding: const EdgeInsets.fromLTRB(RubricSpace.s4, RubricSpace.s4, RubricSpace.s4, RubricSpace.s1),
           child: Text(
-            // Overlines are Latin capitals (brand book §4).
-            (r.ayahTotal > r.ayahs.length
-                    ? 'First ${r.ayahs.length} of ${r.ayahTotal} ayahs'
-                    : '${r.ayahTotal} ${r.ayahTotal == 1 ? 'ayah' : 'ayahs'}')
+            // Overlines are Latin capitals (brand book §4); Arabic has no case.
+            (r.ayahTotal > r.ayahs.length ? l.searchFirstOf(r.ayahs.length, r.ayahTotal) : l.ayahCount(r.ayahTotal))
                 .toUpperCase(),
-            style: RubricText.overline.copyWith(color: c.inkSecondary),
+            style: RubricText.overlineFor(context).copyWith(color: c.inkSecondary),
           ),
         ),
     ];
@@ -73,11 +73,11 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
             autofocus: true,
             textInputAction: TextInputAction.search,
             decoration: InputDecoration(
-              hintText: 'Surah, 2:255, page 50, or Arabic words',
+              hintText: l.searchHint,
               suffixIcon: _query.isEmpty
                   ? null
                   : IconButton(
-                      tooltip: 'Clear',
+                      tooltip: l.clear,
                       icon: const Icon(Icons.close),
                       onPressed: () {
                         _field.clear();
@@ -92,7 +92,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
       body: _query.trim().isEmpty
           ? const _Help()
           : rows.isEmpty && r.ayahs.isEmpty
-              ? _Message('Nothing found for “${_query.trim()}”.')
+              ? _Message(l.searchNothing(_query.trim()))
               : ListView.builder(
                   keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
                   itemCount: rows.length + r.ayahs.length,
@@ -101,7 +101,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                     final verse = r.ayahs[i - rows.length];
                     return PlaceTile(
                       title: verseReference(verse, names),
-                      subtitle: verseLocation(quran, verse.id),
+                      subtitle: verseLocation(l, quran, verse.id),
                       verse: verse,
                       onTap: () => _open(verse.id),
                     );
@@ -110,24 +110,25 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     );
   }
 
-  Widget _target(SearchTarget t, Quran quran, SurahNames names) {
+  Widget _target(AppLocalizations l, SearchTarget t, Quran quran, SurahNames names) {
     final start = quran.verse(t.verseId);
     final (IconData icon, String title, String subtitle) = switch (t) {
-      AyahTarget() => (Icons.format_quote_outlined, verseReference(start, names), verseLocation(quran, t.verseId)),
+      AyahTarget() => (Icons.format_quote_outlined, verseReference(start, names), verseLocation(l, quran, t.verseId)),
       SurahTarget(:final surah) => (
           Icons.menu_book_outlined,
-          '${names.of(surah)} · ${quran.surah(surah).nameAr}',
-          'Surah $surah · ${quran.surah(surah).ayahCount} ayahs',
+          // In Arabic the display name is the Arabic name: say it once.
+          names.isArabic ? names.of(surah) : '${names.of(surah)} · ${quran.surah(surah).nameAr}',
+          l.surahNumberAyahs(surah, l.ayahCount(quran.surah(surah).ayahCount)),
         ),
       JuzTarget(:final juz) => (
           Icons.bookmarks_outlined,
-          'Juz $juz',
-          'From ${verseReference(start, names)} · Page ${quran.pageOf(t.verseId)}',
+          l.juzNumber(juz),
+          l.fromPlacePage(verseReference(start, names), quran.pageOf(t.verseId)),
         ),
       PageTarget(:final page) => (
           Icons.description_outlined,
-          'Page $page',
-          'From ${verseReference(start, names)} · Juz ${quran.juzOf(t.verseId)}',
+          l.pageNumber(page),
+          l.fromPlaceJuz(verseReference(start, names), quran.juzOf(t.verseId)),
         ),
     };
     return PlaceTile(
@@ -146,16 +147,17 @@ class _Help extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
+    final l = context.l10n;
     final style = RubricText.label.copyWith(color: c.inkSecondary);
     return ListView(
       padding: const EdgeInsets.all(RubricSpace.s6),
       children: [
-        Text('SEARCH BY', style: RubricText.overline.copyWith(color: c.inkSecondary)),
+        Text(l.searchBy.toUpperCase(), style: RubricText.overlineFor(context).copyWith(color: c.inkSecondary)),
         const SizedBox(height: RubricSpace.s2),
-        Text('A surah: Al-Kahf, الكهف, or 18', style: style),
-        Text('An ayah: 2:255', style: style),
-        Text('A page or juz: page 50, juz 30', style: style),
-        Text('Words of the Quran, in Arabic: ٱلْحَمْدُ لِلَّهِ (with or without tashkeel)', style: style),
+        Text(l.searchHelpSurah, style: style),
+        Text(l.searchHelpAyah, style: style),
+        Text(l.searchHelpPlace, style: style),
+        Text(l.searchHelpWords, style: style),
       ],
     );
   }

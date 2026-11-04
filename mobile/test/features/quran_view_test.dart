@@ -7,6 +7,7 @@ import 'package:rafiq/data/quran.dart';
 import 'package:rafiq/features/quran_view/book_index.dart';
 import 'package:rafiq/features/quran_view/book_items.dart';
 import 'package:rafiq/features/quran_view/quran_view.dart';
+import 'package:rafiq/l10n/l10n.dart';
 
 import '../support/fakes.dart';
 
@@ -24,6 +25,7 @@ double topOf(WidgetTester tester, int verseId) =>
 void main() {
   final quran = loadQuran();
   final names = loadSurahNames();
+  final en = lookupAppLocalizations(const Locale('en'));
   int id(int s, int a) => quran.verseId(s, a)!;
 
   group('BookIndex', () {
@@ -56,13 +58,13 @@ void main() {
 
   group('DivisionMark labels', () {
     test('juz, hizb quarter and page starts', () {
-      expect(DivisionMark.labelFor(quran, 1), isNull);
-      expect(DivisionMark.labelFor(quran, id(2, 142)), 'Juz 2 · Page 22');
-      expect(DivisionMark.labelFor(quran, id(2, 26)), '¼ Hizb 1');
-      expect(DivisionMark.labelFor(quran, id(2, 6)), 'Page 3');
-      expect(DivisionMark.labelFor(quran, id(2, 7)), isNull);
-      expect(DivisionMark.hizbLabel(5), 'Hizb 2');
-      expect(DivisionMark.hizbLabel(240), '¾ Hizb 60');
+      expect(DivisionMark.labelFor(quran, 1, en), isNull);
+      expect(DivisionMark.labelFor(quran, id(2, 142), en), 'Juz 2 · Page 22');
+      expect(DivisionMark.labelFor(quran, id(2, 26), en), '¼ Hizb 1');
+      expect(DivisionMark.labelFor(quran, id(2, 6), en), 'Page 3');
+      expect(DivisionMark.labelFor(quran, id(2, 7), en), isNull);
+      expect(DivisionMark.hizbLabel(en, 5), 'Hizb 2');
+      expect(DivisionMark.hizbLabel(en, 240), '¾ Hizb 60');
     });
   });
 
@@ -84,6 +86,8 @@ void main() {
       tester.view.devicePixelRatio = 3;
       addTearDown(tester.view.reset);
       await tester.pumpWidget(MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         theme: AppTheme.dark(),
         home: Scaffold(
           body: QuranView(

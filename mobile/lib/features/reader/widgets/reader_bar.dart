@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../app/providers.dart';
 import '../../../app/theme.dart';
+import '../../../l10n/l10n.dart';
 
 /// Where the reader is (surah, juz, page) and the reader's actions. The only
 /// part of the reader that rebuilds as the text scrolls.
@@ -22,26 +23,27 @@ class ReaderBar extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final c = context.colors;
+    final l = context.l10n;
     final quran = ref.watch(quranProvider);
     final names = ref.watch(surahNamesProvider);
     final verse = quran.verse(ref.watch(readingPositionProvider));
     final surah = quran.surah(verse.surah);
-    final where = 'Juz ${quran.juzOf(verse.id)} · Page ${quran.pageOf(verse.id)}';
+    final juz = quran.juzOf(verse.id), page = quran.pageOf(verse.id);
+    final where = l.juzPage(juz, page);
 
     return Padding(
       padding: const EdgeInsetsDirectional.fromSTEB(RubricSpace.s1, RubricSpace.s1, RubricSpace.s1, 0),
       child: Row(
         children: [
           IconButton(
-            tooltip: 'Surahs, juz and bookmarks',
+            tooltip: l.tooltipNavigate,
             onPressed: onNavigate,
             icon: const Icon(Icons.toc),
           ),
           Expanded(
             child: Semantics(
               button: true,
-              label: '${names.of(surah.index)}, ayah ${verse.ayah}. Juz ${quran.juzOf(verse.id)}, '
-                  'page ${quran.pageOf(verse.id)}. Open the index',
+              label: l.semReaderBar(names.of(surah.index), verse.ayah, juz, page),
               excludeSemantics: true,
               child: InkWell(
                 onTap: onNavigate,
@@ -61,10 +63,11 @@ class ReaderBar extends ConsumerWidget {
                               text: surah.nameAr,
                               style: RubricText.surahAr.copyWith(fontSize: 22, height: 1.3, color: c.ink),
                             ),
-                            TextSpan(
-                              text: '  ${names.of(surah.index)}',
-                              style: RubricText.caption.copyWith(color: c.inkSecondary),
-                            ),
+                            if (!names.isArabic)
+                              TextSpan(
+                                text: '  ${names.of(surah.index)}',
+                                style: RubricText.caption.copyWith(color: c.inkSecondary),
+                              ),
                           ],
                         ),
                         maxLines: 1,
@@ -83,8 +86,8 @@ class ReaderBar extends ConsumerWidget {
             ),
           ),
           if (onSearch != null)
-            IconButton(tooltip: 'Search the Quran', onPressed: onSearch, icon: const Icon(Icons.search)),
-          IconButton(tooltip: 'Settings', onPressed: onSettings, icon: const Icon(Icons.settings_outlined)),
+            IconButton(tooltip: l.tooltipSearch, onPressed: onSearch, icon: const Icon(Icons.search)),
+          IconButton(tooltip: l.settings, onPressed: onSettings, icon: const Icon(Icons.settings_outlined)),
         ],
       ),
     );

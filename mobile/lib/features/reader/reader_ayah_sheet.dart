@@ -7,6 +7,7 @@ import '../../app/theme.dart';
 import '../../core/text/quran_display.dart';
 import '../../data/quran.dart';
 import '../../data/surah_names.dart';
+import '../../l10n/l10n.dart';
 
 enum ReaderAyahAction { bookmark, removeBookmark, copy }
 
@@ -26,7 +27,7 @@ Future<ReaderAyahAction?> showReaderAyahSheet(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            SheetHeader(title: '${names.of(verse.surah)} · ayah ${verse.ayah}'),
+            SheetHeader(title: context.l10n.ayahSheetTitle(names.of(verse.surah), verse.ayah)),
             const SizedBox(height: RubricSpace.s2),
             ConstrainedBox(
               constraints: const BoxConstraints(maxHeight: 160),
@@ -39,19 +40,19 @@ Future<ReaderAyahAction?> showReaderAyahSheet(
               OutlinedButton.icon(
                 onPressed: () => Navigator.pop(context, ReaderAyahAction.removeBookmark),
                 icon: const Icon(Icons.bookmark_remove_outlined, size: 20),
-                label: const Text('Remove bookmark'),
+                label: Text(context.l10n.removeBookmark),
               )
             else
               FilledButton.icon(
                 onPressed: () => Navigator.pop(context, ReaderAyahAction.bookmark),
                 icon: const Icon(Icons.bookmark_add_outlined, size: 20),
-                label: const Text('Bookmark'),
+                label: Text(context.l10n.bookmark),
               ),
             const SizedBox(height: RubricSpace.s2),
             TextButton.icon(
               onPressed: () => Navigator.pop(context, ReaderAyahAction.copy),
               icon: const Icon(Icons.copy_outlined, size: 20),
-              label: const Text('Copy the ayah'),
+              label: Text(context.l10n.copyAyah),
             ),
           ],
         ),

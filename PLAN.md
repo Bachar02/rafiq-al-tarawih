@@ -338,3 +338,66 @@ It covers Al-Baqarah flings, juz 30 across surahs, 20 far jumps and Taraweeh fol
 3. Lower `cacheExtent`.
 
 The list architecture stays in every case.
+
+### R3: the reader is home (done)
+- **`ReaderScreen`:** the shared `QuranView`, opened at the personal reading position.
+  - A bar names the surah, juz and page. It is the only widget that rebuilds while scrolling.
+  - A floating Taraweeh button steps aside while reading down.
+- **Reading position:** the verse at the top of the reader.
+  - Saved one second after scrolling stops, and at once when the app leaves the foreground.
+  - A failed save stays pending and is retried.
+  - Tests restore it after a simulated restart.
+- **`ReadingStore`:** the reading position, the last Taraweeh position and bookmarks, as versioned JSON in shared preferences, keyed by verse id.
+  - **An unreadable record is never overwritten.** It is first copied to `<key>.unreadable.<time>`.
+  - **A failed write is reported, not thrown.**
+  - **Bookmarks are saved before they are shown**, so the UI never claims a bookmark it did not keep.
+- **Settings:**
+  - The theme follows the system by default. A stored theme is kept: v1 saved every field on any change, so its users keep dark.
+  - *Dark during Taraweeh* (on) is a theme scoped to the Taraweeh route. Screens opened from Taraweeh mode inherit it.
+- **`AppRoutes`:** every screen-to-screen move in one place.
+
+### R4: Taraweeh mode on `QuranView` (done)
+- The recognition controller, its states, corrections, lock, Al-Fatiha handling and reconnects are **unchanged**. Every earlier recognition-state test still runs.
+- **One tap from the reader starts listening.**
+  - A one-time introduction (microphone, Wi-Fi server build, Ḥafṣ only, how to correct) comes first. It is never shown again; *Not now* leaves following off.
+- **Leaving the mode stops following and saves the last Taraweeh position.** That is the imam's main position (`anchor`), never Al-Fatiha at a rakʿah. Taraweeh never writes the reading position (tested).
+- **The next night**, if the last session was within 36 hours, the juz after where it ended is applied as a soft hint.
+  - It is shown as "Last night ended at …" and is removable.
+  - The hint chip now stays visible while listening, until the imam is found.
+- `QuranColumn` is removed.
+
+### R5: navigation, search, bookmarks (done)
+- **Go to:** Surahs (filterable), Juz, Pages (all 604) and Bookmarks.
+  - Every list opens at the current place, exactly, at any text size. Rows share one height, measured from a prototype.
+  - The Bookmarks tab starts with where Taraweeh ended. Removing a bookmark can be undone.
+- **Search:** one field for references (Arabic-Indic digits too), pages, juz, surah names in any language the app knows, and Arabic text.
+  - Arabic text goes through the engine's own `normalize`, so tashkeel, hamza seats and alef forms do not matter.
+  - Matching is a scan of 6,236 short strings, a few milliseconds, so there is no index and no isolate.
+  - Results are in mushaf order, capped at 200, with the full count.
+- Taraweeh mode's index is the same navigator.
+
+### R6: polish, languages, documentation (done)
+- **English, French and Arabic**, using Flutter's gen-l10n.
+  - About 200 messages, with ICU plurals (the full Arabic forms). The generated code is committed and formatted at the project width (`analysis_options.yaml`).
+  - `test/l10n/` fails if a language misses a message or a placeholder.
+  - An app language setting (System by default) and one `appLocaleProvider` decide the language. Surah names follow it; in Arabic each surah's own name is used and never shown twice.
+  - Arabic is right to left throughout; Quran text is always right to left. Arabic overlines have no letter-spacing or capitals.
+  - iOS declares its localizations, and Android sets `supportsRtl`.
+- **Settings regrouped:** Reading (text size, appearance, language), Taraweeh (dark during Taraweeh, keep screen on), Recitation, Recognition server, Developer, About.
+- **New Rubric token:** `mark`, the reader's wash for a chosen ayah. Cinnabar keeps its one meaning.
+- **Tests:** 177, plus 22 golden screenshots with the real fonts (including Arabic and French). DESIGN.md is rewritten for the reader-first app.
+
+### Open after R6
+1. **The A32 scroll benchmark (R2's deciding run)**, as soon as the phone is connected. It is one command (above).
+2. **Native review of the French and Arabic texts.** They are drafts, as M4 already planned.
+3. **Not localized yet:**
+   - The developer screens (diagnostics, the on-device benchmark).
+   - The server-address validation messages and the server's own error text. Both belong to the server build only.
+4. **Later, by decision:**
+   - A page-by-page mushaf mode (flowing text per Madinah page, never called a facsimile).
+   - Copying or sharing an ayah as an image.
+   - Recitation audio, translations, a khatm planner, notes.
+5. **§17 M4 items closed by this work:**
+   - Localization (drafts).
+   - First-run onboarding for Taraweeh.
+   - Where browsing lives (the reader is home).

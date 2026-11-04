@@ -1,5 +1,6 @@
 import '../../core/recognition/models.dart';
 import 'listen_state.dart';
+import '../../l10n/l10n.dart';
 
 /// How the position marker is drawn (brand book §7).
 enum MarkerFill {
@@ -132,38 +133,34 @@ enum DisplayStatus {
       };
 
   /// The status line's words. Empty for [paused] and [failed]: the Notice speaks.
-  String get label => switch (this) {
-        ready => 'Ready to follow',
-        stopped => 'Not following',
-        connecting => 'Connecting…',
-        listening => 'Listening for the imam',
-        following => 'Following the imam',
-        fatiha => 'Al-Fatiha',
-        noNewMatch => 'No new match yet',
-        littleSound => 'Little sound',
-        notSure => 'Not sure',
-        notMatching => 'Not matching the Quran',
-        reconnecting => 'Reconnecting…',
-        stopping => 'Stopping…',
+  String label(AppLocalizations l) => switch (this) {
+        ready => l.statusReady,
+        stopped => l.statusStopped,
+        connecting => l.statusConnecting,
+        listening => l.statusListening,
+        following => l.statusFollowing,
+        fatiha => l.statusFatiha,
+        noNewMatch => l.statusNoNewMatch,
+        littleSound => l.statusLittleSound,
+        notSure => l.statusNotSure,
+        notMatching => l.statusNotMatching,
+        reconnecting => l.statusReconnecting,
+        stopping => l.statusStopping,
         paused || failed => '',
       };
 
   /// The evidence behind the words, if any. [ayah] is the ayah on screen.
-  String? caption(int? ayah) {
-    final still = ayah == null ? '' : ' Still showing ayah $ayah';
-    return switch (this) {
-      ready => 'Start following when the imam begins. No setup needed.',
-      stopped => 'Showing the last position.',
-      connecting => 'The first time, the recognition server loads its speech model.',
-      listening => 'The ayah appears after a few words.',
-      noNewMatch => 'Sound is coming in, but nothing new has matched the Quran for over 10 seconds.'
-          '${still.isEmpty ? '' : '$still.'}',
-      littleSound => 'The microphone has picked up very little for over 10 seconds.'
-          '${still.isEmpty ? '' : '$still, the last confirmed ayah.'}',
-      notSure => 'Holding the last sure ayah.',
-      notMatching => "Holding the last sure ayah. This happens during duʿāʾ or when the words aren't clear.",
-      reconnecting => 'The microphone keeps listening meanwhile.',
-      following || fatiha || stopping || paused || failed => null,
-    };
-  }
+  String? caption(AppLocalizations l, int? ayah) => switch (this) {
+        ready => l.captionReady,
+        stopped => l.captionStopped,
+        connecting => l.captionConnecting,
+        listening => l.captionListening,
+        noNewMatch => ayah == null ? l.captionNoNewMatch : '${l.captionNoNewMatch} ${l.captionStillShowing(ayah)}',
+        littleSound =>
+          ayah == null ? l.captionLittleSound : '${l.captionLittleSound} ${l.captionStillShowingConfirmed(ayah)}',
+        notSure => l.captionNotSure,
+        notMatching => l.captionNotMatching,
+        reconnecting => l.captionReconnecting,
+        following || fatiha || stopping || paused || failed => null,
+      };
 }

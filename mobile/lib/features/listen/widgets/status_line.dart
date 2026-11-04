@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../app/components/position_marker.dart';
 import '../../../app/theme.dart';
 import '../display_status.dart';
+import '../../../l10n/l10n.dart';
 
 /// One line that says what Rafiq knows right now, with an optional caption:
 /// the only place recognition state is put into words.
@@ -40,9 +41,10 @@ class StatusLine extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = context.colors;
     final marker = status.marker(held: held);
-    var label = status.label;
+    final l = context.l10n;
+    var label = status.label(l);
     if (status == DisplayStatus.reconnecting && reconnectAttempt > 1) label = '$label ($reconnectAttempt)';
-    final caption = status.caption(ayah);
+    final caption = status.caption(l, ayah);
     final captionStyle = RubricText.caption.copyWith(color: c.inkSecondary);
 
     return AnimatedSize(

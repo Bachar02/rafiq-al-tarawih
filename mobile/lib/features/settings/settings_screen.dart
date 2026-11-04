@@ -8,6 +8,7 @@ import '../../app/providers.dart';
 import '../../app/theme.dart';
 import '../../core/recognition/endpoint.dart';
 import '../../data/settings.dart';
+import '../../l10n/l10n.dart';
 import '../../services/server_health.dart';
 import '../bench/asr_bench_screen.dart';
 
@@ -54,103 +55,148 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     }
   }
 
-  Future<void> _chooseAppearance(ThemeMode current) async {
-    final mode = await showRubricSheet<ThemeMode>(
-      context,
-      builder: (context) => SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(RubricSpace.s6, 0, RubricSpace.s6, RubricSpace.s6),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const SheetHeader(title: 'Appearance', explanation: 'Dark is designed for prayer at night.'),
-            const SizedBox(height: RubricSpace.s4),
-            RubricGroup(
-              children: [
-                for (final m in const [ThemeMode.dark, ThemeMode.light, ThemeMode.system])
-                  RubricRow(
-                    label: appearanceLabel(m),
-                    selected: m == current,
-                    trailing: m == current ? Icon(Icons.check, color: context.colors.ink, size: 20) : null,
-                    onTap: () => Navigator.pop(context, m),
-                  ),
-              ],
-            ),
-          ],
+  /// A sheet of options, the current one checked.
+  Future<T?> _choose<T>({
+    required String title,
+    String? explanation,
+    required List<T> options,
+    required T current,
+    required String Function(T) label,
+  }) =>
+      showRubricSheet<T>(
+        context,
+        builder: (context) => SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(RubricSpace.s6, 0, RubricSpace.s6, RubricSpace.s6),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SheetHeader(title: title, explanation: explanation),
+              const SizedBox(height: RubricSpace.s4),
+              RubricGroup(
+                children: [
+                  for (final option in options)
+                    RubricRow(
+                      label: label(option),
+                      selected: option == current,
+                      trailing: option == current ? Icon(Icons.check, color: context.colors.ink, size: 20) : null,
+                      onTap: () => Navigator.pop(context, option),
+                    ),
+                ],
+              ),
+            ],
+          ),
         ),
-      ),
+      );
+
+  Future<void> _chooseAppearance(ThemeMode current) async {
+    final l = context.l10n;
+    final mode = await _choose(
+      title: l.appearance,
+      explanation: l.appearanceExplanation,
+      options: const [ThemeMode.system, ThemeMode.light, ThemeMode.dark],
+      current: current,
+      label: (m) => appearanceLabel(l, m),
     );
     if (mode != null) await ref.read(settingsProvider.notifier).update((s) => s.copyWith(themeMode: mode));
+  }
+
+  Future<void> _chooseLanguage(AppLanguage current) async {
+    final l = context.l10n;
+    final language = await _choose(
+      title: l.language,
+      explanation: l.languageExplanation,
+      options: AppLanguage.values,
+      current: current,
+      label: (a) => languageLabel(l, a),
+    );
+    if (language != null) await ref.read(settingsProvider.notifier).update((s) => s.copyWith(language: language));
   }
 
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
+    final l = context.l10n;
     final settings = ref.watch(settingsProvider);
     final update = ref.read(settingsProvider.notifier).update;
     final caption = RubricText.caption.copyWith(color: c.inkSecondary);
     return Scaffold(
-      appBar: AppBar(title: const Text('Settings')),
+      appBar: AppBar(title: Text(l.settings)),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(RubricSpace.gutter, 0, RubricSpace.gutter, RubricSpace.s8),
         children: [
           RubricGroup(
-            label: 'Reading',
+            label: l.groupReading,
             children: [
               RubricRow(
-                label: 'Quran text size',
+                label: l.quranTextSize,
                 value: '${(settings.textScale * 100).round()}%',
                 onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const TextSizeScreen())),
               ),
               RubricRow(
-                label: 'Keep screen on while following',
-                detail: 'Recommended during prayer',
+                label: l.appearance,
+                value: appearanceLabel(l, settings.themeMode),
+                onTap: () => _chooseAppearance(settings.themeMode),
+              ),
+              RubricRow(
+                label: l.language,
+                value: languageLabel(l, settings.language),
+                onTap: () => _chooseLanguage(settings.language),
+              ),
+            ],
+          ),
+          RubricGroup(
+            label: l.groupTaraweeh,
+            children: [
+              RubricRow(
+                label: l.darkDuringTaraweeh,
+                detail: l.darkDuringTaraweehDetail,
+                onTap: () => update((s) => s.copyWith(darkDuringTaraweeh: !s.darkDuringTaraweeh)),
+                trailing: Switch(
+                  value: settings.darkDuringTaraweeh,
+                  onChanged: (v) => update((s) => s.copyWith(darkDuringTaraweeh: v)),
+                ),
+              ),
+              RubricRow(
+                label: l.keepScreenOn,
+                detail: l.keepScreenOnDetail,
                 onTap: () => update((s) => s.copyWith(keepScreenOn: !s.keepScreenOn)),
                 trailing: Switch(
                   value: settings.keepScreenOn,
                   onChanged: (v) => update((s) => s.copyWith(keepScreenOn: v)),
                 ),
               ),
-              RubricRow(
-                label: 'Appearance',
-                value: appearanceLabel(settings.themeMode),
-                onTap: () => _chooseAppearance(settings.themeMode),
-              ),
             ],
           ),
           RubricGroup(
-            label: 'Recitation',
+            label: l.groupRecitation,
             children: [
-              const RubricRow(label: 'Riwāya', value: 'Ḥafṣ ʿan ʿĀṣim'),
+              RubricRow(label: l.riwaya, value: l.hafs),
               Padding(
                 padding: const EdgeInsets.all(RubricSpace.s4),
-                child: Text(
-                  'Rafiq recognises and numbers ayahs in the Ḥafṣ riwāya only. Qālūn and Warsh are not supported yet.',
-                  style: caption,
-                ),
+                child: Text(l.hafsOnly, style: caption),
               ),
             ],
           ),
           // Server build only: removed with on-device recognition.
           RubricGroup(
-            label: 'Recognition server',
+            label: l.groupServer,
             children: [
               Padding(
                 padding: const EdgeInsets.all(RubricSpace.s4),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Text(
-                      'This build recognises on a computer on the same Wi-Fi; it does not work without it.',
-                      style: caption,
-                    ),
+                    Text(l.serverExplanation, style: caption),
                     const SizedBox(height: RubricSpace.s3),
                     TextField(
                       controller: _address,
                       keyboardType: TextInputType.url,
                       autocorrect: false,
+                      // An address reads left to right in every language.
+                      textDirection: TextDirection.ltr,
                       decoration: InputDecoration(
-                        labelText: 'Server address',
+                        labelText: l.serverAddress,
                         hintText: '192.168.1.5:8765',
                         errorText: _addressError,
                       ),
@@ -167,28 +213,24 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                           onPressed: _testing ? null : _test,
                           child: _testing
                               ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
-                              : const Text('Test connection'),
+                              : Text(l.actionTestConnection),
                         ),
                         if (_health != null) _HealthText(_health!),
                       ],
                     ),
                     const SizedBox(height: RubricSpace.s3),
-                    Text(
-                      'Start the server on the computer with:  python -m rafiq_server --host 0.0.0.0\n'
-                      'then enter its Wi-Fi address and port. On the Android emulator, use 10.0.2.2:8765.',
-                      style: caption,
-                    ),
+                    Text(l.serverHelp, style: caption),
                   ],
                 ),
               ),
             ],
           ),
           RubricGroup(
-            label: 'Developer',
+            label: l.groupDeveloper,
             children: [
               RubricRow(
-                label: 'Show diagnostics',
-                detail: 'What the speech model hears, for testing',
+                label: l.showDiagnostics,
+                detail: l.showDiagnosticsDetail,
                 onTap: () => update((s) => s.copyWith(showDiagnostics: !s.showDiagnostics)),
                 trailing: Switch(
                   value: settings.showDiagnostics,
@@ -196,27 +238,19 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 ),
               ),
               RubricRow(
-                label: 'On-device speech benchmark',
-                detail: 'Can this phone recognise the imam without the computer? A test, not a feature.',
+                label: l.asrBench,
+                detail: l.asrBenchDetail,
                 trailing: Icon(Icons.chevron_right, color: c.inkSecondary),
                 onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const AsrBenchScreen())),
               ),
             ],
           ),
           RubricGroup(
-            label: 'About',
+            label: l.groupAbout,
             children: [
               Padding(
                 padding: const EdgeInsets.all(RubricSpace.s4),
-                child: Text(
-                  'Rafiq al-Tarawih follows the imam and shows the current surah and ayah.\n\n'
-                  'Quran text: Tanzil Project (tanzil.net), Uthmani and Simple Clean v1.1, CC BY 3.0.\n'
-                  'Fonts: Amiri Quran, Amiri, Newsreader, IBM Plex Sans and IBM Plex Sans Arabic, '
-                  'SIL Open Font License 1.1.\n'
-                  'Speech model: Tarteel whisper-base-ar-quran, Apache 2.0.\n'
-                  'On-device runtime: sherpa-onnx (k2-fsa), Apache 2.0.',
-                  style: caption,
-                ),
+                child: Text('${l.aboutLead}\n\n$_attributions', style: caption),
               ),
             ],
           ),
@@ -226,10 +260,25 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 }
 
-String appearanceLabel(ThemeMode mode) => switch (mode) {
-      ThemeMode.dark => 'Dark',
-      ThemeMode.light => 'Light',
-      ThemeMode.system => 'System',
+/// Licences, named as their authors publish them (not translated).
+const _attributions = 'Quran text: Tanzil Project (tanzil.net), Uthmani and Simple Clean v1.1, CC BY 3.0.\n'
+    'Fonts: Amiri Quran, Amiri, Newsreader, IBM Plex Sans and IBM Plex Sans Arabic, '
+    'SIL Open Font License 1.1.\n'
+    'Speech model: Tarteel whisper-base-ar-quran, Apache 2.0.\n'
+    'On-device runtime: sherpa-onnx (k2-fsa), Apache 2.0.';
+
+String appearanceLabel(AppLocalizations l, ThemeMode mode) => switch (mode) {
+      ThemeMode.dark => l.themeDark,
+      ThemeMode.light => l.themeLight,
+      ThemeMode.system => l.themeSystem,
+    };
+
+/// Each language by its own name, so anyone can find theirs.
+String languageLabel(AppLocalizations l, AppLanguage language) => switch (language) {
+      AppLanguage.system => l.languageSystem,
+      AppLanguage.en => 'English',
+      AppLanguage.fr => 'Français',
+      AppLanguage.ar => 'العربية',
     };
 
 /// Quran text size, judged on the real font: a live preview of ayah 93:3.
@@ -243,8 +292,9 @@ class TextSizeScreen extends ConsumerWidget {
     final quran = ref.watch(quranProvider);
     final preview = quran.surahVerses(93)[2];
     final fontSize = RubricText.quranBody.fontSize! * scale;
+    final l = context.l10n;
     return Scaffold(
-      appBar: AppBar(title: const Text('Quran text size')),
+      appBar: AppBar(title: Text(l.quranTextSize)),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(RubricSpace.gutter, RubricSpace.s4, RubricSpace.gutter, RubricSpace.s8),
         children: [
@@ -259,7 +309,7 @@ class TextSizeScreen extends ConsumerWidget {
           const SizedBox(height: RubricSpace.s6),
           Row(
             children: [
-              Text('Size', style: RubricText.label.copyWith(color: c.ink)),
+              Text(l.textSizeSize, style: RubricText.label.copyWith(color: c.ink)),
               const Spacer(),
               Text('${(scale * 100).round()}%', style: RubricText.label.copyWith(color: c.inkSecondary)),
             ],
@@ -272,8 +322,7 @@ class TextSizeScreen extends ConsumerWidget {
             label: '${(scale * 100).round()}%',
             onChanged: (v) => ref.read(settingsProvider.notifier).update((s) => s.copyWith(textScale: v)),
           ),
-          Text('The ayah numbers and line spacing scale with the text.',
-              style: RubricText.caption.copyWith(color: c.inkSecondary)),
+          Text(l.textSizeNote, style: RubricText.caption.copyWith(color: c.inkSecondary)),
         ],
       ),
     );
@@ -287,19 +336,13 @@ class _HealthText extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
+    final l = context.l10n;
+    final ms = health.latency?.inMilliseconds ?? 0;
     final (icon, color, text) = !health.reachable
-        ? (Icons.wifi_off_outlined, c.signal, health.error ?? 'Failed')
+        ? (Icons.wifi_off_outlined, c.signal, health.error ?? l.healthFailed)
         : health.asr
-            ? (
-                Icons.check,
-                c.ink,
-                'Connected · ${health.latency!.inMilliseconds} ms · speech model ${health.device ?? 'ready on first use'}'
-              )
-            : (
-                Icons.info_outline,
-                c.signal,
-                'Connected · ${health.latency!.inMilliseconds} ms · speech recognition NOT installed'
-              );
+            ? (Icons.check, c.ink, l.healthConnected(ms, health.device ?? l.healthReadyOnFirstUse))
+            : (Icons.info_outline, c.signal, l.healthNoAsr(ms));
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [

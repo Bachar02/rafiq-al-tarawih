@@ -1,5 +1,10 @@
 include: package:flutter_lints/flutter.yaml
 
+# One width for every formatter run: CI (dart format -l 120), editors, and
+# the generated localizations (gen-l10n formats its output).
+formatter:
+  page_width: 120
+
 analyzer:
   language:
     strict-casts: true

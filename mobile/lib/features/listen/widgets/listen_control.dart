@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../../../app/theme.dart';
 import '../display_status.dart';
+import '../../../l10n/l10n.dart';
 
 /// The single primary action: start or stop following. A full-width pill
 /// with a label, not an icon; it sits at the bottom, away from the Quran
@@ -24,11 +25,12 @@ class ListenControl extends StatelessWidget {
     final active = status.active;
     final busy = status == DisplayStatus.connecting || status == DisplayStatus.stopping;
     final height = status == DisplayStatus.ready ? RubricSpace.s16 : 56.0;
+    final l = context.l10n;
     final label = switch (status) {
-      DisplayStatus.connecting => 'Preparing…',
-      DisplayStatus.stopping => 'Finishing the last words…',
-      _ when active => 'Stop following',
-      _ => 'Start following',
+      DisplayStatus.connecting => l.controlPreparing,
+      DisplayStatus.stopping => l.controlFinishing,
+      _ when active => l.controlStop,
+      _ => l.controlStart,
     };
     final focusSide = WidgetStateProperty.resolveWith<BorderSide?>((s) {
       if (s.contains(WidgetState.focused)) return BorderSide(color: c.signal, width: 2);
@@ -41,7 +43,7 @@ class ListenControl extends StatelessWidget {
     return Semantics(
       button: true,
       enabled: !busy,
-      label: active ? 'Stop following' : 'Start following the imam',
+      label: active ? l.controlStop : l.semStartFollowing,
       excludeSemantics: true,
       onTap: busy ? null : onPressed,
       child: AnimatedContainer(
@@ -87,8 +89,9 @@ class MicLevel extends StatelessWidget {
     final c = context.colors;
     // Peaks are small at prayer-row distance: a square root spreads them out.
     final lit = hearing ? (5 * math.sqrt(level.clamp(0.0, 1.0))).ceil().clamp(1, 5) : 0;
+    final words = hearing ? context.l10n.hearingSound : context.l10n.veryLittleSound;
     return Semantics(
-      label: hearing ? 'Hearing sound' : 'Very little sound',
+      label: words,
       excludeSemantics: true,
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -109,7 +112,7 @@ class MicLevel extends StatelessWidget {
           const SizedBox(width: 10),
           Flexible(
             child: Text(
-              hearing ? 'Hearing sound' : 'Very little sound',
+              words,
               style: RubricText.caption.copyWith(color: c.inkSecondary),
             ),
           ),
