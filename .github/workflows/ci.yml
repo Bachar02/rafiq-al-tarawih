@@ -62,9 +62,16 @@ jobs:
       - name: Analyze
         working-directory: mobile
         run: flutter analyze
-      - name: Test
+      - name: Test (unit, widget and golden screenshots)
         working-directory: mobile
         run: flutter test
+      - name: Upload golden screenshot diffs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: golden-failures
+          path: mobile/test/golden/failures/
+          if-no-files-found: ignore
       - name: Android build
         working-directory: mobile
         run: flutter build apk --debug

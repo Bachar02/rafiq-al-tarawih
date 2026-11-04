@@ -38,3 +38,6 @@ Thumbs.db
 
 # Design handoff archives (kept outside the repo)
 /*.zip
+
+# Golden screenshot diffs from a failed run (mobile/test/golden/README.md)
+mobile/test/golden/failures/
