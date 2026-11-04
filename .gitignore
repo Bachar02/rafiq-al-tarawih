@@ -25,6 +25,7 @@ venv/
 # Flutter (Phase 5)
 mobile/.dart_tool/
 mobile/build/
+mobile/android/.kotlin/
 mobile/.flutter-plugins*
 
 # Editor / OS
