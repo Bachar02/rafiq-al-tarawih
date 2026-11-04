@@ -25,6 +25,9 @@ DEFAULT_OUT = DATA_DIR / "quran.json"
 
 TOTAL_VERSES = 6236
 TOTAL_SURAHS = 114
+TOTAL_JUZS = 30
+TOTAL_PAGES = 604  # the Madinah mushaf (King Fahd Complex), which Tanzil's page marks follow
+TOTAL_QUARTERS = 240  # hizb quarters (rubʿ al-ḥizb): 60 hizbs of 4, 8 per juz
 
 SOURCE_NOTE = "Tanzil Quran Text (Simple Clean, v1.1; Uthmani, v1.1) + Tanzil metadata, https://tanzil.net"
 LICENSE_NOTE = "Creative Commons Attribution 3.0 — Copyright (C) Tanzil Project"
@@ -94,7 +97,21 @@ def parse_metadata(path: Path) -> dict:
         }
         for el in root.findall("./sajdas/sajda")
     ]
-    return {"surahs": surahs, "juzs": juzs, "sajdas": sajdas}
+    return {
+        "surahs": surahs,
+        "juzs": juzs,
+        "sajdas": sajdas,
+        "pages": _marks(root, "./pages/page"),
+        "hizb_quarters": _marks(root, "./hizbs/quarter"),
+    }
+
+
+def _marks(root: ET.Element, path: str) -> list[dict]:
+    """Ordered start marks (`index`, `sura`, `aya`): pages and hizb quarters."""
+    return [
+        {"index": int(el.get("index")), "surah": int(el.get("sura")), "ayah": int(el.get("aya"))}
+        for el in root.findall(path)
+    ]
 
 
 def validate(verses: list[dict], meta: dict) -> None:
@@ -148,6 +165,51 @@ def validate(verses: list[dict], meta: dict) -> None:
         for m in marks:
             if (m["surah"], m["ayah"]) not in valid:
                 raise BuildError(f"{name} {m['index']} points at nonexistent verse {m['surah']}:{m['ayah']}")
+
+    validate_divisions(verses, meta)
+
+
+def validate_divisions(verses: list[dict], meta: dict) -> None:
+    """Juz, page and hizb-quarter starts: each a complete, ordered partition.
+
+    The app navigates by these and shows them in the margin, so a mark that
+    is missing, out of order or off by one would put a reader on the wrong
+    page without any visible error. Juz starts are also checked against the
+    quarter starts (juz k begins at quarter 8(k-1)+1): two independent tables
+    in the metadata that must agree.
+    """
+    ids = {(v["surah"], v["ayah"]): v["id"] for v in verses}
+    divisions = (
+        ("juz", meta["juzs"], TOTAL_JUZS),
+        ("page", meta["pages"], TOTAL_PAGES),
+        ("hizb quarter", meta["hizb_quarters"], TOTAL_QUARTERS),
+    )
+    for name, marks, total in divisions:
+        if len(marks) != total:
+            raise BuildError(f"metadata has {len(marks)} {name} marks, expected {total}")
+        if [m["index"] for m in marks] != list(range(1, total + 1)):
+            raise BuildError(f"{name} indices are not 1..{total} in order")
+        previous = 0
+        for m in marks:
+            verse_id = ids.get((m["surah"], m["ayah"]))
+            if verse_id is None:
+                raise BuildError(f"{name} {m['index']} points at nonexistent verse {m['surah']}:{m['ayah']}")
+            if verse_id <= previous:
+                raise BuildError(
+                    f"{name} {m['index']} ({m['surah']}:{m['ayah']}) does not follow the previous one"
+                )
+            previous = verse_id
+        if (marks[0]["surah"], marks[0]["ayah"]) != (1, 1):
+            raise BuildError(f"{name} 1 does not start at 1:1")
+
+    quarters = meta["hizb_quarters"]
+    for juz in meta["juzs"]:
+        quarter = quarters[8 * (juz["index"] - 1)]
+        if (juz["surah"], juz["ayah"]) != (quarter["surah"], quarter["ayah"]):
+            raise BuildError(
+                f"juz {juz['index']} starts at {juz['surah']}:{juz['ayah']}, but its first hizb quarter "
+                f"at {quarter['surah']}:{quarter['ayah']}"
+            )
 
 
 BASMALA = "بسم الله الرحمن الرحيم"
@@ -251,6 +313,8 @@ def build(text_src: Path, meta_src: Path, uthmani_src: Path = UTHMANI_SRC) -> di
         "verses": verses,
         "juzs": meta["juzs"],
         "sajdas": meta["sajdas"],
+        "pages": meta["pages"],
+        "hizb_quarters": meta["hizb_quarters"],
     }
 
 
@@ -280,7 +344,9 @@ def main() -> int:
     print(
         f"wrote {args.out} "
         f"({payload['meta']['verse_count']} verses, {payload['meta']['surah_count']} surahs, "
-        f"{len(payload['juzs'])} juzs, {len(payload['sajdas'])} sajdas, {size_mb:.2f} MB)"
+        f"{len(payload['juzs'])} juzs, {len(payload['pages'])} pages, "
+        f"{len(payload['hizb_quarters'])} hizb quarters, "
+        f"{len(payload['sajdas'])} sajdas, {size_mb:.2f} MB)"
     )
     return 0
 
