@@ -30,12 +30,12 @@ class ListenControl extends StatelessWidget {
       _ when active => 'Stop following',
       _ => 'Start following',
     };
-    final focusSide = MaterialStateProperty.resolveWith<BorderSide?>((s) {
-      if (s.contains(MaterialState.focused)) return BorderSide(color: c.signal, width: 2);
-      if (s.contains(MaterialState.disabled)) return BorderSide(color: c.hairline);
+    final focusSide = WidgetStateProperty.resolveWith<BorderSide?>((s) {
+      if (s.contains(WidgetState.focused)) return BorderSide(color: c.signal, width: 2);
+      if (s.contains(WidgetState.disabled)) return BorderSide(color: c.hairline);
       return active ? BorderSide(color: c.ink) : null;
     });
-    final size = MaterialStatePropertyAll(Size.fromHeight(height));
+    final size = WidgetStatePropertyAll(Size.fromHeight(height));
     final text = Text(label, maxLines: 1, overflow: TextOverflow.ellipsis);
 
     return Semantics(
@@ -54,7 +54,7 @@ class ListenControl extends StatelessWidget {
                 style: ButtonStyle(
                   side: focusSide,
                   minimumSize: size,
-                  textStyle: MaterialStatePropertyAll(RubricText.labelLg),
+                  textStyle: WidgetStatePropertyAll(RubricText.labelLg),
                 ),
                 child: text,
               )

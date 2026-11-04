@@ -7,6 +7,7 @@
 /// need the user use [RafiqColors.signal] (lapis) with an icon and words.
 library;
 
+import 'package:flutter/cupertino.dart' show CupertinoPageTransitionsBuilder;
 import 'package:flutter/material.dart';
 
 /// The Rubric palette. Elevation is lightness only: there are no shadows.
@@ -337,11 +338,9 @@ class AppTheme {
       // Errors are not alarming during prayer: lapis, never red.
       error: c.signal,
       onError: c.ground,
-      background: c.ground,
-      onBackground: c.ink,
       surface: c.ground,
       onSurface: c.ink,
-      surfaceVariant: c.surface,
+      surfaceContainerHighest: c.surface,
       onSurfaceVariant: c.inkSecondary,
       outline: c.hairline,
       outlineVariant: c.hairline,
@@ -371,8 +370,8 @@ class AppTheme {
 
     final radiusMd = BorderRadius.circular(RubricRadius.md);
     final pill = RoundedRectangleBorder(borderRadius: BorderRadius.circular(RubricRadius.pill));
-    MaterialStateProperty<Color?> pressed(Color? normal, Color? onPress) =>
-        MaterialStateProperty.resolveWith((s) => s.contains(MaterialState.pressed) ? onPress : normal);
+    WidgetStateProperty<Color?> pressed(Color? normal, Color? onPress) =>
+        WidgetStateProperty.resolveWith((s) => s.contains(WidgetState.pressed) ? onPress : normal);
 
     return ThemeData(
       useMaterial3: true,
@@ -384,9 +383,9 @@ class AppTheme {
       fontFamily: uiFont,
       textTheme: text,
       splashFactory: NoSplash.splashFactory,
-      highlightColor: c.surfaceRaised.withOpacity(0.6),
-      hoverColor: c.surfaceRaised.withOpacity(0.4),
-      focusColor: c.signal.withOpacity(0.16),
+      highlightColor: c.surfaceRaised.withValues(alpha: 0.6),
+      hoverColor: c.surfaceRaised.withValues(alpha: 0.4),
+      focusColor: c.signal.withValues(alpha: 0.16),
       dividerColor: c.hairline,
       dividerTheme: DividerThemeData(color: c.hairline, thickness: 1, space: 1),
       iconTheme: IconThemeData(color: c.inkSecondary, size: 24),
@@ -404,7 +403,7 @@ class AppTheme {
       iconButtonTheme: IconButtonThemeData(
         style: ButtonStyle(
           foregroundColor: pressed(c.inkSecondary, c.ink),
-          minimumSize: const MaterialStatePropertyAll(Size(RubricSpace.s12, RubricSpace.s12)),
+          minimumSize: const WidgetStatePropertyAll(Size(RubricSpace.s12, RubricSpace.s12)),
         ),
       ),
       filledButtonTheme: FilledButtonThemeData(
@@ -435,7 +434,7 @@ class AppTheme {
           textStyle: RubricText.label.weighted(500),
         ),
       ),
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         color: c.surface,
         elevation: 0,
         margin: EdgeInsets.zero,
@@ -454,35 +453,35 @@ class AppTheme {
       ),
       switchTheme: SwitchThemeData(
         // Not cinnabar: a setting is not a position.
-        trackColor: MaterialStateProperty.resolveWith((s) => s.contains(MaterialState.selected) ? c.ink : c.hairline),
+        trackColor: WidgetStateProperty.resolveWith((s) => s.contains(WidgetState.selected) ? c.ink : c.hairline),
         thumbColor:
-            MaterialStateProperty.resolveWith((s) => s.contains(MaterialState.selected) ? c.ground : c.inkSecondary),
-        trackOutlineColor: const MaterialStatePropertyAll(Colors.transparent),
-        thumbIcon: const MaterialStatePropertyAll(null),
+            WidgetStateProperty.resolveWith((s) => s.contains(WidgetState.selected) ? c.ground : c.inkSecondary),
+        trackOutlineColor: const WidgetStatePropertyAll(Colors.transparent),
+        thumbIcon: const WidgetStatePropertyAll(null),
       ),
       sliderTheme: SliderThemeData(
         activeTrackColor: c.ink,
         inactiveTrackColor: c.hairline,
         thumbColor: c.ink,
-        overlayColor: c.ink.withOpacity(0.08),
-        activeTickMarkColor: c.ground.withOpacity(0.5),
-        inactiveTickMarkColor: c.inkSecondary.withOpacity(0.5),
+        overlayColor: c.ink.withValues(alpha: 0.08),
+        activeTickMarkColor: c.ground.withValues(alpha: 0.5),
+        inactiveTickMarkColor: c.inkSecondary.withValues(alpha: 0.5),
         valueIndicatorColor: c.surfaceRaised,
         valueIndicatorTextStyle: text.bodyMedium,
         trackHeight: 2,
       ),
       segmentedButtonTheme: SegmentedButtonThemeData(
         style: ButtonStyle(
-          backgroundColor: MaterialStateProperty.resolveWith(
-            (s) => s.contains(MaterialState.selected) ? c.surface : Colors.transparent,
+          backgroundColor: WidgetStateProperty.resolveWith(
+            (s) => s.contains(WidgetState.selected) ? c.surface : Colors.transparent,
           ),
-          foregroundColor: MaterialStateProperty.resolveWith(
-            (s) => s.contains(MaterialState.selected) ? c.ink : c.inkSecondary,
+          foregroundColor: WidgetStateProperty.resolveWith(
+            (s) => s.contains(WidgetState.selected) ? c.ink : c.inkSecondary,
           ),
-          side: MaterialStatePropertyAll(BorderSide(color: c.hairline)),
-          shape: MaterialStatePropertyAll(RoundedRectangleBorder(borderRadius: radiusMd)),
-          textStyle: MaterialStatePropertyAll(RubricText.label.weighted(500)),
-          minimumSize: const MaterialStatePropertyAll(Size(0, 44)),
+          side: WidgetStatePropertyAll(BorderSide(color: c.hairline)),
+          shape: WidgetStatePropertyAll(RoundedRectangleBorder(borderRadius: radiusMd)),
+          textStyle: WidgetStatePropertyAll(RubricText.label.weighted(500)),
+          minimumSize: const WidgetStatePropertyAll(Size(0, 44)),
         ),
       ),
       bottomSheetTheme: BottomSheetThemeData(
@@ -499,7 +498,7 @@ class AppTheme {
           borderRadius: BorderRadius.vertical(top: Radius.circular(RubricRadius.sheet)),
         ),
       ),
-      dialogTheme: DialogTheme(
+      dialogTheme: DialogThemeData(
         backgroundColor: c.surfaceRaised,
         surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(borderRadius: radiusMd),
@@ -525,7 +524,7 @@ class AppTheme {
       ),
       textSelectionTheme: TextSelectionThemeData(
         cursorColor: c.ink,
-        selectionColor: c.signal.withOpacity(0.3),
+        selectionColor: c.signal.withValues(alpha: 0.3),
         selectionHandleColor: c.signal,
       ),
       progressIndicatorTheme: ProgressIndicatorThemeData(color: c.inkSecondary, linearTrackColor: c.hairline),

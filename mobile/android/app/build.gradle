@@ -45,7 +45,7 @@ android {
         applicationId "app.rafiq.rafiq"
         // You can update the following values to match your application needs.
         // For more information, see: https://docs.flutter.dev/deployment/android#reviewing-the-gradle-build-configuration.
-        minSdkVersion 23  // record_android needs API 23 (Android 6.0)
+        minSdkVersion flutter.minSdkVersion  // 24 (Android 7.0): Flutter 3.47 migrates any lower value to this
         targetSdkVersion flutter.targetSdkVersion
         versionCode flutterVersionCode.toInteger()
         versionName flutterVersionName

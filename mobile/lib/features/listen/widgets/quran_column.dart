@@ -241,7 +241,7 @@ class QuranColumnState extends State<QuranColumn> {
                     gradient: LinearGradient(
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
-                      colors: [ground.withOpacity(0), ground],
+                      colors: [ground.withValues(alpha: 0), ground],
                     ),
                   ),
                 ),

@@ -5,8 +5,9 @@
 #   mobile/tool/goldens.sh check    # compare; diffs land in test/golden/failures/
 #   mobile/tool/goldens.sh update   # re-render test/golden/screens/*.png
 #
-# The working copy is mounted read-only and copied inside the container, so the
-# host's .dart_tool and build folders are never touched.
+# The Flutter version is read from .github/workflows/ci.yml, so local renders
+# and CI always use the same one. The working copy is mounted read-only and
+# copied inside the container: the host's .dart_tool and build are untouched.
 set -euo pipefail
 
 case "${1:-check}" in
@@ -15,13 +16,22 @@ case "${1:-check}" in
   *) echo "usage: $0 check|update" >&2; exit 2 ;;
 esac
 
-# Keep in step with flutter-version in .github/workflows/ci.yml.
-image="ghcr.io/cirruslabs/flutter:3.19.5"
+tool="$(cd "$(dirname "$0")" && pwd)"
+mobile="$(dirname "$tool")"
+version="$(sed -nE 's/^\s*flutter-version:\s*"?([0-9.]+)"?.*/\1/p' "$mobile/../.github/workflows/ci.yml" | head -1)"
+[ -n "$version" ] || { echo "flutter-version not found in .github/workflows/ci.yml" >&2; exit 1; }
+image="rafiq-goldens:$version"
 
-mobile="$(cd "$(dirname "$0")/.." && pwd)"
 if command -v cygpath >/dev/null 2>&1; then # Git Bash on Windows
   mobile="$(cygpath -m "$mobile")"
+  tool="$(cygpath -m "$tool")"
   export MSYS_NO_PATHCONV=1
+fi
+
+if ! docker image inspect "$image" >/dev/null 2>&1; then
+  echo "Building $image (once per Flutter version)…"
+  docker build --platform linux/amd64 --build-arg FLUTTER_VERSION="$version" -t "$image" \
+    -f "$tool/goldens.Dockerfile" "$tool"
 fi
 
 docker run --rm --platform linux/amd64 \

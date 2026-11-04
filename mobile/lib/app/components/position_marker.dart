@@ -62,7 +62,7 @@ class _MarkerPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     canvas.scale(size.width / 24, size.height / 24);
     if (fill > 0) {
-      canvas.drawPath(_rhombus, Paint()..color = color.withOpacity(color.opacity * fill));
+      canvas.drawPath(_rhombus, Paint()..color = color.withValues(alpha: color.a * fill));
     }
     canvas.drawPath(
       _rhombus,

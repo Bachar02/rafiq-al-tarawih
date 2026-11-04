@@ -43,13 +43,13 @@ class ReturnToImam extends StatelessWidget {
             child: OutlinedButton(
               onPressed: onTap,
               style: ButtonStyle(
-                backgroundColor: MaterialStatePropertyAll(c.surfaceRaised),
-                foregroundColor: MaterialStatePropertyAll(c.ink),
-                minimumSize: const MaterialStatePropertyAll(Size(0, 56)),
-                padding: const MaterialStatePropertyAll(EdgeInsets.symmetric(horizontal: RubricSpace.s6)),
-                textStyle: MaterialStatePropertyAll(RubricText.labelLg),
-                side: MaterialStateProperty.resolveWith(
-                  (s) => BorderSide(color: s.contains(MaterialState.pressed) ? c.ink : c.hairline),
+                backgroundColor: WidgetStatePropertyAll(c.surfaceRaised),
+                foregroundColor: WidgetStatePropertyAll(c.ink),
+                minimumSize: const WidgetStatePropertyAll(Size(0, 56)),
+                padding: const WidgetStatePropertyAll(EdgeInsets.symmetric(horizontal: RubricSpace.s6)),
+                textStyle: WidgetStatePropertyAll(RubricText.labelLg),
+                side: WidgetStateProperty.resolveWith(
+                  (s) => BorderSide(color: s.contains(WidgetState.pressed) ? c.ink : c.hairline),
                 ),
               ),
               child: Row(
