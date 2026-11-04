@@ -652,4 +652,19 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get tooltipScrollView => 'القراءة بالتمرير المتصل';
+
+  @override
+  String get share => 'مشاركة';
+
+  @override
+  String get shareAyah => 'مشاركة الآية';
+
+  @override
+  String get shareAsImage => 'مشاركة كصورة';
+
+  @override
+  String get shareAsText => 'مشاركة كنص';
+
+  @override
+  String get shareFailed => 'تعذّرت المشاركة. أعد المحاولة.';
 }

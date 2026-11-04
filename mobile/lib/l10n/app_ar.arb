@@ -182,5 +182,10 @@
   "layoutScroll": "تمرير",
   "layoutPages": "صفحات",
   "tooltipPageView": "القراءة صفحة صفحة",
-  "tooltipScrollView": "القراءة بالتمرير المتصل"
+  "tooltipScrollView": "القراءة بالتمرير المتصل",
+  "share": "مشاركة",
+  "shareAyah": "مشاركة الآية",
+  "shareAsImage": "مشاركة كصورة",
+  "shareAsText": "مشاركة كنص",
+  "shareFailed": "تعذّرت المشاركة. أعد المحاولة."
 }

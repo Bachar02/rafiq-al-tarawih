@@ -12,6 +12,7 @@ import 'package:rafiq/data/reading_store.dart';
 import 'package:rafiq/features/listen/listen_screen.dart';
 import 'package:rafiq/features/quran_view/quran_view.dart';
 import 'package:rafiq/features/reader/reader_screen.dart';
+import 'package:rafiq/features/reader/share_ayah_sheet.dart';
 import 'package:rafiq/features/reader/reading_position.dart';
 
 import '../support/fakes.dart';
@@ -382,6 +383,47 @@ void main() {
       expect(find.byType(MushafPageView), findsOneWidget);
       await restart(tester);
       expect(find.byType(MushafPageView), findsOneWidget);
+    });
+  });
+
+  group('share', () {
+    Future<void> openShare(WidgetTester tester, int verseId) async {
+      tester.widget<AyahBlock>(ayah(verseId)).onTap!();
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.text('Share'));
+      await tester.tap(find.text('Share'));
+      await tester.pumpAndSettle();
+      expect(find.text('Share the ayah'), findsOneWidget);
+      expect(find.byType(AyahCard), findsOneWidget);
+    }
+
+    testWidgets('as text: the ayah and its reference', (tester) async {
+      await launch(tester);
+      await openShare(tester, 2);
+      await tester.ensureVisible(find.text('Share as text'));
+      await tester.tap(find.text('Share as text'));
+      await tester.pumpAndSettle();
+      expect(h.sharer.texts.single, startsWith(quran.verse(2).uthmani));
+      expect(h.sharer.texts.single, endsWith('— Al-Fatiha 1:2'));
+      expect(find.text('Share the ayah'), findsNothing, reason: 'the sheet closes once shared');
+    });
+
+    testWidgets('as an image: the card rendered at 3x, named after the ayah', (tester) async {
+      await launch(tester);
+      await openShare(tester, 2);
+      await tester.ensureVisible(find.text('Share as an image'));
+      // Rendering to an image is real work the fake clock does not drive.
+      await tester.runAsync(() async {
+        await tester.tap(find.text('Share as an image'));
+        for (var i = 0; i < 20 && h.sharer.images.isEmpty; i++) {
+          await Future<void>.delayed(const Duration(milliseconds: 50));
+        }
+      });
+      await tester.pumpAndSettle();
+      final image = h.sharer.images.single;
+      expect(image.fileName, 'rafiq-1-2.png');
+      expect(image.text, 'Al-Fatiha 1:2');
+      expect(image.bytes, greaterThan(1000));
     });
   });
 }

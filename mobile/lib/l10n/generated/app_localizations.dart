@@ -1190,6 +1190,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Read as one scroll'**
   String get tooltipScrollView;
+
+  /// No description provided for @share.
+  ///
+  /// In en, this message translates to:
+  /// **'Share'**
+  String get share;
+
+  /// No description provided for @shareAyah.
+  ///
+  /// In en, this message translates to:
+  /// **'Share the ayah'**
+  String get shareAyah;
+
+  /// No description provided for @shareAsImage.
+  ///
+  /// In en, this message translates to:
+  /// **'Share as an image'**
+  String get shareAsImage;
+
+  /// No description provided for @shareAsText.
+  ///
+  /// In en, this message translates to:
+  /// **'Share as text'**
+  String get shareAsText;
+
+  /// No description provided for @shareFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not share. Try again.'**
+  String get shareFailed;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

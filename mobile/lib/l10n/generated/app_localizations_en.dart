@@ -652,4 +652,19 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get tooltipScrollView => 'Read as one scroll';
+
+  @override
+  String get share => 'Share';
+
+  @override
+  String get shareAyah => 'Share the ayah';
+
+  @override
+  String get shareAsImage => 'Share as an image';
+
+  @override
+  String get shareAsText => 'Share as text';
+
+  @override
+  String get shareFailed => 'Could not share. Try again.';
 }

@@ -479,5 +479,10 @@
   "layoutScroll": "Scroll",
   "layoutPages": "Pages",
   "tooltipPageView": "Read page by page",
-  "tooltipScrollView": "Read as one scroll"
+  "tooltipScrollView": "Read as one scroll",
+  "share": "Share",
+  "shareAyah": "Share the ayah",
+  "shareAsImage": "Share as an image",
+  "shareAsText": "Share as text",
+  "shareFailed": "Could not share. Try again."
 }

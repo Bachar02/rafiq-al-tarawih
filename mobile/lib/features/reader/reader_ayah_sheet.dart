@@ -9,7 +9,7 @@ import '../../data/quran.dart';
 import '../../data/surah_names.dart';
 import '../../l10n/l10n.dart';
 
-enum ReaderAyahAction { bookmark, removeBookmark, copy }
+enum ReaderAyahAction { bookmark, removeBookmark, share, copy }
 
 /// The reader's actions on one ayah (a tap on its text).
 Future<ReaderAyahAction?> showReaderAyahSheet(
@@ -48,6 +48,12 @@ Future<ReaderAyahAction?> showReaderAyahSheet(
                 icon: const Icon(Icons.bookmark_add_outlined, size: 20),
                 label: Text(context.l10n.bookmark),
               ),
+            const SizedBox(height: RubricSpace.s2),
+            OutlinedButton.icon(
+              onPressed: () => Navigator.pop(context, ReaderAyahAction.share),
+              icon: const Icon(Icons.ios_share, size: 20),
+              label: Text(context.l10n.share),
+            ),
             const SizedBox(height: RubricSpace.s2),
             TextButton.icon(
               onPressed: () => Navigator.pop(context, ReaderAyahAction.copy),

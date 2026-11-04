@@ -50,6 +50,7 @@ dependencies:
   # Upgrade after the decision, then re-run the benchmark once.
   sherpa_onnx: 1.13.4
   path_provider: ^2.1.6
+  share_plus: ^13.3.1
 
 dev_dependencies:
   flutter_test:

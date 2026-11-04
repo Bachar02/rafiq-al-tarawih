@@ -182,5 +182,10 @@
   "layoutScroll": "Défilement",
   "layoutPages": "Pages",
   "tooltipPageView": "Lire page par page",
-  "tooltipScrollView": "Lire en défilement continu"
+  "tooltipScrollView": "Lire en défilement continu",
+  "share": "Partager",
+  "shareAyah": "Partager le verset",
+  "shareAsImage": "Partager en image",
+  "shareAsText": "Partager en texte",
+  "shareFailed": "Le partage a échoué. Réessayez."
 }

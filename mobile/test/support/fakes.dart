@@ -18,6 +18,7 @@ import 'package:rafiq/data/surah_names.dart';
 import 'package:rafiq/services/screen_awake.dart';
 import 'package:rafiq/services/server_health.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:rafiq/services/sharer.dart';
 
 class FakeAudioSource implements AudioSource {
   bool permission = true;
@@ -103,6 +104,18 @@ class FakeEngine implements RecognitionEngine {
   }
 }
 
+class FakeSharer implements Sharer {
+  final texts = <String>[];
+  final images = <({int bytes, String fileName, String? text})>[];
+
+  @override
+  Future<void> shareText(String text) async => texts.add(text);
+
+  @override
+  Future<void> shareImage(Uint8List png, {required String fileName, String? text}) async =>
+      images.add((bytes: png.length, fileName: fileName, text: text));
+}
+
 class FakeScreenAwake implements ScreenAwake {
   bool enabled = false;
 
@@ -127,6 +140,7 @@ class Harness {
   final SharedPreferences prefs;
   final audio = FakeAudioSource();
   final awake = FakeScreenAwake();
+  final sharer = FakeSharer();
   final engines = <FakeEngine>[];
   final addresses = <String>[];
   ServerHealth health = const ServerHealth.ok(latency: Duration(milliseconds: 12), asr: true, device: 'cuda');
@@ -148,6 +162,7 @@ class Harness {
         readingStoreProvider.overrideWithValue(readingStore ?? PrefsReadingStore(prefs)),
         audioSourceProvider.overrideWithValue(audio),
         screenAwakeProvider.overrideWithValue(awake),
+        sharerProvider.overrideWithValue(sharer),
         healthCheckerProvider.overrideWithValue((_) async => health),
         engineFactoryProvider.overrideWithValue((address) {
           addresses.add(address);

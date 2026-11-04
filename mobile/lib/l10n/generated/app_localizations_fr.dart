@@ -654,4 +654,19 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get tooltipScrollView => 'Lire en défilement continu';
+
+  @override
+  String get share => 'Partager';
+
+  @override
+  String get shareAyah => 'Partager le verset';
+
+  @override
+  String get shareAsImage => 'Partager en image';
+
+  @override
+  String get shareAsText => 'Partager en texte';
+
+  @override
+  String get shareFailed => 'Le partage a échoué. Réessayez.';
 }

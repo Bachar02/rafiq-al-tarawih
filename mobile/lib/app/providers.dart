@@ -22,6 +22,7 @@ import '../services/mic_audio_source.dart';
 import '../services/screen_awake.dart';
 import '../services/server_health.dart';
 import '../services/server_recognition_engine.dart';
+import '../services/sharer.dart';
 
 /// Loaded once at startup (see main.dart) and injected with an override.
 final quranProvider = Provider<Quran>((ref) => throw UnimplementedError('quranProvider must be overridden'));
@@ -82,6 +83,9 @@ final audioSourceProvider = Provider<AudioSource>((ref) {
 final engineFactoryProvider = Provider<RecognitionEngineFactory>(
   (ref) => (address) => ServerRecognitionEngine(address),
 );
+
+/// The phone's share sheet (tests override it).
+final sharerProvider = Provider<Sharer>((ref) => const PlatformSharer());
 
 final screenAwakeProvider = Provider<ScreenAwake>((ref) => const WakelockScreenAwake());
 

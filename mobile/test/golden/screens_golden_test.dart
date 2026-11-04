@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:rafiq/app/app.dart';
+import 'package:rafiq/app/components/quran_text.dart';
 import 'package:rafiq/core/recognition/models.dart';
 import 'package:rafiq/features/reader/widgets/taraweeh_entry.dart';
 
@@ -117,6 +118,18 @@ void main() {
           prefs: {...readingAt(78, 1), 'reading_layout': 'pages', 'theme_mode': 'dark'}, taraweeh: false);
       await settle(tester);
       await expectGolden(tester, 'reader_pages_dark');
+    });
+
+    testWidgets('share an ayah: the image card, dark', (tester) async {
+      await launch(tester, prefs: {...readingAt(2, 255), 'theme_mode': 'dark'}, taraweeh: false);
+      await settle(tester);
+      final quran = loadQuran();
+      final ayah = find.byWidgetPredicate((w) => w is AyahBlock && w.verse.id == quran.verseId(2, 255));
+      tester.widget<AyahBlock>(ayah.first).onTap!();
+      await settle(tester);
+      await tester.tap(find.text('Share'));
+      await settle(tester);
+      await expectGolden(tester, 'share_card');
     });
 
     testWidgets('Arabic interface: the reader, right to left', (tester) async {

@@ -15,6 +15,7 @@ import 'widgets/taraweeh_entry.dart';
 import '../../l10n/l10n.dart';
 import '../quran_view/mushaf_page_view.dart';
 import '../../data/settings.dart';
+import 'share_ayah_sheet.dart';
 
 /// Home: the Quran, open where the user stopped reading.
 ///
@@ -107,6 +108,8 @@ class ReaderScreenState extends ConsumerState<ReaderScreen> with WidgetsBindingO
         say(await bookmarks.add(verse.id) ? l.bookmarked(ref_) : l.bookmarkFailed);
       case ReaderAyahAction.removeBookmark:
         say(await bookmarks.remove(verse.id) ? l.bookmarkRemoved : l.bookmarkRemoveFailed);
+      case ReaderAyahAction.share:
+        await showShareAyahSheet(context, verse: verse, names: names);
       case ReaderAyahAction.copy:
         await copyAyah(verse, names);
         say(l.copied(ref_));
