@@ -6,11 +6,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../app/components/notice.dart';
 import '../../app/components/wordmark.dart';
 import '../../app/providers.dart';
+import '../../app/routes.dart';
 import '../../app/theme.dart';
 import '../../core/recognition/models.dart';
 import '../../data/quran.dart';
 import '../../data/surah_names.dart';
-import '../settings/settings_screen.dart';
 import 'display_status.dart';
 import 'listen_state.dart';
 import 'widgets/ayah_actions.dart';
@@ -74,7 +74,7 @@ class _ListenScreenState extends ConsumerState<ListenScreen> with WidgetsBinding
     status.active ? controller.stop() : controller.start();
   }
 
-  Future<void> _openSettings() => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const SettingsScreen()));
+  Future<void> _openSettings() => AppRoutes.settings(context);
 
   Future<void> _chooseHint(ListenState state) async {
     final choice = await showHintSheet(

@@ -12,6 +12,7 @@ import 'package:rafiq/core/audio/audio_source.dart';
 import 'package:rafiq/core/recognition/models.dart';
 import 'package:rafiq/core/recognition/recognition_engine.dart';
 import 'package:rafiq/data/quran.dart';
+import 'package:rafiq/data/reading_store.dart';
 import 'package:rafiq/data/settings.dart';
 import 'package:rafiq/data/surah_names.dart';
 import 'package:rafiq/services/screen_awake.dart';
@@ -130,6 +131,9 @@ class Harness {
   final addresses = <String>[];
   ServerHealth health = const ServerHealth.ok(latency: Duration(milliseconds: 12), asr: true, device: 'cuda');
 
+  /// Replace before launching to test storage failures.
+  ReadingStore? readingStore;
+
   FakeEngine get engine => engines.last;
 
   static Future<Harness> create({Map<String, Object> prefs = const {}}) async {
@@ -141,6 +145,7 @@ class Harness {
         quranProvider.overrideWithValue(loadQuran()),
         surahNamesProvider.overrideWithValue(loadSurahNames()),
         settingsStoreProvider.overrideWithValue(SettingsStore(prefs)),
+        readingStoreProvider.overrideWithValue(readingStore ?? PrefsReadingStore(prefs)),
         audioSourceProvider.overrideWithValue(audio),
         screenAwakeProvider.overrideWithValue(awake),
         healthCheckerProvider.overrideWithValue((_) async => health),

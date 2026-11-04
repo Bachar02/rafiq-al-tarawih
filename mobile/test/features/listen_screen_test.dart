@@ -52,6 +52,9 @@ void main() {
     addTearDown(tester.view.reset);
     await tester.pumpWidget(ProviderScope(overrides: h.overrides, child: const RafiqApp()));
     await tester.pump();
+    // The reader is home; Taraweeh mode is one tap away.
+    await tester.tap(find.bySemanticsLabel('Taraweeh: follow the imam'));
+    await tester.pumpAndSettle();
     return ProviderScope.containerOf(tester.element(find.byType(ListenScreen)));
   }
 
@@ -382,8 +385,18 @@ void main() {
     expect(currentAyahs(tester), [pos(2, 256).verseId]);
   });
 
-  testWidgets('light theme renders the same screen', (tester) async {
+  testWidgets('Taraweeh mode is dark over a light reader, unless turned off', (tester) async {
     h = await Harness.create(prefs: {'theme_mode': 'light'});
+    await launch(tester);
+    expect(Theme.of(tester.element(find.byType(ListenScreen))).brightness, Brightness.dark);
+    // Settings opened from Taraweeh mode keep its theme.
+    await tester.tap(find.byTooltip('Settings'));
+    await settle(tester);
+    expect(Theme.of(tester.element(find.byType(SettingsScreen))).brightness, Brightness.dark);
+  });
+
+  testWidgets('light theme renders the same screen', (tester) async {
+    h = await Harness.create(prefs: {'theme_mode': 'light', 'dark_during_taraweeh': false});
     await launch(tester);
     await startListening(tester);
     h.engine.emit(heard(at(93, 3)));

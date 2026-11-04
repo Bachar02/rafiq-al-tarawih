@@ -103,7 +103,10 @@ void main() {
       final d = store.load();
       expect(d.serverAddress, AppSettings.defaultServerAddress);
       expect(d.keepScreenOn, isTrue);
-      expect(d.themeMode, ThemeMode.dark);
+      // The reader follows the phone; Taraweeh mode is dark on its own.
+      expect(d.themeMode, ThemeMode.system);
+      expect(d.darkDuringTaraweeh, isTrue);
+      expect(d.taraweehIntroSeen, isFalse);
 
       await store.save(d.copyWith(serverAddress: ' 192.168.1.9:8765 ', textScale: 1.4, themeMode: ThemeMode.light));
       final back = store.load();
@@ -112,11 +115,29 @@ void main() {
       expect(back.themeMode, ThemeMode.light);
     });
 
+    test('a theme saved by an earlier version is kept', () async {
+      // v1 defaulted to dark and saved every field on any change.
+      SharedPreferences.setMockInitialValues({'theme_mode': 'dark', 'text_scale': 1.2});
+      final s = SettingsStore(await SharedPreferences.getInstance()).load();
+      expect(s.themeMode, ThemeMode.dark);
+      expect(s.textScale, 1.2);
+      expect(s.darkDuringTaraweeh, isTrue);
+    });
+
+    test('Taraweeh settings round-trip', () async {
+      SharedPreferences.setMockInitialValues({});
+      final store = SettingsStore(await SharedPreferences.getInstance());
+      await store.save(store.load().copyWith(darkDuringTaraweeh: false, taraweehIntroSeen: true));
+      final back = store.load();
+      expect(back.darkDuringTaraweeh, isFalse);
+      expect(back.taraweehIntroSeen, isTrue);
+    });
+
     test('out-of-range or corrupt values fall back safely', () async {
       SharedPreferences.setMockInitialValues({'text_scale': 9.0, 'theme_mode': 'neon'});
       final s = SettingsStore(await SharedPreferences.getInstance()).load();
       expect(s.textScale, 1.6);
-      expect(s.themeMode, ThemeMode.dark);
+      expect(s.themeMode, ThemeMode.system);
     });
   });
 }

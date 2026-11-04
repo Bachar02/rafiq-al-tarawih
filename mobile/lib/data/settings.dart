@@ -8,7 +8,9 @@ class AppSettings {
     this.keepScreenOn = true,
     this.textScale = 1.0,
     this.showDiagnostics = false,
-    this.themeMode = ThemeMode.dark,
+    this.themeMode = ThemeMode.system,
+    this.darkDuringTaraweeh = true,
+    this.taraweehIntroSeen = false,
   });
 
   /// The Android emulator's alias for the host machine. On a real phone this
@@ -28,8 +30,17 @@ class AppSettings {
   /// Show the live transcript feed (for field testing).
   final bool showDiagnostics;
 
-  /// Dark by default: Taraweeh is at night.
+  /// The reader follows the phone by default. A value saved by an earlier
+  /// version (which defaulted to dark) is kept as it is.
   final ThemeMode themeMode;
+
+  /// Taraweeh mode is always dark, whatever [themeMode]: it is at night, in
+  /// a dim prayer hall.
+  final bool darkDuringTaraweeh;
+
+  /// The first-run Taraweeh introduction (microphone, Ḥafṣ only, where to
+  /// put the phone) has been shown. It is never shown again.
+  final bool taraweehIntroSeen;
 
   AppSettings copyWith({
     String? serverAddress,
@@ -37,6 +48,8 @@ class AppSettings {
     double? textScale,
     bool? showDiagnostics,
     ThemeMode? themeMode,
+    bool? darkDuringTaraweeh,
+    bool? taraweehIntroSeen,
   }) =>
       AppSettings(
         serverAddress: serverAddress ?? this.serverAddress,
@@ -44,6 +57,8 @@ class AppSettings {
         textScale: textScale ?? this.textScale,
         showDiagnostics: showDiagnostics ?? this.showDiagnostics,
         themeMode: themeMode ?? this.themeMode,
+        darkDuringTaraweeh: darkDuringTaraweeh ?? this.darkDuringTaraweeh,
+        taraweehIntroSeen: taraweehIntroSeen ?? this.taraweehIntroSeen,
       );
 }
 
@@ -58,6 +73,8 @@ class SettingsStore {
   static const _scale = 'text_scale';
   static const _diag = 'show_diagnostics';
   static const _theme = 'theme_mode';
+  static const _darkTaraweeh = 'dark_during_taraweeh';
+  static const _introSeen = 'taraweeh_intro_seen';
 
   AppSettings load() {
     const d = AppSettings();
@@ -69,6 +86,8 @@ class SettingsStore {
           .toDouble(),
       showDiagnostics: _prefs.getBool(_diag) ?? d.showDiagnostics,
       themeMode: ThemeMode.values.asNameMap()[_prefs.getString(_theme)] ?? d.themeMode,
+      darkDuringTaraweeh: _prefs.getBool(_darkTaraweeh) ?? d.darkDuringTaraweeh,
+      taraweehIntroSeen: _prefs.getBool(_introSeen) ?? d.taraweehIntroSeen,
     );
   }
 
@@ -78,5 +97,7 @@ class SettingsStore {
     await _prefs.setDouble(_scale, s.textScale);
     await _prefs.setBool(_diag, s.showDiagnostics);
     await _prefs.setString(_theme, s.themeMode.name);
+    await _prefs.setBool(_darkTaraweeh, s.darkDuringTaraweeh);
+    await _prefs.setBool(_introSeen, s.taraweehIntroSeen);
   }
 }

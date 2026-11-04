@@ -23,19 +23,29 @@ const ratio = 2.0;
 void main() {
   late Harness h;
 
-  Future<void> launch(WidgetTester tester, {Map<String, Object> prefs = const {}, Size size = phone}) async {
+  /// Let transitions and scrolling finish (fixed steps: spinners never settle).
+  Future<void> settle(WidgetTester tester) async {
+    for (var i = 0; i < 15; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+  }
+
+  /// The app opens on the reader; [taraweeh] then enters Taraweeh mode.
+  Future<void> launch(
+    WidgetTester tester, {
+    Map<String, Object> prefs = const {},
+    Size size = phone,
+    bool taraweeh = true,
+  }) async {
     h = await Harness.create(prefs: prefs);
     tester.view.physicalSize = size * ratio;
     tester.view.devicePixelRatio = ratio;
     addTearDown(tester.view.reset);
     await tester.pumpWidget(ProviderScope(overrides: h.overrides, child: const RafiqApp()));
     await tester.pump();
-  }
-
-  /// Let transitions and scrolling finish (fixed steps: spinners never settle).
-  Future<void> settle(WidgetTester tester) async {
-    for (var i = 0; i < 15; i++) {
-      await tester.pump(const Duration(milliseconds: 100));
+    if (taraweeh) {
+      await tester.tap(find.bySemanticsLabel('Taraweeh: follow the imam'));
+      await settle(tester);
     }
   }
 
@@ -68,7 +78,30 @@ void main() {
     await expectLater(find.byType(RafiqApp), matchesGoldenFile('screens/$name.png'));
   }
 
+  /// A saved reading position, as the reading store writes it.
+  Map<String, Object> readingAt(int surah, int ayah) => {
+        'reading_position.v1': '{"v":1,"verse":${loadQuran().verseId(surah, ayah)},"at":"2026-11-04T18:00:00.000Z"}',
+      };
+
   group('Rubric screens', skip: goldenSkipReason, () {
+    testWidgets('reader: Al-Baqarah opens with its header, dark', (tester) async {
+      await launch(tester, prefs: {...readingAt(2, 1), 'theme_mode': 'dark'}, taraweeh: false);
+      await settle(tester);
+      await expectGolden(tester, 'reader_dark');
+    });
+
+    testWidgets('reader: a juz and page mark, light', (tester) async {
+      await launch(tester, prefs: {...readingAt(2, 140), 'theme_mode': 'light'}, taraweeh: false);
+      await settle(tester);
+      await expectGolden(tester, 'reader_light');
+    });
+
+    testWidgets('reader: 320×568 at the largest Quran text, in juz 30', (tester) async {
+      await launch(tester, prefs: {...readingAt(78, 1), 'text_scale': 1.6}, size: smallPhone, taraweeh: false);
+      await settle(tester);
+      await expectGolden(tester, 'reader_small_phone');
+    });
+
     testWidgets('following 93:3, dark', (tester) async {
       await launch(tester);
       await startListening(tester);
@@ -77,7 +110,7 @@ void main() {
     });
 
     testWidgets('following 93:3, light', (tester) async {
-      await launch(tester, prefs: {'theme_mode': 'light'});
+      await launch(tester, prefs: {'theme_mode': 'light', 'dark_during_taraweeh': false});
       await startListening(tester);
       await hear(tester, at(93, 3));
       await expectGolden(tester, 'following_light');

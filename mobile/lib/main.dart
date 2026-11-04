@@ -8,6 +8,7 @@ import 'app/app.dart';
 import 'app/providers.dart';
 import 'app/theme.dart';
 import 'data/quran.dart';
+import 'data/reading_store.dart';
 import 'data/settings.dart';
 import 'data/surah_names.dart';
 
@@ -25,6 +26,7 @@ Future<void> main() async {
           quranProvider.overrideWithValue(quran),
           surahNamesProvider.overrideWithValue(names),
           settingsStoreProvider.overrideWithValue(SettingsStore(prefs)),
+          readingStoreProvider.overrideWithValue(PrefsReadingStore(prefs)),
         ],
         child: const RafiqApp(),
       ),

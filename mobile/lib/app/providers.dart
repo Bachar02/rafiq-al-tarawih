@@ -7,10 +7,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/audio/audio_source.dart';
 import '../core/recognition/recognition_engine.dart';
 import '../data/quran.dart';
+import '../data/reading_store.dart';
 import '../data/settings.dart';
 import '../data/surah_names.dart';
 import '../features/listen/listen_controller.dart';
 import '../features/listen/listen_state.dart';
+import '../features/reader/bookmarks.dart';
+import '../features/reader/reading_position.dart';
 import '../services/mic_audio_source.dart';
 import '../services/screen_awake.dart';
 import '../services/server_health.dart';
@@ -28,6 +31,16 @@ final settingsStoreProvider =
     Provider<SettingsStore>((ref) => throw UnimplementedError('settingsStoreProvider must be overridden'));
 
 final settingsProvider = NotifierProvider<SettingsController, AppSettings>(SettingsController.new);
+
+/// Loaded once at startup (see main.dart) and injected with an override.
+final readingStoreProvider =
+    Provider<ReadingStore>((ref) => throw UnimplementedError('readingStoreProvider must be overridden'));
+
+/// The personal reading position (verse id at the top of the reader).
+final readingPositionProvider = NotifierProvider<ReadingPositionController, int>(ReadingPositionController.new);
+
+/// Bookmarked ayahs, newest first.
+final bookmarksProvider = NotifierProvider<BookmarksController, List<Bookmark>>(BookmarksController.new);
 
 class SettingsController extends Notifier<AppSettings> {
   @override

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../features/listen/listen_screen.dart';
+import '../features/reader/reader_screen.dart';
 import 'providers.dart';
 import 'theme.dart';
 
@@ -17,7 +17,7 @@ class RafiqApp extends ConsumerWidget {
       theme: AppTheme.light(),
       darkTheme: AppTheme.dark(),
       themeMode: themeMode,
-      home: const ListenScreen(),
+      home: const ReaderScreen(),
     );
   }
 }

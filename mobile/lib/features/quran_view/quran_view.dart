@@ -143,7 +143,7 @@ class _QuranViewState extends State<QuranView> {
 
   /// The item at scroll offset 0.
   late int _anchor;
-  final _scroll = ScrollController(initialScrollOffset: -RubricSpace.quranTop);
+  late final ScrollController _scroll;
 
   /// The items that are built now, by index: at most a screenful plus the cache.
   final _built = <int, BuildContext>{};
@@ -170,6 +170,7 @@ class _QuranViewState extends State<QuranView> {
     _book = BookIndex(widget.quran);
     final follow = widget.followVerse;
     _anchor = follow != null ? _book.ofVerse(follow) : _openingIndex(widget.initialVerse);
+    _scroll = ScrollController(initialScrollOffset: -_insetFor(_anchor));
     widget.controller?._view = this;
     _afterLayout(() {
       if (widget.followVerse != null) _follow(animate: false, force: true);
@@ -285,26 +286,36 @@ class _QuranViewState extends State<QuranView> {
 
   // -- scrolling -------------------------------------------------------------
 
+  /// Room above an item opened at the top. An ayah's high marks rise above
+  /// its first line box, so it gets [RubricSpace.quranTop]. A surah header,
+  /// or an ayah under a division mark, has its own space above: no inset, so
+  /// no sliver of the previous ayah shows over it.
+  double _insetFor(int index) => switch (_book.at(index)) {
+        SurahHeaderItem() => 0,
+        AyahItem(:final verse) => DivisionMark.labelFor(widget.quran, verse.id) == null ? RubricSpace.quranTop : 0,
+      };
+
   /// Put item [index] at [alignment] of the height: a scroll if it is
   /// built, otherwise a re-anchor.
   void _jumpToIndex(int index, {double alignment = 0}) {
     if (!mounted) return;
+    final inset = alignment == 0 ? _insetFor(index) : RubricSpace.quranTop;
     final g = _geometry(index);
     if (g != null && _scroll.hasClients) {
       final p = _scroll.position;
-      final to = p.pixels + g.top - g.viewport * alignment - RubricSpace.quranTop;
+      final to = p.pixels + g.top - g.viewport * alignment - inset;
       _scroll.jumpTo(to.clamp(p.minScrollExtent, p.maxScrollExtent));
     } else {
       setState(() {
         _anchor = index;
         _invalidate();
       });
-      if (_scroll.hasClients) _scroll.jumpTo(-RubricSpace.quranTop);
+      if (_scroll.hasClients) _scroll.jumpTo(-inset);
       if (alignment > 0) {
         _afterLayout(() {
           if (!_scroll.hasClients) return;
           final p = _scroll.position;
-          final to = -p.viewportDimension * alignment - RubricSpace.quranTop;
+          final to = -p.viewportDimension * alignment - inset;
           _scroll.jumpTo(to.clamp(p.minScrollExtent, p.maxScrollExtent));
         });
       }
