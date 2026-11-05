@@ -243,6 +243,40 @@ void main() {
       await expectGolden(tester, 'khatm_active');
     });
 
+    testWidgets('reading review: count this reading?, light', (tester) async {
+      await launch(
+        tester,
+        prefs: {
+          ...readingAt(18, 10),
+          'theme_mode': 'light',
+          PrefsReadingStore.pendingKey: '{"v":1,"days":{"2026-11-03":[290,291],"2026-11-04":[293,294,295,296]}}',
+        },
+        taraweeh: false,
+      );
+      await settle(tester);
+      await tester.tap(find.text('295'));
+      await settle(tester);
+      await expectGolden(tester, 'reading_review');
+    });
+
+    testWidgets('khatm: a juz to correct, dark', (tester) async {
+      final plan = KhatmPlan(startedOn: DateTime(2026, 11, 1), endsOn: DateTime(2026, 11, 30), startPage: 1)
+          .reading(DateTime(2026, 11, 1), [for (var p = 1; p <= 48; p++) p]);
+      await launch(
+        tester,
+        prefs: {PrefsReadingStore.khatmKey: jsonEncode(KhatmBook(active: plan).toJson()), 'theme_mode': 'dark'},
+        taraweeh: false,
+      );
+      await tapNav(tester, 'More');
+      await tester.tap(find.text('Khatm planner'));
+      await settle(tester);
+      await tester.ensureVisible(find.bySemanticsLabel(RegExp(r'^Juz 3,')));
+      await settle(tester);
+      await tester.tap(find.bySemanticsLabel(RegExp(r'^Juz 3,')));
+      await settle(tester);
+      await expectGolden(tester, 'khatm_juz');
+    });
+
     testWidgets('note sheet: an Arabic note, right to left, light', (tester) async {
       final quran = loadQuran();
       final verse = quran.verseId(2, 255)!;

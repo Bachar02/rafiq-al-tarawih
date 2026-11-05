@@ -151,6 +151,10 @@ class FailingStore implements ReadingStore {
   @override
   Future<bool> saveReadingLog(ReadingLog log) async => !failing && await _inner.saveReadingLog(log);
   @override
+  ReadingLog pendingReading() => _inner.pendingReading();
+  @override
+  Future<bool> savePendingReading(ReadingLog p) async => !failing && await _inner.savePendingReading(p);
+  @override
   KhatmBook khatm() => _inner.khatm();
   @override
   Future<bool> saveKhatm(KhatmBook book) async => !failing && await _inner.saveKhatm(book);

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../app/providers.dart';
 import '../../../app/theme.dart';
 import '../../../data/khatm.dart';
+import '../reading_session.dart';
 import '../../../l10n/l10n.dart';
 import '../../../data/settings.dart';
 
@@ -35,12 +36,18 @@ class ReaderBar extends ConsumerWidget {
     final juz = quran.juzOf(verse.id), page = quran.pageOf(verse.id);
     final pages = ref.watch(settingsProvider.select((s) => s.readingLayout)) == ReadingLayout.pages;
     // A khatm in progress sets today's target; otherwise the daily goal does.
+    // Today's pages include those waiting for review, so the count moves
+    // while reading; the review makes them final.
     final plan = ref.watch(khatmProvider.select((b) => b.active));
     final today = dateOnly(ref.read(clockProvider)());
     final dailyGoal = ref.watch(settingsProvider.select((s) => s.dailyGoalPages));
-    if (plan == null) ref.watch(readingProgressProvider);
+    final pending = ref.watch(readingSessionProvider.select((s) => s.pending));
     final goal = plan?.todayTarget(today) ?? dailyGoal;
-    final read = plan?.readOn(today) ?? (goal == 0 ? 0 : ref.read(readingProgressProvider.notifier).today);
+    final read = plan != null
+        ? planPagesReadOn(plan, pending, today)
+        : goal == 0
+            ? 0
+            : pagesReadOn(ref.watch(readingProgressProvider), pending, today);
     final progress = plan != null ? l.semKhatmToday(read, goal) : l.semTodayProgress(read, goal);
     final where = goal == 0
         ? l.juzPage(juz, page)

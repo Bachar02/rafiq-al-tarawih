@@ -673,7 +673,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get dailyGoalExplanation =>
-      'تُحسب الصفحة حين تتجاوزها في القراءة، بالتمرير أو بتقليب الصفحات. الانتقال المباشر لا يُحسب. عشرون صفحة في اليوم جزء كامل: ختمة في شهر.';
+      'تُحسب الصفحة إذا بقيت على الشاشة وقتًا يكفي لقراءتها، ثم تؤكّد ذلك بعد القراءة. عشرون صفحة في اليوم جزء كامل: ختمة في شهر.';
 
   @override
   String get dailyGoalOff => 'بدون';
@@ -1018,4 +1018,87 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get noNotesHint => 'المس آية، ثم «أضف ملاحظة». تظهر ملاحظاتك هنا.';
+
+  @override
+  String get reviewTitle => 'هل تُحسب هذه القراءة؟';
+
+  @override
+  String get reviewExplanation => 'بقيت هذه الصفحات على الشاشة وقتًا يكفي لقراءتها. ألغِ تحديد ما لم تقرأه.';
+
+  @override
+  String reviewCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'احسب $count صفحة',
+      many: 'احسب $count صفحة',
+      few: 'احسب $count صفحات',
+      two: 'احسب صفحتين',
+      one: 'احسب صفحة واحدة',
+      zero: 'لا تحسب شيئًا',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get reviewNotNow => 'ليس الآن';
+
+  @override
+  String get reviewDiscard => 'لا تحسبها';
+
+  @override
+  String reviewCounted(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'حُسبت $count صفحة',
+      many: 'حُسبت $count صفحة',
+      few: 'حُسبت $count صفحات',
+      two: 'حُسبت صفحتان',
+      one: 'حُسبت صفحة واحدة',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get reviewFailed => 'تعذّر حفظ قراءتك. ما زالت بانتظار التأكيد؛ حاول مجددًا.';
+
+  @override
+  String reviewWaiting(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count صفحة بانتظار الحساب',
+      many: '$count صفحة بانتظار الحساب',
+      few: '$count صفحات بانتظار الحساب',
+      two: 'صفحتان بانتظار الحساب',
+      one: 'صفحة واحدة بانتظار الحساب',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get reviewAction => 'راجِع';
+
+  @override
+  String get khatmMap => 'الصفحات المقروءة';
+
+  @override
+  String get khatmMapHint => 'المس جزءًا لتحديد صفحاته مقروءة أو غير مقروءة: لتصحيح خطأ، أو لإضافة قراءة من مصحف ورقي.';
+
+  @override
+  String semJuzTile(int juz, int read, int total) {
+    return 'الجزء $juz، قُرئت $read من $total صفحة';
+  }
+
+  @override
+  String khatmJuzPages(int first, int last, int read, int total) {
+    return 'الصفحات $first–$last · قُرئت $read من $total';
+  }
+
+  @override
+  String get khatmMarkAllRead => 'حدّد الكل مقروءًا';
+
+  @override
+  String get khatmMarkAllUnread => 'حدّد الكل غير مقروء';
 }

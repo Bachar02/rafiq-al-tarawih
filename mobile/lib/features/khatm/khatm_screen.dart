@@ -9,6 +9,9 @@ import '../../app/theme.dart';
 import '../../data/khatm.dart';
 import '../../data/quran.dart';
 import '../../l10n/l10n.dart';
+import '../reader/reading_review_sheet.dart';
+import '../reader/reading_session.dart';
+import 'khatm_page_map.dart';
 
 /// "Dec 3, 2026", in the interface language.
 String formatDay(AppLocalizations l, DateTime day) => DateFormat.yMMMd(l.localeName).format(day);
@@ -34,7 +37,7 @@ class KhatmScreen extends ConsumerWidget {
       body: ListView(
         padding: const EdgeInsets.fromLTRB(RubricSpace.gutter, 0, RubricSpace.gutter, RubricSpace.s8),
         children: [
-          if (plan == null) const _NewPlan() else _ActivePlan(plan: plan),
+          if (plan == null) const _NewPlan() else ...[_ActivePlan(plan: plan), KhatmPageMap(plan: plan)],
           if (book.finished.isNotEmpty)
             RubricGroup(
               label: l.khatmFinished,
@@ -220,6 +223,7 @@ class _ActivePlan extends ConsumerWidget {
     final quran = ref.watch(quranProvider);
     final today = dateOnly(ref.read(clockProvider)());
     final next = plan.nextPage ?? plan.startPage;
+    final pending = ref.watch(readingSessionProvider.select((s) => s.pending));
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -246,10 +250,25 @@ class _ActivePlan extends ConsumerWidget {
               ),
               const SizedBox(height: RubricSpace.s3),
               Text(
-                l.khatmToday(plan.readOn(today), plan.todayTarget(today)),
+                l.khatmToday(planPagesReadOn(plan, pending, today), plan.todayTarget(today)),
                 style: RubricText.label.copyWith(color: c.ink),
               ),
               Text(khatmTimeLine(l, plan, today), style: RubricText.caption.copyWith(color: c.inkSecondary)),
+              if (!pending.isEmpty) ...[
+                const SizedBox(height: RubricSpace.s2),
+                // Read but not counted yet: the review makes them final.
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        l.reviewWaiting(pending.length),
+                        style: RubricText.caption.copyWith(color: c.inkSecondary),
+                      ),
+                    ),
+                    TextButton(onPressed: () => showReadingReview(context, ref), child: Text(l.reviewAction)),
+                  ],
+                ),
+              ],
             ],
           ),
         ),

@@ -95,6 +95,16 @@ class KhatmPlan {
     return added.length == pages.length ? this : copyWith(pages: added);
   }
 
+  /// This plan with [unread] no longer read (the page map's correction).
+  KhatmPlan forgetting(Iterable<int> unread) {
+    final drop = unread.toSet();
+    if (!drop.any(pages.containsKey)) return this;
+    return copyWith(pages: {
+      for (final e in pages.entries)
+        if (!drop.contains(e.key)) e.key: e.value
+    });
+  }
+
   KhatmPlan copyWith({DateTime? endsOn, Map<int, String>? pages}) =>
       KhatmPlan(startedOn: startedOn, endsOn: endsOn ?? this.endsOn, startPage: startPage, pages: pages ?? this.pages);
 

@@ -13,6 +13,7 @@ import '../../data/reading_store.dart';
 import '../../l10n/l10n.dart';
 import '../khatm/khatm_screen.dart';
 import '../notes/note_sheet.dart';
+import '../reader/reading_session.dart';
 
 /// Every saved place, in two views.
 ///
@@ -105,6 +106,7 @@ class _BookmarksList extends ConsumerWidget {
     if (quranOrder) bookmarks.sort((a, b) => a.verseId.compareTo(b.verseId));
     final now = ref.read(clockProvider)();
     final plan = ref.watch(khatmProvider.select((b) => b.active));
+    final pending = ref.watch(readingSessionProvider.select((s) => s.pending));
 
     void open(int verseId, {bool mark = true}) => ref.read(readerRequestsProvider.notifier).open(verseId, mark: mark);
 
@@ -133,7 +135,7 @@ class _BookmarksList extends ConsumerWidget {
           PlaceTile(
             leading: Icon(Icons.flag_outlined, color: c.inkSecondary),
             title: l.khatmCard(plan.read),
-            subtitle: '${l.todayProgress(plan.readOn(now), plan.todayTarget(dateOnly(now)))} · '
+            subtitle: '${l.todayProgress(planPagesReadOn(plan, pending, now), plan.todayTarget(dateOnly(now)))} · '
                 '${khatmTimeLine(l, plan, dateOnly(now))}',
             trailing: Icon(Icons.chevron_right, color: c.inkSecondary),
             onTap: () => AppRoutes.khatm(context),

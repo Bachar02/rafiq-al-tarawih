@@ -45,14 +45,36 @@ class ReaderScreenState extends ConsumerState<ReaderScreen> with WidgetsBindingO
   /// Pinged whenever the text moves: the scrubber shows.
   final _activity = ValueNotifier<int>(0);
 
+  /// What decides whether the reader is in view (and reading time runs).
+  bool _appShown = true, _tabShown = true, _routeShown = true;
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    // Opening the app is not reading the page it opens on.
+    final state = WidgetsBinding.instance.lifecycleState;
+    _appShown = state == null || state == AppLifecycleState.resumed;
+    _tabShown = ref.read(homeTabProvider) == HomeTab.read;
     ref
-        .read(readingProgressProvider.notifier)
-        .jumpedTo(ref.read(quranProvider).pageOf(ref.read(readingPositionProvider)));
+        .read(readingSessionProvider.notifier)
+        .showPage(ref.read(quranProvider).pageOf(ref.read(readingPositionProvider)));
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // A route or sheet over the reader (settings, Taraweeh, an ayah's sheet).
+    _routeShown = ModalRoute.of(context)?.isCurrent ?? true;
+    _syncVisible();
+  }
+
+  /// Tell the reading session whether the text is in view, after this frame
+  /// (providers are not changed while widgets build).
+  void _syncVisible() {
+    final visible = _appShown && _tabShown && _routeShown;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) ref.read(readingSessionProvider.notifier).setVisible(visible);
+    });
   }
 
   @override
@@ -65,23 +87,27 @@ class ReaderScreenState extends ConsumerState<ReaderScreen> with WidgetsBindingO
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state != AppLifecycleState.resumed) {
+    final session = ref.read(readingSessionProvider.notifier);
+    if (state == AppLifecycleState.resumed) {
+      _appShown = true;
+      session.appResumed();
+    } else {
+      _appShown = false;
       unawaited(ref.read(readingPositionProvider.notifier).flush());
-      unawaited(ref.read(readingProgressProvider.notifier).flush());
-      unawaited(ref.read(khatmProvider.notifier).flush());
+      if (state == AppLifecycleState.paused || state == AppLifecycleState.hidden) session.appPaused();
     }
+    _syncVisible();
   }
 
   /// Open the text at [verseId] and mark it for a moment, so the eye finds it.
   void openAt(int verseId, {bool mark = true}) {
-    // A jump is not reading: nothing between here and there counts.
-    ref.read(readingProgressProvider.notifier).jumpedTo(ref.read(quranProvider).pageOf(verseId));
     if (_layout == ReadingLayout.pages) {
       _pages.jumpToVerse(verseId);
     } else {
       _view.jumpToVerse(verseId);
     }
     ref.read(readingPositionProvider.notifier).update(verseId);
+    ref.read(readingSessionProvider.notifier).showPage(ref.read(quranProvider).pageOf(verseId));
     if (!mark) return;
     _clearHighlight?.cancel();
     setState(() => _highlighted = verseId);
@@ -185,7 +211,7 @@ class ReaderScreenState extends ConsumerState<ReaderScreen> with WidgetsBindingO
     // Each view opens where the other left off: the reading position is
     // read (not watched) when the view is created, then the view owns it.
     final opening = ref.read(readingPositionProvider);
-    final progress = ref.read(readingProgressProvider.notifier);
+    final session = ref.read(readingSessionProvider.notifier);
     final position = ref.read(readingPositionProvider.notifier);
     final bookmarked = {for (final b in ref.watch(bookmarksProvider)) b.verseId};
     final noted = {for (final n in ref.watch(notesProvider)) n.verseId};
@@ -196,6 +222,11 @@ class ReaderScreenState extends ConsumerState<ReaderScreen> with WidgetsBindingO
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()
         ..showSnackBar(SnackBar(content: Text('${l.khatmComplete} · ${l.khatmInDays(after.finished.first.days)}')));
+    });
+    // Reading time runs only while the Read tab is shown.
+    ref.listen(homeTabProvider, (_, tab) {
+      _tabShown = tab == HomeTab.read;
+      _syncVisible();
     });
     // Another tab asked for a place: open it here.
     ref.listen(readerRequestsProvider, (_, request) {
@@ -231,7 +262,7 @@ class ReaderScreenState extends ConsumerState<ReaderScreen> with WidgetsBindingO
                             onAyahLongPress: _toggleBookmark,
                             onPageChanged: (page) {
                               position.update(quran.pages.start(page));
-                              progress.movedTo(page);
+                              session.showPage(page);
                               _moved();
                             },
                             onUserScroll: (_) => _moved(),
@@ -251,7 +282,7 @@ class ReaderScreenState extends ConsumerState<ReaderScreen> with WidgetsBindingO
                             onAyahLongPress: _toggleBookmark,
                             onTopVerseChanged: (verse) {
                               position.update(verse);
-                              progress.movedTo(quran.pageOf(verse));
+                              session.showPage(quran.pageOf(verse));
                               _moved();
                             },
                             bottomPadding: RubricSpace.s4,

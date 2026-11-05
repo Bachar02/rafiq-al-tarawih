@@ -1230,7 +1230,7 @@ abstract class AppLocalizations {
   /// No description provided for @dailyGoalExplanation.
   ///
   /// In en, this message translates to:
-  /// **'A page counts when you read past it, scrolling or turning. Jumps don\'t count. 20 pages a day is a juz: the whole Quran in a month.'**
+  /// **'A page counts once it has stayed on screen long enough to read, and you confirm it after reading. 20 pages a day is a juz: the whole Quran in a month.'**
   String get dailyGoalExplanation;
 
   /// No description provided for @dailyGoalOff.
@@ -1694,6 +1694,96 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Tap an ayah, then Add a note. Your notes appear here.'**
   String get noNotesHint;
+
+  /// No description provided for @reviewTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Count this reading?'**
+  String get reviewTitle;
+
+  /// No description provided for @reviewExplanation.
+  ///
+  /// In en, this message translates to:
+  /// **'These pages stayed on screen long enough to read. Untick any you did not read.'**
+  String get reviewExplanation;
+
+  /// No description provided for @reviewCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{Count nothing} =1{Count 1 page} other{Count {count} pages}}'**
+  String reviewCount(int count);
+
+  /// No description provided for @reviewNotNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Not now'**
+  String get reviewNotNow;
+
+  /// No description provided for @reviewDiscard.
+  ///
+  /// In en, this message translates to:
+  /// **'Don’t count these'**
+  String get reviewDiscard;
+
+  /// No description provided for @reviewCounted.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 page counted} other{{count} pages counted}}'**
+  String reviewCounted(int count);
+
+  /// No description provided for @reviewFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not save your reading. It is still waiting; try again.'**
+  String get reviewFailed;
+
+  /// No description provided for @reviewWaiting.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 page waiting to be counted} other{{count} pages waiting to be counted}}'**
+  String reviewWaiting(int count);
+
+  /// No description provided for @reviewAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Review'**
+  String get reviewAction;
+
+  /// No description provided for @khatmMap.
+  ///
+  /// In en, this message translates to:
+  /// **'Pages read'**
+  String get khatmMap;
+
+  /// No description provided for @khatmMapHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap a juz to mark its pages read or unread: to fix a mistake, or to add reading from a paper mushaf.'**
+  String get khatmMapHint;
+
+  /// No description provided for @semJuzTile.
+  ///
+  /// In en, this message translates to:
+  /// **'Juz {juz}, {read} of {total} pages read'**
+  String semJuzTile(int juz, int read, int total);
+
+  /// No description provided for @khatmJuzPages.
+  ///
+  /// In en, this message translates to:
+  /// **'Pages {first}–{last} · {read} of {total} read'**
+  String khatmJuzPages(int first, int last, int read, int total);
+
+  /// No description provided for @khatmMarkAllRead.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark all read'**
+  String get khatmMarkAllRead;
+
+  /// No description provided for @khatmMarkAllUnread.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark all unread'**
+  String get khatmMarkAllUnread;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

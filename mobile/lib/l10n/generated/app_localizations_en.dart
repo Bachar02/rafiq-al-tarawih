@@ -673,7 +673,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get dailyGoalExplanation =>
-      'A page counts when you read past it, scrolling or turning. Jumps don\'t count. 20 pages a day is a juz: the whole Quran in a month.';
+      'A page counts once it has stayed on screen long enough to read, and you confirm it after reading. 20 pages a day is a juz: the whole Quran in a month.';
 
   @override
   String get dailyGoalOff => 'Off';
@@ -995,4 +995,79 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get noNotesHint => 'Tap an ayah, then Add a note. Your notes appear here.';
+
+  @override
+  String get reviewTitle => 'Count this reading?';
+
+  @override
+  String get reviewExplanation => 'These pages stayed on screen long enough to read. Untick any you did not read.';
+
+  @override
+  String reviewCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Count $count pages',
+      one: 'Count 1 page',
+      zero: 'Count nothing',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get reviewNotNow => 'Not now';
+
+  @override
+  String get reviewDiscard => 'Don’t count these';
+
+  @override
+  String reviewCounted(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count pages counted',
+      one: '1 page counted',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get reviewFailed => 'Could not save your reading. It is still waiting; try again.';
+
+  @override
+  String reviewWaiting(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count pages waiting to be counted',
+      one: '1 page waiting to be counted',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get reviewAction => 'Review';
+
+  @override
+  String get khatmMap => 'Pages read';
+
+  @override
+  String get khatmMapHint =>
+      'Tap a juz to mark its pages read or unread: to fix a mistake, or to add reading from a paper mushaf.';
+
+  @override
+  String semJuzTile(int juz, int read, int total) {
+    return 'Juz $juz, $read of $total pages read';
+  }
+
+  @override
+  String khatmJuzPages(int first, int last, int read, int total) {
+    return 'Pages $first–$last · $read of $total read';
+  }
+
+  @override
+  String get khatmMarkAllRead => 'Mark all read';
+
+  @override
+  String get khatmMarkAllUnread => 'Mark all unread';
 }

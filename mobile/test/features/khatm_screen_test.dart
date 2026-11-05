@@ -85,7 +85,7 @@ void main() {
     expect(find.text('Where I am reading'), findsNothing, reason: 'on page 1 there is one way to start');
     await tester.tap(find.text('Pick a date'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('20'));
+    await tester.tap(find.text('20').last); // the picker's day, over the juz tiles
     await tester.tap(find.text('OK'));
     await tester.pumpAndSettle();
     // The picker opened on the default end, in December.
@@ -123,7 +123,7 @@ void main() {
     await launch(tester, prefs: khatmPrefs(planWith()));
     await openPlanner(tester);
     await tapText(tester, 'Change end date');
-    await tester.tap(find.text('20'));
+    await tester.tap(find.text('20').last); // the picker's day, over the juz tiles
     await tester.tap(find.text('OK'));
     await tester.pumpAndSettle();
     expect(saved().active!.endsOn, DateTime(2026, 11, 20));
@@ -172,16 +172,56 @@ void main() {
     final container = await launch(tester, prefs: {'daily_goal_pages': 5, ...khatmPrefs(planWith())});
     expect(find.text('Juz 1 · Page 1 · Today 0/23'), findsOneWidget); // ceil(604 / 27)
     expect(find.bySemanticsLabel(RegExp('Khatm: 0 of 23 pages read today')), findsOneWidget);
-    container.read(readingProgressProvider.notifier)
-      ..jumpedTo(1)
-      ..movedTo(2)
-      ..movedTo(3);
+    // Two pages read, waiting for review: today moves already.
+    await container
+        .read(readingSessionProvider.notifier)
+        .review(shown: const ReadingLog(), counted: const ReadingLog().adding(h.now, [1, 2]));
     await tester.pump();
     expect(find.textContaining('Today 2/23'), findsOneWidget, reason: "today's reading does not shrink today's target");
 
     await container.read(khatmProvider.notifier).stop();
     await tester.pump();
     expect(find.textContaining('Today 2/5'), findsOneWidget, reason: 'no plan: the daily goal again');
+  });
+
+  testWidgets('waiting pages show in today, with a way to review them', (tester) async {
+    await launch(tester, prefs: {
+      ...khatmPrefs(planWith(read: pages(1, 10))),
+      PrefsReadingStore.pendingKey: '{"v":1,"days":{"2026-11-04":[10,11,12]}}',
+    });
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Not now')); // asked as the app opens
+    await tester.pumpAndSettle();
+    await openPlanner(tester);
+    expect(find.text('Today: 2 of 22 pages'), findsOneWidget, reason: 'page 10 is already in the plan');
+    expect(find.text('3 pages waiting to be counted'), findsOneWidget);
+    await tapText(tester, 'Review');
+    await tapText(tester, 'Count 3 pages');
+    expect(find.text('12 of 604 pages read'), findsOneWidget);
+    expect(find.text('Today: 2 of 22 pages'), findsOneWidget);
+    expect(find.textContaining('waiting'), findsNothing);
+  });
+
+  testWidgets('the page map: a juz opens its pages; tap to mark read or unread', (tester) async {
+    await launch(tester, prefs: khatmPrefs(planWith(read: pages(1, 10))));
+    await openPlanner(tester);
+    expect(find.bySemanticsLabel('Juz 1, 10 of 21 pages read'), findsOneWidget);
+    expect(find.bySemanticsLabel('Juz 30, 0 of 23 pages read'), findsOneWidget);
+    await tester.ensureVisible(find.bySemanticsLabel('Juz 1, 10 of 21 pages read'));
+    await tester.tap(find.bySemanticsLabel('Juz 1, 10 of 21 pages read'));
+    await tester.pumpAndSettle();
+    expect(find.text('Pages 1–21 · 10 of 21 read'), findsOneWidget);
+    await tester.tap(find.widgetWithText(FilterChip, '3'));
+    await tester.pumpAndSettle();
+    expect(saved().active!.pages.containsKey(3), isFalse, reason: 'unmarked: a mistake fixed');
+    await tester.tap(find.widgetWithText(FilterChip, '15'));
+    await tester.pumpAndSettle();
+    expect(saved().active!.pages[15], '2026-11-04', reason: 'marked read today');
+    expect(find.text('Pages 1–21 · 10 of 21 read'), findsOneWidget);
+    await tapText(tester, 'Mark all read');
+    expect(saved().active!.read, 21);
+    await tapText(tester, 'Mark all unread');
+    expect(saved().active!.read, 0);
   });
 
   testWidgets('the Bookmarks card shows the khatm and opens the planner', (tester) async {
@@ -200,20 +240,16 @@ void main() {
     expect(find.text('KHATM'), findsNothing);
   });
 
-  testWidgets('reading the last pages completes the khatm, said once', (tester) async {
-    final container = await launch(
-      tester,
-      prefs: {
-        'reading_layout': 'pages',
-        'reading_position.v1': '{"v":1,"verse":${quran.pages.start(603)},"at":"2026-11-04T18:00:00.000Z"}',
-        ...khatmPrefs(planWith(read: pages(1, 602))),
-      },
-    );
-    await tester.fling(find.byType(PageView), const Offset(200, 0), 800);
+  testWidgets('counting the last pages completes the khatm, said once', (tester) async {
+    final container = await launch(tester, prefs: {
+      ...khatmPrefs(planWith(read: pages(1, 602))),
+      PrefsReadingStore.pendingKey: '{"v":1,"days":{"2026-11-04":[603,604]}}',
+    });
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Count 2 pages'));
     await tester.pumpAndSettle();
     expect(container.read(khatmProvider).active, isNull);
     expect(find.text('Khatm complete · in 4 days'), findsOneWidget);
-    await container.read(khatmProvider.notifier).flush();
     expect(saved().finished.single.completedOn, DateTime(2026, 11, 4));
   });
 }

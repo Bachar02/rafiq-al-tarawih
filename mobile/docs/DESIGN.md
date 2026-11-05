@@ -94,9 +94,15 @@ without a computer. Shown where they will live, disabled and labelled "Soon".
 - *Today's target adapts:* what was left this morning ÷ the days left (at least one), rounded up.
   Reading ahead lowers tomorrow's target, falling behind raises it, and today's reading never shrinks
   today's target.
-- *What counts:* the same rule as the daily goal (below), so there is one definition of reading. A
-  page counts the first time it is read during the plan; reading it again adds nothing. The plan keeps
-  the day each page was first read, so a year-long plan does not depend on the reading log.
+- *What counts:* the reading the user counted (*What counts as reading*, below), the same pages as the
+  daily goal: one definition of reading. A page counts the first time it is read during the plan;
+  reading it again adds nothing, and reading from before the plan began is not part of it. The plan
+  keeps the day each page was first read, so a year-long plan does not depend on the reading log.
+- *The page map:* under the plan, 30 juz tiles, filled as their pages are read (a bar for a part,
+  solid ink when complete). A tile opens its pages, juz by juz as a printed mushaf lists them (juz 3:
+  pages 42–61). Each page is a toggle, with *Mark all read* and *Mark all unread*. Marking a page read
+  stamps it today. This is where a mistake is fixed, or reading from a paper mushaf is added; it changes
+  the khatm only, never the daily log.
 - While a plan runs, its target replaces the daily goal in the reader bar. The last page completes the
   plan: the reader says "Khatm complete · in 29 days" once, and the plan moves to the finished list.
 
@@ -122,9 +128,22 @@ pages, before the ayah); screen readers hear ", note".
 wordmark, in the current theme), then *Share as an image* (rendered from the card at 3×, 1080 px wide)
 or *Share as text*.
 
-**Daily reading goal** (Settings → Reading: off, 5, 10, 20, 40 pages). A page counts when the reader
-moves forward past it, scrolling or turning one or two pages at a time; jumps and opening the app count
-nothing; the last page of the Quran counts when reached. With a goal, the bar's second line ends with
+**What counts as reading** (`features/reader/page_dwell.dart`, `reading_session.dart`), for the daily
+goal and the khatm alike, in two steps:
+1. *Time on the page.* A page is proposed once it has stayed in view long enough to read it: 0.15 s for
+   each word on it, at least 4 s (a full page about 20 s, Al-Fatiha's page about 4 s). Time runs only
+   while the reader is in view (the app in the foreground, the Read tab shown, no screen or sheet over
+   it) and goes to the page at the top of the text; two visits add up. Flinging or scrubbing past pages
+   counts nothing, however far it goes; a jump counts only if the reader then stays and reads.
+2. *The user's review.* Proposed pages wait, saved (`reading_pending.v1`), until a session is over: the
+   next time the app opens, or when it comes back after 3 minutes or more away. Then a sheet asks
+   *Count this reading?* with the pages by day, each a toggle, all on. *Count N pages* counts the ticked
+   ones (into the daily log and the khatm) and sets the rest aside; *Don't count these* sets them all
+   aside; *Not now* (or dismissing) keeps them waiting. The planner shows "3 pages waiting to be counted
+   · Review" meanwhile. If counting cannot be saved, the pages keep waiting and the snackbar says so.
+Waiting pages already show in "Today", so the bar moves while reading; the review makes them final.
+
+**Daily reading goal** (Settings → Reading: off, 5, 10, 20, 40 pages). With a goal, the bar's second line ends with
 "Today 12/20" (just "12/20" on narrow phones) and a 2 px ink line runs under the bar. No streaks, no
 badges. The Pages tab of Go to says where the reader is in the whole Quran ("Page 42 of 604 · 6%").
 

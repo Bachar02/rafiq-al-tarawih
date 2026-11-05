@@ -28,6 +28,7 @@ import '../services/server_health.dart';
 import '../services/server_recognition_engine.dart';
 import '../services/sharer.dart';
 import '../features/reader/reading_progress.dart';
+import '../features/reader/reading_session.dart';
 
 /// Loaded once at startup (see main.dart) and injected with an override.
 final quranProvider = Provider<Quran>((ref) => throw UnimplementedError('quranProvider must be overridden'));
@@ -69,7 +70,11 @@ final quranSearchProvider =
 /// The time (tests replace it to cross midnight without waiting).
 final clockProvider = Provider<DateTime Function()>((ref) => DateTime.now);
 
-/// Pages read each day, for the daily goal.
+/// What the reader proposes as read (time on the page), waiting for the
+/// user's review.
+final readingSessionProvider = NotifierProvider<ReadingSessionController, ReadingSession>(ReadingSessionController.new);
+
+/// Pages read each day, as the user counted them: the daily goal.
 final readingProgressProvider = NotifierProvider<ReadingProgressController, ReadingLog>(ReadingProgressController.new);
 
 /// The khatm plan, if one is running, and the finished khatms.

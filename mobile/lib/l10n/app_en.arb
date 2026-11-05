@@ -486,7 +486,7 @@
   "shareAsText": "Share as text",
   "shareFailed": "Could not share. Try again.",
   "dailyGoal": "Daily reading goal",
-  "dailyGoalExplanation": "A page counts when you read past it, scrolling or turning. Jumps don't count. 20 pages a day is a juz: the whole Quran in a month.",
+  "dailyGoalExplanation": "A page counts once it has stayed on screen long enough to read, and you confirm it after reading. 20 pages a day is a juz: the whole Quran in a month.",
   "dailyGoalOff": "Off",
   "pagesCount": "{count, plural, =1{1 page} other{{count} pages}}",
   "@pagesCount": {
@@ -717,5 +717,70 @@
       }
     }
   },
-  "noNotesHint": "Tap an ayah, then Add a note. Your notes appear here."
+  "noNotesHint": "Tap an ayah, then Add a note. Your notes appear here.",
+  "reviewTitle": "Count this reading?",
+  "reviewExplanation": "These pages stayed on screen long enough to read. Untick any you did not read.",
+  "reviewCount": "{count, plural, =0{Count nothing} =1{Count 1 page} other{Count {count} pages}}",
+  "@reviewCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "reviewNotNow": "Not now",
+  "reviewDiscard": "Don’t count these",
+  "reviewCounted": "{count, plural, =1{1 page counted} other{{count} pages counted}}",
+  "@reviewCounted": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "reviewFailed": "Could not save your reading. It is still waiting; try again.",
+  "reviewWaiting": "{count, plural, =1{1 page waiting to be counted} other{{count} pages waiting to be counted}}",
+  "@reviewWaiting": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "reviewAction": "Review",
+  "khatmMap": "Pages read",
+  "khatmMapHint": "Tap a juz to mark its pages read or unread: to fix a mistake, or to add reading from a paper mushaf.",
+  "semJuzTile": "Juz {juz}, {read} of {total} pages read",
+  "@semJuzTile": {
+    "placeholders": {
+      "juz": {
+        "type": "int"
+      },
+      "read": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "khatmJuzPages": "Pages {first}–{last} · {read} of {total} read",
+  "@khatmJuzPages": {
+    "placeholders": {
+      "first": {
+        "type": "int"
+      },
+      "last": {
+        "type": "int"
+      },
+      "read": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "khatmMarkAllRead": "Mark all read",
+  "khatmMarkAllUnread": "Mark all unread"
 }

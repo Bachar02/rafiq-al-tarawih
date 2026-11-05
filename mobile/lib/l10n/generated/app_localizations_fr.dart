@@ -675,7 +675,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get dailyGoalExplanation =>
-      'Une page compte quand vous la dépassez en lisant, par défilement ou en tournant. Les sauts ne comptent pas. 20 pages par jour, c’est un juz : tout le Coran en un mois.';
+      'Une page compte quand elle est restée à l’écran assez longtemps pour être lue, et que vous le confirmez après la lecture. 20 pages par jour, c’est un juz : tout le Coran en un mois.';
 
   @override
   String get dailyGoalOff => 'Désactivé';
@@ -998,4 +998,80 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get noNotesHint => 'Touchez un verset, puis Ajouter une note. Vos notes apparaissent ici.';
+
+  @override
+  String get reviewTitle => 'Compter cette lecture ?';
+
+  @override
+  String get reviewExplanation =>
+      'Ces pages sont restées à l’écran assez longtemps pour être lues. Décochez celles que vous n’avez pas lues.';
+
+  @override
+  String reviewCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Compter $count pages',
+      one: 'Compter 1 page',
+      zero: 'Ne rien compter',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get reviewNotNow => 'Plus tard';
+
+  @override
+  String get reviewDiscard => 'Ne pas les compter';
+
+  @override
+  String reviewCounted(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count pages comptées',
+      one: '1 page comptée',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get reviewFailed => 'Impossible d’enregistrer votre lecture. Elle reste en attente ; réessayez.';
+
+  @override
+  String reviewWaiting(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count pages en attente',
+      one: '1 page en attente',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get reviewAction => 'Vérifier';
+
+  @override
+  String get khatmMap => 'Pages lues';
+
+  @override
+  String get khatmMapHint =>
+      'Touchez un juz pour marquer ses pages lues ou non lues : pour corriger une erreur, ou ajouter une lecture faite dans un mushaf papier.';
+
+  @override
+  String semJuzTile(int juz, int read, int total) {
+    return 'Juz $juz, $read pages lues sur $total';
+  }
+
+  @override
+  String khatmJuzPages(int first, int last, int read, int total) {
+    return 'Pages $first à $last · $read lues sur $total';
+  }
+
+  @override
+  String get khatmMarkAllRead => 'Tout marquer lu';
+
+  @override
+  String get khatmMarkAllUnread => 'Tout marquer non lu';
 }

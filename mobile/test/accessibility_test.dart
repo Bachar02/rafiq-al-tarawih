@@ -80,6 +80,14 @@ void main() {
         await settle(tester);
         expect(find.text('0 of 604 pages read'), findsOneWidget);
         await meetsGuidelines(tester);
+        await tester.ensureVisible(find.bySemanticsLabel('Juz 30, 0 of 23 pages read'));
+        await settle(tester);
+        await tester.tap(find.bySemanticsLabel('Juz 30, 0 of 23 pages read'));
+        await settle(tester);
+        expect(find.text('Mark all read'), findsOneWidget);
+        await meetsGuidelines(tester); // the juz's pages
+        await tester.tapAt(const Offset(20, 20)); // close the sheet
+        await settle(tester);
         await tester.pageBack();
         await settle(tester);
         await tapNav(tester, 'Bookmarks');
@@ -104,6 +112,15 @@ void main() {
         await meetsGuidelines(tester);
       });
 
+      testWidgets('reviewing the last session', (tester) async {
+        await launch(tester, {
+          'theme_mode': theme,
+          'reading_pending.v1': '{"v":1,"days":{"2026-11-03":[40,41],"2026-11-04":[42,43,44]}}',
+        });
+        expect(find.text('Count this reading?'), findsOneWidget);
+        await meetsGuidelines(tester);
+      });
+
       testWidgets('settings', (tester) async {
         await launch(tester, {'theme_mode': theme});
         await openSettings(tester);
@@ -121,6 +138,32 @@ void main() {
       });
     });
   }
+
+  testWidgets('200% system text: the review and the juz sheets', (tester) async {
+    tester.platformDispatcher.textScaleFactorTestValue = 2.0;
+    addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+    await launch(tester, {'reading_pending.v1': '{"v":1,"days":{"2026-11-03":[40,41],"2026-11-04":[42,43,44]}}'});
+    expect(find.text('Count this reading?'), findsOneWidget);
+    expect(tester.takeException(), isNull, reason: 'review sheet');
+    await tester.ensureVisible(find.text('Not now'));
+    await settle(tester);
+    await tester.tap(find.text('Not now'));
+    await settle(tester);
+    await tapNav(tester, 'More');
+    await tester.tap(find.text('Khatm planner'));
+    await settle(tester);
+    await tester.ensureVisible(find.text('Start khatm'));
+    await settle(tester);
+    await tester.tap(find.text('Start khatm'));
+    await settle(tester);
+    await tester.ensureVisible(find.bySemanticsLabel('Juz 1, 0 of 21 pages read'));
+    await settle(tester);
+    expect(tester.takeException(), isNull, reason: 'page map');
+    await tester.tap(find.bySemanticsLabel('Juz 1, 0 of 21 pages read'));
+    await settle(tester);
+    expect(find.text('Mark all read'), findsOneWidget);
+    expect(tester.takeException(), isNull, reason: 'juz sheet');
+  });
 
   testWidgets('200% system text: every main screen lays out without overflow', (tester) async {
     tester.platformDispatcher.textScaleFactorTestValue = 2.0;

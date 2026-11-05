@@ -83,9 +83,14 @@ abstract interface class ReadingStore {
   List<Bookmark> bookmarks();
   Future<bool> saveBookmarks(List<Bookmark> bookmarks);
 
-  /// Pages read on each day (local `yyyy-mm-dd`).
+  /// Pages read on each day (local `yyyy-mm-dd`), as the user confirmed them.
   ReadingLog readingLog();
   Future<bool> saveReadingLog(ReadingLog log);
+
+  /// Pages that stayed on screen long enough to be read, waiting for the
+  /// user to confirm them, by the day they were read.
+  ReadingLog pendingReading();
+  Future<bool> savePendingReading(ReadingLog pending);
 
   /// The active khatm plan and the finished ones.
   KhatmBook khatm();
@@ -96,7 +101,8 @@ abstract interface class ReadingStore {
   Future<bool> saveNotes(List<Note> notes);
 }
 
-/// The pages read on each day, for the daily goal. Immutable.
+/// Pages by day: the confirmed reading log (the daily goal), or the pages
+/// waiting for review. Immutable.
 @immutable
 class ReadingLog {
   const ReadingLog([this.days = const {}]);
@@ -112,6 +118,38 @@ class ReadingLog {
       '${local.day.toString().padLeft(2, '0')}';
 
   Set<int> on(DateTime local) => days[dayKey(local)] ?? const {};
+
+  bool get isEmpty => days.values.every((p) => p.isEmpty);
+
+  /// How many (day, page) entries there are.
+  int get length => days.values.fold(0, (n, p) => n + p.length);
+
+  /// This log with each of [other]'s pages added to its own day.
+  ReadingLog merging(ReadingLog other) {
+    var out = this;
+    for (final e in other.days.entries) {
+      final day = parseDay(e.key);
+      if (day != null && e.value.isNotEmpty) out = out.adding(day, e.value);
+    }
+    return out;
+  }
+
+  /// This log without [other]'s (day, page) entries; empty days dropped.
+  ReadingLog removing(ReadingLog other) => ReadingLog({
+        for (final e in days.entries)
+          if (e.value.difference(other.days[e.key] ?? const {}).isNotEmpty)
+            e.key: e.value.difference(other.days[e.key] ?? const {}),
+      });
+
+  /// The local day a [dayKey] names.
+  static DateTime? parseDay(String key) {
+    final parts = key.split('-');
+    if (parts.length != 3) return null;
+    final y = int.tryParse(parts[0]), m = int.tryParse(parts[1]), d = int.tryParse(parts[2]);
+    if (y == null || m == null || d == null) return null;
+    final day = DateTime(y, m, d);
+    return dayKey(day) == key ? day : null;
+  }
 
   /// This log with [pages] added to [local]'s day, and days older than
   /// [keepDays] before it dropped.
@@ -158,6 +196,7 @@ class PrefsReadingStore implements ReadingStore {
   static const logKey = 'reading_log.v1';
   static const khatmKey = 'khatm.v1';
   static const notesKey = 'notes.v1';
+  static const pendingKey = 'reading_pending.v1';
 
   /// The prefix of the keys an unreadable record is copied to, untouched
   /// (one per occurrence, suffixed with the time it was found).
@@ -222,6 +261,18 @@ class PrefsReadingStore implements ReadingStore {
 
   @override
   Future<bool> saveReadingLog(ReadingLog log) => _write(logKey, log.toJson());
+
+  @override
+  ReadingLog pendingReading() {
+    final json = _readJson(pendingKey);
+    if (json == null) return const ReadingLog();
+    final log = ReadingLog.fromJson(json);
+    if (log == null) _setAside(pendingKey);
+    return log ?? const ReadingLog();
+  }
+
+  @override
+  Future<bool> savePendingReading(ReadingLog pending) => _write(pendingKey, pending.toJson());
 
   @override
   KhatmBook khatm() {

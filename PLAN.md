@@ -604,6 +604,25 @@ Built on `feat/khatm-notes` from `master`, in six commits as §21.4 planned, eac
 1. Native review of the new French and Arabic strings.
 2. Not seen on a phone yet: the date picker in Arabic.
 
-### 21.6 After 0.3
+### 21.6 Reading that counts (2026-11-05, after the owner's first try)
+
+**Why:** after trying 0.3 the owner found the tracking too easy to fool. A page counted when the reader moved past it, so scrolling through counted pages nobody read, and there was no way to undo a wrong count.
+
+**What changed** (agreed with the owner: time on the page, then a review; a page map for corrections):
+- **Time on the page** (`PageDwell`): a page is proposed once it has stayed in view long enough to read it.
+  - That is 0.15 s per word on the page, at least 4 s: about 20 s for a full page.
+  - Time runs only while the reader is in view, and goes to the page at the top. Two visits add up.
+  - This replaces "moved forward past it" everywhere. Flings and the scrubber count nothing.
+- **Review** (`ReadingSessionController`, the *Count this reading?* sheet):
+  - Proposed pages wait, saved, until a session is over: the next time the app opens, or after 3 minutes or more away.
+  - The sheet lists them by day as toggles. *Count* records the ticked ones in the daily log and the khatm. *Don't count these* sets them aside. *Not now* keeps them waiting.
+  - Waiting pages show in "Today" in the meantime.
+- **Page map** in the planner: 30 juz tiles; each opens its pages (mushaf juz boundaries) as toggles, with *Mark all read / unread*.
+  - For mistakes and paper-mushaf reading.
+  - It changes the khatm only, not the daily log.
+- **Simpler underneath:** the log and the khatm now take only explicit, saved-first changes. Their delayed saves are gone.
+- **Totals:** 297 tests, 30 golden screenshots (new: the review sheet, a juz sheet; the planner re-rendered), accessibility checks on both sheets. There are 15 new strings in three languages, and the daily-goal explanation was reworded.
+
+### 21.7 After 0.3
 - **Taraweeh on the phone:** the §16 benchmark on the Galaxy A16, then §17 M2.
 - **Reading discipline chart:** a year grid of days shaded by pages read, from `ReadingLog` (now kept 400 days). It goes in the Bookmarks or More area, with a weekly or yearly toggle and no streak pressure.
