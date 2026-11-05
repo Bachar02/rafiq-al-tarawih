@@ -7,11 +7,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/audio/audio_source.dart';
 import '../core/recognition/recognition_engine.dart';
+import '../data/khatm.dart';
 import '../data/quran.dart';
 import '../data/reading_store.dart';
 import '../data/settings.dart';
 import '../data/surah_names.dart';
 import '../l10n/l10n.dart';
+import '../features/khatm/khatm_controller.dart';
 import '../features/listen/listen_controller.dart';
 import '../features/listen/listen_state.dart';
 import '../features/listen/taraweeh_position.dart';
@@ -67,6 +69,9 @@ final clockProvider = Provider<DateTime Function()>((ref) => DateTime.now);
 
 /// Pages read each day, for the daily goal.
 final readingProgressProvider = NotifierProvider<ReadingProgressController, ReadingLog>(ReadingProgressController.new);
+
+/// The khatm plan, if one is running, and the finished khatms.
+final khatmProvider = NotifierProvider<KhatmController, KhatmBook>(KhatmController.new);
 
 /// Bookmarked ayahs, newest first.
 final bookmarksProvider = NotifierProvider<BookmarksController, List<Bookmark>>(BookmarksController.new);

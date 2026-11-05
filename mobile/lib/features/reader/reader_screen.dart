@@ -67,6 +67,7 @@ class ReaderScreenState extends ConsumerState<ReaderScreen> with WidgetsBindingO
     if (state != AppLifecycleState.resumed) {
       unawaited(ref.read(readingPositionProvider.notifier).flush());
       unawaited(ref.read(readingProgressProvider.notifier).flush());
+      unawaited(ref.read(khatmProvider.notifier).flush());
     }
   }
 

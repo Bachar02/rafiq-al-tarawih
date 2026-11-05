@@ -14,6 +14,9 @@ import '../../data/reading_store.dart';
 /// inflated by navigating, and the page a session ends on counts once the
 /// reader moves on from it. The last page of the Quran counts when reached.
 ///
+/// This is the only definition of reading: the khatm plan records the same
+/// pages.
+///
 /// Saved a moment after each change and flushed when the app goes to the
 /// background, like the reading position.
 class ReadingProgressController extends Notifier<ReadingLog> {
@@ -54,6 +57,7 @@ class ReadingProgressController extends Notifier<ReadingLog> {
     final step = page - last;
     if (step < 1 || step > maxStep) return;
     final read = [for (var p = last; p < page; p++) p, if (page == Quran.pageCount) page];
+    ref.read(khatmProvider.notifier).recordPages(read);
     _latest = _latest.adding(_now(), read);
     state = _latest;
     _dirty = true;
