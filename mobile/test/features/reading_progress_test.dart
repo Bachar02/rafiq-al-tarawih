@@ -17,13 +17,16 @@ void main() {
   group('ReadingLog', () {
     final day = DateTime(2026, 11, 4, 20);
 
-    test('adds pages to the day, keeps 90 days, round-trips', () {
+    test('adds pages to the day, keeps 400 days, round-trips', () {
       var log = const ReadingLog().adding(day, [1, 2]).adding(day, [2, 3]);
       expect(log.on(day), {1, 2, 3});
-      log = log.adding(day.add(const Duration(days: 91)), [9]);
-      expect(log.on(day), isEmpty, reason: 'older than 90 days is dropped');
+      log = log.adding(day.add(const Duration(days: 366)), [7]);
+      expect(log.on(day), {1, 2, 3}, reason: 'a year later the day is still there, for the year chart');
+      log = log.adding(day.add(const Duration(days: 401)), [9]);
+      expect(log.on(day), isEmpty, reason: 'older than 400 days is dropped');
       final back = ReadingLog.fromJson(log.toJson())!;
-      expect(back.on(day.add(const Duration(days: 91))), {9});
+      expect(back.on(day.add(const Duration(days: 401))), {9});
+      expect(back.on(day.add(const Duration(days: 366))), {7});
     });
 
     test('an unreadable log is kept aside and reads as empty', () async {

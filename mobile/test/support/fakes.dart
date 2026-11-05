@@ -11,6 +11,8 @@ import 'package:rafiq/app/providers.dart';
 import 'package:rafiq/core/audio/audio_source.dart';
 import 'package:rafiq/core/recognition/models.dart';
 import 'package:rafiq/core/recognition/recognition_engine.dart';
+import 'package:rafiq/data/khatm.dart';
+import 'package:rafiq/data/note.dart';
 import 'package:rafiq/data/quran.dart';
 import 'package:rafiq/data/reading_store.dart';
 import 'package:rafiq/data/settings.dart';
@@ -124,6 +126,38 @@ class FakeScreenAwake implements ScreenAwake {
 
   @override
   Future<void> disable() async => enabled = false;
+}
+
+/// A store whose writes fail (a full disk): reads still work.
+class FailingStore implements ReadingStore {
+  FailingStore(this._inner);
+  final ReadingStore _inner;
+  bool failing = true;
+
+  @override
+  SavedPosition? readingPosition() => _inner.readingPosition();
+  @override
+  Future<bool> saveReadingPosition(SavedPosition p) async => !failing && await _inner.saveReadingPosition(p);
+  @override
+  SavedPosition? taraweehPosition() => _inner.taraweehPosition();
+  @override
+  Future<bool> saveTaraweehPosition(SavedPosition p) async => !failing && await _inner.saveTaraweehPosition(p);
+  @override
+  List<Bookmark> bookmarks() => _inner.bookmarks();
+  @override
+  Future<bool> saveBookmarks(List<Bookmark> b) async => !failing && await _inner.saveBookmarks(b);
+  @override
+  ReadingLog readingLog() => _inner.readingLog();
+  @override
+  Future<bool> saveReadingLog(ReadingLog log) async => !failing && await _inner.saveReadingLog(log);
+  @override
+  KhatmBook khatm() => _inner.khatm();
+  @override
+  Future<bool> saveKhatm(KhatmBook book) async => !failing && await _inner.saveKhatm(book);
+  @override
+  List<Note> notes() => _inner.notes();
+  @override
+  Future<bool> saveNotes(List<Note> notes) async => !failing && await _inner.saveNotes(notes);
 }
 
 Quran? _quran;

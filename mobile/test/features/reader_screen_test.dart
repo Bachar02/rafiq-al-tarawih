@@ -20,30 +20,6 @@ import 'package:rafiq/features/navigate/navigate_screen.dart';
 import 'package:rafiq/features/reader/widgets/page_scrubber.dart';
 import '../support/app_nav.dart';
 
-/// A store whose writes fail (a full disk): reads still work.
-class FailingStore implements ReadingStore {
-  FailingStore(this._inner);
-  final ReadingStore _inner;
-  bool failing = true;
-
-  @override
-  SavedPosition? readingPosition() => _inner.readingPosition();
-  @override
-  Future<bool> saveReadingPosition(SavedPosition p) async => !failing && await _inner.saveReadingPosition(p);
-  @override
-  SavedPosition? taraweehPosition() => _inner.taraweehPosition();
-  @override
-  Future<bool> saveTaraweehPosition(SavedPosition p) async => !failing && await _inner.saveTaraweehPosition(p);
-  @override
-  List<Bookmark> bookmarks() => _inner.bookmarks();
-  @override
-  Future<bool> saveBookmarks(List<Bookmark> b) async => !failing && await _inner.saveBookmarks(b);
-  @override
-  ReadingLog readingLog() => _inner.readingLog();
-  @override
-  Future<bool> saveReadingLog(ReadingLog log) async => !failing && await _inner.saveReadingLog(log);
-}
-
 void main() {
   final quran = loadQuran();
   int id(int s, int a) => quran.verseId(s, a)!;

@@ -1,5 +1,5 @@
 /// Where the user is: the personal reading position, where Taraweeh last
-/// ended, and bookmarks. Kept apart from [AppSettings]: these are the user's
+/// ended, bookmarks, notes, the reading log and the khatm plan. Kept apart from [AppSettings]: these are the user's
 /// data, not preferences, and must never be lost.
 ///
 /// Stored in shared preferences as small versioned JSON records keyed by
@@ -16,6 +16,8 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'khatm.dart';
+import 'note.dart';
 import 'quran.dart';
 
 /// A saved place in the Quran.
@@ -84,6 +86,14 @@ abstract interface class ReadingStore {
   /// Pages read on each day (local `yyyy-mm-dd`).
   ReadingLog readingLog();
   Future<bool> saveReadingLog(ReadingLog log);
+
+  /// The active khatm plan and the finished ones.
+  KhatmBook khatm();
+  Future<bool> saveKhatm(KhatmBook book);
+
+  /// Newest edit first, one per ayah.
+  List<Note> notes();
+  Future<bool> saveNotes(List<Note> notes);
 }
 
 /// The pages read on each day, for the daily goal. Immutable.
@@ -91,8 +101,9 @@ abstract interface class ReadingStore {
 class ReadingLog {
   const ReadingLog([this.days = const {}]);
 
-  /// Days older than this are dropped when saving.
-  static const keepDays = 90;
+  /// Days older than this are dropped when saving: a year and a little
+  /// more, for a year of reading history.
+  static const keepDays = 400;
 
   final Map<String, Set<int>> days;
 
@@ -145,6 +156,8 @@ class PrefsReadingStore implements ReadingStore {
   static const taraweehKey = 'taraweeh_position.v1';
   static const bookmarksKey = 'bookmarks.v1';
   static const logKey = 'reading_log.v1';
+  static const khatmKey = 'khatm.v1';
+  static const notesKey = 'notes.v1';
 
   /// The prefix of the keys an unreadable record is copied to, untouched
   /// (one per occurrence, suffixed with the time it was found).
@@ -209,6 +222,52 @@ class PrefsReadingStore implements ReadingStore {
 
   @override
   Future<bool> saveReadingLog(ReadingLog log) => _write(logKey, log.toJson());
+
+  @override
+  KhatmBook khatm() {
+    final json = _readJson(khatmKey);
+    if (json == null) return KhatmBook.empty;
+    var dropped = false;
+    final book = KhatmBook.fromJson(json, onDropped: () => dropped = true);
+    // Unreadable, whole or in part: keep the original before a save rewrites it.
+    if (book == null || dropped) _setAside(khatmKey);
+    return book ?? KhatmBook.empty;
+  }
+
+  @override
+  Future<bool> saveKhatm(KhatmBook book) => _write(khatmKey, book.toJson());
+
+  @override
+  List<Note> notes() {
+    final json = _readJson(notesKey);
+    if (json == null) return const [];
+    final list = json is Map && json['v'] == 1 ? json['items'] : null;
+    if (list is! List) {
+      _setAside(notesKey);
+      return const [];
+    }
+    final byVerse = <int, Note>{};
+    var dropped = false;
+    for (final item in list) {
+      final n = Note.fromJson(item);
+      if (n == null) {
+        dropped = true;
+        continue;
+      }
+      final other = byVerse[n.verseId];
+      // Two notes on one ayah: keep the newer, and the original record.
+      if (other != null) dropped = true;
+      if (other == null || n.updatedAt.isAfter(other.updatedAt)) byVerse[n.verseId] = n;
+    }
+    if (dropped) _setAside(notesKey);
+    return List.unmodifiable(byVerse.values.toList()..sort((a, b) => b.updatedAt.compareTo(a.updatedAt)));
+  }
+
+  @override
+  Future<bool> saveNotes(List<Note> notes) => _write(notesKey, {
+        'v': 1,
+        'items': [for (final n in notes) n.toJson()]
+      });
 
   SavedPosition? _readPosition(String key) {
     final json = _readJson(key);
