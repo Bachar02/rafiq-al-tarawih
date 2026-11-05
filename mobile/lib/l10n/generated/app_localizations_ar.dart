@@ -780,12 +780,6 @@ class AppLocalizationsAr extends AppLocalizations {
   String get soonTafsirDetail => 'تفسير كل آية';
 
   @override
-  String get soonKhatm => 'خطة الختمة';
-
-  @override
-  String get soonKhatmDetail => 'خطط لختمة كاملة وتابعها يومًا بيوم';
-
-  @override
   String get soonNotes => 'الملاحظات';
 
   @override
@@ -805,4 +799,173 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get tafsir => 'تفسير';
+
+  @override
+  String get khatmPlanner => 'خطة الختمة';
+
+  @override
+  String get khatmPlannerDetail => 'خطط لختمة كاملة وتابعها يومًا بيوم';
+
+  @override
+  String get khatmExplanation =>
+      'اقرأ القرآن كاملًا قبل تاريخ تختاره. يتكيّف ورد اليوم مع قراءتك: إن سبقتَ خفّ ما بعده.';
+
+  @override
+  String get khatmFinishIn => 'أتمّها في';
+
+  @override
+  String khatmDays(int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: '$days يوم',
+      many: '$days يومًا',
+      few: '$days أيام',
+      two: 'يومان',
+      one: 'يوم واحد',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get khatmJuzADay => 'جزء كل يوم';
+
+  @override
+  String get khatmPickDate => 'اختر تاريخًا';
+
+  @override
+  String get khatmLastDay => 'آخر يوم في الختمة';
+
+  @override
+  String get khatmStartAt => 'البداية';
+
+  @override
+  String get khatmFromHere => 'من حيث أقرأ';
+
+  @override
+  String get khatmFromBeginning => 'من البداية';
+
+  @override
+  String khatmPreview(int pages, String date) {
+    String _temp0 = intl.Intl.pluralLogic(
+      pages,
+      locale: localeName,
+      other: 'نحو $pages صفحة يوميًا',
+      many: 'نحو $pages صفحة يوميًا',
+      few: 'نحو $pages صفحات يوميًا',
+      two: 'نحو صفحتين يوميًا',
+      one: 'نحو صفحة واحدة يوميًا',
+    );
+    return '$_temp0 · تنتهي في $date';
+  }
+
+  @override
+  String get khatmStart => 'ابدأ الختمة';
+
+  @override
+  String khatmPagesRead(int read) {
+    return 'قُرئت $read من 604 صفحة';
+  }
+
+  @override
+  String khatmToday(int read, int target) {
+    return 'اليوم: $read من $target صفحة';
+  }
+
+  @override
+  String khatmDaysLeft(int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: 'بقي $days يوم',
+      many: 'بقي $days يومًا',
+      few: 'بقيت $days أيام',
+      two: 'بقي يومان',
+      one: 'اليوم الأخير',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String khatmEnds(String date) {
+    return 'تنتهي في $date';
+  }
+
+  @override
+  String get khatmPastEnd => 'تجاوزتَ تاريخ النهاية';
+
+  @override
+  String khatmPagesLeft(int pages) {
+    String _temp0 = intl.Intl.pluralLogic(
+      pages,
+      locale: localeName,
+      other: 'بقيت $pages صفحة',
+      many: 'بقيت $pages صفحة',
+      few: 'بقيت $pages صفحات',
+      two: 'بقيت صفحتان',
+      one: 'بقيت صفحة واحدة',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String khatmContinue(int page) {
+    return 'تابع الختمة (الصفحة $page)';
+  }
+
+  @override
+  String get khatmChangeEnd => 'غيّر تاريخ النهاية';
+
+  @override
+  String get khatmStop => 'أوقف هذه الختمة';
+
+  @override
+  String get khatmStopTitle => 'إيقاف هذه الختمة؟';
+
+  @override
+  String get khatmStopBody => 'ستُنسى الصفحات المقروءة في هذه الخطة. يبقى سجل قراءتك والختمات المكتملة.';
+
+  @override
+  String get khatmStopConfirm => 'أوقف';
+
+  @override
+  String get khatmSaveFailed => 'تعذّر حفظ خطة الختمة. حاول مجددًا.';
+
+  @override
+  String get khatmFinished => 'الختمات المكتملة';
+
+  @override
+  String khatmCompletedOn(String date) {
+    return 'اكتملت في $date';
+  }
+
+  @override
+  String khatmInDays(int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: 'في $days يوم',
+      many: 'في $days يومًا',
+      few: 'في $days أيام',
+      two: 'في يومين',
+      one: 'في يوم واحد',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get khatmComplete => 'اكتملت الختمة';
+
+  @override
+  String get khatmSection => 'الختمة';
+
+  @override
+  String khatmCard(int read) {
+    return '$read من 604 صفحة';
+  }
+
+  @override
+  String semKhatmToday(int read, int target) {
+    return 'الختمة: قُرئت اليوم $read من $target صفحة';
+  }
 }

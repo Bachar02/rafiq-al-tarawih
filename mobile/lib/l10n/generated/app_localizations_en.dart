@@ -774,12 +774,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get soonTafsirDetail => 'Commentary on each ayah';
 
   @override
-  String get soonKhatm => 'Khatm planner';
-
-  @override
-  String get soonKhatmDetail => 'Plan a complete reading and follow it day by day';
-
-  @override
   String get soonNotes => 'Notes';
 
   @override
@@ -799,4 +793,159 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get tafsir => 'Tafsir';
+
+  @override
+  String get khatmPlanner => 'Khatm planner';
+
+  @override
+  String get khatmPlannerDetail => 'Plan a complete reading and follow it day by day';
+
+  @override
+  String get khatmExplanation =>
+      'Read the whole Quran by a date you choose. Today’s target adapts as you go: read ahead and the days after ask less.';
+
+  @override
+  String get khatmFinishIn => 'Finish in';
+
+  @override
+  String khatmDays(int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: '$days days',
+      one: '1 day',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get khatmJuzADay => 'A juz a day';
+
+  @override
+  String get khatmPickDate => 'Pick a date';
+
+  @override
+  String get khatmLastDay => 'Last day of the khatm';
+
+  @override
+  String get khatmStartAt => 'Start';
+
+  @override
+  String get khatmFromHere => 'Where I am reading';
+
+  @override
+  String get khatmFromBeginning => 'From the beginning';
+
+  @override
+  String khatmPreview(int pages, String date) {
+    String _temp0 = intl.Intl.pluralLogic(
+      pages,
+      locale: localeName,
+      other: 'About $pages pages a day',
+      one: 'About 1 page a day',
+    );
+    return '$_temp0 · ends $date';
+  }
+
+  @override
+  String get khatmStart => 'Start khatm';
+
+  @override
+  String khatmPagesRead(int read) {
+    return '$read of 604 pages read';
+  }
+
+  @override
+  String khatmToday(int read, int target) {
+    return 'Today: $read of $target pages';
+  }
+
+  @override
+  String khatmDaysLeft(int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: '$days days left',
+      one: 'Last day',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String khatmEnds(String date) {
+    return 'ends $date';
+  }
+
+  @override
+  String get khatmPastEnd => 'Past the planned end';
+
+  @override
+  String khatmPagesLeft(int pages) {
+    String _temp0 = intl.Intl.pluralLogic(
+      pages,
+      locale: localeName,
+      other: '$pages pages left',
+      one: '1 page left',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String khatmContinue(int page) {
+    return 'Continue khatm (page $page)';
+  }
+
+  @override
+  String get khatmChangeEnd => 'Change end date';
+
+  @override
+  String get khatmStop => 'Stop this khatm';
+
+  @override
+  String get khatmStopTitle => 'Stop this khatm?';
+
+  @override
+  String get khatmStopBody =>
+      'The pages read in this plan will be forgotten. Your reading log and finished khatms are kept.';
+
+  @override
+  String get khatmStopConfirm => 'Stop';
+
+  @override
+  String get khatmSaveFailed => 'Could not save the khatm plan. Try again.';
+
+  @override
+  String get khatmFinished => 'Finished khatms';
+
+  @override
+  String khatmCompletedOn(String date) {
+    return 'Completed $date';
+  }
+
+  @override
+  String khatmInDays(int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: 'in $days days',
+      one: 'in 1 day',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get khatmComplete => 'Khatm complete';
+
+  @override
+  String get khatmSection => 'Khatm';
+
+  @override
+  String khatmCard(int read) {
+    return '$read of 604 pages';
+  }
+
+  @override
+  String semKhatmToday(int read, int target) {
+    return 'Khatm: $read of $target pages read today';
+  }
 }

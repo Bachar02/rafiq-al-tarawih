@@ -777,12 +777,6 @@ class AppLocalizationsFr extends AppLocalizations {
   String get soonTafsirDetail => 'Le commentaire de chaque verset';
 
   @override
-  String get soonKhatm => 'Plan de khatm';
-
-  @override
-  String get soonKhatmDetail => 'Planifier une lecture complète et la suivre jour après jour';
-
-  @override
   String get soonNotes => 'Notes';
 
   @override
@@ -802,4 +796,159 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get tafsir => 'Tafsir';
+
+  @override
+  String get khatmPlanner => 'Plan de khatm';
+
+  @override
+  String get khatmPlannerDetail => 'Planifier une lecture complète et la suivre jour après jour';
+
+  @override
+  String get khatmExplanation =>
+      'Lisez tout le Coran d’ici la date de votre choix. L’objectif du jour s’adapte : lisez en avance et les jours suivants demandent moins.';
+
+  @override
+  String get khatmFinishIn => 'Terminer en';
+
+  @override
+  String khatmDays(int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: '$days jours',
+      one: '1 jour',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get khatmJuzADay => 'Un juz par jour';
+
+  @override
+  String get khatmPickDate => 'Choisir une date';
+
+  @override
+  String get khatmLastDay => 'Dernier jour de la khatm';
+
+  @override
+  String get khatmStartAt => 'Début';
+
+  @override
+  String get khatmFromHere => 'Là où je lis';
+
+  @override
+  String get khatmFromBeginning => 'Depuis le début';
+
+  @override
+  String khatmPreview(int pages, String date) {
+    String _temp0 = intl.Intl.pluralLogic(
+      pages,
+      locale: localeName,
+      other: 'Environ $pages pages par jour',
+      one: 'Environ 1 page par jour',
+    );
+    return '$_temp0 · fin le $date';
+  }
+
+  @override
+  String get khatmStart => 'Commencer la khatm';
+
+  @override
+  String khatmPagesRead(int read) {
+    return '$read pages lues sur 604';
+  }
+
+  @override
+  String khatmToday(int read, int target) {
+    return 'Aujourd’hui : $read sur $target pages';
+  }
+
+  @override
+  String khatmDaysLeft(int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: 'Encore $days jours',
+      one: 'Dernier jour',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String khatmEnds(String date) {
+    return 'fin le $date';
+  }
+
+  @override
+  String get khatmPastEnd => 'Date de fin dépassée';
+
+  @override
+  String khatmPagesLeft(int pages) {
+    String _temp0 = intl.Intl.pluralLogic(
+      pages,
+      locale: localeName,
+      other: '$pages pages restantes',
+      one: '1 page restante',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String khatmContinue(int page) {
+    return 'Continuer la khatm (page $page)';
+  }
+
+  @override
+  String get khatmChangeEnd => 'Changer la date de fin';
+
+  @override
+  String get khatmStop => 'Arrêter cette khatm';
+
+  @override
+  String get khatmStopTitle => 'Arrêter cette khatm ?';
+
+  @override
+  String get khatmStopBody =>
+      'Les pages lues dans ce plan seront oubliées. Votre historique de lecture et les khatms terminées sont conservés.';
+
+  @override
+  String get khatmStopConfirm => 'Arrêter';
+
+  @override
+  String get khatmSaveFailed => 'Impossible d’enregistrer le plan de khatm. Réessayez.';
+
+  @override
+  String get khatmFinished => 'Khatms terminées';
+
+  @override
+  String khatmCompletedOn(String date) {
+    return 'Terminée le $date';
+  }
+
+  @override
+  String khatmInDays(int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: 'en $days jours',
+      one: 'en 1 jour',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get khatmComplete => 'Khatm terminée';
+
+  @override
+  String get khatmSection => 'Khatm';
+
+  @override
+  String khatmCard(int read) {
+    return '$read pages sur 604';
+  }
+
+  @override
+  String semKhatmToday(int read, int target) {
+    return 'Khatm : $read pages lues sur $target aujourd’hui';
+  }
 }

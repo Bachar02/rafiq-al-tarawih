@@ -67,6 +67,24 @@ void main() {
         await meetsGuidelines(tester);
       });
 
+      testWidgets('khatm planner, before and during a plan', (tester) async {
+        await launch(tester, {'theme_mode': theme});
+        await tapNav(tester, 'More');
+        await tester.tap(find.text('Khatm planner'));
+        await settle(tester);
+        await meetsGuidelines(tester);
+        await tester.ensureVisible(find.text('Start khatm'));
+        await settle(tester);
+        await tester.tap(find.text('Start khatm'));
+        await settle(tester);
+        expect(find.text('0 of 604 pages read'), findsOneWidget);
+        await meetsGuidelines(tester);
+        await tester.pageBack();
+        await settle(tester);
+        await tapNav(tester, 'Bookmarks');
+        await meetsGuidelines(tester);
+      });
+
       testWidgets('settings', (tester) async {
         await launch(tester, {'theme_mode': theme});
         await openSettings(tester);
@@ -101,6 +119,18 @@ void main() {
     await settle(tester);
     await openSettings(tester);
     expect(tester.takeException(), isNull, reason: 'settings');
+    await tester.pageBack();
+    await settle(tester);
+    await tapNav(tester, 'More');
+    await tester.tap(find.text('Khatm planner'));
+    await settle(tester);
+    expect(tester.takeException(), isNull, reason: 'khatm planner, no plan');
+    await tester.ensureVisible(find.text('Start khatm'));
+    await settle(tester);
+    await tester.tap(find.text('Start khatm'));
+    await settle(tester);
+    expect(tester.takeException(), isNull, reason: 'khatm planner, a plan');
+    expect(find.text('0 of 604 pages read'), findsOneWidget);
     await tester.pageBack();
     await settle(tester);
     await tapNav(tester, 'Read');

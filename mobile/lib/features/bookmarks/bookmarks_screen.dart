@@ -4,12 +4,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../app/components/place_tile.dart';
 import '../../app/navigation.dart';
 import '../../app/providers.dart';
+import '../../app/routes.dart';
 import '../../app/theme.dart';
+import '../../data/khatm.dart';
 import '../../data/reading_store.dart';
+import '../khatm/khatm_screen.dart';
 import '../../l10n/l10n.dart';
 
-/// Every saved place: where the user stopped reading, where Taraweeh ended,
-/// then the bookmarks (newest first, or in Quran order). Tap to read there;
+/// Every saved place: the khatm in progress, where the user stopped reading,
+/// where Taraweeh ended, then the bookmarks (newest first, or in Quran order). Tap to read there;
 /// swipe or the remove button to delete, with Undo. A removal that cannot
 /// be saved does not disappear.
 class BookmarksScreen extends ConsumerWidget {
@@ -27,6 +30,7 @@ class BookmarksScreen extends ConsumerWidget {
     final bookmarks = [...ref.watch(bookmarksProvider)];
     if (quranOrder) bookmarks.sort((a, b) => a.verseId.compareTo(b.verseId));
     final now = ref.read(clockProvider)();
+    final plan = ref.watch(khatmProvider.select((b) => b.active));
 
     void open(int verseId, {bool mark = true}) => ref.read(readerRequestsProvider.notifier).open(verseId, mark: mark);
 
@@ -68,6 +72,17 @@ class BookmarksScreen extends ConsumerWidget {
       body: ListView(
         padding: const EdgeInsets.only(bottom: RubricSpace.s6),
         children: [
+          if (plan != null) ...[
+            _Section(l.khatmSection),
+            PlaceTile(
+              leading: Icon(Icons.flag_outlined, color: c.inkSecondary),
+              title: l.khatmCard(plan.read),
+              subtitle: '${l.todayProgress(plan.readOn(now), plan.todayTarget(dateOnly(now)))} · '
+                  '${khatmTimeLine(l, plan, dateOnly(now))}',
+              trailing: Icon(Icons.chevron_right, color: c.inkSecondary),
+              onTap: () => AppRoutes.khatm(context),
+            ),
+          ],
           _Section(l.continueReading),
           PlaceTile(
             leading: Icon(Icons.menu_book_outlined, color: c.inkSecondary),

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../app/providers.dart';
 import '../../../app/theme.dart';
+import '../../../data/khatm.dart';
 import '../../../l10n/l10n.dart';
 import '../../../data/settings.dart';
 
@@ -33,9 +34,14 @@ class ReaderBar extends ConsumerWidget {
     final surah = quran.surah(verse.surah);
     final juz = quran.juzOf(verse.id), page = quran.pageOf(verse.id);
     final pages = ref.watch(settingsProvider.select((s) => s.readingLayout)) == ReadingLayout.pages;
-    final goal = ref.watch(settingsProvider.select((s) => s.dailyGoalPages));
-    ref.watch(readingProgressProvider);
-    final read = goal == 0 ? 0 : ref.read(readingProgressProvider.notifier).today;
+    // A khatm in progress sets today's target; otherwise the daily goal does.
+    final plan = ref.watch(khatmProvider.select((b) => b.active));
+    final today = dateOnly(ref.read(clockProvider)());
+    final dailyGoal = ref.watch(settingsProvider.select((s) => s.dailyGoalPages));
+    if (plan == null) ref.watch(readingProgressProvider);
+    final goal = plan?.todayTarget(today) ?? dailyGoal;
+    final read = plan?.readOn(today) ?? (goal == 0 ? 0 : ref.read(readingProgressProvider.notifier).today);
+    final progress = plan != null ? l.semKhatmToday(read, goal) : l.semTodayProgress(read, goal);
     final where = goal == 0
         ? l.juzPage(juz, page)
         // On a narrow phone only the count; the line under the bar and the
@@ -51,7 +57,7 @@ class ReaderBar extends ConsumerWidget {
               button: true,
               label: goal == 0
                   ? l.semReaderBar(names.of(surah.index), verse.ayah, juz, page)
-                  : '${l.semReaderBar(names.of(surah.index), verse.ayah, juz, page)}. ${l.semTodayProgress(read, goal)}',
+                  : '${l.semReaderBar(names.of(surah.index), verse.ayah, juz, page)}. $progress',
               excludeSemantics: true,
               child: InkWell(
                 onTap: onOpenSurahs,

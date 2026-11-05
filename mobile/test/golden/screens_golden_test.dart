@@ -4,12 +4,16 @@
 /// typefaces; these can.
 library;
 
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:rafiq/app/app.dart';
 import 'package:rafiq/app/components/quran_text.dart';
 import 'package:rafiq/core/recognition/models.dart';
+import 'package:rafiq/data/khatm.dart';
+import 'package:rafiq/data/reading_store.dart';
 
 import '../support/app_nav.dart';
 import '../support/fakes.dart';
@@ -201,6 +205,33 @@ void main() {
       await launch(tester, prefs: {'theme_mode': 'light'}, taraweeh: false);
       await tapNav(tester, 'More');
       await expectGolden(tester, 'more');
+    });
+
+    testWidgets('khatm planner: choosing a plan, light', (tester) async {
+      await launch(tester, prefs: {...readingAt(18, 1), 'theme_mode': 'light'}, taraweeh: false);
+      await tapNav(tester, 'More');
+      await tester.tap(find.text('Khatm planner'));
+      await settle(tester);
+      await expectGolden(tester, 'khatm_new');
+    });
+
+    testWidgets('khatm planner: a plan in progress and one finished, dark', (tester) async {
+      final plan = KhatmPlan(startedOn: DateTime(2026, 11, 1), endsOn: DateTime(2026, 11, 30), startPage: 1)
+          .reading(DateTime(2026, 11, 1), [for (var p = 1; p <= 62; p++) p]).reading(
+              DateTime(2026, 11, 4), [for (var p = 63; p <= 72; p++) p]);
+      final book = KhatmBook(
+        active: plan,
+        finished: [KhatmRecord(startedOn: DateTime(2026, 9, 12), completedOn: DateTime(2026, 10, 10))],
+      );
+      await launch(
+        tester,
+        prefs: {PrefsReadingStore.khatmKey: jsonEncode(book.toJson()), 'theme_mode': 'dark'},
+        taraweeh: false,
+      );
+      await tapNav(tester, 'More');
+      await tester.tap(find.text('Khatm planner'));
+      await settle(tester);
+      await expectGolden(tester, 'khatm_active');
     });
 
     testWidgets('ayah sheet: bookmark, share, copy, and what is coming', (tester) async {

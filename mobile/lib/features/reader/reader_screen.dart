@@ -184,6 +184,14 @@ class ReaderScreenState extends ConsumerState<ReaderScreen> with WidgetsBindingO
     final progress = ref.read(readingProgressProvider.notifier);
     final position = ref.read(readingPositionProvider.notifier);
     final bookmarked = {for (final b in ref.watch(bookmarksProvider)) b.verseId};
+    // The last page of a khatm was just read: say so, once, calmly.
+    ref.listen(khatmProvider, (before, after) {
+      if (before == null || after.finished.length <= before.finished.length) return;
+      final l = context.l10n;
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(SnackBar(content: Text('${l.khatmComplete} · ${l.khatmInDays(after.finished.first.days)}')));
+    });
     // Another tab asked for a place: open it here.
     ref.listen(readerRequestsProvider, (_, request) {
       if (request != null) openAt(request.verseId, mark: request.mark);

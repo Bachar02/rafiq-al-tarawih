@@ -1383,18 +1383,6 @@ abstract class AppLocalizations {
   /// **'Commentary on each ayah'**
   String get soonTafsirDetail;
 
-  /// No description provided for @soonKhatm.
-  ///
-  /// In en, this message translates to:
-  /// **'Khatm planner'**
-  String get soonKhatm;
-
-  /// No description provided for @soonKhatmDetail.
-  ///
-  /// In en, this message translates to:
-  /// **'Plan a complete reading and follow it day by day'**
-  String get soonKhatmDetail;
-
   /// No description provided for @soonNotes.
   ///
   /// In en, this message translates to:
@@ -1436,6 +1424,204 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Tafsir'**
   String get tafsir;
+
+  /// No description provided for @khatmPlanner.
+  ///
+  /// In en, this message translates to:
+  /// **'Khatm planner'**
+  String get khatmPlanner;
+
+  /// No description provided for @khatmPlannerDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'Plan a complete reading and follow it day by day'**
+  String get khatmPlannerDetail;
+
+  /// No description provided for @khatmExplanation.
+  ///
+  /// In en, this message translates to:
+  /// **'Read the whole Quran by a date you choose. Today’s target adapts as you go: read ahead and the days after ask less.'**
+  String get khatmExplanation;
+
+  /// No description provided for @khatmFinishIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Finish in'**
+  String get khatmFinishIn;
+
+  /// No description provided for @khatmDays.
+  ///
+  /// In en, this message translates to:
+  /// **'{days, plural, =1{1 day} other{{days} days}}'**
+  String khatmDays(int days);
+
+  /// No description provided for @khatmJuzADay.
+  ///
+  /// In en, this message translates to:
+  /// **'A juz a day'**
+  String get khatmJuzADay;
+
+  /// No description provided for @khatmPickDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a date'**
+  String get khatmPickDate;
+
+  /// No description provided for @khatmLastDay.
+  ///
+  /// In en, this message translates to:
+  /// **'Last day of the khatm'**
+  String get khatmLastDay;
+
+  /// No description provided for @khatmStartAt.
+  ///
+  /// In en, this message translates to:
+  /// **'Start'**
+  String get khatmStartAt;
+
+  /// No description provided for @khatmFromHere.
+  ///
+  /// In en, this message translates to:
+  /// **'Where I am reading'**
+  String get khatmFromHere;
+
+  /// No description provided for @khatmFromBeginning.
+  ///
+  /// In en, this message translates to:
+  /// **'From the beginning'**
+  String get khatmFromBeginning;
+
+  /// No description provided for @khatmPreview.
+  ///
+  /// In en, this message translates to:
+  /// **'{pages, plural, =1{About 1 page a day} other{About {pages} pages a day}} · ends {date}'**
+  String khatmPreview(int pages, String date);
+
+  /// No description provided for @khatmStart.
+  ///
+  /// In en, this message translates to:
+  /// **'Start khatm'**
+  String get khatmStart;
+
+  /// No description provided for @khatmPagesRead.
+  ///
+  /// In en, this message translates to:
+  /// **'{read} of 604 pages read'**
+  String khatmPagesRead(int read);
+
+  /// No description provided for @khatmToday.
+  ///
+  /// In en, this message translates to:
+  /// **'Today: {read} of {target} pages'**
+  String khatmToday(int read, int target);
+
+  /// No description provided for @khatmDaysLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'{days, plural, =1{Last day} other{{days} days left}}'**
+  String khatmDaysLeft(int days);
+
+  /// No description provided for @khatmEnds.
+  ///
+  /// In en, this message translates to:
+  /// **'ends {date}'**
+  String khatmEnds(String date);
+
+  /// No description provided for @khatmPastEnd.
+  ///
+  /// In en, this message translates to:
+  /// **'Past the planned end'**
+  String get khatmPastEnd;
+
+  /// No description provided for @khatmPagesLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'{pages, plural, =1{1 page left} other{{pages} pages left}}'**
+  String khatmPagesLeft(int pages);
+
+  /// No description provided for @khatmContinue.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue khatm (page {page})'**
+  String khatmContinue(int page);
+
+  /// No description provided for @khatmChangeEnd.
+  ///
+  /// In en, this message translates to:
+  /// **'Change end date'**
+  String get khatmChangeEnd;
+
+  /// No description provided for @khatmStop.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop this khatm'**
+  String get khatmStop;
+
+  /// No description provided for @khatmStopTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop this khatm?'**
+  String get khatmStopTitle;
+
+  /// No description provided for @khatmStopBody.
+  ///
+  /// In en, this message translates to:
+  /// **'The pages read in this plan will be forgotten. Your reading log and finished khatms are kept.'**
+  String get khatmStopBody;
+
+  /// No description provided for @khatmStopConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop'**
+  String get khatmStopConfirm;
+
+  /// No description provided for @khatmSaveFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not save the khatm plan. Try again.'**
+  String get khatmSaveFailed;
+
+  /// No description provided for @khatmFinished.
+  ///
+  /// In en, this message translates to:
+  /// **'Finished khatms'**
+  String get khatmFinished;
+
+  /// No description provided for @khatmCompletedOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Completed {date}'**
+  String khatmCompletedOn(String date);
+
+  /// No description provided for @khatmInDays.
+  ///
+  /// In en, this message translates to:
+  /// **'{days, plural, =1{in 1 day} other{in {days} days}}'**
+  String khatmInDays(int days);
+
+  /// No description provided for @khatmComplete.
+  ///
+  /// In en, this message translates to:
+  /// **'Khatm complete'**
+  String get khatmComplete;
+
+  /// No description provided for @khatmSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Khatm'**
+  String get khatmSection;
+
+  /// No description provided for @khatmCard.
+  ///
+  /// In en, this message translates to:
+  /// **'{read} of 604 pages'**
+  String khatmCard(int read);
+
+  /// No description provided for @semKhatmToday.
+  ///
+  /// In en, this message translates to:
+  /// **'Khatm: {read} of {target} pages read today'**
+  String semKhatmToday(int read, int target);
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

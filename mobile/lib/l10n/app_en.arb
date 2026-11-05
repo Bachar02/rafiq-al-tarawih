@@ -559,13 +559,137 @@
   "soonTranslationDetail": "The meaning beside the Arabic, in your language",
   "soonTafsir": "Tafsir",
   "soonTafsirDetail": "Commentary on each ayah",
-  "soonKhatm": "Khatm planner",
-  "soonKhatmDetail": "Plan a complete reading and follow it day by day",
   "soonNotes": "Notes",
   "soonNotesDetail": "Your own notes on an ayah",
   "soonOffline": "Taraweeh without a computer",
   "soonOfflineDetail": "Recognition on the phone itself",
   "listen": "Listen",
   "translation": "Translation",
-  "tafsir": "Tafsir"
+  "tafsir": "Tafsir",
+  "khatmPlanner": "Khatm planner",
+  "khatmPlannerDetail": "Plan a complete reading and follow it day by day",
+  "khatmExplanation": "Read the whole Quran by a date you choose. Today’s target adapts as you go: read ahead and the days after ask less.",
+  "khatmFinishIn": "Finish in",
+  "khatmDays": "{days, plural, =1{1 day} other{{days} days}}",
+  "@khatmDays": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "khatmJuzADay": "A juz a day",
+  "khatmPickDate": "Pick a date",
+  "khatmLastDay": "Last day of the khatm",
+  "khatmStartAt": "Start",
+  "khatmFromHere": "Where I am reading",
+  "khatmFromBeginning": "From the beginning",
+  "khatmPreview": "{pages, plural, =1{About 1 page a day} other{About {pages} pages a day}} · ends {date}",
+  "@khatmPreview": {
+    "placeholders": {
+      "pages": {
+        "type": "int"
+      },
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "khatmStart": "Start khatm",
+  "khatmPagesRead": "{read} of 604 pages read",
+  "@khatmPagesRead": {
+    "placeholders": {
+      "read": {
+        "type": "int"
+      }
+    }
+  },
+  "khatmToday": "Today: {read} of {target} pages",
+  "@khatmToday": {
+    "placeholders": {
+      "read": {
+        "type": "int"
+      },
+      "target": {
+        "type": "int"
+      }
+    }
+  },
+  "khatmDaysLeft": "{days, plural, =1{Last day} other{{days} days left}}",
+  "@khatmDaysLeft": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "khatmEnds": "ends {date}",
+  "@khatmEnds": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "khatmPastEnd": "Past the planned end",
+  "khatmPagesLeft": "{pages, plural, =1{1 page left} other{{pages} pages left}}",
+  "@khatmPagesLeft": {
+    "placeholders": {
+      "pages": {
+        "type": "int"
+      }
+    }
+  },
+  "khatmContinue": "Continue khatm (page {page})",
+  "@khatmContinue": {
+    "placeholders": {
+      "page": {
+        "type": "int"
+      }
+    }
+  },
+  "khatmChangeEnd": "Change end date",
+  "khatmStop": "Stop this khatm",
+  "khatmStopTitle": "Stop this khatm?",
+  "khatmStopBody": "The pages read in this plan will be forgotten. Your reading log and finished khatms are kept.",
+  "khatmStopConfirm": "Stop",
+  "khatmSaveFailed": "Could not save the khatm plan. Try again.",
+  "khatmFinished": "Finished khatms",
+  "khatmCompletedOn": "Completed {date}",
+  "@khatmCompletedOn": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "khatmInDays": "{days, plural, =1{in 1 day} other{in {days} days}}",
+  "@khatmInDays": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "khatmComplete": "Khatm complete",
+  "khatmSection": "Khatm",
+  "khatmCard": "{read} of 604 pages",
+  "@khatmCard": {
+    "placeholders": {
+      "read": {
+        "type": "int"
+      }
+    }
+  },
+  "semKhatmToday": "Khatm: {read} of {target} pages read today",
+  "@semKhatmToday": {
+    "placeholders": {
+      "read": {
+        "type": "int"
+      },
+      "target": {
+        "type": "int"
+      }
+    }
+  }
 }
