@@ -968,4 +968,36 @@ class AppLocalizationsAr extends AppLocalizations {
   String semKhatmToday(int read, int target) {
     return 'الختمة: قُرئت اليوم $read من $target صفحة';
   }
+
+  @override
+  String get addNote => 'أضف ملاحظة';
+
+  @override
+  String get editNote => 'عدّل الملاحظة';
+
+  @override
+  String noteOn(String reference) {
+    return 'ملاحظة على $reference';
+  }
+
+  @override
+  String get noteHint => 'اكتب ملاحظتك';
+
+  @override
+  String get saveNote => 'احفظ';
+
+  @override
+  String get deleteNote => 'احذف الملاحظة';
+
+  @override
+  String get noteSaved => 'حُفظت الملاحظة';
+
+  @override
+  String get noteDeleted => 'حُذفت الملاحظة';
+
+  @override
+  String get noteSaveFailed => 'تعذّر حفظ الملاحظة. نصّك ما زال هنا.';
+
+  @override
+  String get noteDeleteFailed => 'تعذّر حذف الملاحظة.';
 }

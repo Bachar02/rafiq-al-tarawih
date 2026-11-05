@@ -8,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/audio/audio_source.dart';
 import '../core/recognition/recognition_engine.dart';
 import '../data/khatm.dart';
+import '../data/note.dart';
 import '../data/quran.dart';
 import '../data/reading_store.dart';
 import '../data/settings.dart';
@@ -15,6 +16,7 @@ import '../data/surah_names.dart';
 import '../l10n/l10n.dart';
 import '../features/khatm/khatm_controller.dart';
 import '../features/listen/listen_controller.dart';
+import '../features/notes/notes_controller.dart';
 import '../features/listen/listen_state.dart';
 import '../features/listen/taraweeh_position.dart';
 import '../features/reader/bookmarks.dart';
@@ -72,6 +74,9 @@ final readingProgressProvider = NotifierProvider<ReadingProgressController, Read
 
 /// The khatm plan, if one is running, and the finished khatms.
 final khatmProvider = NotifierProvider<KhatmController, KhatmBook>(KhatmController.new);
+
+/// The user's notes, newest edit first, one per ayah.
+final notesProvider = NotifierProvider<NotesController, List<Note>>(NotesController.new);
 
 /// Bookmarked ayahs, newest first.
 final bookmarksProvider = NotifierProvider<BookmarksController, List<Bookmark>>(BookmarksController.new);

@@ -948,4 +948,36 @@ class AppLocalizationsEn extends AppLocalizations {
   String semKhatmToday(int read, int target) {
     return 'Khatm: $read of $target pages read today';
   }
+
+  @override
+  String get addNote => 'Add a note';
+
+  @override
+  String get editNote => 'Edit note';
+
+  @override
+  String noteOn(String reference) {
+    return 'Note on $reference';
+  }
+
+  @override
+  String get noteHint => 'Write your note';
+
+  @override
+  String get saveNote => 'Save';
+
+  @override
+  String get deleteNote => 'Delete note';
+
+  @override
+  String get noteSaved => 'Note saved';
+
+  @override
+  String get noteDeleted => 'Note deleted';
+
+  @override
+  String get noteSaveFailed => 'Could not save the note. Your text is still here.';
+
+  @override
+  String get noteDeleteFailed => 'Could not delete the note.';
 }

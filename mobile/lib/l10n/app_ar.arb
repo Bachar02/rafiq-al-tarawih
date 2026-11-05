@@ -254,5 +254,15 @@
   "khatmComplete": "اكتملت الختمة",
   "khatmSection": "الختمة",
   "khatmCard": "{read} من 604 صفحة",
-  "semKhatmToday": "الختمة: قُرئت اليوم {read} من {target} صفحة"
+  "semKhatmToday": "الختمة: قُرئت اليوم {read} من {target} صفحة",
+  "addNote": "أضف ملاحظة",
+  "editNote": "عدّل الملاحظة",
+  "noteOn": "ملاحظة على {reference}",
+  "noteHint": "اكتب ملاحظتك",
+  "saveNote": "احفظ",
+  "deleteNote": "احذف الملاحظة",
+  "noteSaved": "حُفظت الملاحظة",
+  "noteDeleted": "حُذفت الملاحظة",
+  "noteSaveFailed": "تعذّر حفظ الملاحظة. نصّك ما زال هنا.",
+  "noteDeleteFailed": "تعذّر حذف الملاحظة."
 }

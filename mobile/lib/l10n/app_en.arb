@@ -691,5 +691,22 @@
         "type": "int"
       }
     }
-  }
+  },
+  "addNote": "Add a note",
+  "editNote": "Edit note",
+  "noteOn": "Note on {reference}",
+  "@noteOn": {
+    "placeholders": {
+      "reference": {
+        "type": "String"
+      }
+    }
+  },
+  "noteHint": "Write your note",
+  "saveNote": "Save",
+  "deleteNote": "Delete note",
+  "noteSaved": "Note saved",
+  "noteDeleted": "Note deleted",
+  "noteSaveFailed": "Could not save the note. Your text is still here.",
+  "noteDeleteFailed": "Could not delete the note."
 }

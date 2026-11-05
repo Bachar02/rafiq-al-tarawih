@@ -1622,6 +1622,66 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Khatm: {read} of {target} pages read today'**
   String semKhatmToday(int read, int target);
+
+  /// No description provided for @addNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a note'**
+  String get addNote;
+
+  /// No description provided for @editNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit note'**
+  String get editNote;
+
+  /// No description provided for @noteOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Note on {reference}'**
+  String noteOn(String reference);
+
+  /// No description provided for @noteHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Write your note'**
+  String get noteHint;
+
+  /// No description provided for @saveNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get saveNote;
+
+  /// No description provided for @deleteNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete note'**
+  String get deleteNote;
+
+  /// No description provided for @noteSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Note saved'**
+  String get noteSaved;
+
+  /// No description provided for @noteDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Note deleted'**
+  String get noteDeleted;
+
+  /// No description provided for @noteSaveFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not save the note. Your text is still here.'**
+  String get noteSaveFailed;
+
+  /// No description provided for @noteDeleteFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not delete the note.'**
+  String get noteDeleteFailed;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

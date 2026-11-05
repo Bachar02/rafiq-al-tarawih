@@ -254,5 +254,15 @@
   "khatmComplete": "Khatm terminée",
   "khatmSection": "Khatm",
   "khatmCard": "{read} pages sur 604",
-  "semKhatmToday": "Khatm : {read} pages lues sur {target} aujourd’hui"
+  "semKhatmToday": "Khatm : {read} pages lues sur {target} aujourd’hui",
+  "addNote": "Ajouter une note",
+  "editNote": "Modifier la note",
+  "noteOn": "Note sur {reference}",
+  "noteHint": "Écrivez votre note",
+  "saveNote": "Enregistrer",
+  "deleteNote": "Supprimer la note",
+  "noteSaved": "Note enregistrée",
+  "noteDeleted": "Note supprimée",
+  "noteSaveFailed": "Impossible d’enregistrer la note. Votre texte est toujours là.",
+  "noteDeleteFailed": "Impossible de supprimer la note."
 }

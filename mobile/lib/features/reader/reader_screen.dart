@@ -14,6 +14,7 @@ import '../../l10n/l10n.dart';
 import '../quran_view/mushaf_page_view.dart';
 import '../../data/settings.dart';
 import 'share_ayah_sheet.dart';
+import '../notes/note_sheet.dart';
 import 'package:flutter/services.dart';
 import '../../app/navigation.dart';
 import 'widgets/page_scrubber.dart';
@@ -139,6 +140,7 @@ class ReaderScreenState extends ConsumerState<ReaderScreen> with WidgetsBindingO
       verse: verse,
       names: names,
       bookmarked: bookmarks.contains(verse.id),
+      noted: ref.read(notesProvider.notifier).noteFor(verse.id) != null,
     );
     if (!mounted) return;
     setState(() => _highlighted = null);
@@ -153,6 +155,19 @@ class ReaderScreenState extends ConsumerState<ReaderScreen> with WidgetsBindingO
         say(await bookmarks.add(verse.id) ? l.bookmarked(ref_) : l.bookmarkFailed);
       case ReaderAyahAction.removeBookmark:
         say(await bookmarks.remove(verse.id) ? l.bookmarkRemoved : l.bookmarkRemoveFailed);
+      case ReaderAyahAction.note:
+        final notes = ref.read(notesProvider.notifier);
+        final before = notes.noteFor(verse.id);
+        final result = await showNoteSheet(context, verse: verse);
+        if (result == NoteSheetResult.saved) say(l.noteSaved);
+        if (result == NoteSheetResult.deleted && before != null) {
+          messenger
+            ..hideCurrentSnackBar()
+            ..showSnackBar(SnackBar(
+              content: Text(l.noteDeleted),
+              action: SnackBarAction(label: l.undo, onPressed: () => notes.restore(before)),
+            ));
+        }
       case ReaderAyahAction.share:
         await showShareAyahSheet(context, verse: verse, names: names);
       case ReaderAyahAction.copy:
