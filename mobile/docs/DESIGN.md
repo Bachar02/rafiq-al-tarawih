@@ -8,13 +8,13 @@
 **Two experiences, one app** (product decision, PLAN.md §18):
 - **The reader (home):** the whole Quran as one continuous text, opened at the personal reading position; Go to
   (surahs, juz, the 604 Madinah-mushaf pages, bookmarks), search (references, pages, juz, surah names, Arabic
-  text), bookmarks, text size, light/dark/system, English, French and Arabic.
+  text), bookmarks, notes, a khatm planner, text size, light/dark/system, English, French and Arabic.
 - **Taraweeh mode (the signature):** one tap from the reader; the app listens to the imam and marks the ayah
   being recited, with honest uncertainty, corrections and a surah lock.
 
 | In | Not in (by decision, not by omission) |
 |---|---|
-| Reading, navigation, search, bookmarks, two independent positions | Accounts, sync, prayer times, adhkar, streaks |
+| Reading, navigation, search, bookmarks, notes, a khatm plan, two independent positions | Accounts, sync, prayer times, adhkar, streaks |
 | Taraweeh mode, Ḥafṣ only | Other riwāyāt (Qālūn, Warsh) |
 | A page *number* for every ayah (page starts) | A facsimile of the printed page (the text flows) |
 | Recognition on the laptop server (this build) | On-device recognition (PLAN.md §17 M2), offline claims |
@@ -43,9 +43,10 @@ the same interface later (§4.2), without UI changes. The reader needs no server
 ┌ Read ─ Surahs ─ Bookmarks ─ (Taraweeh) ─ More ┐   a labelled bar at the bottom of every screen
 Read       the Quran (scroll or pages), the place in the bar; the surah name ▾ opens Surahs
 Surahs     surahs (filter by name or number), juz, the 604 pages; a choice opens Read there
-Bookmarks  continue reading · where Taraweeh ended · bookmarks (newest first or Quran order)
+Bookmarks  Bookmarks | Notes: the khatm card · continue reading · where Taraweeh ended · bookmarks;
+           or the notes, newest edit first
 Taraweeh   a button, not a tab: the full-screen mode, listening at once (one tap)
-More       Settings, and what is coming (shown, visibly not yet working)
+More       Khatm planner, Settings, and what is coming (shown, visibly not yet working)
 ```
 `lib/app/home_shell.dart`. The reader stays alive under the other tabs (its place and scroll
 survive); the other tabs are rebuilt on each visit so their lists open at the current place. Back
@@ -56,13 +57,13 @@ through `readerRequestsProvider` (`lib/app/navigation.dart`), never by reaching 
 ```
 ┌───────────────────────────────┐
 │ البقرة Al-Baqarah ▾     📖  🔍 │  name ▾ → Surahs · layout · search
-│ Juz 1 · Page 21 · Today 4/20  │  where; today's pages when a goal is set
+│ Juz 1 · Page 21 · Today 4/20  │  where; today's pages (khatm target, or the goal)
 │        … ayahs, full ink …  ▌ │  the scrubber: shows while the text moves;
 │ ─────── Juz 2 · Page 22 ───── │   drag it, a bubble names page · surah · juz
-│ ▮ ayah with a bookmark ribbon │
+│ ▮ ayah with a bookmark ribbon │  and a note icon under it when noted
 └───────────────────────────────┘
 ```
-- **Tap an ayah:** its sheet: Bookmark / Remove bookmark, Share, Copy; then Listen, Translation and
+- **Tap an ayah:** its sheet: Bookmark / Remove bookmark, Add a note / Edit note, Share, Copy; then Listen, Translation and
   Tafsir, disabled under "Coming soon". The ayah is marked with the `mark` wash while its sheet is open,
   and for two seconds after a jump from search, Surahs or Bookmarks.
 - **Press and hold an ayah:** bookmark it (or remove its bookmark) at once, with a light haptic tick
@@ -71,13 +72,42 @@ through `readerRequestsProvider` (`lib/app/navigation.dart`), never by reaching 
   layouts. Hidden until the text moves; a page per step while dragged; screen readers get it as a
   slider (ten pages a step).
 
-**Bookmarks:** *Continue reading* (the reading position), *Where Taraweeh ended*, then the bookmarks
-with their opening words, place and date. Sort: newest first or Quran order (remembered). Swipe or
-the remove button deletes, with Undo that restores the bookmark with its own date; a removal that
-cannot be saved stays in the list and says so.
+**Bookmarks:** a segmented control, **Bookmarks | Notes**.
+- *Bookmarks:* the khatm card when a plan runs ("72 of 604 pages", today's target, days left; it opens
+  the planner), *Continue reading* (the reading position), *Where Taraweeh ended*, then the bookmarks
+  with their opening words, place and date. Sort: newest first or Quran order (remembered).
+- *Notes:* each note's reference, place, date and first two lines, in the direction the note is
+  written. Tap to read there; the trailing button edits it.
+- Swipe (or the remove button) deletes, with Undo that restores the item with its own dates; a removal
+  that cannot be saved stays in the list and says so.
 
-**More:** Settings; *Coming soon*: recitation audio, translations, tafsir, a khatm planner, notes,
-Taraweeh without a computer. Shown where they will live, disabled and labelled "Soon".
+**More:** Khatm planner, Settings; *Coming soon*: recitation audio, translations, tafsir, Taraweeh
+without a computer. Shown where they will live, disabled and labelled "Soon".
+
+**Khatm planner** (More, or the Bookmarks card). One active plan at a time.
+- *Start:* finish in 15, 30 ("a juz a day") or 60 days, or by a picked date; start where the reader is
+  (page N) or from page 1. A line previews the pace ("About 21 pages a day · ends Dec 3, 2026").
+- *Running:* "72 of 604 pages read" with a bar, "Today: 10 of 21 pages", "27 days left · ends Nov 30,
+  2026" (or "Past the planned end · 40 pages left"). *Continue khatm (page N)* opens the first unread
+  page, reading on from the start page and wrapping round; *Change end date*; *Stop this khatm*, after
+  a confirmation. Finished khatms are listed quietly ("Completed Oct 10, 2026 · in 29 days").
+- *Today's target adapts:* what was left this morning ÷ the days left (at least one), rounded up.
+  Reading ahead lowers tomorrow's target, falling behind raises it, and today's reading never shrinks
+  today's target.
+- *What counts:* the same rule as the daily goal (below), so there is one definition of reading. A
+  page counts the first time it is read during the plan; reading it again adds nothing. The plan keeps
+  the day each page was first read, so a year-long plan does not depend on the reading log.
+- While a plan runs, its target replaces the daily goal in the reader bar. The last page completes the
+  plan: the reader says "Khatm complete · in 29 days" once, and the plan moves to the finished list.
+
+**Notes:** one per ayah, from the ayah sheet. The sheet has the reference with *Save* beside it (pinned,
+so it stays in view above the keyboard), a field (up to 2,000 characters), and *Delete note* when one
+exists; saving an emptied note deletes it. The sheet
+saves the note itself and closes only once it is kept: if the save fails, the text stays in the field
+and the sheet says so. The field and every list show a note in the direction it is written
+(`Bidi.detectRtlDirectionality`): Arabic right to left, French or English left to right, whatever the
+interface language. Noted ayahs carry a small note icon in the margin under the bookmark ribbon (in
+pages, before the ayah); screen readers hear ", note".
 
 **Two layouts** (Settings → Reading → Layout, and a toggle in the bar on screens 360 dp and wider):
 - *Scroll:* the whole Quran as one text (`QuranView`, §2.2b).
@@ -249,7 +279,10 @@ lib/
   services/   platform adapters: microphone, WebSocket recognition, wakelock
   features/
     quran_view/  the shared Quran text (BookIndex, QuranView, headers and marks)
-    reader/      home: reading position, bookmarks, ayah sheet
+    reader/      home: reading position, reading progress, bookmarks, ayah sheet
+    bookmarks/   the Bookmarks tab (Bookmarks | Notes)
+    khatm/       KhatmController and the planner screen
+    notes/       NotesController and the note sheet
     navigate/    Go to         search/   QuranSearch (pure Dart) and its screen
     listen/      Taraweeh mode: ListenController (unchanged), its screen, last Taraweeh position
     settings/
@@ -257,10 +290,14 @@ lib/
 Dependencies point downward only. `features` never touches `record` or WebSockets directly; it talks
 to the interfaces in §4.2. Everything below `features` is unit-tested without Flutter widgets.
 
-**Persistence** (`data/reading_store.dart`): the reading position, the last Taraweeh position and
-bookmarks are versioned JSON records keyed by verse id. A record that cannot be read is copied aside
-(`<key>.unreadable.<time>`) before any write can replace it; a failed write is reported, never thrown.
-Bookmarks are saved before they are shown. Preferences stay in `SettingsStore`, which keeps any value
+**Persistence** (`data/reading_store.dart`): the reading position, the last Taraweeh position,
+bookmarks, notes (`notes.v1`), the reading log (`reading_log.v1`, 400 days, for a year chart later) and
+the khatm book (`khatm.v1`: the active plan with each page's first day, grouped by day, and the finished
+khatms) are versioned JSON records. A record that cannot be read, whole or in part, is copied aside
+(`<key>.unreadable.<time>`) before any write can replace it, and its readable parts are kept; a failed
+write is reported, never thrown. Bookmarks, notes and khatm start / change / stop are saved before they
+are shown; pages read are saved a moment later and when the app leaves the foreground, and a failed
+save stays pending. Preferences stay in `SettingsStore`, which keeps any value
 an earlier version stored (a theme saved as dark stays dark).
 
 ### 4.2 Seams (the scalability story)
@@ -268,7 +305,7 @@ an earlier version stored (a theme saved as dark stays dark).
 |---|---|---|
 | `AudioSource`: 16 kHz mono float32 frames + level | `MicAudioSource` (`record` package) | file playback for demos |
 | `RecognitionEngine`: audio in, `RecognitionEvent`s out | `ServerRecognitionEngine` (WebSocket) | on-device engine (PLAN.md §17 M2) |
-| `ReadingStore`: positions and bookmarks | `PrefsReadingStore` (shared_preferences) | SQLite, if notes ever need it |
+| `ReadingStore`: positions, bookmarks, notes, reading log, khatm | `PrefsReadingStore` (shared_preferences) | SQLite, if notes outgrow it |
 | `Quran` | bundled `assets/quran/quran.json` | |
 
 `ListenController` (a Riverpod `Notifier`) is a state machine over those
@@ -287,22 +324,26 @@ treats `error` as fatal and `warning` as informational.
 | State | flutter_riverpod | testable, no codegen, explicit dependencies |
 | Mic | record (PCM16 stream at 16 kHz) | native resampling, Android and iOS |
 | Socket | web_socket_channel | standard; wrapped behind `RecognitionEngine` |
-| Storage | shared_preferences | settings, positions, bookmarks (versioned JSON) |
+| Storage | shared_preferences | settings, positions, bookmarks, notes, khatm (versioned JSON) |
 | Strings | flutter_localizations + gen-l10n (intl) | the official stack; generated code committed |
 | Screen awake | wakelock_plus | maintained, both platforms |
 
 ## 5. Quality bar
 - **Unit tests:** protocol codec, PCM, backoff, the Quran and its divisions (binary search against a
-  linear scan of every verse), the reading store (unreadable records are kept), search, settings,
+  linear scan of every verse), the reading store (unreadable records are kept), the khatm arithmetic
+  (adaptive target, overdue, wrap-around, re-reading, a 365-day plan), notes, search, settings,
   `BookIndex` round-trips for all 6,350 items, translations complete in every language.
 - **Controller tests:** the full session state machine with fake audio and a fake engine.
 - **Engine integration test:** `ServerRecognitionEngine` against a real local WebSocket server.
-- **Widget tests:** the reader (restore after restart, background save, failed saves, bookmarks, copy,
-  search, Go to), Taraweeh mode in every state (auto-start, the introduction once, leaving, both
+- **Widget tests:** the reader (restore after restart, background save, failed saves, bookmarks, notes,
+  copy, search, Go to), the khatm planner (start, continue, change end, stop, the bar and the card,
+  completion), the Notes view, Taraweeh mode in every state (auto-start, the introduction once, leaving, both
   positions, last night's hint), `QuranView` (virtualization, jumps, follow, detach), Arabic RTL and
   French, small phones at large text in every language.
 - **Golden screenshots** with the real fonts, rendered on Linux (`tool/goldens.sh`): reader, Taraweeh,
-  search, Go to, settings, the introduction, Arabic and French.
+  search, Go to, settings, the introduction, the khatm planner, the note sheet, Notes, Arabic and French.
+- **Accessibility** (`test/accessibility_test.dart`): Flutter's tap-target, label and contrast
+  guidelines on every main screen in both themes, and every screen at 200% system text.
 - **Performance:** the R2 budgets on a real phone (`integration_test/`, `tool/perf_report.py`).
 - **CI:** `dart format`, `flutter analyze` (strict lints), `flutter test`, and a check that the bundled
   Quran asset matches the data pipeline output.

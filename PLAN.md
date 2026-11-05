@@ -581,6 +581,29 @@ Built on `feat/quran-reader`, in five commits, each with tests and goldens.
 5. Note icons in both layouts, the Bookmarks | Notes tabs, strings, tests and goldens.
 6. `DESIGN.md`, this section's results, version 0.3.0, a release build, and a check on the emulator.
 
-### 21.5 After 0.3
+### 21.5 Results (build 0.3, 2026-11-05)
+
+Built on `feat/khatm-notes` from `master`, in six commits as §21.4 planned, each with all checks green.
+
+- **Data:** `KhatmPlan` / `KhatmBook` (`khatm.v1`, pages grouped by day) and `Note` (`notes.v1`) in the reading store, with the same rules as bookmarks: readable parts kept, the original copied aside, failed writes reported. `ReadingLog.keepDays` is 400.
+- **Khatm planner:** as planned in §21.2. One deviation: Start's "from the beginning" has no "Page 1" caption, so the Start button fits on a 360 × 780 screen.
+- **Notes:** as planned in §21.3. Two deviations, both from the emulator check:
+  - *Save* sits beside the sheet's title, pinned above the field. Below the field, the keyboard hid it.
+  - The field starts at three lines, not four.
+- **Bookmarks | Notes** is a segmented control at the top of the tab's body, not in the app bar, so it grows with 200% system text.
+- **Strings:** 47 new messages in English, French and Arabic (full Arabic plural forms). The "Khatm planner" and "Notes" placeholders are gone from More.
+- **Totals:** 279 tests (212 before), 28 golden screenshots (4 new: the planner with and without a plan, the note sheet, Notes; More, Bookmarks and the ayah sheet re-rendered). The release APK builds as 0.3.0+3.
+- **Emulator** (Pixel XL API 36, release build, installed over 0.2): the reading position and bookmark from 0.2 were kept. Checked:
+  - starting a 30-day plan from page 423;
+  - *Continue*, then two page turns giving "Today 2/21" in the bar;
+  - the Bookmarks card, still there after two reinstalls;
+  - adding a note, its icon in the page view, and the Notes list.
+- **Emulator note:** with Docker Desktop running, the emulator hangs at boot (all vCPU threads). Quit Docker (and `wsl --shutdown`) first, and cold boot with `-gpu swiftshader_indirect`.
+
+**Open after 0.3:**
+1. Native review of the new French and Arabic strings.
+2. Not seen on a phone yet: the date picker in Arabic.
+
+### 21.6 After 0.3
 - **Taraweeh on the phone:** the §16 benchmark on the Galaxy A16, then §17 M2.
 - **Reading discipline chart:** a year grid of days shaded by pages read, from `ReadingLog` (now kept 400 days). It goes in the Bookmarks or More area, with a weekly or yearly toggle and no streak pressure.

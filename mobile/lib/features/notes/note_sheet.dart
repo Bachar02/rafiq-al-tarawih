@@ -111,50 +111,67 @@ class _NoteSheetState extends ConsumerState<_NoteSheet> {
     return Padding(
       // Above the keyboard.
       padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(RubricSpace.s6, 0, RubricSpace.s6, RubricSpace.s6),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            SheetHeader(title: l.noteOn(verseReference(widget.verse, names))),
-            const SizedBox(height: RubricSpace.s4),
-            ValueListenableBuilder(
-              valueListenable: _text,
-              builder: (context, value, _) => TextField(
-                controller: _text,
-                autofocus: true,
-                minLines: 4,
-                maxLines: 10,
-                maxLength: Note.maxLength,
-                keyboardType: TextInputType.multiline,
-                textCapitalization: TextCapitalization.sentences,
-                textDirection: noteDirection(value.text),
-                decoration: InputDecoration(hintText: l.noteHint, errorText: _error),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Save beside the title, which never scrolls: in view above the keyboard.
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: RubricSpace.s6),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Expanded(child: SheetHeader(title: l.noteOn(verseReference(widget.verse, names)))),
+                const SizedBox(width: RubricSpace.s3),
+                ValueListenableBuilder(
+                  valueListenable: _text,
+                  builder: (context, value, _) {
+                    final empty = Note.clean(value.text).isEmpty;
+                    return FilledButton(
+                      // Saving an empty note deletes it; with no note, there is nothing to save.
+                      onPressed: _saving || (empty && _existing == null) ? null : _save,
+                      child: Text(l.saveNote),
+                    );
+                  },
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: RubricSpace.s4),
+          Flexible(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(RubricSpace.s6, 0, RubricSpace.s6, RubricSpace.s6),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  ValueListenableBuilder(
+                    valueListenable: _text,
+                    builder: (context, value, _) => TextField(
+                      controller: _text,
+                      autofocus: true,
+                      minLines: 3,
+                      maxLines: 10,
+                      maxLength: Note.maxLength,
+                      keyboardType: TextInputType.multiline,
+                      textCapitalization: TextCapitalization.sentences,
+                      textDirection: noteDirection(value.text),
+                      decoration: InputDecoration(hintText: l.noteHint, errorText: _error),
+                    ),
+                  ),
+                  if (_existing != null) ...[
+                    const SizedBox(height: RubricSpace.s2),
+                    TextButton.icon(
+                      onPressed: _saving ? null : _delete,
+                      icon: Icon(Icons.delete_outline, size: 20, color: c.ink),
+                      label: Text(l.deleteNote),
+                    ),
+                  ],
+                ],
               ),
             ),
-            const SizedBox(height: RubricSpace.s2),
-            ValueListenableBuilder(
-              valueListenable: _text,
-              builder: (context, value, _) {
-                final empty = Note.clean(value.text).isEmpty;
-                return FilledButton(
-                  // Saving an empty note deletes it; with no note, there is nothing to save.
-                  onPressed: _saving || (empty && _existing == null) ? null : _save,
-                  child: Text(l.saveNote),
-                );
-              },
-            ),
-            if (_existing != null) ...[
-              const SizedBox(height: RubricSpace.s2),
-              TextButton.icon(
-                onPressed: _saving ? null : _delete,
-                icon: Icon(Icons.delete_outline, size: 20, color: c.ink),
-                label: Text(l.deleteNote),
-              ),
-            ],
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
