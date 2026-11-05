@@ -6,15 +6,19 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:rafiq/app/providers.dart';
 import 'package:rafiq/core/audio/audio_source.dart';
 import 'package:rafiq/core/recognition/models.dart';
 import 'package:rafiq/core/recognition/recognition_engine.dart';
 import 'package:rafiq/data/quran.dart';
+import 'package:rafiq/data/reading_store.dart';
 import 'package:rafiq/data/settings.dart';
+import 'package:rafiq/data/surah_names.dart';
 import 'package:rafiq/services/screen_awake.dart';
 import 'package:rafiq/services/server_health.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:rafiq/services/sharer.dart';
 
 class FakeAudioSource implements AudioSource {
   bool permission = true;
@@ -100,6 +104,18 @@ class FakeEngine implements RecognitionEngine {
   }
 }
 
+class FakeSharer implements Sharer {
+  final texts = <String>[];
+  final images = <({int bytes, String fileName, String? text})>[];
+
+  @override
+  Future<void> shareText(String text) async => texts.add(text);
+
+  @override
+  Future<void> shareImage(Uint8List png, {required String fileName, String? text}) async =>
+      images.add((bytes: png.length, fileName: fileName, text: text));
+}
+
 class FakeScreenAwake implements ScreenAwake {
   bool enabled = false;
 
@@ -113,6 +129,10 @@ class FakeScreenAwake implements ScreenAwake {
 Quran? _quran;
 Quran loadQuran() => _quran ??= Quran.fromJson(File('assets/quran/quran.json').readAsStringSync());
 
+SurahNames? _names;
+SurahNames loadSurahNames() =>
+    _names ??= SurahNames.fromJson(File('assets/data/surah-names.json').readAsStringSync(), loadQuran());
+
 /// Everything a test needs, wired the way main.dart wires the real app.
 class Harness {
   Harness._(this.prefs);
@@ -120,9 +140,16 @@ class Harness {
   final SharedPreferences prefs;
   final audio = FakeAudioSource();
   final awake = FakeScreenAwake();
+  final sharer = FakeSharer();
   final engines = <FakeEngine>[];
   final addresses = <String>[];
   ServerHealth health = const ServerHealth.ok(latency: Duration(milliseconds: 12), asr: true, device: 'cuda');
+
+  /// Replace before launching to test storage failures.
+  ReadingStore? readingStore;
+
+  /// The time the app sees (change it to cross midnight).
+  DateTime now = DateTime(2026, 11, 4, 20);
 
   FakeEngine get engine => engines.last;
 
@@ -133,9 +160,13 @@ class Harness {
 
   List<Override> get overrides => [
         quranProvider.overrideWithValue(loadQuran()),
+        surahTableProvider.overrideWithValue(loadSurahNames()),
         settingsStoreProvider.overrideWithValue(SettingsStore(prefs)),
+        readingStoreProvider.overrideWithValue(readingStore ?? PrefsReadingStore(prefs)),
         audioSourceProvider.overrideWithValue(audio),
         screenAwakeProvider.overrideWithValue(awake),
+        sharerProvider.overrideWithValue(sharer),
+        clockProvider.overrideWithValue(() => now),
         healthCheckerProvider.overrideWithValue((_) async => health),
         engineFactoryProvider.overrideWithValue((address) {
           addresses.add(address);

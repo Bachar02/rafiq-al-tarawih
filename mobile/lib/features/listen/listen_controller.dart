@@ -57,6 +57,8 @@ class ListenController extends Notifier<ListenState> {
       readerSurah: state.readerSurah,
       browsing: state.browsing,
       track: state.track,
+      anchor: state.anchor,
+      lastSure: state.lastSure,
       startedAt: DateTime.now(),
     );
 
@@ -153,6 +155,10 @@ class ListenController extends Notifier<ListenState> {
       track: TrackState(position: position, status: TrackStatus.tracking, confidence: 1),
       readerSurah: position.surah,
       browsing: false,
+      // The user said where the imam is, Al-Fatiha included: show exactly that.
+      anchor: position.surah == 1 ? null : position,
+      lastSure: position,
+      confirmedAt: DateTime.now(),
     );
   }
 
@@ -177,7 +183,8 @@ class ListenController extends Notifier<ListenState> {
     final now = DateTime.now();
     if (now.difference(_lastLevel) >= _levelInterval) {
       _lastLevel = now;
-      state = state.copyWith(level: peakLevel(samples));
+      final level = peakLevel(samples);
+      state = state.copyWith(level: level, lastSoundAt: level >= quietLevel ? now : state.lastSoundAt);
     }
   }
 
@@ -222,20 +229,26 @@ class ListenController extends Notifier<ListenState> {
     final firstDetection = state.detectedAfter == null && heard.state.position != null && state.startedAt != null;
     // The reader moves to another surah only on a confident result (or the
     // server confirming a user correction): an unsure guess must not yank
-    // the text away. While browsing, the user decides.
+    // the text away. Al-Fatiha at each rakʿah does not move it either: the
+    // imam's surah stays open. While browsing, the user decides.
     var reader = state.readerSurah;
     final shown = heard.state.showing;
+    final confident = heard.state.status == TrackStatus.tracking && shown != null;
     if (!state.browsing && shown != null) {
-      final confident = heard.state.status == TrackStatus.tracking;
-      if (reader == null || confident) reader = shown.surah;
+      final fatihaExcursion = shown.surah == 1 && reader != null && reader != 1;
+      if (reader == null || (confident && !fatihaExcursion)) reader = shown.surah;
     }
+    final now = DateTime.now();
     state = state.copyWith(
+      anchor: confident && shown.surah != 1 ? shown : state.anchor,
+      lastSure: confident ? shown : state.lastSure,
+      confirmedAt: confident ? now : state.confirmedAt,
       readerSurah: reader,
       phase: state.phase == SessionPhase.stopping ? null : SessionPhase.listening,
       track: heard.state,
       transcript: transcript,
       livePartial: heard.isFinal ? null : line,
-      detectedAfter: firstDetection ? DateTime.now().difference(state.startedAt!) : state.detectedAfter,
+      detectedAfter: firstDetection ? now.difference(state.startedAt!) : state.detectedAfter,
     );
   }
 

@@ -79,7 +79,9 @@ script, because the order of its combining marks matters.
   "verses":  [ { "id": 6092, "surah": 93, "ayah": 2,
                  "text": "والليل اذا سجى" }, ... ],
   "juzs":    [ { "index": 1, "surah": 1, "ayah": 1 }, ... ],
-  "sajdas":  [ { "index": 1, "surah": 7, "ayah": 206, "type": "recommended" }, ... ]
+  "sajdas":  [ { "index": 1, "surah": 7, "ayah": 206, "type": "recommended" }, ... ],
+  "pages":   [ { "index": 1, "surah": 1, "ayah": 1 }, ... ],          // 604
+  "hizb_quarters": [ { "index": 1, "surah": 1, "ayah": 1 }, ... ]   // 240
 }
 ```
 
@@ -92,6 +94,15 @@ plain integer arithmetic.
 prior on where the imam will be. `sajdas` matter because the UI should signal a
 prostration ayah as it arrives.
 
-The XML also carries hizb, manzil, ruku and mushaf page boundaries. Those are
-not parsed yet; they belong to a mushaf reader rather than to recognition. The
-raw XML is committed, so adding them later is a few lines.
+`pages` and `hizb_quarters` are for the reader: page starts follow the
+604-page Madinah mushaf (the King Fahd Complex print), and the quarters are the
+rubʿ al-ḥizb marks, 8 per juz. They are *starts only*: the app's text flows and
+is not a facsimile of the printed page. The build checks that each table is a
+complete, ordered partition starting at 1:1, and that every juz begins exactly
+at its first hizb quarter (two independent tables in the XML). The engine
+tests add hand-written anchors from the printed mushaf (juz start pages,
+Ayat al-Kursi on page 42, al-Kahf on 293, …) in
+`engine/tests/test_quran_divisions.py`.
+
+The XML also carries manzil and ruku boundaries. Those are not parsed; nothing
+uses them yet.

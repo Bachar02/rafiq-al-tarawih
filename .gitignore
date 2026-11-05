@@ -25,6 +25,7 @@ venv/
 # Flutter (Phase 5)
 mobile/.dart_tool/
 mobile/build/
+mobile/android/.kotlin/
 mobile/.flutter-plugins*
 
 # Editor / OS
@@ -35,3 +36,9 @@ Thumbs.db
 
 # Exported on-device models and validation clips (tools/whisper_export)
 /build/
+
+# Design handoff archives (kept outside the repo)
+/*.zip
+
+# Golden screenshot diffs from a failed run (mobile/test/golden/README.md)
+mobile/test/golden/failures/

@@ -15,7 +15,7 @@ import '../../services/ondevice/ondevice_transcriber.dart';
 /// Phase 6 go/no-go: can this phone run the Quran speech model fast enough?
 ///
 /// Downloads the model and validation clips from the dev server, transcribes
-/// them on the phone with 2 and 4 threads, and reports speed and accuracy next
+/// them on the phone with 1, 2 and 4 threads, and reports speed and accuracy next
 /// to the laptop server's numbers on the very same audio.
 class AsrBenchScreen extends ConsumerStatefulWidget {
   const AsrBenchScreen({super.key});
@@ -61,8 +61,9 @@ class _AsrBenchScreenState extends ConsumerState<AsrBenchScreen> {
       ];
       int? bestShortMs;
       // (threads, trailing silence): fewer threads avoid the slow cores of
-      // big.LITTLE phones; shorter padding is faster, slightly less accurate.
-      const configs = [(1, 500), (2, 500), (2, 2000)];
+      // big.LITTLE phones, more use the big cores flagships have; shorter
+      // padding is faster, slightly less accurate.
+      const configs = [(1, 500), (2, 500), (4, 500), (2, 2000)];
       for (final (threads, padMs) in configs) {
         _set('Transcribing on the phone: $threads thread(s), ${padMs / 1000} s padding…', progress: null);
         final run = await runBenchmark(
@@ -117,12 +118,12 @@ class _AsrBenchScreenState extends ConsumerState<AsrBenchScreen> {
     return Scaffold(
       appBar: AppBar(title: const Text('On-device speech benchmark')),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(RubricSpace.gutter),
         children: [
           Text(
             'Tests whether this phone can run the Quran speech model itself, without the laptop. '
             'Uses the server address from Settings to download the model and test audio once.',
-            style: context.text.bodyMedium?.copyWith(color: context.colors.muted),
+            style: context.text.bodyMedium?.copyWith(color: context.colors.inkSecondary),
           ),
           const SizedBox(height: 16),
           FilledButton.icon(
@@ -135,13 +136,17 @@ class _AsrBenchScreenState extends ConsumerState<AsrBenchScreen> {
           if (_busy) ...[const SizedBox(height: 8), LinearProgressIndicator(value: _progress)],
           if (_error != null) ...[
             const SizedBox(height: 12),
-            Text(_error!, style: context.text.bodySmall?.copyWith(color: context.colors.lost)),
+            Text(_error!, style: context.text.bodySmall?.copyWith(color: context.colors.signal)),
           ],
           if (_report != null) ...[
             const SizedBox(height: 16),
             Card(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(RubricRadius.md),
+                side: BorderSide(color: context.colors.hairline),
+              ),
               child: Padding(
-                padding: const EdgeInsets.all(14),
+                padding: const EdgeInsets.all(RubricSpace.s4),
                 child: SelectableText(_report!, style: const TextStyle(fontFamily: 'monospace', fontSize: 12)),
               ),
             ),
@@ -177,7 +182,7 @@ String verdict(int typicalChunkMs) {
     return 'GOOD: on-device recognition is fast enough for live following on this phone.';
   }
   if (typicalChunkMs <= 3000) {
-    return 'BORDERLINE: usable with fewer live previews; the vocabulary-trim optimization should make it comfortable.';
+    return 'BORDERLINE: usable with fewer live previews; needs the next speed-ups (NNAPI/XNNPACK, a smaller model).';
   }
   return 'TOO SLOW for live following: needs a smaller model (or the cloud fallback) on phones like this.';
 }

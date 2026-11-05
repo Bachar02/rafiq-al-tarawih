@@ -210,3 +210,253 @@ So the Play Store build is on-device. The server stays useful for development, t
 - **Decision rule:** a typical chunk under 1.5 s on mid-range phones means go on-device. Between 1.5 and 3 s, trim the vocabulary first. Over 3 s, use a smaller model or a cloud fallback.
 - **Phone round 1 (Galaxy A32, budget):** 3.6 s per chunk on 2 threads, too slow. Accuracy 96.6% (fine). Whisper-tiny rejected (80% accuracy). The bottleneck is the decoder's full-vocabulary projection.
 - **Fix:** trimmed the vocabulary to 660 tokens. Output is identical, the model is 55 MB instead of 160 MB, and it's ~25% faster on the laptop. Phone round 2 is pending.
+- **Phone round 2, budget tier (2026-11-04, Galaxy A32 4G SM-A325F, Android 13, 8 cores: 2 fast + 6 efficiency):** `quran-basetrim` int8, sherpa-onnx 1.13.4, the same 22 clips; typical chunks are ≤ 6.5 s, median 3.1 s of speech.
+
+  | Threads, padding | Typical chunk | Word accuracy |
+  |---|---|---|
+  | 1, 0.5 s | 4.38 s | 95.2% |
+  | **2, 0.5 s** | **3.11 s** | 95.2% |
+  | 4, 0.5 s | 3.64 s | 95.2% |
+  | 2, 2.0 s | 3.61 s | 96.6% |
+
+  - **§16 rule for this tier: over 3 s → smaller model or cloud fallback.** At best the A32 transcribes a chunk in as long as it took to recite (real-time factor ≈ 1.0), so it can never catch up and every ayah would show more than 3 s late. Accuracy is fine.
+  - **Two threads is the best setting.** Four threads is slower because the work spills onto the efficiency cores.
+  - **The vocabulary trim did not speed up this phone:** round 1 measured 3.6 s and 96.6%, the same as the 2 thread, 2 s padding row here. (Round 1's configuration was not written down; that row is the only one that matches.) The 1.5 s of extra padding costs 0.5 s, so length-proportional work (mostly the encoder) is about 0.33 s per second of audio, and about 1.9 s per chunk is fixed (mostly decoding). The real split must be measured before choosing the next optimization.
+  - **Overall go/no-go is pending the mid-range and flagship phones**, as the rule is decided on mid-range.
+
+## 17. Roadmap to a shippable product (planned 2026-11-03)
+
+**Hard deadline:** Ramadan 2027 starts around 8 February 2027 (to confirm by moon sighting). A closed beta must be in real mosques before then, so the release candidate is due **mid-January 2027**. Taraweeh audio only exists during Ramadan; until then, the daily *jahrī* prayers (Maghrib, ʿIshāʾ, Fajr) supply real mosque audio.
+
+**Principles:** the engine stays the moat and is measured, not guessed. One `RecognitionEngine` interface, two builds (server and on-device). Every number that matters is gated in CI. Never claim more than the app does.
+
+### M0 — Secure the base (first session, ~1 day)
+- **Rubric design work** (76 files, uncommitted when this was written): review the diff, commit it on a branch, open a PR, merge.
+- **Git history:** the latest commit's message ("Phase 0: …") does not describe its content (the model-size change). Reword it before anything is pushed on top. The earlier "switch to Whisper-tiny" commit is no longer in the history; the code uses `quran-basetrim`.
+- **Golden screenshot tests with the real fonts:** dark/light, 320 px at text size 1.3, Not sure, Al-Fatiha, settings. Rendering with the real fonts found missing ʿ/Ḥ glyphs and an overflow that the Ahem-font widget tests missed.
+- **Flutter upgrade:** 3.19.5 → current stable, *before* the big work (Dart 3.3 lacks features already needed; packages are 2.5 years behind). Then update CI to the same version.
+
+### M1 — On-device go/no-go (week 1)
+- Phone round 2 with `quran-basetrim` (55 MB), on three tiers: budget (Galaxy A32), mid-range and flagship. Apply the §16 rule: under 1.5 s per typical chunk → go.
+- If still too slow: try a 4-thread setting, CPU affinity, and NNAPI/XNNPACK. Otherwise a smaller distilled Quran model, or a streaming CTC model.
+- **Output:** a written decision, with numbers, in this file.
+
+### M2 — On-device engine (weeks 2–5)
+- **Dart port** of `match` and `track` (normalize is done) with golden parity tests against Python in CI; the port must never drift.
+- **On-device audio path:** a Dart VAD/segmenter (the loudness VAD with an adaptive floor, §10), live partials, and catch-up without backlog (§11), all running in a background isolate.
+- **`OnDeviceRecognitionEngine`** behind the existing interface, so the UI does not change. The fake-engine tests run against both engines.
+- **Model delivery:** Play Asset Delivery (install-time pack) or a first-run download with checksum, resume and storage checks. The "Preparing the speech model" state from the brand book.
+- **Build flavors:** `server` (development) and `ondevice` (store). The on-device flavor drops all server/Wi-Fi copy and settings, and removes `usesCleartextTraffic`.
+- **Budgets, measured on the three phones:** latency under 3 s, a battery and thermal budget for a 2-hour session, and memory.
+
+### M3 — Real-world evaluation (starts now, runs in parallel)
+- **Recording protocol and consent:** record jahrī prayers in 3+ mosques (different acoustics) with the phone in realistic positions; label ayah timestamps. This is Phase 2's eval set (§5), still missing.
+- Replay recordings through **both** engines with `eval/audio_bench.py`, and gate accuracy, wrong jumps per hour and latency in CI (audio stays out of git; manifests only).
+- **Calibrate** with the data: the 10 s inferred-state windows, `quietLevel`, and the qunūt false-match risk.
+
+### M4 — Product completeness (weeks 4–8)
+- **Localization:** English, French and Arabic via `flutter_localizations` + ARB files, full RTL, and native-speaker review of the handoff copy and the French surah names.
+- **First-run onboarding:** microphone rationale, the Ḥafṣ-only statement, and how to place the phone. A privacy policy page.
+- **Open Rubric decisions:**
+  - an "Open settings" action for a denied mic (`permission_handler` or `app_settings`);
+  - Lucide icons;
+  - where browsing lives;
+  - copy written outside the spec;
+  - the coming-ayah colour at low brightness;
+  - Flutter justification on sparse lines (55:14).
+- **Accessibility pass:** TalkBack/VoiceOver, large text, reduced motion, contrast on real phones.
+
+### M5 — Release engineering (in parallel from week 3)
+- **Signing:** a release keystore (out of git, in CI secrets) and Play App Signing. Versioning from tags.
+- **CI/CD:** a GitHub Actions pipeline producing a signed app bundle and APKs per tag; upload to the internal track (Fastlane or the Gradle Play Publisher). iOS: TestFlight, which needs a Mac or a macOS CI runner.
+- **Observability:** opt-in, privacy-preserving crash reporting (no audio, no transcripts), plus a local session log the user can export for bug reports.
+- **Store listing:** Data safety form ("audio processed on device, not collected") and screenshots from the golden renders.
+
+### M6 — Beta and launch
+- **Internal track** by mid-December 2026.
+- **Closed beta** with imams and regular worshippers by **mid-January 2027**.
+- **Fix window**, then public release in the week before Ramadan 2027.
+- **During Ramadan:** collect opt-in Taraweeh recordings to improve the next version.
+
+### First session agenda
+1. M0: commit the Rubric work, reword the misnamed commit, add golden screenshot tests.
+2. M0: upgrade Flutter and dependencies; keep all tests green.
+3. M1: run phone round 2 and record the go/no-go decision.
+
+## 18. Product direction: a Quran reader with Taraweeh mode (approved 2026-11-04)
+
+**Decision:** Rafiq becomes a Quran reading app first, and live Taraweeh tracking is its signature mode. The reader is the home screen. Taraweeh mode is a full-screen mode one tap away, built on the same Quran view. Approved choices:
+1. **Continuous scrolling through the whole Quran**, kept only if the A32 benchmark passes.
+2. **Two independent positions:** personal reading, and the last Taraweeh position.
+3. **One tap starts listening**, after first-run onboarding (shown once) and the microphone permission.
+4. **System theme by default**, with "Dark during Taraweeh" on.
+
+Hafs only. The engine, server, protocol and Quran text are unchanged.
+
+**Roadmap:** R1 data → R2 `QuranView` spike → R3 reader and app shell → R4 Taraweeh on `QuranView` → R5 navigation, search, bookmarks → R6 polish, localization, docs.
+
+### R1: page and hizb-quarter data (done)
+- `quran.json` gains `pages` (604 page starts, Madinah mushaf) and `hizb_quarters` (240). Every existing field is unchanged.
+- The build checks that each division is a complete, ordered partition starting at 1:1, and that every juz starts at its first quarter.
+- Engine tests pin hand-written anchors from the printed mushaf: juz start pages (including the irregular 121 and 201), Ayat al-Kursi on page 42, al-Kahf on 293, Ya-Sin on 440.
+- Dart `Divisions` does binary-search lookups (`juzs`, `pages`, `quarters`), checked against a linear scan of all 6,236 verses.
+- Page marks are **starts only**: the text flows, it is not a page facsimile, and the app never claims to be one.
+
+### R2: `QuranView` spike
+**Architecture:** one lazily built list of 6,350 items (114 surah headers and 6,236 ayahs).
+- **Jumps:** the list is anchored with the two-sliver "center" technique (items after the anchor grow down, items before it grow up). Any jump is an exact re-anchor in constant time, with no extent estimation and no new dependency.
+- **Follow-scroll:** ported with the same constants (comfort zone 25–60%, anchor 38%).
+- **Measuring positions:** in scroll space, because scroll notifications arrive before layout, and paint positions are a frame stale exactly when a drag ends (a bug the tests caught).
+- **No needless rebuilds:** item delegates are rebuilt only when what the items show changes, so the Taraweeh screen's 80 ms mic-level updates rebuild no ayah. A test checks this.
+- **Reading tone** skips the tone crossfade machinery, which is cheaper per ayah while scrolling.
+
+**Why continuous rather than per surah:** per-frame scroll cost is the same either way, because only items on screen exist. The thing that matters is virtualization. A per-surah fallback would only remove reading across surah boundaries (a juz crosses them), not cost.
+
+**Host proxy** (`RAFIQ_PERF=1 flutter test test/perf/quran_view_cost_test.dart`): real fonts, a debug-mode laptop, so only the ratios mean anything.
+
+| Text size | Old eager column, Al-Baqarah frame | `QuranView` open | Scroll frame, median / p90 | Jump, median |
+|---|---|---|---|---|
+| 1.0 | 313 ms | 19 ms | 2.2 / 9.9 ms | 11 ms |
+| 1.6 | 250 ms | 11 ms | 1.1 / 5.6 ms | 6 ms |
+
+**Deciding run, pending: the A32.** It needs a phone (the local emulators are 32-bit x86, which Flutter no longer runs).
+
+```
+flutter drive --profile -d <A32> --driver=test_driver/perf_driver.dart --target=integration_test/quran_view_perf_test.dart
+py tool/perf_report.py --markdown
+```
+
+It covers Al-Baqarah flings, juz 30 across surahs, 20 far jumps and Taraweeh follow, each at text size 1.0 and 1.6.
+
+**Budgets:**
+- **Scrolling:** frame build and raster p90 ≤ 16 ms, build p99 ≤ 33 ms, ≤ 5% of frames over budget.
+- **Jumps:** p90 ≤ 250 ms.
+
+**If scrolling misses the budget**, the levers in order are:
+1. Cache shaped paragraphs per ayah and text size.
+2. Split long ayahs into line-range items.
+3. Lower `cacheExtent`.
+
+The list architecture stays in every case.
+
+### R3: the reader is home (done)
+- **`ReaderScreen`:** the shared `QuranView`, opened at the personal reading position.
+  - A bar names the surah, juz and page. It is the only widget that rebuilds while scrolling.
+  - A floating Taraweeh button steps aside while reading down.
+- **Reading position:** the verse at the top of the reader.
+  - Saved one second after scrolling stops, and at once when the app leaves the foreground.
+  - A failed save stays pending and is retried.
+  - Tests restore it after a simulated restart.
+- **`ReadingStore`:** the reading position, the last Taraweeh position and bookmarks, as versioned JSON in shared preferences, keyed by verse id.
+  - **An unreadable record is never overwritten.** It is first copied to `<key>.unreadable.<time>`.
+  - **A failed write is reported, not thrown.**
+  - **Bookmarks are saved before they are shown**, so the UI never claims a bookmark it did not keep.
+- **Settings:**
+  - The theme follows the system by default. A stored theme is kept: v1 saved every field on any change, so its users keep dark.
+  - *Dark during Taraweeh* (on) is a theme scoped to the Taraweeh route. Screens opened from Taraweeh mode inherit it.
+- **`AppRoutes`:** every screen-to-screen move in one place.
+
+### R4: Taraweeh mode on `QuranView` (done)
+- The recognition controller, its states, corrections, lock, Al-Fatiha handling and reconnects are **unchanged**. Every earlier recognition-state test still runs.
+- **One tap from the reader starts listening.**
+  - A one-time introduction (microphone, Wi-Fi server build, Ḥafṣ only, how to correct) comes first. It is never shown again; *Not now* leaves following off.
+- **Leaving the mode stops following and saves the last Taraweeh position.** That is the imam's main position (`anchor`), never Al-Fatiha at a rakʿah. Taraweeh never writes the reading position (tested).
+- **The next night**, if the last session was within 36 hours, the juz after where it ended is applied as a soft hint.
+  - It is shown as "Last night ended at …" and is removable.
+  - The hint chip now stays visible while listening, until the imam is found.
+- `QuranColumn` is removed.
+
+### R5: navigation, search, bookmarks (done)
+- **Go to:** Surahs (filterable), Juz, Pages (all 604) and Bookmarks.
+  - Every list opens at the current place, exactly, at any text size. Rows share one height, measured from a prototype.
+  - The Bookmarks tab starts with where Taraweeh ended. Removing a bookmark can be undone.
+- **Search:** one field for references (Arabic-Indic digits too), pages, juz, surah names in any language the app knows, and Arabic text.
+  - Arabic text goes through the engine's own `normalize`, so tashkeel, hamza seats and alef forms do not matter.
+  - Matching is a scan of 6,236 short strings, a few milliseconds, so there is no index and no isolate.
+  - Results are in mushaf order, capped at 200, with the full count.
+- Taraweeh mode's index is the same navigator.
+
+### R6: polish, languages, documentation (done)
+- **English, French and Arabic**, using Flutter's gen-l10n.
+  - About 200 messages, with ICU plurals (the full Arabic forms). The generated code is committed and formatted at the project width (`analysis_options.yaml`).
+  - `test/l10n/` fails if a language misses a message or a placeholder.
+  - An app language setting (System by default) and one `appLocaleProvider` decide the language. Surah names follow it; in Arabic each surah's own name is used and never shown twice.
+  - Arabic is right to left throughout; Quran text is always right to left. Arabic overlines have no letter-spacing or capitals.
+  - iOS declares its localizations, and Android sets `supportsRtl`.
+- **Settings regrouped:** Reading (text size, appearance, language), Taraweeh (dark during Taraweeh, keep screen on), Recitation, Recognition server, Developer, About.
+- **New Rubric token:** `mark`, the reader's wash for a chosen ayah. Cinnabar keeps its one meaning.
+- **Tests:** 177, plus 22 golden screenshots with the real fonts (including Arabic and French). DESIGN.md is rewritten for the reader-first app.
+
+### Open after R6
+1. **The A32 scroll benchmark (R2's deciding run)**, as soon as the phone is connected. It is one command (above).
+2. **Native review of the French and Arabic texts.** They are drafts, as M4 already planned.
+3. **Not localized yet:**
+   - The developer screens (diagnostics, the on-device benchmark).
+   - The server-address validation messages and the server's own error text. Both belong to the server build only.
+4. **Later, by decision:**
+   - A page-by-page mushaf mode (flowing text per Madinah page, never called a facsimile).
+   - Copying or sharing an ayah as an image.
+   - Recitation audio, translations, a khatm planner, notes.
+5. **§17 M4 items closed by this work:**
+   - Localization (drafts).
+   - First-run onboarding for Taraweeh.
+   - Where browsing lives (the reader is home).
+
+## 19. Build 0.2: reader complete (2026-11-05)
+
+Built on `feat/quran-reader`, in five commits, each with tests and goldens.
+
+- **Page view.** The 604 Madinah-mushaf pages, one per screen, turned right to left like a printed mushaf.
+  - Each page holds exactly Tanzil's ayahs, flowing per surah, with a running head and the page number.
+  - It is never presented as a facsimile: a long page scrolls within itself.
+  - It shares the reading position, ayah taps, marks and text size with the scroll view.
+  - A Layout setting (Scroll / Pages) is saved; the bar toggle shows on screens 360 dp or wider.
+- **Share an ayah**, as an image card (rendered at 3× from its own preview) or as text.
+  - A `Sharer` interface over `share_plus`, the standard Flutter share-sheet plugin (the one new dependency).
+- **Reading progress and a daily goal.**
+  - **What counts:** a page is read when the reader moves forward past it (one or two pages at a time). Jumps never count, and opening the app counts nothing.
+  - **Storage:** a 90-day log, versioned like the other records.
+  - **Goals:** off, 5, 10, 20 or 40 pages. Today's count and a 2 px line show in the reader bar. No streaks.
+  - The Pages tab shows where the reader is in the whole Quran.
+- **Launch screen.** On Android it follows day and night with the Rafiq mark; the app icon stays dark.
+- **Accessibility pass.** Flutter's tap-target, label and contrast guidelines run on every main screen, in both themes, and every screen is checked at 200% system text. The pass found and fixed:
+  - two settings switches that screen readers announced without a name;
+  - a surah-row layout error at large text.
+- **Also:** the Kotlin compiler cache is no longer tracked.
+
+**Totals:** 205 tests, 26 golden screenshots, and the Android debug build passes.
+
+**Open after 0.2:**
+1. **iOS still launches dark.** The storyboard was not changed, because it cannot be verified without a Mac.
+2. **Not yet seen on a device:** the splash and the share sheet. The tests cover the share flow with a fake sharer.
+3. **The A32 scroll benchmark** (R2) is still pending. It should now also cover the page view.
+4. **Native review** of the new French and Arabic strings.
+5. **Next build:** 0.3, Taraweeh on the phone (§17 M1–M2), the critical path to the beta.
+
+## 20. Navigation and bookmarks redesign (2026-11-05)
+
+**Why:** after trying 0.2 on the emulator, finding a surah, moving through the Quran and bookmarking were all too hard:
+- Navigation hid behind unlabelled icons.
+- There was no fast way through 604 pages.
+- Bookmarks were invisible in the text and buried in a tab of Go to.
+
+**What changed** (simple patterns, nothing new underneath):
+- **A labelled bottom bar: Read · Surahs · Bookmarks · Taraweeh · More.**
+  - Taraweeh stays a one-tap button that starts listening, as approved in §18.
+  - Settings moved to More.
+  - The floating Taraweeh button over the text is gone.
+- **Surahs tab:** the surah list (with a filter), juz and pages. Tapping the surah name (now with a ▾) in the reader opens it.
+- **Scrubber:** a handle on the edge that flies through the pages, with a bubble naming the page, surah and juz. It works the same in scroll and page view.
+- **Bookmarks:**
+  - A ribbon in the text marks bookmarked ayahs.
+  - Press and hold an ayah to toggle its bookmark at once, with Undo.
+  - The Bookmarks tab lists *Continue reading* and *Where Taraweeh ended*, then the bookmarks, sorted newest first or in Quran order (remembered).
+  - Swipe to delete, with Undo restoring the original date.
+  - A removal that fails to save stays visible and says so.
+- **Placeholders**, shown and visibly disabled:
+  - In More: recitation audio, translations, tafsir, a khatm planner, notes, Taraweeh without a computer.
+  - In the ayah sheet: Listen, Translation and Tafsir.
+- **Design rule:** other tabs open places in the reader through `readerRequestsProvider`, never by reaching into its widget state.
+- **Accessibility:** a screen reader announced the page view's long-press area as an unlabelled node. It is now hidden from screen readers, who bookmark through each ayah's sheet.
+
+**Totals:** 212 tests, 29 golden screenshots, and the Android debug build passes.

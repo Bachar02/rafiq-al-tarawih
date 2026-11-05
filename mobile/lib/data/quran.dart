@@ -65,8 +65,72 @@ class Verse {
   final String uthmani;
 }
 
+/// An ordered partition of the Quran's verses into numbered divisions (juz,
+/// Madinah-mushaf pages, hizb quarters), each given by its first verse id.
+///
+/// Lookups are binary searches: called per ayah while scrolling, they must
+/// not scan 604 pages.
+class Divisions {
+  Divisions._(this.name, this._starts);
+
+  /// Builds from ordered `{surah, ayah}` marks. Throws [FormatException] if
+  /// they are not a partition: [expected] marks, the first at 1:1, each after
+  /// the previous one and inside its surah.
+  factory Divisions._fromMarks(String name, List<dynamic> marks, List<Surah> surahs, int expected) {
+    if (marks.length != expected) {
+      throw FormatException('quran.json has ${marks.length} $name marks, expected $expected');
+    }
+    final starts = <int>[];
+    for (final m in marks.cast<Map<String, dynamic>>()) {
+      final surahIndex = m['surah'] as int, ayah = m['ayah'] as int;
+      if (surahIndex < 1 || surahIndex > surahs.length) throw FormatException('$name mark in surah $surahIndex');
+      final surah = surahs[surahIndex - 1];
+      if (ayah < 1 || ayah > surah.ayahCount) throw FormatException('$name mark at $surahIndex:$ayah');
+      final id = surah.firstVerseId + ayah - 1;
+      if (starts.isEmpty ? id != 1 : id <= starts.last) {
+        throw FormatException('$name ${starts.length + 1} ($surahIndex:$ayah) is out of order');
+      }
+      starts.add(id);
+    }
+    return Divisions._(name, List.unmodifiable(starts));
+  }
+
+  /// "juz", "page" or "hizb quarter": for messages only.
+  final String name;
+  final List<int> _starts;
+
+  int get count => _starts.length;
+
+  /// The first verse id of division [index] (1-based).
+  int start(int index) => _starts[index - 1];
+
+  /// The last verse id of division [index] (1-based).
+  int end(int index) => index == count ? Quran.verseCount : _starts[index] - 1;
+
+  /// The division (1-based) that [verseId] falls in.
+  int of(int verseId) {
+    var lo = 0, hi = _starts.length; // first start > verseId
+    while (lo < hi) {
+      final mid = (lo + hi) >> 1;
+      if (_starts[mid] <= verseId) {
+        lo = mid + 1;
+      } else {
+        hi = mid;
+      }
+    }
+    return lo < 1 ? 1 : lo;
+  }
+
+  /// [verseId] is the first verse of a division.
+  bool isStart(int verseId) => _starts[of(verseId) - 1] == verseId;
+}
+
 class Quran {
-  Quran._(this.surahs, this.verses, this._juzStarts);
+  Quran._(this.surahs, this.verses, this.juzs, this.pages, this.quarters);
+
+  static const verseCount = 6236;
+  static const surahCount = 114;
+  static const pageCount = 604;
 
   /// Parse the bundled JSON. Throws [FormatException] if it is not a complete Quran.
   factory Quran.fromJson(String raw) {
@@ -82,42 +146,58 @@ class Quran {
           uthmani: v['text_uthmani'] as String?,
         ),
     ];
-    if (surahs.length != 114 || verses.length != 6236) {
+    if (surahs.length != surahCount || verses.length != verseCount) {
       throw FormatException('quran.json is incomplete: ${surahs.length} surahs, ${verses.length} verses');
     }
-    final juzStarts = <int>[];
-    for (final j in json['juzs'] as List) {
-      final m = j as Map<String, dynamic>;
-      final surah = surahs[(m['surah'] as int) - 1];
-      juzStarts.add(surah.firstVerseId + (m['ayah'] as int) - 1);
-    }
-    return Quran._(surahs, verses, juzStarts);
+    List<dynamic> marks(String key) =>
+        json[key] as List<dynamic>? ?? (throw FormatException('quran.json has no "$key"; rebuild it'));
+    return Quran._(
+      List.unmodifiable(surahs),
+      List.unmodifiable(verses),
+      Divisions._fromMarks('juz', marks('juzs'), surahs, 30),
+      Divisions._fromMarks('page', marks('pages'), surahs, 604),
+      Divisions._fromMarks('hizb quarter', marks('hizb_quarters'), surahs, 240),
+    );
   }
 
   final List<Surah> surahs;
   final List<Verse> verses;
-  final List<int> _juzStarts; // first verse id of each juz
+
+  /// The 30 ajzāʾ.
+  final Divisions juzs;
+
+  /// The 604 pages of the Madinah mushaf (Tanzil's page marks). Only where
+  /// each page starts: the app's text flows, it is not a page facsimile.
+  final Divisions pages;
+
+  /// The 240 hizb quarters (rubʿ al-ḥizb), 8 per juz.
+  final Divisions quarters;
 
   Surah surah(int index) => surahs[index - 1];
 
   Verse verse(int id) => verses[id - 1];
+
+  /// The verse id of [surah]:[ayah], or null if there is no such ayah.
+  int? verseId(int surah, int ayah) {
+    if (surah < 1 || surah > surahs.length) return null;
+    final s = surahs[surah - 1];
+    if (ayah < 1 || ayah > s.ayahCount) return null;
+    return s.firstVerseId + ayah - 1;
+  }
 
   List<Verse> surahVerses(int index) {
     final s = surah(index);
     return verses.sublist(s.firstVerseId - 1, s.lastVerseId);
   }
 
-  int get juzCount => _juzStarts.length;
+  int get juzCount => juzs.count;
 
   /// Which juz (1-based) a verse falls in.
-  int juzOf(int verseId) {
-    var juz = 1;
-    for (var i = 0; i < _juzStarts.length; i++) {
-      if (_juzStarts[i] <= verseId) juz = i + 1;
-    }
-    return juz;
-  }
+  int juzOf(int verseId) => juzs.of(verseId);
+
+  /// Which Madinah-mushaf page (1-based) a verse starts on.
+  int pageOf(int verseId) => pages.of(verseId);
 
   /// The surah a juz begins in (for labelling the juz picker).
-  Surah juzStartSurah(int juz) => surah(verse(_juzStarts[juz - 1]).surah);
+  Surah juzStartSurah(int juz) => surah(verse(juzs.start(juz)).surah);
 }

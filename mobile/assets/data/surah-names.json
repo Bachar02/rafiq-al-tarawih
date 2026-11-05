@@ -1,0 +1,805 @@
+{
+ "note": "Display names only. Surah indexes, Arabic names and the Quran data are unchanged; name_ar and data_translit are copied from quran.json for cross-checking. English and French spellings are a draft for native-speaker review.",
+ "source": "mobile/assets/quran/quran.json (Tanzil metadata) for index, name_ar, data_translit",
+ "status": "draft",
+ "surahs": [
+  {
+   "index": 1,
+   "name_ar": "الفاتحة",
+   "data_translit": "Al-Faatiha",
+   "en": "Al-Fatiha",
+   "fr": "Al-Fatiha"
+  },
+  {
+   "index": 2,
+   "name_ar": "البقرة",
+   "data_translit": "Al-Baqara",
+   "en": "Al-Baqarah",
+   "fr": "Al-Baqara"
+  },
+  {
+   "index": 3,
+   "name_ar": "آل عمران",
+   "data_translit": "Aal-i-Imraan",
+   "en": "Al Imran",
+   "fr": "Al Imran"
+  },
+  {
+   "index": 4,
+   "name_ar": "النساء",
+   "data_translit": "An-Nisaa",
+   "en": "An-Nisa",
+   "fr": "An-Nisa"
+  },
+  {
+   "index": 5,
+   "name_ar": "المائدة",
+   "data_translit": "Al-Maaida",
+   "en": "Al-Ma'idah",
+   "fr": "Al-Maïda"
+  },
+  {
+   "index": 6,
+   "name_ar": "الأنعام",
+   "data_translit": "Al-An'aam",
+   "en": "Al-An'am",
+   "fr": "Al-An'am"
+  },
+  {
+   "index": 7,
+   "name_ar": "الأعراف",
+   "data_translit": "Al-A'raaf",
+   "en": "Al-A'raf",
+   "fr": "Al-A'raf"
+  },
+  {
+   "index": 8,
+   "name_ar": "الأنفال",
+   "data_translit": "Al-Anfaal",
+   "en": "Al-Anfal",
+   "fr": "Al-Anfal"
+  },
+  {
+   "index": 9,
+   "name_ar": "التوبة",
+   "data_translit": "At-Tawba",
+   "en": "At-Tawbah",
+   "fr": "At-Tawba"
+  },
+  {
+   "index": 10,
+   "name_ar": "يونس",
+   "data_translit": "Yunus",
+   "en": "Yunus",
+   "fr": "Younous"
+  },
+  {
+   "index": 11,
+   "name_ar": "هود",
+   "data_translit": "Hud",
+   "en": "Hud",
+   "fr": "Houd"
+  },
+  {
+   "index": 12,
+   "name_ar": "يوسف",
+   "data_translit": "Yusuf",
+   "en": "Yusuf",
+   "fr": "Youssouf"
+  },
+  {
+   "index": 13,
+   "name_ar": "الرعد",
+   "data_translit": "Ar-Ra'd",
+   "en": "Ar-Ra'd",
+   "fr": "Ar-Ra'd"
+  },
+  {
+   "index": 14,
+   "name_ar": "ابراهيم",
+   "data_translit": "Ibrahim",
+   "en": "Ibrahim",
+   "fr": "Ibrahim"
+  },
+  {
+   "index": 15,
+   "name_ar": "الحجر",
+   "data_translit": "Al-Hijr",
+   "en": "Al-Hijr",
+   "fr": "Al-Hijr"
+  },
+  {
+   "index": 16,
+   "name_ar": "النحل",
+   "data_translit": "An-Nahl",
+   "en": "An-Nahl",
+   "fr": "An-Nahl"
+  },
+  {
+   "index": 17,
+   "name_ar": "الإسراء",
+   "data_translit": "Al-Israa",
+   "en": "Al-Isra",
+   "fr": "Al-Isra"
+  },
+  {
+   "index": 18,
+   "name_ar": "الكهف",
+   "data_translit": "Al-Kahf",
+   "en": "Al-Kahf",
+   "fr": "Al-Kahf"
+  },
+  {
+   "index": 19,
+   "name_ar": "مريم",
+   "data_translit": "Maryam",
+   "en": "Maryam",
+   "fr": "Maryam"
+  },
+  {
+   "index": 20,
+   "name_ar": "طه",
+   "data_translit": "Taa-Haa",
+   "en": "Ta-Ha",
+   "fr": "Ta-Ha"
+  },
+  {
+   "index": 21,
+   "name_ar": "الأنبياء",
+   "data_translit": "Al-Anbiyaa",
+   "en": "Al-Anbiya",
+   "fr": "Al-Anbiya"
+  },
+  {
+   "index": 22,
+   "name_ar": "الحج",
+   "data_translit": "Al-Hajj",
+   "en": "Al-Hajj",
+   "fr": "Al-Hajj"
+  },
+  {
+   "index": 23,
+   "name_ar": "المؤمنون",
+   "data_translit": "Al-Muminoon",
+   "en": "Al-Mu'minun",
+   "fr": "Al-Mou'minoun"
+  },
+  {
+   "index": 24,
+   "name_ar": "النور",
+   "data_translit": "An-Noor",
+   "en": "An-Nur",
+   "fr": "An-Nour"
+  },
+  {
+   "index": 25,
+   "name_ar": "الفرقان",
+   "data_translit": "Al-Furqaan",
+   "en": "Al-Furqan",
+   "fr": "Al-Fourqan"
+  },
+  {
+   "index": 26,
+   "name_ar": "الشعراء",
+   "data_translit": "Ash-Shu'araa",
+   "en": "Ash-Shu'ara",
+   "fr": "Ach-Chou'ara"
+  },
+  {
+   "index": 27,
+   "name_ar": "النمل",
+   "data_translit": "An-Naml",
+   "en": "An-Naml",
+   "fr": "An-Naml"
+  },
+  {
+   "index": 28,
+   "name_ar": "القصص",
+   "data_translit": "Al-Qasas",
+   "en": "Al-Qasas",
+   "fr": "Al-Qasas"
+  },
+  {
+   "index": 29,
+   "name_ar": "العنكبوت",
+   "data_translit": "Al-Ankaboot",
+   "en": "Al-Ankabut",
+   "fr": "Al-Ankabout"
+  },
+  {
+   "index": 30,
+   "name_ar": "الروم",
+   "data_translit": "Ar-Room",
+   "en": "Ar-Rum",
+   "fr": "Ar-Roum"
+  },
+  {
+   "index": 31,
+   "name_ar": "لقمان",
+   "data_translit": "Luqman",
+   "en": "Luqman",
+   "fr": "Louqman"
+  },
+  {
+   "index": 32,
+   "name_ar": "السجدة",
+   "data_translit": "As-Sajda",
+   "en": "As-Sajdah",
+   "fr": "As-Sajda"
+  },
+  {
+   "index": 33,
+   "name_ar": "الأحزاب",
+   "data_translit": "Al-Ahzaab",
+   "en": "Al-Ahzab",
+   "fr": "Al-Ahzab"
+  },
+  {
+   "index": 34,
+   "name_ar": "سبإ",
+   "data_translit": "Saba",
+   "en": "Saba",
+   "fr": "Saba"
+  },
+  {
+   "index": 35,
+   "name_ar": "فاطر",
+   "data_translit": "Faatir",
+   "en": "Fatir",
+   "fr": "Fatir"
+  },
+  {
+   "index": 36,
+   "name_ar": "يس",
+   "data_translit": "Yaseen",
+   "en": "Ya-Sin",
+   "fr": "Ya-Sin"
+  },
+  {
+   "index": 37,
+   "name_ar": "الصافات",
+   "data_translit": "As-Saaffaat",
+   "en": "As-Saffat",
+   "fr": "As-Saffat"
+  },
+  {
+   "index": 38,
+   "name_ar": "ص",
+   "data_translit": "Saad",
+   "en": "Sad",
+   "fr": "Sad"
+  },
+  {
+   "index": 39,
+   "name_ar": "الزمر",
+   "data_translit": "Az-Zumar",
+   "en": "Az-Zumar",
+   "fr": "Az-Zoumar"
+  },
+  {
+   "index": 40,
+   "name_ar": "غافر",
+   "data_translit": "Al-Ghaafir",
+   "en": "Ghafir",
+   "fr": "Ghafir"
+  },
+  {
+   "index": 41,
+   "name_ar": "فصلت",
+   "data_translit": "Fussilat",
+   "en": "Fussilat",
+   "fr": "Foussilat"
+  },
+  {
+   "index": 42,
+   "name_ar": "الشورى",
+   "data_translit": "Ash-Shura",
+   "en": "Ash-Shura",
+   "fr": "Ach-Choura"
+  },
+  {
+   "index": 43,
+   "name_ar": "الزخرف",
+   "data_translit": "Az-Zukhruf",
+   "en": "Az-Zukhruf",
+   "fr": "Az-Zoukhrouf"
+  },
+  {
+   "index": 44,
+   "name_ar": "الدخان",
+   "data_translit": "Ad-Dukhaan",
+   "en": "Ad-Dukhan",
+   "fr": "Ad-Doukhan"
+  },
+  {
+   "index": 45,
+   "name_ar": "الجاثية",
+   "data_translit": "Al-Jaathiya",
+   "en": "Al-Jathiyah",
+   "fr": "Al-Jathiya"
+  },
+  {
+   "index": 46,
+   "name_ar": "الأحقاف",
+   "data_translit": "Al-Ahqaf",
+   "en": "Al-Ahqaf",
+   "fr": "Al-Ahqaf"
+  },
+  {
+   "index": 47,
+   "name_ar": "محمد",
+   "data_translit": "Muhammad",
+   "en": "Muhammad",
+   "fr": "Mouhammad"
+  },
+  {
+   "index": 48,
+   "name_ar": "الفتح",
+   "data_translit": "Al-Fath",
+   "en": "Al-Fath",
+   "fr": "Al-Fath"
+  },
+  {
+   "index": 49,
+   "name_ar": "الحجرات",
+   "data_translit": "Al-Hujuraat",
+   "en": "Al-Hujurat",
+   "fr": "Al-Houjourat"
+  },
+  {
+   "index": 50,
+   "name_ar": "ق",
+   "data_translit": "Qaaf",
+   "en": "Qaf",
+   "fr": "Qaf"
+  },
+  {
+   "index": 51,
+   "name_ar": "الذاريات",
+   "data_translit": "Adh-Dhaariyat",
+   "en": "Adh-Dhariyat",
+   "fr": "Adh-Dhariyat"
+  },
+  {
+   "index": 52,
+   "name_ar": "الطور",
+   "data_translit": "At-Tur",
+   "en": "At-Tur",
+   "fr": "At-Tour"
+  },
+  {
+   "index": 53,
+   "name_ar": "النجم",
+   "data_translit": "An-Najm",
+   "en": "An-Najm",
+   "fr": "An-Najm"
+  },
+  {
+   "index": 54,
+   "name_ar": "القمر",
+   "data_translit": "Al-Qamar",
+   "en": "Al-Qamar",
+   "fr": "Al-Qamar"
+  },
+  {
+   "index": 55,
+   "name_ar": "الرحمن",
+   "data_translit": "Ar-Rahmaan",
+   "en": "Ar-Rahman",
+   "fr": "Ar-Rahman"
+  },
+  {
+   "index": 56,
+   "name_ar": "الواقعة",
+   "data_translit": "Al-Waaqia",
+   "en": "Al-Waqi'ah",
+   "fr": "Al-Waqi'a"
+  },
+  {
+   "index": 57,
+   "name_ar": "الحديد",
+   "data_translit": "Al-Hadid",
+   "en": "Al-Hadid",
+   "fr": "Al-Hadid"
+  },
+  {
+   "index": 58,
+   "name_ar": "المجادلة",
+   "data_translit": "Al-Mujaadila",
+   "en": "Al-Mujadilah",
+   "fr": "Al-Moujadala"
+  },
+  {
+   "index": 59,
+   "name_ar": "الحشر",
+   "data_translit": "Al-Hashr",
+   "en": "Al-Hashr",
+   "fr": "Al-Hachr"
+  },
+  {
+   "index": 60,
+   "name_ar": "الممتحنة",
+   "data_translit": "Al-Mumtahana",
+   "en": "Al-Mumtahanah",
+   "fr": "Al-Moumtahana"
+  },
+  {
+   "index": 61,
+   "name_ar": "الصف",
+   "data_translit": "As-Saff",
+   "en": "As-Saff",
+   "fr": "As-Saff"
+  },
+  {
+   "index": 62,
+   "name_ar": "الجمعة",
+   "data_translit": "Al-Jumu'a",
+   "en": "Al-Jumu'ah",
+   "fr": "Al-Joumou'a"
+  },
+  {
+   "index": 63,
+   "name_ar": "المنافقون",
+   "data_translit": "Al-Munaafiqoon",
+   "en": "Al-Munafiqun",
+   "fr": "Al-Mounafiqoun"
+  },
+  {
+   "index": 64,
+   "name_ar": "التغابن",
+   "data_translit": "At-Taghaabun",
+   "en": "At-Taghabun",
+   "fr": "At-Taghaboun"
+  },
+  {
+   "index": 65,
+   "name_ar": "الطلاق",
+   "data_translit": "At-Talaaq",
+   "en": "At-Talaq",
+   "fr": "At-Talaq"
+  },
+  {
+   "index": 66,
+   "name_ar": "التحريم",
+   "data_translit": "At-Tahrim",
+   "en": "At-Tahrim",
+   "fr": "At-Tahrim"
+  },
+  {
+   "index": 67,
+   "name_ar": "الملك",
+   "data_translit": "Al-Mulk",
+   "en": "Al-Mulk",
+   "fr": "Al-Moulk"
+  },
+  {
+   "index": 68,
+   "name_ar": "القلم",
+   "data_translit": "Al-Qalam",
+   "en": "Al-Qalam",
+   "fr": "Al-Qalam"
+  },
+  {
+   "index": 69,
+   "name_ar": "الحاقة",
+   "data_translit": "Al-Haaqqa",
+   "en": "Al-Haqqah",
+   "fr": "Al-Haqqa"
+  },
+  {
+   "index": 70,
+   "name_ar": "المعارج",
+   "data_translit": "Al-Ma'aarij",
+   "en": "Al-Ma'arij",
+   "fr": "Al-Ma'arij"
+  },
+  {
+   "index": 71,
+   "name_ar": "نوح",
+   "data_translit": "Nooh",
+   "en": "Nuh",
+   "fr": "Nouh"
+  },
+  {
+   "index": 72,
+   "name_ar": "الجن",
+   "data_translit": "Al-Jinn",
+   "en": "Al-Jinn",
+   "fr": "Al-Jinn"
+  },
+  {
+   "index": 73,
+   "name_ar": "المزمل",
+   "data_translit": "Al-Muzzammil",
+   "en": "Al-Muzzammil",
+   "fr": "Al-Mouzzammil"
+  },
+  {
+   "index": 74,
+   "name_ar": "المدثر",
+   "data_translit": "Al-Muddaththir",
+   "en": "Al-Muddaththir",
+   "fr": "Al-Mouddaththir"
+  },
+  {
+   "index": 75,
+   "name_ar": "القيامة",
+   "data_translit": "Al-Qiyaama",
+   "en": "Al-Qiyamah",
+   "fr": "Al-Qiyama"
+  },
+  {
+   "index": 76,
+   "name_ar": "الانسان",
+   "data_translit": "Al-Insaan",
+   "en": "Al-Insan",
+   "fr": "Al-Insan"
+  },
+  {
+   "index": 77,
+   "name_ar": "المرسلات",
+   "data_translit": "Al-Mursalaat",
+   "en": "Al-Mursalat",
+   "fr": "Al-Moursalat"
+  },
+  {
+   "index": 78,
+   "name_ar": "النبإ",
+   "data_translit": "An-Naba",
+   "en": "An-Naba",
+   "fr": "An-Naba"
+  },
+  {
+   "index": 79,
+   "name_ar": "النازعات",
+   "data_translit": "An-Naazi'aat",
+   "en": "An-Nazi'at",
+   "fr": "An-Nazi'at"
+  },
+  {
+   "index": 80,
+   "name_ar": "عبس",
+   "data_translit": "Abasa",
+   "en": "Abasa",
+   "fr": "Abasa"
+  },
+  {
+   "index": 81,
+   "name_ar": "التكوير",
+   "data_translit": "At-Takwir",
+   "en": "At-Takwir",
+   "fr": "At-Takwir"
+  },
+  {
+   "index": 82,
+   "name_ar": "الإنفطار",
+   "data_translit": "Al-Infitaar",
+   "en": "Al-Infitar",
+   "fr": "Al-Infitar"
+  },
+  {
+   "index": 83,
+   "name_ar": "المطففين",
+   "data_translit": "Al-Mutaffifin",
+   "en": "Al-Mutaffifin",
+   "fr": "Al-Moutaffifin"
+  },
+  {
+   "index": 84,
+   "name_ar": "الإنشقاق",
+   "data_translit": "Al-Inshiqaaq",
+   "en": "Al-Inshiqaq",
+   "fr": "Al-Inchiqaq"
+  },
+  {
+   "index": 85,
+   "name_ar": "البروج",
+   "data_translit": "Al-Burooj",
+   "en": "Al-Buruj",
+   "fr": "Al-Bourouj"
+  },
+  {
+   "index": 86,
+   "name_ar": "الطارق",
+   "data_translit": "At-Taariq",
+   "en": "At-Tariq",
+   "fr": "At-Tariq"
+  },
+  {
+   "index": 87,
+   "name_ar": "الأعلى",
+   "data_translit": "Al-A'laa",
+   "en": "Al-A'la",
+   "fr": "Al-A'la"
+  },
+  {
+   "index": 88,
+   "name_ar": "الغاشية",
+   "data_translit": "Al-Ghaashiya",
+   "en": "Al-Ghashiyah",
+   "fr": "Al-Ghachiya"
+  },
+  {
+   "index": 89,
+   "name_ar": "الفجر",
+   "data_translit": "Al-Fajr",
+   "en": "Al-Fajr",
+   "fr": "Al-Fajr"
+  },
+  {
+   "index": 90,
+   "name_ar": "البلد",
+   "data_translit": "Al-Balad",
+   "en": "Al-Balad",
+   "fr": "Al-Balad"
+  },
+  {
+   "index": 91,
+   "name_ar": "الشمس",
+   "data_translit": "Ash-Shams",
+   "en": "Ash-Shams",
+   "fr": "Ach-Chams"
+  },
+  {
+   "index": 92,
+   "name_ar": "الليل",
+   "data_translit": "Al-Lail",
+   "en": "Al-Layl",
+   "fr": "Al-Layl"
+  },
+  {
+   "index": 93,
+   "name_ar": "الضحى",
+   "data_translit": "Ad-Dhuhaa",
+   "en": "Ad-Duha",
+   "fr": "Ad-Douha"
+  },
+  {
+   "index": 94,
+   "name_ar": "الشرح",
+   "data_translit": "Ash-Sharh",
+   "en": "Ash-Sharh",
+   "fr": "Ach-Charh"
+  },
+  {
+   "index": 95,
+   "name_ar": "التين",
+   "data_translit": "At-Tin",
+   "en": "At-Tin",
+   "fr": "At-Tin"
+  },
+  {
+   "index": 96,
+   "name_ar": "العلق",
+   "data_translit": "Al-Alaq",
+   "en": "Al-Alaq",
+   "fr": "Al-Alaq"
+  },
+  {
+   "index": 97,
+   "name_ar": "القدر",
+   "data_translit": "Al-Qadr",
+   "en": "Al-Qadr",
+   "fr": "Al-Qadr"
+  },
+  {
+   "index": 98,
+   "name_ar": "البينة",
+   "data_translit": "Al-Bayyina",
+   "en": "Al-Bayyinah",
+   "fr": "Al-Bayyina"
+  },
+  {
+   "index": 99,
+   "name_ar": "الزلزلة",
+   "data_translit": "Az-Zalzala",
+   "en": "Az-Zalzalah",
+   "fr": "Az-Zalzala"
+  },
+  {
+   "index": 100,
+   "name_ar": "العاديات",
+   "data_translit": "Al-Aadiyaat",
+   "en": "Al-Adiyat",
+   "fr": "Al-Adiyat"
+  },
+  {
+   "index": 101,
+   "name_ar": "القارعة",
+   "data_translit": "Al-Qaari'a",
+   "en": "Al-Qari'ah",
+   "fr": "Al-Qari'a"
+  },
+  {
+   "index": 102,
+   "name_ar": "التكاثر",
+   "data_translit": "At-Takaathur",
+   "en": "At-Takathur",
+   "fr": "At-Takathour"
+  },
+  {
+   "index": 103,
+   "name_ar": "العصر",
+   "data_translit": "Al-Asr",
+   "en": "Al-Asr",
+   "fr": "Al-Asr"
+  },
+  {
+   "index": 104,
+   "name_ar": "الهمزة",
+   "data_translit": "Al-Humaza",
+   "en": "Al-Humazah",
+   "fr": "Al-Houmaza"
+  },
+  {
+   "index": 105,
+   "name_ar": "الفيل",
+   "data_translit": "Al-Fil",
+   "en": "Al-Fil",
+   "fr": "Al-Fil"
+  },
+  {
+   "index": 106,
+   "name_ar": "قريش",
+   "data_translit": "Quraish",
+   "en": "Quraysh",
+   "fr": "Qouraych"
+  },
+  {
+   "index": 107,
+   "name_ar": "الماعون",
+   "data_translit": "Al-Maa'un",
+   "en": "Al-Ma'un",
+   "fr": "Al-Ma'oun"
+  },
+  {
+   "index": 108,
+   "name_ar": "الكوثر",
+   "data_translit": "Al-Kawthar",
+   "en": "Al-Kawthar",
+   "fr": "Al-Kawthar"
+  },
+  {
+   "index": 109,
+   "name_ar": "الكافرون",
+   "data_translit": "Al-Kaafiroon",
+   "en": "Al-Kafirun",
+   "fr": "Al-Kafiroun"
+  },
+  {
+   "index": 110,
+   "name_ar": "النصر",
+   "data_translit": "An-Nasr",
+   "en": "An-Nasr",
+   "fr": "An-Nasr"
+  },
+  {
+   "index": 111,
+   "name_ar": "المسد",
+   "data_translit": "Al-Masad",
+   "en": "Al-Masad",
+   "fr": "Al-Masad"
+  },
+  {
+   "index": 112,
+   "name_ar": "الإخلاص",
+   "data_translit": "Al-Ikhlaas",
+   "en": "Al-Ikhlas",
+   "fr": "Al-Ikhlas"
+  },
+  {
+   "index": 113,
+   "name_ar": "الفلق",
+   "data_translit": "Al-Falaq",
+   "en": "Al-Falaq",
+   "fr": "Al-Falaq"
+  },
+  {
+   "index": 114,
+   "name_ar": "الناس",
+   "data_translit": "An-Naas",
+   "en": "An-Nas",
+   "fr": "An-Nas"
+  }
+ ]
+}

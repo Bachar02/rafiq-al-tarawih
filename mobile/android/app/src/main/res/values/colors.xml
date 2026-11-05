@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Rubric tokens, day (values-night/ has the night ones): the launch
+         window matches the reader, which follows the phone's theme. -->
+    <color name="rafiq_ground">#F2ECE0</color>
+    <color name="rafiq_ink">#1C1915</color>
+    <color name="rafiq_rubric">#B33E24</color>
+    <!-- The app icon is drawn dark in both themes (handoff app-icon-dark.svg). -->
+    <color name="rafiq_icon_ground">#100E0C</color>
+</resources>

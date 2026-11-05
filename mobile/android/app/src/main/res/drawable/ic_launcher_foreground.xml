@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Paths from the handoff's logo/svg/app-icon-dark.svg (1024 grid), scaled
+     0.9 about the centre so the art sits inside the adaptive-icon safe zone. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="1024"
+    android:viewportHeight="1024">
+    <group android:pivotX="512" android:pivotY="512" android:scaleX="0.9" android:scaleY="0.9">
+        <path
+            android:fillColor="#E8E1D2"
+            android:pathData="M788.5,598.0 C829.0,598.0 829.0,671.7 788.5,671.7 L235.5,646.1 C213.0,646.1 213.0,623.6 235.5,623.6 Z" />
+        <path
+            android:fillColor="#D9603F"
+            android:pathData="M658.633,397.708Q665.546,388.491 678.220,391.947Q701.263,400.013 722.578,412.686Q743.893,425.360 762.328,441.491Q771.545,450.708 765.784,462.230L710.480,549.794Q702.415,561.316 689.741,552.099Q678.220,542.881 606.785,500.251Q594.111,492.186 602.176,480.664Z" />
+    </group>
+</vector>

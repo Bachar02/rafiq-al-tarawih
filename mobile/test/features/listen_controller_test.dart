@@ -214,4 +214,75 @@ void main() {
       expect(state().transcript, isEmpty);
     });
   });
+
+  group('display state', () {
+    test("Al-Fatiha at each rakʿah keeps the imam's surah and last ayah", () async {
+      await controller().start();
+      h.engine.emit(const EngineReady());
+      h.engine.emit(heard(at(93, 5)));
+      h.engine.emit(heard(at(1, 3)));
+      expect(state().inFatihaExcursion, isTrue);
+      expect(state().displayed, pos(93, 5));
+      expect(state().readerSurah, 93); // no jump to surah 1
+      h.engine.emit(heard(at(93, 6)));
+      expect(state().inFatihaExcursion, isFalse);
+      expect(state().displayed, pos(93, 6));
+    });
+
+    test('a session that opens with Al-Fatiha shows Al-Fatiha', () async {
+      await controller().start();
+      h.engine.emit(const EngineReady());
+      h.engine.emit(heard(at(1, 2)));
+      expect(state().inFatihaExcursion, isFalse);
+      expect(state().displayed, pos(1, 2));
+      expect(state().readerSurah, 1);
+    });
+
+    test('"the imam is here" on Al-Fatiha shows exactly that', () async {
+      await controller().start();
+      h.engine.emit(const EngineReady());
+      h.engine.emit(heard(at(93, 5)));
+      controller().setPosition(pos(1, 4));
+      expect(state().displayed, pos(1, 4));
+      expect(state().readerSurah, 1);
+    });
+
+    test('while unsure, the number on screen stays the last sure one', () async {
+      await controller().start();
+      h.engine.emit(const EngineReady());
+      h.engine.emit(heard(at(93, 3)));
+      h.engine.emit(heard(at(2, 255, status: TrackStatus.lost)));
+      expect(state().displayed, pos(93, 3));
+      h.engine.emit(heard(at(2, 255)));
+      expect(state().displayed, pos(2, 255)); // confirmed: now it moves
+    });
+
+    test('confirmation and sound are time-stamped', () async {
+      await controller().start();
+      h.engine.emit(const EngineReady());
+      expect(state().confirmedAt, isNull);
+      h.engine.emit(heard(at(93, 3, status: TrackStatus.uncertain)));
+      expect(state().confirmedAt, isNull); // unsure is not a confirmation
+      h.engine.emit(heard(at(93, 3)));
+      expect(state().confirmedAt, isNotNull);
+
+      h.audio.push(Float32List.fromList(List.filled(1600, 0.001)));
+      await pumpEventQueue();
+      expect(state().lastSoundAt, isNull); // below the quiet threshold
+      await Future<void>.delayed(const Duration(milliseconds: 90)); // level updates are rate-limited
+      h.audio.push(Float32List.fromList(List.filled(1600, 0.4)));
+      await pumpEventQueue();
+      expect(state().lastSoundAt, isNotNull);
+    });
+
+    test('a new session keeps the held position but not its freshness', () async {
+      await controller().start();
+      h.engine.emit(const EngineReady());
+      h.engine.emit(heard(at(93, 3)));
+      await controller().stop();
+      await controller().start();
+      expect(state().displayed, pos(93, 3));
+      expect(state().confirmedAt, isNull);
+    });
+  });
 }

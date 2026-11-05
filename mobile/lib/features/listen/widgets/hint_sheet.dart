@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
 
+import '../../../app/components/settings_group.dart';
+import '../../../app/components/sheet.dart';
+import '../../../app/components/surah_tile.dart';
 import '../../../app/theme.dart';
 import '../../../core/recognition/models.dart';
 import '../../../data/quran.dart';
+import '../../../data/surah_names.dart';
+import '../../../l10n/l10n.dart';
 
 /// The user's choice in the hint sheet (distinguishes "no hint" from "cancelled").
 class HintChoice {
@@ -10,23 +15,32 @@ class HintChoice {
   final Hint? hint;
 }
 
-/// Optional help: "tonight is surah X / juz N". Detection works without it.
-Future<HintChoice?> showHintSheet(BuildContext context, {required Quran quran, Hint? current}) {
-  return showModalBottomSheet<HintChoice>(
-    context: context,
-    isScrollControlled: true,
-    showDragHandle: true,
-    builder: (_) => FractionallySizedBox(heightFactor: 0.85, child: _HintSheet(quran: quran, current: current)),
-  );
-}
+/// Optional help: "tonight starts at surah X / juz N". The engine finds the
+/// imam without it and a wrong hint cannot trap it. Changing it restarts the
+/// listening session (the engine applies hints at session start), and the
+/// sheet says so when a session is active.
+Future<HintChoice?> showHintSheet(
+  BuildContext context, {
+  required Quran quran,
+  required SurahNames names,
+  Hint? current,
+  bool active = false,
+}) =>
+    showRubricSheet<HintChoice>(
+      context,
+      expand: true,
+      builder: (_) => _HintSheet(quran: quran, names: names, current: current, active: active),
+    );
 
 enum _Mode { none, surah, juz }
 
 class _HintSheet extends StatefulWidget {
-  const _HintSheet({required this.quran, this.current});
+  const _HintSheet({required this.quran, required this.names, this.current, required this.active});
 
   final Quran quran;
+  final SurahNames names;
   final Hint? current;
+  final bool active;
 
   @override
   State<_HintSheet> createState() => _HintSheetState();
@@ -44,24 +58,23 @@ class _HintSheetState extends State<_HintSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final l = context.l10n;
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.fromLTRB(RubricSpace.s6, 0, RubricSpace.s6, 0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text('Help the app (optional)', style: context.text.titleLarge),
-          const SizedBox(height: 4),
-          Text(
-            'Rafiq finds the surah by itself. Telling it where the imam is tonight makes the first detection faster. '
-            'If the hint is wrong, it still finds the right place.',
-            style: context.text.bodySmall?.copyWith(color: context.colors.muted),
+          SheetHeader(
+            title: l.hintSheetTitle,
+            explanation: widget.active ? '${l.hintSheetExplanation} ${l.hintSheetRestarts}' : l.hintSheetExplanation,
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: RubricSpace.s4),
           SegmentedButton<_Mode>(
-            segments: const [
-              ButtonSegment(value: _Mode.none, label: Text('No hint')),
-              ButtonSegment(value: _Mode.surah, label: Text('Surah')),
-              ButtonSegment(value: _Mode.juz, label: Text('Juz')),
+            showSelectedIcon: false,
+            segments: [
+              ButtonSegment(value: _Mode.none, label: Text(l.hintNone)),
+              ButtonSegment(value: _Mode.surah, label: Text(l.hintSurah)),
+              ButtonSegment(value: _Mode.juz, label: Text(l.hintJuz)),
             ],
             selected: {_mode},
             onSelectionChanged: (s) {
@@ -69,12 +82,15 @@ class _HintSheetState extends State<_HintSheet> {
               if (s.first == _Mode.none) _pick(null);
             },
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: RubricSpace.s4),
           Expanded(
             child: switch (_mode) {
-              _Mode.none => const SizedBox.shrink(),
+              _Mode.none => Text(
+                  l.hintNoneExplanation,
+                  style: RubricText.caption.copyWith(color: context.colors.inkSecondary),
+                ),
               _Mode.surah => _surahList(),
-              _Mode.juz => _juzGrid(),
+              _Mode.juz => _juzList(),
             },
           ),
         ],
@@ -83,81 +99,52 @@ class _HintSheetState extends State<_HintSheet> {
   }
 
   Widget _surahList() {
-    final q = _query.trim().toLowerCase();
-    final surahs = widget.quran.surahs.where((s) {
-      if (q.isEmpty) return true;
-      return '${s.index}' == q ||
-          s.nameTranslit.toLowerCase().contains(q) ||
-          s.nameEn.toLowerCase().contains(q) ||
-          s.nameAr.contains(_query.trim());
-    }).toList();
     final selected = widget.current is SurahHint ? (widget.current! as SurahHint).surah : null;
+    final surahs = searchSurahs(widget.quran, widget.names, _query);
     return Column(
       children: [
         TextField(
-          autofocus: false,
-          decoration: const InputDecoration(
-              prefixIcon: Icon(Icons.search), hintText: 'Search by name or number', isDense: true),
+          decoration:
+              InputDecoration(prefixIcon: const Icon(Icons.search), hintText: context.l10n.searchByNameOrNumber),
           onChanged: (v) => setState(() => _query = v),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: RubricSpace.s2),
         Expanded(
           child: ListView.builder(
             itemCount: surahs.length,
-            itemBuilder: (context, i) {
-              final s = surahs[i];
-              return ListTile(
-                selected: s.index == selected,
-                leading: SizedBox(width: 32, child: Text('${s.index}', style: context.text.labelLarge)),
-                title: Text(s.nameTranslit),
-                subtitle: Text('${s.nameEn} · ${s.ayahCount} ayahs'),
-                trailing: Text(s.nameAr, style: const TextStyle(fontFamily: quranFont, fontSize: 22)),
-                onTap: () => _pick(SurahHint(s.index)),
-              );
-            },
+            itemBuilder: (context, i) => SurahTile(
+              surah: surahs[i],
+              names: widget.names,
+              selected: surahs[i].index == selected,
+              onTap: () => _pick(SurahHint(surahs[i].index)),
+            ),
           ),
         ),
       ],
     );
   }
 
-  Widget _juzGrid() {
+  Widget _juzList() {
     final selected = widget.current is JuzHint ? (widget.current! as JuzHint).juz : null;
-    return GridView.builder(
-      gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(maxCrossAxisExtent: 110, childAspectRatio: 1.3),
-      itemCount: widget.quran.juzCount,
-      itemBuilder: (context, i) {
-        final juz = i + 1;
-        final start = widget.quran.juzStartSurah(juz);
-        return Padding(
-          padding: const EdgeInsets.all(4),
-          child: juz == selected
-              ? FilledButton(onPressed: () => _pick(JuzHint(juz)), child: _JuzLabel(juz: juz, start: start))
-              : OutlinedButton(onPressed: () => _pick(JuzHint(juz)), child: _JuzLabel(juz: juz, start: start)),
-        );
-      },
+    return SingleChildScrollView(
+      padding: const EdgeInsets.only(bottom: RubricSpace.s6),
+      child: RubricGroup(
+        children: [
+          for (var juz = 1; juz <= widget.quran.juzCount; juz++)
+            RubricRow(
+              label: context.l10n.juzNumber(juz),
+              value: widget.names.of(widget.quran.juzStartSurah(juz).index),
+              selected: juz == selected,
+              onTap: () => _pick(JuzHint(juz)),
+            ),
+        ],
+      ),
     );
   }
 }
 
-class _JuzLabel extends StatelessWidget {
-  const _JuzLabel({required this.juz, required this.start});
-
-  final int juz;
-  final Surah start;
-
-  @override
-  Widget build(BuildContext context) => Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text('Juz $juz', style: const TextStyle(fontWeight: FontWeight.w600)),
-          Text(start.nameTranslit, style: const TextStyle(fontSize: 10), overflow: TextOverflow.ellipsis),
-        ],
-      );
-}
-
 /// Short label for the hint chip.
-String hintLabel(Hint hint, Quran quran) => switch (hint) {
-      SurahHint(:final surah) => 'Tonight: ${quran.surah(surah).nameTranslit}',
-      JuzHint(:final juz) => 'Tonight: Juz $juz',
+String hintLabel(AppLocalizations l, Hint hint, SurahNames names) => switch (hint) {
+      SurahHint(:final surah) => l.hintTonightSurah(names.of(surah)),
+      JuzHint(:final juz) => l.hintTonightJuz(juz),
     };
