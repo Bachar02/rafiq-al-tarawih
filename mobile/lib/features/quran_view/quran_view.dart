@@ -80,6 +80,7 @@ class QuranView extends StatefulWidget {
     this.followVerse,
     this.highlightedVerse,
     this.bookmarkedVerses = const {},
+    this.notedVerses = const {},
     this.onAyahTap,
     this.onAyahLongPress,
     this.onTopVerseChanged,
@@ -117,6 +118,9 @@ class QuranView extends StatefulWidget {
 
   /// Ayahs that carry the bookmark ribbon.
   final Set<int> bookmarkedVerses;
+
+  /// Ayahs that carry the note icon.
+  final Set<int> notedVerses;
 
   final ValueChanged<Verse>? onAyahTap;
   final ValueChanged<Verse>? onAyahLongPress;
@@ -205,7 +209,8 @@ class _QuranViewState extends State<QuranView> {
         old.current?.verseId != widget.current?.verseId ||
         old.unsure != widget.unsure ||
         old.highlightedVerse != widget.highlightedVerse ||
-        !setEquals(old.bookmarkedVerses, widget.bookmarkedVerses)) {
+        !setEquals(old.bookmarkedVerses, widget.bookmarkedVerses) ||
+        !setEquals(old.notedVerses, widget.notedVerses)) {
       _invalidate();
     }
 
@@ -443,6 +448,7 @@ class _QuranViewState extends State<QuranView> {
         justify: _justify,
         highlighted: verse.id == widget.highlightedVerse,
         bookmarked: widget.bookmarkedVerses.contains(verse.id),
+        noted: widget.notedVerses.contains(verse.id),
         // Read at tap time: a parent's new closure must not rebuild the text.
         onTap: () => widget.onAyahTap?.call(verse),
         onLongPress: widget.onAyahLongPress == null ? null : () => widget.onAyahLongPress?.call(verse),

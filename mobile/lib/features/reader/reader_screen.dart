@@ -156,18 +156,7 @@ class ReaderScreenState extends ConsumerState<ReaderScreen> with WidgetsBindingO
       case ReaderAyahAction.removeBookmark:
         say(await bookmarks.remove(verse.id) ? l.bookmarkRemoved : l.bookmarkRemoveFailed);
       case ReaderAyahAction.note:
-        final notes = ref.read(notesProvider.notifier);
-        final before = notes.noteFor(verse.id);
-        final result = await showNoteSheet(context, verse: verse);
-        if (result == NoteSheetResult.saved) say(l.noteSaved);
-        if (result == NoteSheetResult.deleted && before != null) {
-          messenger
-            ..hideCurrentSnackBar()
-            ..showSnackBar(SnackBar(
-              content: Text(l.noteDeleted),
-              action: SnackBarAction(label: l.undo, onPressed: () => notes.restore(before)),
-            ));
-        }
+        await editNote(context, ref, verse);
       case ReaderAyahAction.share:
         await showShareAyahSheet(context, verse: verse, names: names);
       case ReaderAyahAction.copy:
@@ -199,6 +188,7 @@ class ReaderScreenState extends ConsumerState<ReaderScreen> with WidgetsBindingO
     final progress = ref.read(readingProgressProvider.notifier);
     final position = ref.read(readingPositionProvider.notifier);
     final bookmarked = {for (final b in ref.watch(bookmarksProvider)) b.verseId};
+    final noted = {for (final n in ref.watch(notesProvider)) n.verseId};
     // The last page of a khatm was just read: say so, once, calmly.
     ref.listen(khatmProvider, (before, after) {
       if (before == null || after.finished.length <= before.finished.length) return;
@@ -236,6 +226,7 @@ class ReaderScreenState extends ConsumerState<ReaderScreen> with WidgetsBindingO
                             textScale: textScale,
                             highlightedVerse: _highlighted,
                             bookmarkedVerses: bookmarked,
+                            notedVerses: noted,
                             onAyahTap: _onAyahTap,
                             onAyahLongPress: _toggleBookmark,
                             onPageChanged: (page) {
@@ -255,6 +246,7 @@ class ReaderScreenState extends ConsumerState<ReaderScreen> with WidgetsBindingO
                             textScale: textScale,
                             highlightedVerse: _highlighted,
                             bookmarkedVerses: bookmarked,
+                            notedVerses: noted,
                             onAyahTap: _onAyahTap,
                             onAyahLongPress: _toggleBookmark,
                             onTopVerseChanged: (verse) {

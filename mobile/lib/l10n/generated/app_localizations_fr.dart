@@ -777,12 +777,6 @@ class AppLocalizationsFr extends AppLocalizations {
   String get soonTafsirDetail => 'Le commentaire de chaque verset';
 
   @override
-  String get soonNotes => 'Notes';
-
-  @override
-  String get soonNotesDetail => 'Vos propres notes sur un verset';
-
-  @override
   String get soonOffline => 'Tarawih sans ordinateur';
 
   @override
@@ -983,4 +977,25 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get noteDeleteFailed => 'Impossible de supprimer la note.';
+
+  @override
+  String get notes => 'Notes';
+
+  @override
+  String get semNote => 'note';
+
+  @override
+  String notesCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count notes',
+      one: '1 note',
+      zero: 'Notes',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get noNotesHint => 'Touchez un verset, puis Ajouter une note. Vos notes apparaissent ici.';
 }

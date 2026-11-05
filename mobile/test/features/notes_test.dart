@@ -10,9 +10,11 @@ import 'package:rafiq/data/note.dart';
 import 'package:rafiq/data/reading_store.dart';
 import 'package:rafiq/features/notes/note_sheet.dart';
 import 'package:rafiq/features/notes/notes_controller.dart';
+import 'package:rafiq/features/quran_view/mushaf_page_view.dart';
 import 'package:rafiq/features/quran_view/quran_view.dart';
 import 'package:rafiq/features/reader/reader_screen.dart';
 
+import '../support/app_nav.dart';
 import '../support/fakes.dart';
 
 /// Stored notes, as the store writes them.
@@ -205,6 +207,127 @@ void main() {
       await tester.enterText(find.byType(TextField), 'b' * 2100);
       await tester.pump();
       expect(tester.widget<TextField>(find.byType(TextField)).controller!.text.length, Note.maxLength);
+    });
+    testWidgets('a noted ayah shows the note icon in the scroll view, and says so', (tester) async {
+      final note = Note(verseId: 3, text: 'x', createdAt: DateTime(2026, 11, 1), updatedAt: DateTime(2026, 11, 1));
+      await launch(tester, prefs: notesPrefs([note]));
+      final block = find.descendant(
+        of: find.byType(QuranView),
+        matching: find.byWidgetPredicate((w) => w is AyahBlock && w.verse.id == 3),
+      );
+      expect(tester.widget<AyahBlock>(block).noted, isTrue);
+      expect(find.descendant(of: block, matching: find.byIcon(noteIcon)), findsOneWidget);
+      expect(find.bySemanticsLabel(RegExp(r'^Ayah 3, note')), findsOneWidget);
+      expect(find.descendant(of: find.byType(QuranView), matching: find.byIcon(noteIcon)), findsOneWidget,
+          reason: 'only the noted ayah');
+    });
+
+    testWidgets('a note added in the page view shows its icon there', (tester) async {
+      await launch(tester, prefs: {'reading_layout': 'pages'});
+      expect(find.descendant(of: find.byType(MushafPageView), matching: find.byIcon(noteIcon)), findsNothing);
+      final container = ProviderScope.containerOf(tester.element(find.byType(ReaderScreen)));
+      await container.read(notesProvider.notifier).save(3, 'On page 1');
+      await tester.pumpAndSettle();
+      expect(find.descendant(of: find.byType(MushafPageView), matching: find.byIcon(noteIcon)), findsOneWidget);
+    });
+  });
+
+  group('the Notes view of Bookmarks', () {
+    late Harness h;
+
+    Future<ProviderContainer> launch(WidgetTester tester, List<Note> notes) async {
+      h = await Harness.create(prefs: notes.isEmpty ? const {} : notesPrefs(notes));
+      tester.view.physicalSize = const Size(1080, 2340);
+      tester.view.devicePixelRatio = 3;
+      addTearDown(tester.view.reset);
+      await tester.pumpWidget(ProviderScope(overrides: h.overrides, child: const RafiqApp()));
+      await tester.pump();
+      await tester.pump();
+      final container = ProviderScope.containerOf(tester.element(find.byType(ReaderScreen)));
+      await tapNav(tester, 'Bookmarks');
+      await tester.tap(find.text('Notes'));
+      await tester.pumpAndSettle();
+      return container;
+    }
+
+    final arabic = Note(
+      verseId: 262,
+      text: 'آية الكرسي: تُقرأ بعد كل صلاة',
+      createdAt: DateTime(2026, 11, 1),
+      updatedAt: DateTime(2026, 11, 3),
+    );
+    final french = Note(
+      verseId: 3,
+      text: 'À relire avec les enfants',
+      createdAt: DateTime(2026, 11, 2),
+      updatedAt: DateTime(2026, 11, 4, 9),
+    );
+
+    testWidgets('empty: how to add a note', (tester) async {
+      await launch(tester, const []);
+      expect(find.text('Tap an ayah, then Add a note. Your notes appear here.'), findsOneWidget);
+    });
+
+    testWidgets('notes, newest edit first, each in its own direction', (tester) async {
+      await launch(tester, [arabic, french]);
+      expect(find.text('2 NOTES'), findsOneWidget);
+      final first = tester.getTopLeft(find.text('Al-Fatiha 1:3')).dy;
+      final second = tester.getTopLeft(find.text('Al-Baqarah 2:255')).dy;
+      expect(first, lessThan(second), reason: 'edited today, so first');
+      expect(find.text('Juz 1 · Page 1 · today'), findsOneWidget);
+      expect(find.text('Juz 3 · Page 42 · yesterday'), findsOneWidget);
+      expect(tester.widget<Text>(find.text(arabic.text)).textDirection, TextDirection.rtl);
+      expect(tester.widget<Text>(find.text(french.text)).textDirection, TextDirection.ltr);
+    });
+
+    testWidgets('tap a note to read there', (tester) async {
+      final container = await launch(tester, [arabic]);
+      await tester.tap(find.text(arabic.text));
+      await tester.pumpAndSettle();
+      expect(container.read(readingPositionProvider), 262);
+    });
+
+    testWidgets('the edit button opens the note sheet', (tester) async {
+      final container = await launch(tester, [french]);
+      await tester.tap(find.byTooltip('Edit note'));
+      await tester.pumpAndSettle();
+      expect(find.text('Note on Al-Fatiha 1:3'), findsOneWidget);
+      await tester.enterText(find.byType(TextField), 'Changed');
+      await tester.pump();
+      await tester.tap(find.text('Save'));
+      await tester.pumpAndSettle();
+      expect(find.text('Note saved'), findsOneWidget);
+      expect(find.text('Changed'), findsOneWidget);
+      expect(container.read(notesProvider).single.createdAt, french.createdAt);
+    });
+
+    testWidgets('swipe deletes; Undo brings it back as it was', (tester) async {
+      final container = await launch(tester, [arabic, french]);
+      await tester.drag(find.text(arabic.text), const Offset(-600, 0));
+      await tester.pumpAndSettle();
+      expect(find.text(arabic.text), findsNothing);
+      expect(PrefsReadingStore(h.prefs).notes().map((n) => n.verseId), [3]);
+      await tester.tap(find.text('Undo'));
+      await tester.pumpAndSettle();
+      expect(container.read(notesProvider), [french, arabic]);
+      expect(find.text(arabic.text), findsOneWidget);
+    });
+
+    testWidgets('a deletion that cannot be saved stays in the list', (tester) async {
+      h = await Harness.create(prefs: notesPrefs([french]));
+      h.readingStore = FailingStore(PrefsReadingStore(h.prefs));
+      tester.view.physicalSize = const Size(1080, 2340);
+      tester.view.devicePixelRatio = 3;
+      addTearDown(tester.view.reset);
+      await tester.pumpWidget(ProviderScope(overrides: h.overrides, child: const RafiqApp()));
+      await tester.pumpAndSettle();
+      await tapNav(tester, 'Bookmarks');
+      await tester.tap(find.text('Notes'));
+      await tester.pumpAndSettle();
+      await tester.drag(find.text(french.text), const Offset(-600, 0));
+      await tester.pumpAndSettle();
+      expect(find.text('Could not delete the note.'), findsOneWidget);
+      expect(find.text(french.text), findsOneWidget);
     });
   });
 }

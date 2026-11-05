@@ -45,7 +45,6 @@ class MoreScreen extends ConsumerWidget {
                 (l.soonRecitation, l.soonRecitationDetail),
                 (l.soonTranslation, l.soonTranslationDetail),
                 (l.soonTafsir, l.soonTafsirDetail),
-                (l.soonNotes, l.soonNotesDetail),
                 (l.soonOffline, l.soonOfflineDetail),
               ])
                 RubricRow(label: label, detail: detail, value: l.soon, enabled: false),

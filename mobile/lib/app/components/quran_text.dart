@@ -35,6 +35,9 @@ bool justifyQuran({required double columnWidth, required double fontSize}) => co
 /// the text, and its end marker in `rubric`. When the engine is not sure the
 /// rule turns dashed and the text drops to `ink-upcoming`; the position does
 /// not move. Tone changes crossfade in [RubricMotion.settle]; text never moves.
+/// The mark of an ayah with a note, in the text and in lists.
+const noteIcon = Icons.sticky_note_2_outlined;
+
 class AyahBlock extends StatelessWidget {
   const AyahBlock({
     super.key,
@@ -45,6 +48,7 @@ class AyahBlock extends StatelessWidget {
     this.justify = true,
     this.highlighted = false,
     this.bookmarked = false,
+    this.noted = false,
     this.onTap,
     this.onLongPress,
   });
@@ -65,6 +69,10 @@ class AyahBlock extends StatelessWidget {
 
   /// A small ribbon in the inline-start margin: this ayah is bookmarked.
   final bool bookmarked;
+
+  /// A small note icon in the same margin, under the ribbon: the user wrote
+  /// a note on this ayah.
+  final bool noted;
 
   /// Opens the ayah's actions (in Taraweeh mode: "The imam is here", a
   /// deliberate two-step correction).
@@ -136,7 +144,7 @@ class AyahBlock extends StatelessWidget {
         ],
       );
     }
-    if (bookmarked) {
+    if (bookmarked || noted) {
       block = Stack(
         clipBehavior: Clip.none,
         children: [
@@ -144,7 +152,14 @@ class AyahBlock extends StatelessWidget {
           PositionedDirectional(
             start: -2,
             top: fontSize * 0.55,
-            child: Icon(Icons.bookmark, size: 14, color: c.inkSecondary),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (bookmarked) Icon(Icons.bookmark, size: 14, color: c.inkSecondary),
+                if (bookmarked && noted) const SizedBox(height: RubricSpace.s1),
+                if (noted) Icon(noteIcon, size: 14, color: c.inkSecondary),
+              ],
+            ),
           ),
         ],
       );
@@ -159,7 +174,8 @@ class AyahBlock extends StatelessWidget {
     final live = tone != AyahTone.reading;
     final l = context.l10n;
     return Semantics(
-      label: '${current ? l.semAyahImamHere(verse.ayah) : l.semAyah(verse.ayah)}${bookmarked ? ', ${l.bookmark}' : ''}',
+      label: '${current ? l.semAyahImamHere(verse.ayah) : l.semAyah(verse.ayah)}'
+          '${bookmarked ? ', ${l.bookmark}' : ''}${noted ? ', ${l.semNote}' : ''}',
       onTapHint: onTap == null ? null : (live ? l.hintMarkImam : l.hintAyahActions),
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,

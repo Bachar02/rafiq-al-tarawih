@@ -774,12 +774,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get soonTafsirDetail => 'Commentary on each ayah';
 
   @override
-  String get soonNotes => 'Notes';
-
-  @override
-  String get soonNotesDetail => 'Your own notes on an ayah';
-
-  @override
   String get soonOffline => 'Taraweeh without a computer';
 
   @override
@@ -980,4 +974,25 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get noteDeleteFailed => 'Could not delete the note.';
+
+  @override
+  String get notes => 'Notes';
+
+  @override
+  String get semNote => 'note';
+
+  @override
+  String notesCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count notes',
+      one: '1 note',
+      zero: 'Notes',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get noNotesHint => 'Tap an ayah, then Add a note. Your notes appear here.';
 }

@@ -360,13 +360,15 @@ void main() {
     expect(page, inInclusiveRange(250, 350), reason: 'about halfway through 604 pages');
   });
 
-  testWidgets('More: settings, and what is coming, not yet working', (tester) async {
+  testWidgets('More: the khatm planner, settings, and what is coming', (tester) async {
     await launch(tester);
     await tapNav(tester, 'More');
     expect(find.text('COMING SOON'), findsOneWidget);
-    for (final soon in ['Recitation audio', 'Translations', 'Tafsir', 'Khatm planner', 'Notes']) {
+    for (final soon in ['Recitation audio', 'Translations', 'Tafsir']) {
       expect(find.text(soon), findsOneWidget);
     }
+    expect(find.text('Khatm planner'), findsOneWidget, reason: 'working now, above Settings');
+    expect(find.text('Notes'), findsNothing, reason: 'notes live in the ayah sheet and Bookmarks');
     await tester.tap(find.text('Settings'));
     await tester.pumpAndSettle();
     expect(find.text('Quran text size'), findsOneWidget);

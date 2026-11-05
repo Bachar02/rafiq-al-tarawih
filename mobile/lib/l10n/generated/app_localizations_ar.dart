@@ -780,12 +780,6 @@ class AppLocalizationsAr extends AppLocalizations {
   String get soonTafsirDetail => 'تفسير كل آية';
 
   @override
-  String get soonNotes => 'الملاحظات';
-
-  @override
-  String get soonNotesDetail => 'ملاحظاتك الخاصة على آية';
-
-  @override
   String get soonOffline => 'التراويح دون حاسوب';
 
   @override
@@ -1000,4 +994,28 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get noteDeleteFailed => 'تعذّر حذف الملاحظة.';
+
+  @override
+  String get notes => 'الملاحظات';
+
+  @override
+  String get semNote => 'ملاحظة';
+
+  @override
+  String notesCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count ملاحظة',
+      many: '$count ملاحظة',
+      few: '$count ملاحظات',
+      two: 'ملاحظتان',
+      one: 'ملاحظة واحدة',
+      zero: 'الملاحظات',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get noNotesHint => 'المس آية، ثم «أضف ملاحظة». تظهر ملاحظاتك هنا.';
 }

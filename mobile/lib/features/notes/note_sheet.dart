@@ -21,6 +21,28 @@ TextDirection? noteDirection(String text) {
   return Bidi.detectRtlDirectionality(text) ? TextDirection.rtl : TextDirection.ltr;
 }
 
+/// The note sheet for [verse], then what happened, said in a snackbar:
+/// saved, or deleted with Undo.
+Future<void> editNote(BuildContext context, WidgetRef ref, Verse verse) async {
+  final notes = ref.read(notesProvider.notifier);
+  final messenger = ScaffoldMessenger.of(context);
+  final l = context.l10n;
+  final before = notes.noteFor(verse.id);
+  final result = await showNoteSheet(context, verse: verse);
+  if (result == NoteSheetResult.saved) {
+    messenger
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(l.noteSaved)));
+  } else if (result == NoteSheetResult.deleted && before != null) {
+    showNoteDeleted(messenger, l, () => notes.restore(before));
+  }
+}
+
+/// "Note deleted", with Undo.
+void showNoteDeleted(ScaffoldMessengerState messenger, AppLocalizations l, VoidCallback undo) => messenger
+  ..hideCurrentSnackBar()
+  ..showSnackBar(SnackBar(content: Text(l.noteDeleted), action: SnackBarAction(label: l.undo, onPressed: undo)));
+
 /// Write, edit or delete the note on [verse]. The sheet saves the note
 /// itself and closes only once it is kept: a failed save leaves the text in
 /// the field and says so. Returns what happened, or null if dismissed.

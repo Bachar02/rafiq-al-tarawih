@@ -559,8 +559,6 @@
   "soonTranslationDetail": "The meaning beside the Arabic, in your language",
   "soonTafsir": "Tafsir",
   "soonTafsirDetail": "Commentary on each ayah",
-  "soonNotes": "Notes",
-  "soonNotesDetail": "Your own notes on an ayah",
   "soonOffline": "Taraweeh without a computer",
   "soonOfflineDetail": "Recognition on the phone itself",
   "listen": "Listen",
@@ -708,5 +706,16 @@
   "noteSaved": "Note saved",
   "noteDeleted": "Note deleted",
   "noteSaveFailed": "Could not save the note. Your text is still here.",
-  "noteDeleteFailed": "Could not delete the note."
+  "noteDeleteFailed": "Could not delete the note.",
+  "notes": "Notes",
+  "semNote": "note",
+  "notesCount": "{count, plural, =0{Notes} =1{1 note} other{{count} notes}}",
+  "@notesCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "noNotesHint": "Tap an ayah, then Add a note. Your notes appear here."
 }

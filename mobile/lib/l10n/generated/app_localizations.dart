@@ -1383,18 +1383,6 @@ abstract class AppLocalizations {
   /// **'Commentary on each ayah'**
   String get soonTafsirDetail;
 
-  /// No description provided for @soonNotes.
-  ///
-  /// In en, this message translates to:
-  /// **'Notes'**
-  String get soonNotes;
-
-  /// No description provided for @soonNotesDetail.
-  ///
-  /// In en, this message translates to:
-  /// **'Your own notes on an ayah'**
-  String get soonNotesDetail;
-
   /// No description provided for @soonOffline.
   ///
   /// In en, this message translates to:
@@ -1682,6 +1670,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Could not delete the note.'**
   String get noteDeleteFailed;
+
+  /// No description provided for @notes.
+  ///
+  /// In en, this message translates to:
+  /// **'Notes'**
+  String get notes;
+
+  /// No description provided for @semNote.
+  ///
+  /// In en, this message translates to:
+  /// **'note'**
+  String get semNote;
+
+  /// No description provided for @notesCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{Notes} =1{1 note} other{{count} notes}}'**
+  String notesCount(int count);
+
+  /// No description provided for @noNotesHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap an ayah, then Add a note. Your notes appear here.'**
+  String get noNotesHint;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

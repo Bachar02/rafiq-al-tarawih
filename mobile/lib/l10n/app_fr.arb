@@ -215,8 +215,6 @@
   "soonTranslationDetail": "Le sens à côté de l’arabe, dans votre langue",
   "soonTafsir": "Tafsir",
   "soonTafsirDetail": "Le commentaire de chaque verset",
-  "soonNotes": "Notes",
-  "soonNotesDetail": "Vos propres notes sur un verset",
   "soonOffline": "Tarawih sans ordinateur",
   "soonOfflineDetail": "La reconnaissance sur le téléphone lui-même",
   "listen": "Écouter",
@@ -264,5 +262,9 @@
   "noteSaved": "Note enregistrée",
   "noteDeleted": "Note supprimée",
   "noteSaveFailed": "Impossible d’enregistrer la note. Votre texte est toujours là.",
-  "noteDeleteFailed": "Impossible de supprimer la note."
+  "noteDeleteFailed": "Impossible de supprimer la note.",
+  "notes": "Notes",
+  "semNote": "note",
+  "notesCount": "{count, plural, =0{Notes} =1{1 note} other{{count} notes}}",
+  "noNotesHint": "Touchez un verset, puis Ajouter une note. Vos notes apparaissent ici."
 }

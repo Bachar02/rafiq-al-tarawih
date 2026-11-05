@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:rafiq/app/app.dart';
+import 'package:rafiq/app/components/quran_text.dart';
 import 'package:rafiq/core/recognition/models.dart';
 
 import 'support/fakes.dart';
@@ -85,6 +86,24 @@ void main() {
         await meetsGuidelines(tester);
       });
 
+      testWidgets('notes: the sheet and the Notes view', (tester) async {
+        await launch(tester, {'theme_mode': theme});
+        tester.widget<AyahBlock>(find.byWidgetPredicate((w) => w is AyahBlock && w.verse.id == 2)).onTap!();
+        await settle(tester);
+        await tester.tap(find.text('Add a note'));
+        await settle(tester);
+        await tester.enterText(find.byType(TextField), 'A note on the second ayah');
+        await settle(tester);
+        await meetsGuidelines(tester);
+        await tester.tap(find.text('Save'));
+        await settle(tester);
+        await tapNav(tester, 'Bookmarks');
+        await tester.tap(find.text('Notes'));
+        await settle(tester);
+        expect(find.text('A note on the second ayah'), findsOneWidget);
+        await meetsGuidelines(tester);
+      });
+
       testWidgets('settings', (tester) async {
         await launch(tester, {'theme_mode': theme});
         await openSettings(tester);
@@ -112,6 +131,25 @@ void main() {
       await tapNav(tester, tab);
       expect(tester.takeException(), isNull, reason: tab);
     }
+    tester.widget<AyahBlock>(find.byWidgetPredicate((w) => w is AyahBlock && w.verse.id == 2)).onTap!();
+    await settle(tester);
+    await tester.ensureVisible(find.text('Add a note'));
+    await settle(tester);
+    await tester.tap(find.text('Add a note'));
+    await settle(tester);
+    expect(tester.takeException(), isNull, reason: 'note sheet');
+    await tester.enterText(find.byType(TextField), 'A note at 200%');
+    await settle(tester);
+    await tester.ensureVisible(find.text('Save'));
+    await settle(tester);
+    await tester.tap(find.text('Save'));
+    await settle(tester);
+    await tapNav(tester, 'Bookmarks');
+    await tester.tap(find.text('Notes'));
+    await settle(tester);
+    expect(find.text('A note at 200%'), findsOneWidget);
+    expect(tester.takeException(), isNull, reason: 'Notes view');
+    await tapNav(tester, 'Read');
     await tester.tap(find.byTooltip('Search the Quran'));
     await settle(tester);
     expect(tester.takeException(), isNull, reason: 'search');
