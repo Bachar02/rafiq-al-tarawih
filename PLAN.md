@@ -460,3 +460,127 @@ Built on `feat/quran-reader`, in five commits, each with tests and goldens.
 - **Accessibility:** a screen reader announced the page view's long-press area as an unlabelled node. It is now hidden from screen readers, who bookmark through each ayah's sheet.
 
 **Totals:** 212 tests, 29 golden screenshots, and the Android debug build passes.
+
+## 21. Build 0.3 plan: khatm planner and notes (agreed 2026-11-05)
+
+**Scope now:** the khatm planner and notes, built to the same standard as 0.2: tests, goldens, three languages, accessibility.
+
+**Later, in this order:**
+1. Taraweeh on the phone, once the Galaxy A16 is plugged in for the §16 benchmark.
+2. A GitHub-style chart of reading discipline.
+3. Translations, tafsir and audio, once licensed sources are confirmed.
+4. The Play Console account. The iPhone needs a Mac.
+
+**Dropped:** recording real mosque audio (not permitted).
+
+**Starting state:** branch `feat/quran-reader`, at the end of §20, with history tidied. It is to be pushed and merged into `master` by the owner through a PR. Start 0.3 on a new branch from `master` once that is merged.
+
+**Rules, unchanged:**
+- **Simple, robust, scalable.** No feature added just to look bigger.
+- **Store rules:** save before showing; an unreadable record is copied aside (`<key>.unreadable.<time>`) before any write; a failed write is reported, never thrown.
+- **Same checks as 0.2:** every string in English, French and Arabic (`test/l10n`); every screen passes `test/accessibility_test.dart`; goldens for new screens via `mobile/tool/goldens.sh`.
+- **The owner commits and pushes.** No AI attribution in commits, PRs or files.
+
+### 21.1 Data (lib/data/)
+
+**First, `ReadingLog.keepDays`: 90 → 400.** The discipline chart will need a full year of history. It is a one-line change, with a test.
+
+**`khatm.dart`:**
+- `KhatmPlan` (immutable):
+  - `startedOn` and `endsOn`: local dates, `endsOn` inclusive.
+  - `startPage`: where the reading order begins.
+  - `pages`: `Map<int page, String dayKey>`, the day each page was *first* read during the plan.
+  - Derived values:
+    - `remaining = 604 − pages.length`;
+    - `readOn(day)` = the pages whose dayKey is that day;
+    - `daysLeft(today) = max(1, endsOn − today + 1)`;
+    - `overdue(today)`;
+    - `todayTarget(today) = ceil((remaining + readOn(today)) / daysLeft)`. Today's reading must not shrink today's target.
+    - `nextPage` = the first unread page, scanning from `startPage` and wrapping around.
+  - JSON `{"v":1, …}`.
+- `KhatmRecord {startedOn, completedOn}` and `KhatmBook {active?, finished: [KhatmRecord]}`.
+
+**`note.dart`:** `Note {verseId, text, createdAt, updatedAt}`.
+- One note per ayah.
+- Text trimmed, at most 2000 characters; an empty text deletes the note.
+
+**`ReadingStore`:** add `khatm()` / `saveKhatm(KhatmBook)` (key `khatm.v1`) and `notes()` / `saveNotes(List<Note>)` (key `notes.v1`).
+- Same validation as bookmarks: verse ids 1..6236, pages 1..604, unknown versions kept aside.
+- Update `FailingStore` in `test/features/reader_screen_test.dart`.
+
+### 21.2 Khatm planner
+
+**`features/khatm/khatm_controller.dart`** (`Notifier<KhatmBook>`, uses `clockProvider`):
+- `start(endsOn, startPage)`, `changeEnd(endsOn)` and `stop()` save first, then update the state.
+- `recordPages(pages)`: adds only pages not already in the plan, stamped with today's key.
+  - It is called from `ReadingProgressController.movedTo` for the pages it counts, so the "read past it" rule (§19) is the only definition of reading.
+  - Saving is fire-and-forget with a dirty flag, flushed with the reading position on pause, like `ReadingProgressController`.
+- **Completion:** when `pages` covers all 604, the plan moves to `finished` (`completedOn` = today) and `active` becomes null.
+
+**`khatm_screen.dart`**, opened from More (it replaces the "Khatm planner — Soon" row) and from the Bookmarks card:
+- **No plan:**
+  - A one-line explanation.
+  - Length choices: 15 days, 30 days ("a juz a day"), 60 days, or a date you pick (`showDatePicker`).
+  - Start choices: "where I am reading (page N)" or "from the beginning".
+  - A *Start* button.
+- **Active plan:**
+  - "Page X of 604 read" with a progress bar.
+  - "Today: a of b pages".
+  - "N days left · ends <date>", the date formatted by `intl` `DateFormat.yMMMd(locale)`.
+  - *Continue khatm (page N)*, which calls `readerRequestsProvider.open(pages.start(nextPage))`.
+  - *Change end date*.
+  - *Stop this khatm*, with a confirmation dialog.
+- **Overdue:** "Past the planned end · X pages left", and *Change end date*.
+- **Finished khatms:** a quiet list, "Completed <date> · in N days".
+- **Completion moment:** the reader shows one calm snackbar ("Khatm complete"). It reacts to `finished` growing, through `ref.listen`.
+
+**Integration:**
+- **Reader bar:** when a plan is active, "Today a/b" comes from the plan and supersedes the daily goal. The 2 px line follows it. The daily goal applies only when there is no plan.
+- **Bookmarks tab:** when a plan is active, a card at the top with "Khatm · page X of 604 · today a/b". Tapping it opens the khatm screen.
+
+**Tests:**
+- Target arithmetic, including: reading ahead lowers tomorrow's target; overdue; wrap-around of `nextPage`; re-reading a page adds nothing.
+- Completion moves the plan to `finished`.
+- Long plans (365 days) keep every page, independent of the log.
+- JSON round-trip, and unreadable records kept aside.
+- Widget flows: start, continue, change end, stop, the bar and the card.
+- Goldens: the screen with no plan and with an active plan.
+
+### 21.3 Notes
+
+**`features/notes/notes_controller.dart`** (`Notifier<List<Note>>`, newest updated first): `save(verseId, text)`, `delete(verseId)` and `restore(note)` for Undo. Save first, then update the state.
+
+**`note_sheet.dart`:**
+- A bottom sheet with the ayah's reference, a multiline `TextField` (autofocus, `maxLength` 2000) and *Save*.
+- *Delete* appears when a note already exists.
+- The text direction follows the note's content (`Bidi.detectRtlDirectionality` from `intl`), both while editing and when shown.
+
+**Entry point:** the ayah sheet gets *Add a note* / *Edit note*, next to Bookmark, Share and Copy.
+
+**In the text:** `AyahBlock.noted` and `QuranView.notedVerses` show a small note icon in the margin, under the bookmark ribbon. `MushafPageView` shows the same as a `WidgetSpan` before the ayah. The semantics label gains ", note".
+
+**Bookmarks tab:**
+- A segmented control: **Bookmarks | Notes**.
+- Notes list: reference, place, the note's first two lines and the date. Tap to read there. A trailing edit button opens the sheet. Swipe deletes, with Undo.
+- An empty state explains how to add a note.
+
+**More:** remove "Notes — Soon" (the feature now lives in the ayah sheet and Bookmarks).
+
+**Tests:**
+- Save, edit, empty text deletes, the 2000-character limit, Undo restores the note with its dates.
+- A failed save is reported and nothing changes.
+- The icon appears in both layouts.
+- RTL and LTR notes.
+- Goldens: the note sheet and the Notes list.
+
+### 21.4 Order of work (each step one commit, all checks green)
+1. Data models, the store, `keepDays` 400, and unit tests.
+2. The khatm controller and its hook into reading progress, with tests.
+3. The khatm screen, the reader bar, the Bookmarks card and More, with strings, tests and goldens.
+4. The notes controller, the sheet and the ayah-sheet entry, with tests.
+5. Note icons in both layouts, the Bookmarks | Notes tabs, strings, tests and goldens.
+6. `DESIGN.md`, this section's results, version 0.3.0, a release build, and a check on the emulator.
+
+### 21.5 After 0.3
+- **Taraweeh on the phone:** the §16 benchmark on the Galaxy A16, then §17 M2.
+- **Reading discipline chart:** a year grid of days shaded by pages read, from `ReadingLog` (now kept 400 days). It goes in the Bookmarks or More area, with a weekly or yearly toggle and no streak pressure.
