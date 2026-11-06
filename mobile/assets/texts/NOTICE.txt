@@ -1,0 +1,14 @@
+Translations and tafsir: QuranEnc.com (Encyclopedia of the Noble Quran), https://quranenc.com
+
+Republished unchanged under QuranEnc's terms: no modification, addition or
+deletion; the publisher, QuranEnc.com and the version are named; each text is
+kept at QuranEnc's latest version.
+
+english_saheeh      Saheeh International, issued by Noor International Center, version 1.1.2
+french_hameedullah  Muhammad Hamidullah (French translation), version 1.0.2
+arabic_moyassar     At-Tafsir Al-Muyassar, King Fahd Glorious Quran Printing Complex, version 1.0.0
+french_mokhtasar    Al-Mukhtasar fi Tafsir al-Quran (French), Tafsir Center for Quranic Studies, version 1.0.0
+
+Each <key>.json is built by data/build_texts.py from QuranEnc's own database
+(data/raw/quranenc/<key>.zip, SHA-256 pinned in data/texts.json). The text and
+footnotes of every ayah are copied byte for byte.

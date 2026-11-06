@@ -1,0 +1,87 @@
+{
+  "source": "QuranEnc.com (Encyclopedia of the Noble Quran)",
+  "source_url": "https://quranenc.com",
+  "terms_url": "https://quranenc.com/en/home",
+  "texts": [
+    {
+      "key": "english_saheeh",
+      "kind": "translation",
+      "language": "en",
+      "direction": "ltr",
+      "name": {
+        "en": "Saheeh International",
+        "fr": "Saheeh International",
+        "ar": "صحيح إنترناشونال"
+      },
+      "credit": {
+        "en": "Noor International Center",
+        "fr": "Centre International Nûr",
+        "ar": "مركز نور الدولي"
+      },
+      "quranenc_title": "English Translation - Noor International Center",
+      "version": "1.1.2",
+      "last_update": 1750772247,
+      "sha256": "16a234782e0d43f2c1e31177941d65f5b9e813679edb0b4737a0589627fa7ac2"
+    },
+    {
+      "key": "french_hameedullah",
+      "kind": "translation",
+      "language": "fr",
+      "direction": "ltr",
+      "name": {
+        "en": "Muhammad Hamidullah",
+        "fr": "Muhammad Hamidullah",
+        "ar": "محمد حميد الله"
+      },
+      "credit": {
+        "en": "Muhammad Hamidullah",
+        "fr": "Muhammad Hamidullah",
+        "ar": "محمد حميد الله"
+      },
+      "quranenc_title": "French Translation - Muhammad Hamidullah",
+      "version": "1.0.2",
+      "last_update": 1751452351,
+      "sha256": "8dd7fb3d1119c2be9a701c868b296d949615d984333cdd64430b92975c41d903"
+    },
+    {
+      "key": "arabic_moyassar",
+      "kind": "tafsir",
+      "language": "ar",
+      "direction": "rtl",
+      "name": {
+        "en": "At-Tafsir Al-Muyassar",
+        "fr": "At-Tafsîr Al-Muyassar",
+        "ar": "التفسير الميسر"
+      },
+      "credit": {
+        "en": "King Fahd Glorious Quran Printing Complex",
+        "fr": "Complexe du Roi Fahd pour l’impression du Noble Coran",
+        "ar": "مجمع الملك فهد لطباعة المصحف الشريف"
+      },
+      "quranenc_title": "Arabic Language - At-Tafsir Al-Muyassar",
+      "version": "1.0.0",
+      "last_update": 1487106000,
+      "sha256": "96182831395a03e7497a8f398a960d45fcf90397dd72760ac35d735752a18046"
+    },
+    {
+      "key": "french_mokhtasar",
+      "kind": "tafsir",
+      "language": "fr",
+      "direction": "ltr",
+      "name": {
+        "en": "Al-Mukhtasar (French)",
+        "fr": "Al-Mukhtasar fî Tafsîr al-Qur’ân",
+        "ar": "المختصر في تفسير القرآن الكريم (بالفرنسية)"
+      },
+      "credit": {
+        "en": "Tafsir Center for Quranic Studies",
+        "fr": "Centre Tafsir des études coraniques",
+        "ar": "مركز تفسير للدراسات القرآنية"
+      },
+      "quranenc_title": "French Translation of Al-Mukhtasar in Interpreting the Noble Quran",
+      "version": "1.0.0",
+      "last_update": 1570050000,
+      "sha256": "b5a427b89e0587bae94611d3973752ee9955abaf698dd495ed4037ebe78cf762"
+    }
+  ]
+}

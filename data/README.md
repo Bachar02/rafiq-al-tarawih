@@ -106,3 +106,58 @@ Ayat al-Kursi on page 42, al-Kahf on 293, …) in
 
 The XML also carries manzil and ruku boundaries. Those are not parsed; nothing
 uses them yet.
+
+## Translations and tafsir
+
+The app bundles four texts from [QuranEnc.com](https://quranenc.com)
+(Encyclopedia of the Noble Quran). Tanzil's translations are not used: Tanzil
+allows them for non-commercial use only.
+
+| Key | Kind | Language | Text | Issued by | Version |
+|-----|------|----------|------|-----------|---------|
+| `english_saheeh` | translation | English | Saheeh International | Noor International Center | 1.1.2 |
+| `french_hameedullah` | translation | French | Muhammad Hamidullah | Muhammad Hamidullah | 1.0.2 |
+| `arabic_moyassar` | tafsir | Arabic | At-Tafsir Al-Muyassar | King Fahd Glorious Quran Printing Complex | 1.0.0 |
+| `french_mokhtasar` | tafsir | French | Al-Mukhtasar fi Tafsir al-Quran | Tafsir Center for Quranic Studies | 1.0.0 |
+
+QuranEnc has no English tafsir, so English readers are offered Al-Muyassar
+in Arabic, labelled "In Arabic".
+
+**QuranEnc's terms** (on every page of the site) allow downloading and
+republishing on these conditions:
+
+1. No modification, addition or deletion of the content.
+2. The publisher and the source (QuranEnc.com) are clearly credited.
+3. The version number is named when the translation is republished.
+4. The transcript information is kept inside the document.
+5. Notes on a translation are sent to QuranEnc.com.
+6. The translation is kept at the latest version issued by QuranEnc.com.
+7. No inappropriate advertisements are shown with the translations.
+
+How the pipeline keeps them:
+
+- `raw/quranenc/<key>.zip` is QuranEnc's own SQLite database, verbatim. Its
+  SHA-256, version and update date are pinned in `texts.json`.
+- `build_texts.py` copies each ayah's text and footnotes byte for byte into
+  `mobile/assets/texts/<key>.json`. Only the container changes. It also
+  writes `catalog.json`: names, credits, versions, URLs.
+- The build checks every text against `quran-data.xml`: 6236 ayahs, surah by
+  surah, in order, and none empty. Any mismatch aborts. The tests in `tests/`
+  show that a damaged or swapped file is refused.
+- The app shows the name, the credit, the version and "QuranEnc.com" under
+  every text, and lists them all in Settings → About (conditions 2 to 4). It
+  has no ads.
+- Before each release, run `py data/build_texts.py updates`. If a text is
+  behind, run `fetch KEY`, rebuild, and review the diff (condition 6).
+
+```bash
+py data/build_texts.py                 # build the assets from data/raw/quranenc/
+py data/build_texts.py --check         # CI: fail if the assets are stale
+py data/build_texts.py updates         # is any text behind QuranEnc? (exit 1 if so)
+py data/build_texts.py fetch [KEY...]  # download the current version and re-pin it
+```
+
+**Adding a text:** add its entry to `texts.json` (key from QuranEnc's API,
+names and credit in en/fr/ar), run `fetch KEY` and then the build. Order
+within a kind is the preference order: the app shows the first text in the
+interface language, else the first English translation or Arabic tafsir.
