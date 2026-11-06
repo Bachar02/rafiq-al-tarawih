@@ -261,6 +261,7 @@ void main() {
     await launch(tester);
     await tester.tap(find.byTooltip('Settings'));
     await settle(tester);
+    await revealInSettings(tester, find.text('Ḥafṣ ʿan ʿĀṣim'));
     expect(find.text('Ḥafṣ ʿan ʿĀṣim'), findsOneWidget); // the riwāya statement
     await revealInSettings(tester, find.text('Test connection'));
     await tester.tap(find.text('Test connection'));

@@ -7,9 +7,9 @@ import '../../app/routes.dart';
 import '../../app/theme.dart';
 import '../../l10n/l10n.dart';
 
-/// Everything that is not the text itself: the khatm planner, settings, and
-/// the features still to come, shown where they will live, visibly not yet
-/// working.
+/// Everything that is not the text itself: translation and tafsir, the
+/// khatm planner, settings, and the features still to come, shown where they
+/// will live, visibly not yet working.
 class MoreScreen extends ConsumerWidget {
   const MoreScreen({super.key});
 
@@ -25,6 +25,13 @@ class MoreScreen extends ConsumerWidget {
         children: [
           RubricGroup(
             children: [
+              RubricRow(
+                label: l.translationAndTafsir,
+                detail: l.translationAndTafsirDetail,
+                trailing: Icon(Icons.chevron_right, color: c.inkSecondary),
+                // Opens at the ayah the reader is on.
+                onTap: () => AppRoutes.study(context, verseId: ref.read(readingPositionProvider)),
+              ),
               RubricRow(
                 label: l.khatmPlanner,
                 detail: plan == null ? l.khatmPlannerDetail : l.khatmPagesRead(plan.read),
@@ -43,8 +50,6 @@ class MoreScreen extends ConsumerWidget {
             children: [
               for (final (label, detail) in [
                 (l.soonRecitation, l.soonRecitationDetail),
-                (l.soonTranslation, l.soonTranslationDetail),
-                (l.soonTafsir, l.soonTafsirDetail),
                 (l.soonOffline, l.soonOfflineDetail),
               ])
                 RubricRow(label: label, detail: detail, value: l.soon, enabled: false),

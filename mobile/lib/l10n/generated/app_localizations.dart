@@ -1359,30 +1359,6 @@ abstract class AppLocalizations {
   /// **'Listen to an ayah, a page or a surah'**
   String get soonRecitationDetail;
 
-  /// No description provided for @soonTranslation.
-  ///
-  /// In en, this message translates to:
-  /// **'Translations'**
-  String get soonTranslation;
-
-  /// No description provided for @soonTranslationDetail.
-  ///
-  /// In en, this message translates to:
-  /// **'The meaning beside the Arabic, in your language'**
-  String get soonTranslationDetail;
-
-  /// No description provided for @soonTafsir.
-  ///
-  /// In en, this message translates to:
-  /// **'Tafsir'**
-  String get soonTafsir;
-
-  /// No description provided for @soonTafsirDetail.
-  ///
-  /// In en, this message translates to:
-  /// **'Commentary on each ayah'**
-  String get soonTafsirDetail;
-
   /// No description provided for @soonOffline.
   ///
   /// In en, this message translates to:
@@ -1784,6 +1760,108 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Mark all unread'**
   String get khatmMarkAllUnread;
+
+  /// No description provided for @translationAndTafsir.
+  ///
+  /// In en, this message translates to:
+  /// **'Translation and tafsir'**
+  String get translationAndTafsir;
+
+  /// No description provided for @translationAndTafsirDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'The meaning of each ayah, from trusted publishers'**
+  String get translationAndTafsirDetail;
+
+  /// No description provided for @chooseTranslation.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a translation'**
+  String get chooseTranslation;
+
+  /// No description provided for @chooseTafsir.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a tafsir'**
+  String get chooseTafsir;
+
+  /// No description provided for @chooseTextExplanation.
+  ///
+  /// In en, this message translates to:
+  /// **'Each text is shown exactly as its publisher issued it.'**
+  String get chooseTextExplanation;
+
+  /// No description provided for @chooseText.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose the text'**
+  String get chooseText;
+
+  /// No description provided for @textLanguageEn.
+  ///
+  /// In en, this message translates to:
+  /// **'English'**
+  String get textLanguageEn;
+
+  /// No description provided for @textLanguageFr.
+  ///
+  /// In en, this message translates to:
+  /// **'French'**
+  String get textLanguageFr;
+
+  /// No description provided for @textLanguageAr.
+  ///
+  /// In en, this message translates to:
+  /// **'Arabic'**
+  String get textLanguageAr;
+
+  /// No description provided for @inLanguage.
+  ///
+  /// In en, this message translates to:
+  /// **'In {language}'**
+  String inLanguage(String language);
+
+  /// No description provided for @textSourceLine.
+  ///
+  /// In en, this message translates to:
+  /// **'{credit} · version {version} · QuranEnc.com'**
+  String textSourceLine(String credit, String version);
+
+  /// No description provided for @translationNote.
+  ///
+  /// In en, this message translates to:
+  /// **'A translation conveys the meanings of the Quran; it is not the Quran itself.'**
+  String get translationNote;
+
+  /// No description provided for @footnotes.
+  ///
+  /// In en, this message translates to:
+  /// **'Footnotes'**
+  String get footnotes;
+
+  /// No description provided for @previousAyah.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous ayah'**
+  String get previousAyah;
+
+  /// No description provided for @nextAyah.
+  ///
+  /// In en, this message translates to:
+  /// **'Next ayah'**
+  String get nextAyah;
+
+  /// No description provided for @textLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'This text could not be opened. Reinstalling Rafiq should fix it.'**
+  String get textLoadFailed;
+
+  /// No description provided for @listenComingSoon.
+  ///
+  /// In en, this message translates to:
+  /// **'Listening to the recitation is coming soon.'**
+  String get listenComingSoon;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

@@ -8,9 +8,11 @@ import '../../app/providers.dart';
 import '../../app/theme.dart';
 import '../../core/recognition/endpoint.dart';
 import '../../data/settings.dart';
+import '../../data/study_text.dart';
 import '../../l10n/l10n.dart';
 import '../../services/server_health.dart';
 import '../bench/asr_bench_screen.dart';
+import '../study/study_source_sheet.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -144,6 +146,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final settings = ref.watch(settingsProvider);
     final update = ref.read(settingsProvider.notifier).update;
     final caption = RubricText.caption.copyWith(color: c.inkSecondary);
+    final ui = Localizations.localeOf(context).languageCode;
+    final translation = ref.watch(studySourceProvider(StudyKind.translation));
+    final tafsir = ref.watch(studySourceProvider(StudyKind.tafsir));
+    final texts = ref.watch(studyCatalogProvider).sources;
     return Scaffold(
       appBar: AppBar(title: Text(l.settings)),
       body: ListView(
@@ -179,6 +185,24 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               ),
             ],
           ),
+          if (translation != null || tafsir != null)
+            RubricGroup(
+              label: l.translationAndTafsir,
+              children: [
+                if (translation != null)
+                  RubricRow(
+                    label: l.translation,
+                    value: translation.name(ui),
+                    onTap: () => chooseStudySource(context, ref, StudyKind.translation),
+                  ),
+                if (tafsir != null)
+                  RubricRow(
+                    label: l.tafsir,
+                    value: tafsir.name(ui),
+                    onTap: () => chooseStudySource(context, ref, StudyKind.tafsir),
+                  ),
+              ],
+            ),
           RubricGroup(
             label: l.groupTaraweeh,
             children: [
@@ -284,7 +308,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             children: [
               Padding(
                 padding: const EdgeInsets.all(RubricSpace.s4),
-                child: Text('${l.aboutLead}\n\n$_attributions', style: caption),
+                child: Text('${l.aboutLead}\n\n$_attributions${textAttributions(texts)}', style: caption),
               ),
             ],
           ),
@@ -300,6 +324,12 @@ const _attributions = 'Quran text: Tanzil Project (tanzil.net), Uthmani and Simp
     'SIL Open Font License 1.1.\n'
     'Speech model: Tarteel whisper-base-ar-quran, Apache 2.0.\n'
     'On-device runtime: sherpa-onnx (k2-fsa), Apache 2.0.';
+
+/// QuranEnc's terms: name the publisher, QuranEnc.com and the version.
+String textAttributions(List<StudySource> texts) => texts.isEmpty
+    ? ''
+    : '\nTranslations and tafsir, unchanged, from QuranEnc.com (Encyclopedia of the Noble Quran): '
+        '${[for (final t in texts) '${t.name('en')} (${t.credit('en')}), version ${t.version}'].join('; ')}.';
 
 String appearanceLabel(AppLocalizations l, ThemeMode mode) => switch (mode) {
       ThemeMode.dark => l.themeDark,

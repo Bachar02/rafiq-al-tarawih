@@ -768,18 +768,6 @@ class AppLocalizationsAr extends AppLocalizations {
   String get soonRecitationDetail => 'الاستماع إلى آية أو صفحة أو سورة';
 
   @override
-  String get soonTranslation => 'الترجمات';
-
-  @override
-  String get soonTranslationDetail => 'المعنى بجانب النص العربي، بلغتك';
-
-  @override
-  String get soonTafsir => 'التفسير';
-
-  @override
-  String get soonTafsirDetail => 'تفسير كل آية';
-
-  @override
   String get soonOffline => 'التراويح دون حاسوب';
 
   @override
@@ -1101,4 +1089,59 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get khatmMarkAllUnread => 'حدّد الكل غير مقروء';
+
+  @override
+  String get translationAndTafsir => 'الترجمة والتفسير';
+
+  @override
+  String get translationAndTafsirDetail => 'معاني كل آية، من ناشرين موثوقين';
+
+  @override
+  String get chooseTranslation => 'اختر ترجمة';
+
+  @override
+  String get chooseTafsir => 'اختر تفسيرًا';
+
+  @override
+  String get chooseTextExplanation => 'يُعرض كل نص كما أصدره ناشره دون تغيير.';
+
+  @override
+  String get chooseText => 'اختيار النص';
+
+  @override
+  String get textLanguageEn => 'الإنجليزية';
+
+  @override
+  String get textLanguageFr => 'الفرنسية';
+
+  @override
+  String get textLanguageAr => 'العربية';
+
+  @override
+  String inLanguage(String language) {
+    return 'باللغة $language';
+  }
+
+  @override
+  String textSourceLine(String credit, String version) {
+    return '$credit · الإصدار $version · QuranEnc.com';
+  }
+
+  @override
+  String get translationNote => 'الترجمة تنقل معاني القرآن، وليست هي القرآن.';
+
+  @override
+  String get footnotes => 'الحواشي';
+
+  @override
+  String get previousAyah => 'الآية السابقة';
+
+  @override
+  String get nextAyah => 'الآية التالية';
+
+  @override
+  String get textLoadFailed => 'تعذّر فتح هذا النص. إعادة تثبيت رفيق تصلح ذلك عادةً.';
+
+  @override
+  String get listenComingSoon => 'الاستماع إلى التلاوة قريبًا.';
 }

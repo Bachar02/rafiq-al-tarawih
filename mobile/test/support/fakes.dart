@@ -16,6 +16,7 @@ import 'package:rafiq/data/note.dart';
 import 'package:rafiq/data/quran.dart';
 import 'package:rafiq/data/reading_store.dart';
 import 'package:rafiq/data/settings.dart';
+import 'package:rafiq/data/study_text.dart';
 import 'package:rafiq/data/surah_names.dart';
 import 'package:rafiq/services/screen_awake.dart';
 import 'package:rafiq/services/server_health.dart';
@@ -171,6 +172,16 @@ SurahNames? _names;
 SurahNames loadSurahNames() =>
     _names ??= SurahNames.fromJson(File('assets/data/surah-names.json').readAsStringSync(), loadQuran());
 
+StudyCatalog? _catalog;
+StudyCatalog loadStudyCatalog() =>
+    _catalog ??= StudyCatalog.fromJson(File('assets/texts/catalog.json').readAsStringSync());
+
+final _texts = <String, StudyText>{};
+
+/// The bundled texts, read from the files (parsed once per test run).
+Future<StudyText> loadStudyTextFile(StudySource source) async =>
+    _texts[source.key] ??= StudyText.parse((raw: File(source.asset).readAsStringSync(), key: source.key));
+
 /// Everything a test needs, wired the way main.dart wires the real app.
 class Harness {
   Harness._(this.prefs);
@@ -182,6 +193,9 @@ class Harness {
   final engines = <FakeEngine>[];
   final addresses = <String>[];
   ServerHealth health = const ServerHealth.ok(latency: Duration(milliseconds: 12), asr: true, device: 'cuda');
+
+  /// Replace before launching to make texts fail or wait.
+  StudyTextLoader studyTexts = loadStudyTextFile;
 
   /// Replace before launching to test storage failures.
   ReadingStore? readingStore;
@@ -199,6 +213,8 @@ class Harness {
   List<Override> get overrides => [
         quranProvider.overrideWithValue(loadQuran()),
         surahTableProvider.overrideWithValue(loadSurahNames()),
+        studyCatalogProvider.overrideWithValue(loadStudyCatalog()),
+        studyTextLoaderProvider.overrideWithValue((s) => studyTexts(s)),
         settingsStoreProvider.overrideWithValue(SettingsStore(prefs)),
         readingStoreProvider.overrideWithValue(readingStore ?? PrefsReadingStore(prefs)),
         audioSourceProvider.overrideWithValue(audio),

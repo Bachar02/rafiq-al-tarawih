@@ -82,6 +82,8 @@ flutter:
   assets:
     - assets/quran/quran.json
     - assets/data/surah-names.json
+    # Translations and tafsirs (data/build_texts.py, from QuranEnc.com).
+    - assets/texts/
     - assets/brand/wordmark-ar-small.png
 
   # Rubric identity (docs/DESIGN.md §2.3). Licences beside each file (OFL-*.txt).

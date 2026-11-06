@@ -11,6 +11,8 @@ import '../features/listen/listen_screen.dart';
 import '../features/navigate/navigate_screen.dart';
 import '../features/search/search_screen.dart';
 import '../features/settings/settings_screen.dart';
+import '../features/study/study_screen.dart';
+import '../data/study_text.dart';
 import 'providers.dart';
 import 'theme.dart';
 
@@ -20,6 +22,7 @@ abstract final class AppRoutes {
   static const navigateName = '/navigate';
   static const searchName = '/search';
   static const khatmName = '/khatm';
+  static const studyName = '/study';
 
   /// A route that keeps the theme it was opened from: settings opened in
   /// (dark) Taraweeh mode stay dark, as do their sheets and dialogs.
@@ -46,6 +49,12 @@ abstract final class AppRoutes {
   /// The khatm planner.
   static Future<void> khatm(BuildContext context) =>
       Navigator.of(context).push(_route<void>(context, khatmName, (_) => const KhatmScreen()));
+
+  /// The translation or tafsir of an ayah, from which the user can move on.
+  static Future<void> study(BuildContext context, {required int verseId, StudyKind kind = StudyKind.translation}) =>
+      Navigator.of(context).push(
+        _route<void>(context, studyName, (_) => StudyScreen(verseId: verseId, kind: kind)),
+      );
 
   /// Search the Quran; returns the chosen verse id.
   static Future<int?> search(BuildContext context) =>

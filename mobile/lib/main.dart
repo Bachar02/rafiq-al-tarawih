@@ -10,6 +10,7 @@ import 'app/theme.dart';
 import 'data/quran.dart';
 import 'data/reading_store.dart';
 import 'data/settings.dart';
+import 'data/study_text.dart';
 import 'data/surah_names.dart';
 
 Future<void> main() async {
@@ -19,12 +20,14 @@ Future<void> main() async {
     final raw = await rootBundle.loadString('assets/quran/quran.json');
     final quran = await compute(Quran.fromJson, raw);
     final names = SurahNames.fromJson(await rootBundle.loadString('assets/data/surah-names.json'), quran);
+    final texts = StudyCatalog.fromJson(await rootBundle.loadString('assets/texts/catalog.json'));
     final prefs = await SharedPreferences.getInstance();
     runApp(
       ProviderScope(
         overrides: [
           quranProvider.overrideWithValue(quran),
           surahTableProvider.overrideWithValue(names),
+          studyCatalogProvider.overrideWithValue(texts),
           settingsStoreProvider.overrideWithValue(SettingsStore(prefs)),
           readingStoreProvider.overrideWithValue(PrefsReadingStore(prefs)),
         ],

@@ -112,6 +112,25 @@ void main() {
         await meetsGuidelines(tester);
       });
 
+      testWidgets('translation and tafsir', (tester) async {
+        await launch(tester, {'theme_mode': theme});
+        tester.widget<AyahBlock>(find.byWidgetPredicate((w) => w is AyahBlock && w.verse.id == 2)).onTap!();
+        await settle(tester);
+        await meetsGuidelines(tester); // the ayah sheet, Translation and Tafsir live
+        await tester.ensureVisible(find.text('Translation'));
+        await settle(tester);
+        await tester.tap(find.text('Translation'));
+        await settle(tester);
+        expect(find.textContaining('QuranEnc.com'), findsOneWidget);
+        await meetsGuidelines(tester);
+        await tester.tap(find.text('Tafsir'));
+        await settle(tester);
+        await meetsGuidelines(tester);
+        await tester.tap(find.byTooltip('Choose the text'));
+        await settle(tester);
+        await meetsGuidelines(tester);
+      });
+
       testWidgets('reviewing the last session', (tester) async {
         await launch(tester, {
           'theme_mode': theme,
@@ -150,6 +169,8 @@ void main() {
     await tester.tap(find.text('Not now'));
     await settle(tester);
     await tapNav(tester, 'More');
+    await tester.ensureVisible(find.text('Khatm planner'));
+    await settle(tester);
     await tester.tap(find.text('Khatm planner'));
     await settle(tester);
     await tester.ensureVisible(find.text('Start khatm'));
@@ -163,6 +184,27 @@ void main() {
     await settle(tester);
     expect(find.text('Mark all read'), findsOneWidget);
     expect(tester.takeException(), isNull, reason: 'juz sheet');
+  });
+
+  testWidgets('200% system text: the study view and its source sheet', (tester) async {
+    tester.platformDispatcher.textScaleFactorTestValue = 2.0;
+    addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+    await launch(tester, {});
+    tester.widget<AyahBlock>(find.byWidgetPredicate((w) => w is AyahBlock && w.verse.id == 2)).onTap!();
+    await settle(tester);
+    expect(tester.takeException(), isNull, reason: 'ayah sheet');
+    await tester.ensureVisible(find.text('Tafsir'));
+    await settle(tester);
+    await tester.tap(find.text('Tafsir'));
+    await settle(tester);
+    expect(tester.takeException(), isNull, reason: 'study view, tafsir');
+    await tester.tap(find.text('Translation'));
+    await settle(tester);
+    expect(tester.takeException(), isNull, reason: 'study view, translation');
+    await tester.tap(find.byTooltip('Choose the text'));
+    await settle(tester);
+    expect(find.text('Choose a translation'), findsOneWidget);
+    expect(tester.takeException(), isNull, reason: 'source sheet');
   });
 
   testWidgets('200% system text: every main screen lays out without overflow', (tester) async {
@@ -203,6 +245,8 @@ void main() {
     await tester.pageBack();
     await settle(tester);
     await tapNav(tester, 'More');
+    await tester.ensureVisible(find.text('Khatm planner'));
+    await settle(tester);
     await tester.tap(find.text('Khatm planner'));
     await settle(tester);
     expect(tester.takeException(), isNull, reason: 'khatm planner, no plan');

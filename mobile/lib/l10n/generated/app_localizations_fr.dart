@@ -765,18 +765,6 @@ class AppLocalizationsFr extends AppLocalizations {
   String get soonRecitationDetail => 'Écouter un verset, une page ou une sourate';
 
   @override
-  String get soonTranslation => 'Traductions';
-
-  @override
-  String get soonTranslationDetail => 'Le sens à côté de l’arabe, dans votre langue';
-
-  @override
-  String get soonTafsir => 'Tafsir';
-
-  @override
-  String get soonTafsirDetail => 'Le commentaire de chaque verset';
-
-  @override
   String get soonOffline => 'Tarawih sans ordinateur';
 
   @override
@@ -1074,4 +1062,59 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get khatmMarkAllUnread => 'Tout marquer non lu';
+
+  @override
+  String get translationAndTafsir => 'Traduction et tafsir';
+
+  @override
+  String get translationAndTafsirDetail => 'Le sens de chaque verset, par des éditeurs de confiance';
+
+  @override
+  String get chooseTranslation => 'Choisir une traduction';
+
+  @override
+  String get chooseTafsir => 'Choisir un tafsir';
+
+  @override
+  String get chooseTextExplanation => 'Chaque texte est affiché tel que son éditeur l’a publié.';
+
+  @override
+  String get chooseText => 'Choisir le texte';
+
+  @override
+  String get textLanguageEn => 'anglais';
+
+  @override
+  String get textLanguageFr => 'français';
+
+  @override
+  String get textLanguageAr => 'arabe';
+
+  @override
+  String inLanguage(String language) {
+    return 'En $language';
+  }
+
+  @override
+  String textSourceLine(String credit, String version) {
+    return '$credit · version $version · QuranEnc.com';
+  }
+
+  @override
+  String get translationNote => 'Une traduction rend le sens du Coran ; elle n’est pas le Coran lui-même.';
+
+  @override
+  String get footnotes => 'Notes';
+
+  @override
+  String get previousAyah => 'Verset précédent';
+
+  @override
+  String get nextAyah => 'Verset suivant';
+
+  @override
+  String get textLoadFailed => 'Ce texte n’a pas pu être ouvert. Réinstaller Rafiq devrait régler le problème.';
+
+  @override
+  String get listenComingSoon => 'L’écoute de la récitation arrive bientôt.';
 }

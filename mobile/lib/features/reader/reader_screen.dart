@@ -13,6 +13,7 @@ import 'widgets/reader_bar.dart';
 import '../../l10n/l10n.dart';
 import '../quran_view/mushaf_page_view.dart';
 import '../../data/settings.dart';
+import '../../data/study_text.dart';
 import 'share_ayah_sheet.dart';
 import '../notes/note_sheet.dart';
 import 'package:flutter/services.dart';
@@ -188,6 +189,10 @@ class ReaderScreenState extends ConsumerState<ReaderScreen> with WidgetsBindingO
       case ReaderAyahAction.copy:
         await copyAyah(verse, names);
         say(l.copied(ref_));
+      case ReaderAyahAction.translation:
+        await AppRoutes.study(context, verseId: verse.id);
+      case ReaderAyahAction.tafsir:
+        await AppRoutes.study(context, verseId: verse.id, kind: StudyKind.tafsir);
       case null:
         break;
     }

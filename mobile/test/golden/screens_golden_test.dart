@@ -338,7 +338,7 @@ void main() {
       await expectGolden(tester, 'notes');
     });
 
-    testWidgets('ayah sheet: bookmark, share, copy, and what is coming', (tester) async {
+    testWidgets('ayah sheet: bookmark, share, copy, translation and tafsir', (tester) async {
       await launch(tester, prefs: {...readingAt(2, 255), 'theme_mode': 'dark'}, taraweeh: false);
       await settle(tester);
       final quran = loadQuran();
@@ -346,6 +346,28 @@ void main() {
       tester.widget<AyahBlock>(ayah.first).onTap!();
       await settle(tester);
       await expectGolden(tester, 'ayah_sheet');
+    });
+
+    /// Ayat al-Kursi in the study view, from its ayah sheet.
+    Future<void> study255(WidgetTester tester, String action) async {
+      await settle(tester);
+      final ayah = find.byWidgetPredicate((w) => w is AyahBlock && w.verse.id == loadQuran().verseId(2, 255));
+      tester.widget<AyahBlock>(ayah.first).onTap!();
+      await settle(tester);
+      await tester.tap(find.text(action));
+      await settle(tester);
+    }
+
+    testWidgets('study view: Saheeh International on 2:255, with footnotes, light', (tester) async {
+      await launch(tester, prefs: {...readingAt(2, 255), 'theme_mode': 'light'}, taraweeh: false);
+      await study255(tester, 'Translation');
+      await expectGolden(tester, 'study_translation');
+    });
+
+    testWidgets('study view, Arabic interface: Al-Muyassar on 2:255, dark', (tester) async {
+      await launch(tester, prefs: {...readingAt(2, 255), 'theme_mode': 'dark', 'language': 'ar'}, taraweeh: false);
+      await study255(tester, 'تفسير');
+      await expectGolden(tester, 'ar_study_tafsir');
     });
 
     testWidgets('reader: 320×568 at the largest Quran text, in juz 30', (tester) async {

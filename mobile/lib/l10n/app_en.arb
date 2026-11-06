@@ -555,10 +555,6 @@
   "soon": "Soon",
   "soonRecitation": "Recitation audio",
   "soonRecitationDetail": "Listen to an ayah, a page or a surah",
-  "soonTranslation": "Translations",
-  "soonTranslationDetail": "The meaning beside the Arabic, in your language",
-  "soonTafsir": "Tafsir",
-  "soonTafsirDetail": "Commentary on each ayah",
   "soonOffline": "Taraweeh without a computer",
   "soonOfflineDetail": "Recognition on the phone itself",
   "listen": "Listen",
@@ -782,5 +778,39 @@
     }
   },
   "khatmMarkAllRead": "Mark all read",
-  "khatmMarkAllUnread": "Mark all unread"
+  "khatmMarkAllUnread": "Mark all unread",
+  "translationAndTafsir": "Translation and tafsir",
+  "translationAndTafsirDetail": "The meaning of each ayah, from trusted publishers",
+  "chooseTranslation": "Choose a translation",
+  "chooseTafsir": "Choose a tafsir",
+  "chooseTextExplanation": "Each text is shown exactly as its publisher issued it.",
+  "chooseText": "Choose the text",
+  "textLanguageEn": "English",
+  "textLanguageFr": "French",
+  "textLanguageAr": "Arabic",
+  "inLanguage": "In {language}",
+  "@inLanguage": {
+    "placeholders": {
+      "language": {
+        "type": "String"
+      }
+    }
+  },
+  "textSourceLine": "{credit} · version {version} · QuranEnc.com",
+  "@textSourceLine": {
+    "placeholders": {
+      "credit": {
+        "type": "String"
+      },
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "translationNote": "A translation conveys the meanings of the Quran; it is not the Quran itself.",
+  "footnotes": "Footnotes",
+  "previousAyah": "Previous ayah",
+  "nextAyah": "Next ayah",
+  "textLoadFailed": "This text could not be opened. Reinstalling Rafiq should fix it.",
+  "listenComingSoon": "Listening to the recitation is coming soon."
 }

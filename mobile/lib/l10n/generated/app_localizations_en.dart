@@ -762,18 +762,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get soonRecitationDetail => 'Listen to an ayah, a page or a surah';
 
   @override
-  String get soonTranslation => 'Translations';
-
-  @override
-  String get soonTranslationDetail => 'The meaning beside the Arabic, in your language';
-
-  @override
-  String get soonTafsir => 'Tafsir';
-
-  @override
-  String get soonTafsirDetail => 'Commentary on each ayah';
-
-  @override
   String get soonOffline => 'Taraweeh without a computer';
 
   @override
@@ -1070,4 +1058,59 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get khatmMarkAllUnread => 'Mark all unread';
+
+  @override
+  String get translationAndTafsir => 'Translation and tafsir';
+
+  @override
+  String get translationAndTafsirDetail => 'The meaning of each ayah, from trusted publishers';
+
+  @override
+  String get chooseTranslation => 'Choose a translation';
+
+  @override
+  String get chooseTafsir => 'Choose a tafsir';
+
+  @override
+  String get chooseTextExplanation => 'Each text is shown exactly as its publisher issued it.';
+
+  @override
+  String get chooseText => 'Choose the text';
+
+  @override
+  String get textLanguageEn => 'English';
+
+  @override
+  String get textLanguageFr => 'French';
+
+  @override
+  String get textLanguageAr => 'Arabic';
+
+  @override
+  String inLanguage(String language) {
+    return 'In $language';
+  }
+
+  @override
+  String textSourceLine(String credit, String version) {
+    return '$credit · version $version · QuranEnc.com';
+  }
+
+  @override
+  String get translationNote => 'A translation conveys the meanings of the Quran; it is not the Quran itself.';
+
+  @override
+  String get footnotes => 'Footnotes';
+
+  @override
+  String get previousAyah => 'Previous ayah';
+
+  @override
+  String get nextAyah => 'Next ayah';
+
+  @override
+  String get textLoadFailed => 'This text could not be opened. Reinstalling Rafiq should fix it.';
+
+  @override
+  String get listenComingSoon => 'Listening to the recitation is coming soon.';
 }
