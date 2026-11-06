@@ -626,3 +626,64 @@ Built on `feat/khatm-notes` from `master`, in six commits as §21.4 planned, eac
 ### 21.7 After 0.3
 - **Taraweeh on the phone:** the §16 benchmark on the Galaxy A16, then §17 M2.
 - **Reading discipline chart:** a year grid of days shaded by pages read, from `ReadingLog` (now kept 400 days). It goes in the Bookmarks or More area, with a weekly or yearly toggle and no streak pressure.
+
+## 22. Build 0.4: translations and tafsir (2026-11-06)
+
+**Sources (agreed with the owner):** all four come from [QuranEnc.com](https://quranenc.com), are bundled offline, and match our 6236 ayahs surah by surah.
+
+| | English | French | Arabic |
+|---|---|---|---|
+| Translation | Saheeh International (Noor International Center), 1.1.2 | Muhammad Hamidullah, 1.0.2 | — |
+| Tafsir | none licensed: Al-Muyassar, labelled "In Arabic" | Al-Mukhtasar (Tafsir Center for Quranic Studies), 1.0.0 | At-Tafsir Al-Muyassar (King Fahd Complex), 1.0.0 |
+
+**Why QuranEnc:**
+- **Tanzil is ruled out:** its translations are for non-commercial use only.
+- **QuranEnc's terms** allow republishing as long as:
+  - the text is not changed;
+  - the publisher, QuranEnc.com and the version are named;
+  - each text is kept at QuranEnc's latest version;
+  - no inappropriate ads are shown.
+- **Commercial use:** the terms say nothing about it. Rafiq is free and has no ads.
+- **English tafsir:** QuranEnc has none. Getting the English Mukhtasar needs the Tafsir Center's permission (a request was drafted for the owner).
+
+**Data** (`data/build_texts.py`, `data/texts.json`, `data/README.md`):
+- **Sources:** QuranEnc's SQLite databases, kept verbatim in `data/raw/quranenc/` with their SHA-256 pinned.
+- **Build:** text and footnotes are copied byte for byte to `mobile/assets/texts/<key>.json`, plus a `catalog.json`.
+- **Validation:** every text is checked against `quran-data.xml`. Any mismatch aborts the build.
+- **Commands:** `updates` reports a newer QuranEnc version (run it before each release), and `fetch` takes it.
+- **CI:** runs `pytest data` and `build_texts.py --check`.
+
+**App:**
+- **Study view** (`features/study/`):
+  - It opens from the ayah sheet's Translation and Tafsir buttons (now live; Listen stays "coming soon"), or from More → *Translation and tafsir* at the reading position.
+  - It shows the ayah, then a Translation | Tafsir switch.
+  - The text appears as published, with footnotes, the name, and "credit · version · QuranEnc.com".
+  - A translation also carries the note that it conveys the meanings and is not the Quran.
+  - Swipe, or tap *Previous ayah* / *Next ayah*, to move across surahs. The reader's position does not move.
+  - Each text keeps its own direction and language, so an Arabic tafsir reads right to left in English and a screen reader voices it as Arabic.
+- **Choice:** the text in the interface language by default. Otherwise English for translations and Arabic for tafsir. In the Arabic UI, the translation is English.
+  - It can be changed from the study view or from Settings → Translation and tafsir. Saved as `translation_key` / `tafsir_key`.
+  - A saved key that is no longer bundled falls back to the default.
+- **Loading:** texts load on first use, parsed in an isolate, and are kept in memory. A broken file shows a message instead of crashing, and is not retried.
+- **Attribution:** every text is listed in Settings → About, and in `assets/texts/NOTICE.txt`.
+- **Ayah sheet:** the Translation · Tafsir · Listen row now sits right under the ayah. On the emulator the sheet stops at 70% of the screen, and at the bottom the row was hidden until scrolled. "Listening … coming soon" moved to the foot of the sheet.
+- **Theme fix:** screen titles (Newsreader) had no Arabic fallback, so Arabic titles depended on the phone's fonts and showed as empty boxes in renders. They now fall back to IBM Plex Sans Arabic. No existing golden changed.
+
+**Totals:**
+- **Tests:** 315 (297 before) and 7 data-pipeline tests.
+- **Goldens:** 32 (new: the study view in English, and Al-Muyassar in the Arabic UI; re-rendered: ayah sheet, More, Settings, French Settings).
+- **Accessibility:** the study view and source sheet pass in both themes and at 200% text.
+- **Strings:** 17 new strings in three languages, and 4 placeholders removed.
+- **Size:** about 6.7 MB of JSON before APK compression.
+- **Version:** 0.4.0+4.
+
+**Emulator** (Pixel XL API 36, release build installed over 0.3):
+- The reading position from 0.3 was kept (page 339).
+- Ayah 22:58 → Translation showed Saheeh International with its credit line and the translation note.
+- Tafsir showed Al-Muyassar, labelled "In Arabic". It is the largest file (2.5 MB) and opened without a visible wait.
+- A swipe moved to 22:59.
+
+**Open after 0.4:**
+1. Native review of the new French and Arabic strings, and of the French and Arabic source names and credits.
+2. Ask the Tafsir Center for the English Mukhtasar.
+3. Optional: a second translation per language (Rowwad in English, Rachid Maach in French), one `texts.json` entry each.
