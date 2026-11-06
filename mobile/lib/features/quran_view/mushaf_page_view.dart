@@ -38,6 +38,7 @@ class MushafPageView extends StatefulWidget {
     this.textScale = 1.0,
     this.highlightedVerse,
     this.bookmarkedVerses = const {},
+    this.notedVerses = const {},
     this.onAyahTap,
     this.onAyahLongPress,
     this.onPageChanged,
@@ -56,6 +57,9 @@ class MushafPageView extends StatefulWidget {
 
   /// Ayahs that carry the bookmark ribbon.
   final Set<int> bookmarkedVerses;
+
+  /// Ayahs that carry the note icon.
+  final Set<int> notedVerses;
   final ValueChanged<Verse>? onAyahTap;
   final ValueChanged<Verse>? onAyahLongPress;
 
@@ -129,6 +133,7 @@ class _MushafPageViewState extends State<MushafPageView> {
           fontSize: MushafPageView.baseFontSize * widget.textScale,
           highlightedVerse: widget.highlightedVerse,
           bookmarkedVerses: widget.bookmarkedVerses,
+          notedVerses: widget.notedVerses,
           onAyahTap: widget.onAyahTap,
           onAyahLongPress: widget.onAyahLongPress,
           onUserScroll: widget.onUserScroll,
@@ -149,6 +154,7 @@ class _MushafPage extends StatefulWidget {
     required this.fontSize,
     required this.highlightedVerse,
     required this.bookmarkedVerses,
+    required this.notedVerses,
     required this.onAyahTap,
     required this.onAyahLongPress,
     required this.onUserScroll,
@@ -161,6 +167,7 @@ class _MushafPage extends StatefulWidget {
   final double fontSize;
   final int? highlightedVerse;
   final Set<int> bookmarkedVerses;
+  final Set<int> notedVerses;
   final ValueChanged<Verse>? onAyahTap;
   final ValueChanged<Verse>? onAyahLongPress;
   final ValueChanged<ScrollDirection>? onUserScroll;
@@ -211,12 +218,16 @@ class _MushafPageState extends State<_MushafPage> {
       final tap = widget.onAyahTap;
       final recognizer = tap == null ? null : (TapGestureRecognizer()..onTap = () => tap(v));
       if (recognizer != null) _recognizers.add(recognizer);
-      if (widget.bookmarkedVerses.contains(v.id)) {
+      for (final (marked, icon) in [
+        (widget.bookmarkedVerses.contains(v.id), Icons.bookmark),
+        (widget.notedVerses.contains(v.id), noteIcon),
+      ]) {
+        if (!marked) continue;
         spans.add(WidgetSpan(
           alignment: PlaceholderAlignment.middle,
           child: Padding(
             padding: const EdgeInsetsDirectional.only(end: 2),
-            child: Icon(Icons.bookmark, size: widget.fontSize * 0.55, color: ribbon),
+            child: Icon(icon, size: widget.fontSize * 0.55, color: ribbon),
           ),
         ));
       }

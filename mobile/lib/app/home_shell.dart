@@ -5,6 +5,7 @@ import '../features/bookmarks/bookmarks_screen.dart';
 import '../features/more/more_screen.dart';
 import '../features/navigate/navigate_screen.dart';
 import '../features/reader/reader_screen.dart';
+import '../features/reader/reading_review_sheet.dart';
 import '../l10n/l10n.dart';
 import 'navigation.dart';
 import 'providers.dart';
@@ -18,9 +19,17 @@ import 'routes.dart';
 /// lists open at the current place. Taraweeh is a button, not a tab: it opens
 /// the full-screen mode and starts listening. Back from any tab returns to
 /// the reader; back from the reader leaves the app.
-class HomeShell extends ConsumerWidget {
+///
+/// When a reading session is over (the app opens on pages read last time,
+/// or comes back after a while), the shell asks the user to count them.
+class HomeShell extends ConsumerStatefulWidget {
   const HomeShell({super.key});
 
+  @override
+  ConsumerState<HomeShell> createState() => _HomeShellState();
+}
+
+class _HomeShellState extends ConsumerState<HomeShell> {
   /// Bar positions; Taraweeh sits between Bookmarks and More.
   static const _taraweeh = 3;
 
@@ -31,8 +40,27 @@ class HomeShell extends ConsumerWidget {
         HomeTab.more => 4,
       };
 
+  bool _reviewing = false;
+
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  void initState() {
+    super.initState();
+    // Pages left from last time: ask once the app is on screen.
+    if (ref.read(readingSessionProvider).ask > 0) WidgetsBinding.instance.addPostFrameCallback((_) => _review());
+  }
+
+  /// Ask about the waiting pages, unless something else is on top (Taraweeh
+  /// mode, a sheet): then the next session end asks.
+  Future<void> _review() async {
+    if (!mounted || _reviewing || !(ModalRoute.of(context)?.isCurrent ?? true)) return;
+    _reviewing = true;
+    await showReadingReview(context, ref);
+    _reviewing = false;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    ref.listen(readingSessionProvider.select((s) => s.ask), (_, __) => _review());
     final l = context.l10n;
     final tab = ref.watch(homeTabProvider);
     final tabs = ref.read(homeTabProvider.notifier);

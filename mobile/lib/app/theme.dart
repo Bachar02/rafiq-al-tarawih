@@ -200,6 +200,9 @@ abstract final class RubricText {
 
   static TextStyle _title(double size, double lineHeight, {double letterSpacing = 0}) => TextStyle(
         fontFamily: titleFont,
+        // Newsreader has no Arabic: Arabic screen titles fall to the bundled
+        // Arabic faces, not to whatever the phone has (or to empty boxes).
+        fontFamilyFallback: _uiFallback,
         fontSize: size,
         height: lineHeight / size,
         letterSpacing: letterSpacing,

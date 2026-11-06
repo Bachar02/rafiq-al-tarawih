@@ -33,6 +33,8 @@ class AppSettings {
     this.readingLayout = ReadingLayout.scroll,
     this.dailyGoalPages = 0,
     this.bookmarksInQuranOrder = false,
+    this.translationKey,
+    this.tafsirKey,
   });
 
   /// The daily reading goals offered, in pages; 0 is off. 20 pages is a juz
@@ -78,6 +80,11 @@ class AppSettings {
   /// The Bookmarks tab lists in Quran order (else newest first).
   final bool bookmarksInQuranOrder;
 
+  /// The translation and the tafsir the user chose (QuranEnc keys). Null
+  /// until they choose: then one in the interface language is shown.
+  final String? translationKey;
+  final String? tafsirKey;
+
   AppSettings copyWith({
     String? serverAddress,
     bool? keepScreenOn,
@@ -90,6 +97,8 @@ class AppSettings {
     ReadingLayout? readingLayout,
     int? dailyGoalPages,
     bool? bookmarksInQuranOrder,
+    String? translationKey,
+    String? tafsirKey,
   }) =>
       AppSettings(
         serverAddress: serverAddress ?? this.serverAddress,
@@ -103,6 +112,8 @@ class AppSettings {
         readingLayout: readingLayout ?? this.readingLayout,
         dailyGoalPages: dailyGoalPages ?? this.dailyGoalPages,
         bookmarksInQuranOrder: bookmarksInQuranOrder ?? this.bookmarksInQuranOrder,
+        translationKey: translationKey ?? this.translationKey,
+        tafsirKey: tafsirKey ?? this.tafsirKey,
       );
 }
 
@@ -123,6 +134,8 @@ class SettingsStore {
   static const _layout = 'reading_layout';
   static const _goal = 'daily_goal_pages';
   static const _bookmarkOrder = 'bookmarks_quran_order';
+  static const _translation = 'translation_key';
+  static const _tafsir = 'tafsir_key';
 
   AppSettings load() {
     const d = AppSettings();
@@ -140,6 +153,9 @@ class SettingsStore {
       readingLayout: ReadingLayout.values.asNameMap()[_prefs.getString(_layout)] ?? d.readingLayout,
       dailyGoalPages: _knownGoal(_prefs.getInt(_goal)) ?? d.dailyGoalPages,
       bookmarksInQuranOrder: _prefs.getBool(_bookmarkOrder) ?? d.bookmarksInQuranOrder,
+      // A key no longer bundled falls back to the default where it is used.
+      translationKey: _prefs.getString(_translation),
+      tafsirKey: _prefs.getString(_tafsir),
     );
   }
 
@@ -155,6 +171,8 @@ class SettingsStore {
     await _prefs.setString(_layout, s.readingLayout.name);
     await _prefs.setInt(_goal, s.dailyGoalPages);
     await _prefs.setBool(_bookmarkOrder, s.bookmarksInQuranOrder);
+    if (s.translationKey != null) await _prefs.setString(_translation, s.translationKey!);
+    if (s.tafsirKey != null) await _prefs.setString(_tafsir, s.tafsirKey!);
   }
 
   static int? _knownGoal(int? pages) => AppSettings.dailyGoals.contains(pages) ? pages : null;

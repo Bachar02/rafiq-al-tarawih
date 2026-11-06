@@ -13,6 +13,8 @@ Future<void> tapNav(WidgetTester tester, String label) async {
 /// More → Settings.
 Future<void> openSettings(WidgetTester tester, {String more = 'More', String settings = 'Settings'}) async {
   await tapNav(tester, more);
+  await tester.ensureVisible(find.text(settings)); // below the fold at 200% text
+  await tester.pumpAndSettle();
   await tester.tap(find.text(settings));
   await tester.pumpAndSettle();
 }

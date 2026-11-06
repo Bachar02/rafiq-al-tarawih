@@ -673,7 +673,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get dailyGoalExplanation =>
-      'A page counts when you read past it, scrolling or turning. Jumps don\'t count. 20 pages a day is a juz: the whole Quran in a month.';
+      'A page counts once it has stayed on screen long enough to read, and you confirm it after reading. 20 pages a day is a juz: the whole Quran in a month.';
 
   @override
   String get dailyGoalOff => 'Off';
@@ -762,30 +762,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get soonRecitationDetail => 'Listen to an ayah, a page or a surah';
 
   @override
-  String get soonTranslation => 'Translations';
-
-  @override
-  String get soonTranslationDetail => 'The meaning beside the Arabic, in your language';
-
-  @override
-  String get soonTafsir => 'Tafsir';
-
-  @override
-  String get soonTafsirDetail => 'Commentary on each ayah';
-
-  @override
-  String get soonKhatm => 'Khatm planner';
-
-  @override
-  String get soonKhatmDetail => 'Plan a complete reading and follow it day by day';
-
-  @override
-  String get soonNotes => 'Notes';
-
-  @override
-  String get soonNotesDetail => 'Your own notes on an ayah';
-
-  @override
   String get soonOffline => 'Taraweeh without a computer';
 
   @override
@@ -799,4 +775,342 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get tafsir => 'Tafsir';
+
+  @override
+  String get khatmPlanner => 'Khatm planner';
+
+  @override
+  String get khatmPlannerDetail => 'Plan a complete reading and follow it day by day';
+
+  @override
+  String get khatmExplanation =>
+      'Read the whole Quran by a date you choose. Today’s target adapts as you go: read ahead and the days after ask less.';
+
+  @override
+  String get khatmFinishIn => 'Finish in';
+
+  @override
+  String khatmDays(int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: '$days days',
+      one: '1 day',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get khatmJuzADay => 'A juz a day';
+
+  @override
+  String get khatmPickDate => 'Pick a date';
+
+  @override
+  String get khatmLastDay => 'Last day of the khatm';
+
+  @override
+  String get khatmStartAt => 'Start';
+
+  @override
+  String get khatmFromHere => 'Where I am reading';
+
+  @override
+  String get khatmFromBeginning => 'From the beginning';
+
+  @override
+  String khatmPreview(int pages, String date) {
+    String _temp0 = intl.Intl.pluralLogic(
+      pages,
+      locale: localeName,
+      other: 'About $pages pages a day',
+      one: 'About 1 page a day',
+    );
+    return '$_temp0 · ends $date';
+  }
+
+  @override
+  String get khatmStart => 'Start khatm';
+
+  @override
+  String khatmPagesRead(int read) {
+    return '$read of 604 pages read';
+  }
+
+  @override
+  String khatmToday(int read, int target) {
+    return 'Today: $read of $target pages';
+  }
+
+  @override
+  String khatmDaysLeft(int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: '$days days left',
+      one: 'Last day',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String khatmEnds(String date) {
+    return 'ends $date';
+  }
+
+  @override
+  String get khatmPastEnd => 'Past the planned end';
+
+  @override
+  String khatmPagesLeft(int pages) {
+    String _temp0 = intl.Intl.pluralLogic(
+      pages,
+      locale: localeName,
+      other: '$pages pages left',
+      one: '1 page left',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String khatmContinue(int page) {
+    return 'Continue khatm (page $page)';
+  }
+
+  @override
+  String get khatmChangeEnd => 'Change end date';
+
+  @override
+  String get khatmStop => 'Stop this khatm';
+
+  @override
+  String get khatmStopTitle => 'Stop this khatm?';
+
+  @override
+  String get khatmStopBody =>
+      'The pages read in this plan will be forgotten. Your reading log and finished khatms are kept.';
+
+  @override
+  String get khatmStopConfirm => 'Stop';
+
+  @override
+  String get khatmSaveFailed => 'Could not save the khatm plan. Try again.';
+
+  @override
+  String get khatmFinished => 'Finished khatms';
+
+  @override
+  String khatmCompletedOn(String date) {
+    return 'Completed $date';
+  }
+
+  @override
+  String khatmInDays(int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: 'in $days days',
+      one: 'in 1 day',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get khatmComplete => 'Khatm complete';
+
+  @override
+  String get khatmSection => 'Khatm';
+
+  @override
+  String khatmCard(int read) {
+    return '$read of 604 pages';
+  }
+
+  @override
+  String semKhatmToday(int read, int target) {
+    return 'Khatm: $read of $target pages read today';
+  }
+
+  @override
+  String get addNote => 'Add a note';
+
+  @override
+  String get editNote => 'Edit note';
+
+  @override
+  String noteOn(String reference) {
+    return 'Note on $reference';
+  }
+
+  @override
+  String get noteHint => 'Write your note';
+
+  @override
+  String get saveNote => 'Save';
+
+  @override
+  String get deleteNote => 'Delete note';
+
+  @override
+  String get noteSaved => 'Note saved';
+
+  @override
+  String get noteDeleted => 'Note deleted';
+
+  @override
+  String get noteSaveFailed => 'Could not save the note. Your text is still here.';
+
+  @override
+  String get noteDeleteFailed => 'Could not delete the note.';
+
+  @override
+  String get notes => 'Notes';
+
+  @override
+  String get semNote => 'note';
+
+  @override
+  String notesCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count notes',
+      one: '1 note',
+      zero: 'Notes',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get noNotesHint => 'Tap an ayah, then Add a note. Your notes appear here.';
+
+  @override
+  String get reviewTitle => 'Count this reading?';
+
+  @override
+  String get reviewExplanation => 'These pages stayed on screen long enough to read. Untick any you did not read.';
+
+  @override
+  String reviewCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Count $count pages',
+      one: 'Count 1 page',
+      zero: 'Count nothing',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get reviewNotNow => 'Not now';
+
+  @override
+  String get reviewDiscard => 'Don’t count these';
+
+  @override
+  String reviewCounted(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count pages counted',
+      one: '1 page counted',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get reviewFailed => 'Could not save your reading. It is still waiting; try again.';
+
+  @override
+  String reviewWaiting(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count pages waiting to be counted',
+      one: '1 page waiting to be counted',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get reviewAction => 'Review';
+
+  @override
+  String get khatmMap => 'Pages read';
+
+  @override
+  String get khatmMapHint =>
+      'Tap a juz to mark its pages read or unread: to fix a mistake, or to add reading from a paper mushaf.';
+
+  @override
+  String semJuzTile(int juz, int read, int total) {
+    return 'Juz $juz, $read of $total pages read';
+  }
+
+  @override
+  String khatmJuzPages(int first, int last, int read, int total) {
+    return 'Pages $first–$last · $read of $total read';
+  }
+
+  @override
+  String get khatmMarkAllRead => 'Mark all read';
+
+  @override
+  String get khatmMarkAllUnread => 'Mark all unread';
+
+  @override
+  String get translationAndTafsir => 'Translation and tafsir';
+
+  @override
+  String get translationAndTafsirDetail => 'The meaning of each ayah, from trusted publishers';
+
+  @override
+  String get chooseTranslation => 'Choose a translation';
+
+  @override
+  String get chooseTafsir => 'Choose a tafsir';
+
+  @override
+  String get chooseTextExplanation => 'Each text is shown exactly as its publisher issued it.';
+
+  @override
+  String get chooseText => 'Choose the text';
+
+  @override
+  String get textLanguageEn => 'English';
+
+  @override
+  String get textLanguageFr => 'French';
+
+  @override
+  String get textLanguageAr => 'Arabic';
+
+  @override
+  String inLanguage(String language) {
+    return 'In $language';
+  }
+
+  @override
+  String textSourceLine(String credit, String version) {
+    return '$credit · version $version · QuranEnc.com';
+  }
+
+  @override
+  String get translationNote => 'A translation conveys the meanings of the Quran; it is not the Quran itself.';
+
+  @override
+  String get footnotes => 'Footnotes';
+
+  @override
+  String get previousAyah => 'Previous ayah';
+
+  @override
+  String get nextAyah => 'Next ayah';
+
+  @override
+  String get textLoadFailed => 'This text could not be opened. Reinstalling Rafiq should fix it.';
+
+  @override
+  String get listenComingSoon => 'Listening to the recitation is coming soon.';
 }

@@ -11,9 +11,12 @@ import 'package:rafiq/app/providers.dart';
 import 'package:rafiq/core/audio/audio_source.dart';
 import 'package:rafiq/core/recognition/models.dart';
 import 'package:rafiq/core/recognition/recognition_engine.dart';
+import 'package:rafiq/data/khatm.dart';
+import 'package:rafiq/data/note.dart';
 import 'package:rafiq/data/quran.dart';
 import 'package:rafiq/data/reading_store.dart';
 import 'package:rafiq/data/settings.dart';
+import 'package:rafiq/data/study_text.dart';
 import 'package:rafiq/data/surah_names.dart';
 import 'package:rafiq/services/screen_awake.dart';
 import 'package:rafiq/services/server_health.dart';
@@ -126,12 +129,58 @@ class FakeScreenAwake implements ScreenAwake {
   Future<void> disable() async => enabled = false;
 }
 
+/// A store whose writes fail (a full disk): reads still work.
+class FailingStore implements ReadingStore {
+  FailingStore(this._inner);
+  final ReadingStore _inner;
+  bool failing = true;
+
+  @override
+  SavedPosition? readingPosition() => _inner.readingPosition();
+  @override
+  Future<bool> saveReadingPosition(SavedPosition p) async => !failing && await _inner.saveReadingPosition(p);
+  @override
+  SavedPosition? taraweehPosition() => _inner.taraweehPosition();
+  @override
+  Future<bool> saveTaraweehPosition(SavedPosition p) async => !failing && await _inner.saveTaraweehPosition(p);
+  @override
+  List<Bookmark> bookmarks() => _inner.bookmarks();
+  @override
+  Future<bool> saveBookmarks(List<Bookmark> b) async => !failing && await _inner.saveBookmarks(b);
+  @override
+  ReadingLog readingLog() => _inner.readingLog();
+  @override
+  Future<bool> saveReadingLog(ReadingLog log) async => !failing && await _inner.saveReadingLog(log);
+  @override
+  ReadingLog pendingReading() => _inner.pendingReading();
+  @override
+  Future<bool> savePendingReading(ReadingLog p) async => !failing && await _inner.savePendingReading(p);
+  @override
+  KhatmBook khatm() => _inner.khatm();
+  @override
+  Future<bool> saveKhatm(KhatmBook book) async => !failing && await _inner.saveKhatm(book);
+  @override
+  List<Note> notes() => _inner.notes();
+  @override
+  Future<bool> saveNotes(List<Note> notes) async => !failing && await _inner.saveNotes(notes);
+}
+
 Quran? _quran;
 Quran loadQuran() => _quran ??= Quran.fromJson(File('assets/quran/quran.json').readAsStringSync());
 
 SurahNames? _names;
 SurahNames loadSurahNames() =>
     _names ??= SurahNames.fromJson(File('assets/data/surah-names.json').readAsStringSync(), loadQuran());
+
+StudyCatalog? _catalog;
+StudyCatalog loadStudyCatalog() =>
+    _catalog ??= StudyCatalog.fromJson(File('assets/texts/catalog.json').readAsStringSync());
+
+final _texts = <String, StudyText>{};
+
+/// The bundled texts, read from the files (parsed once per test run).
+Future<StudyText> loadStudyTextFile(StudySource source) async =>
+    _texts[source.key] ??= StudyText.parse((raw: File(source.asset).readAsStringSync(), key: source.key));
 
 /// Everything a test needs, wired the way main.dart wires the real app.
 class Harness {
@@ -144,6 +193,9 @@ class Harness {
   final engines = <FakeEngine>[];
   final addresses = <String>[];
   ServerHealth health = const ServerHealth.ok(latency: Duration(milliseconds: 12), asr: true, device: 'cuda');
+
+  /// Replace before launching to make texts fail or wait.
+  StudyTextLoader studyTexts = loadStudyTextFile;
 
   /// Replace before launching to test storage failures.
   ReadingStore? readingStore;
@@ -161,6 +213,8 @@ class Harness {
   List<Override> get overrides => [
         quranProvider.overrideWithValue(loadQuran()),
         surahTableProvider.overrideWithValue(loadSurahNames()),
+        studyCatalogProvider.overrideWithValue(loadStudyCatalog()),
+        studyTextLoaderProvider.overrideWithValue((s) => studyTexts(s)),
         settingsStoreProvider.overrideWithValue(SettingsStore(prefs)),
         readingStoreProvider.overrideWithValue(readingStore ?? PrefsReadingStore(prefs)),
         audioSourceProvider.overrideWithValue(audio),

@@ -4,12 +4,17 @@
 /// typefaces; these can.
 library;
 
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:rafiq/app/app.dart';
 import 'package:rafiq/app/components/quran_text.dart';
 import 'package:rafiq/core/recognition/models.dart';
+import 'package:rafiq/data/khatm.dart';
+import 'package:rafiq/data/note.dart';
+import 'package:rafiq/data/reading_store.dart';
 
 import '../support/app_nav.dart';
 import '../support/fakes.dart';
@@ -79,6 +84,14 @@ void main() {
     expect(tester.takeException(), isNull);
     await expectLater(find.byType(RafiqApp), matchesGoldenFile('screens/$name.png'));
   }
+
+  /// Notes, as the reading store writes them.
+  Map<String, Object> notesPrefs(List<Note> notes) => {
+        PrefsReadingStore.notesKey: jsonEncode({
+          'v': 1,
+          'items': [for (final n in notes) n.toJson()],
+        }),
+      };
 
   /// A saved reading position, as the reading store writes it.
   Map<String, Object> readingAt(int surah, int ayah) => {
@@ -203,7 +216,129 @@ void main() {
       await expectGolden(tester, 'more');
     });
 
-    testWidgets('ayah sheet: bookmark, share, copy, and what is coming', (tester) async {
+    testWidgets('khatm planner: choosing a plan, light', (tester) async {
+      await launch(tester, prefs: {...readingAt(18, 1), 'theme_mode': 'light'}, taraweeh: false);
+      await tapNav(tester, 'More');
+      await tester.tap(find.text('Khatm planner'));
+      await settle(tester);
+      await expectGolden(tester, 'khatm_new');
+    });
+
+    testWidgets('khatm planner: a plan in progress and one finished, dark', (tester) async {
+      final plan = KhatmPlan(startedOn: DateTime(2026, 11, 1), endsOn: DateTime(2026, 11, 30), startPage: 1)
+          .reading(DateTime(2026, 11, 1), [for (var p = 1; p <= 62; p++) p]).reading(
+              DateTime(2026, 11, 4), [for (var p = 63; p <= 72; p++) p]);
+      final book = KhatmBook(
+        active: plan,
+        finished: [KhatmRecord(startedOn: DateTime(2026, 9, 12), completedOn: DateTime(2026, 10, 10))],
+      );
+      await launch(
+        tester,
+        prefs: {PrefsReadingStore.khatmKey: jsonEncode(book.toJson()), 'theme_mode': 'dark'},
+        taraweeh: false,
+      );
+      await tapNav(tester, 'More');
+      await tester.tap(find.text('Khatm planner'));
+      await settle(tester);
+      await expectGolden(tester, 'khatm_active');
+    });
+
+    testWidgets('reading review: count this reading?, light', (tester) async {
+      await launch(
+        tester,
+        prefs: {
+          ...readingAt(18, 10),
+          'theme_mode': 'light',
+          PrefsReadingStore.pendingKey: '{"v":1,"days":{"2026-11-03":[290,291],"2026-11-04":[293,294,295,296]}}',
+        },
+        taraweeh: false,
+      );
+      await settle(tester);
+      await tester.tap(find.text('295'));
+      await settle(tester);
+      await expectGolden(tester, 'reading_review');
+    });
+
+    testWidgets('khatm: a juz to correct, dark', (tester) async {
+      final plan = KhatmPlan(startedOn: DateTime(2026, 11, 1), endsOn: DateTime(2026, 11, 30), startPage: 1)
+          .reading(DateTime(2026, 11, 1), [for (var p = 1; p <= 48; p++) p]);
+      await launch(
+        tester,
+        prefs: {PrefsReadingStore.khatmKey: jsonEncode(KhatmBook(active: plan).toJson()), 'theme_mode': 'dark'},
+        taraweeh: false,
+      );
+      await tapNav(tester, 'More');
+      await tester.tap(find.text('Khatm planner'));
+      await settle(tester);
+      await tester.ensureVisible(find.bySemanticsLabel(RegExp(r'^Juz 3,')));
+      await settle(tester);
+      await tester.tap(find.bySemanticsLabel(RegExp(r'^Juz 3,')));
+      await settle(tester);
+      await expectGolden(tester, 'khatm_juz');
+    });
+
+    testWidgets('note sheet: an Arabic note, right to left, light', (tester) async {
+      final quran = loadQuran();
+      final verse = quran.verseId(2, 255)!;
+      final note = Note(
+        verseId: verse,
+        text: 'آية الكرسي: أعظم آية في كتاب الله، تُقرأ بعد كل صلاة وقبل النوم.',
+        createdAt: DateTime(2026, 11, 1),
+        updatedAt: DateTime(2026, 11, 3),
+      );
+      await launch(
+        tester,
+        prefs: {
+          ...readingAt(2, 255),
+          'theme_mode': 'light',
+          ...notesPrefs([note])
+        },
+        taraweeh: false,
+      );
+      await settle(tester);
+      tester.widget<AyahBlock>(find.byWidgetPredicate((w) => w is AyahBlock && w.verse.id == verse).first).onTap!();
+      await settle(tester);
+      await tester.tap(find.text('Edit note'));
+      await settle(tester);
+      await expectGolden(tester, 'note_sheet');
+    });
+
+    testWidgets('Bookmarks, Notes view: Arabic and French notes, dark', (tester) async {
+      final quran = loadQuran();
+      await launch(
+        tester,
+        prefs: {
+          'theme_mode': 'dark',
+          ...notesPrefs([
+            Note(
+              verseId: quran.verseId(18, 10)!,
+              text: 'Le refuge des jeunes gens dans la caverne : relire chaque vendredi, avec la famille.',
+              createdAt: DateTime(2026, 11, 4, 8),
+              updatedAt: DateTime(2026, 11, 4, 8),
+            ),
+            Note(
+              verseId: quran.verseId(2, 255)!,
+              text: 'آية الكرسي: أعظم آية في كتاب الله، تُقرأ بعد كل صلاة وقبل النوم.',
+              createdAt: DateTime(2026, 11, 1),
+              updatedAt: DateTime(2026, 11, 3),
+            ),
+            Note(
+              verseId: quran.verseId(94, 5)!,
+              text: 'With hardship comes ease.',
+              createdAt: DateTime(2026, 10, 20),
+              updatedAt: DateTime(2026, 10, 28),
+            ),
+          ]),
+        },
+        taraweeh: false,
+      );
+      await tapNav(tester, 'Bookmarks');
+      await tester.tap(find.text('Notes'));
+      await settle(tester);
+      await expectGolden(tester, 'notes');
+    });
+
+    testWidgets('ayah sheet: bookmark, share, copy, translation and tafsir', (tester) async {
       await launch(tester, prefs: {...readingAt(2, 255), 'theme_mode': 'dark'}, taraweeh: false);
       await settle(tester);
       final quran = loadQuran();
@@ -211,6 +346,28 @@ void main() {
       tester.widget<AyahBlock>(ayah.first).onTap!();
       await settle(tester);
       await expectGolden(tester, 'ayah_sheet');
+    });
+
+    /// Ayat al-Kursi in the study view, from its ayah sheet.
+    Future<void> study255(WidgetTester tester, String action) async {
+      await settle(tester);
+      final ayah = find.byWidgetPredicate((w) => w is AyahBlock && w.verse.id == loadQuran().verseId(2, 255));
+      tester.widget<AyahBlock>(ayah.first).onTap!();
+      await settle(tester);
+      await tester.tap(find.text(action));
+      await settle(tester);
+    }
+
+    testWidgets('study view: Saheeh International on 2:255, with footnotes, light', (tester) async {
+      await launch(tester, prefs: {...readingAt(2, 255), 'theme_mode': 'light'}, taraweeh: false);
+      await study255(tester, 'Translation');
+      await expectGolden(tester, 'study_translation');
+    });
+
+    testWidgets('study view, Arabic interface: Al-Muyassar on 2:255, dark', (tester) async {
+      await launch(tester, prefs: {...readingAt(2, 255), 'theme_mode': 'dark', 'language': 'ar'}, taraweeh: false);
+      await study255(tester, 'تفسير');
+      await expectGolden(tester, 'ar_study_tafsir');
     });
 
     testWidgets('reader: 320×568 at the largest Quran text, in juz 30', (tester) async {

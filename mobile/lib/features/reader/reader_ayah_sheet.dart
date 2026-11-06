@@ -9,7 +9,7 @@ import '../../data/quran.dart';
 import '../../data/surah_names.dart';
 import '../../l10n/l10n.dart';
 
-enum ReaderAyahAction { bookmark, removeBookmark, share, copy }
+enum ReaderAyahAction { bookmark, removeBookmark, note, share, copy, translation, tafsir }
 
 /// The reader's actions on one ayah (a tap on its text).
 Future<ReaderAyahAction?> showReaderAyahSheet(
@@ -17,6 +17,7 @@ Future<ReaderAyahAction?> showReaderAyahSheet(
   required Verse verse,
   required SurahNames names,
   required bool bookmarked,
+  required bool noted,
 }) =>
     showRubricSheet<ReaderAyahAction>(
       context,
@@ -35,7 +36,11 @@ Future<ReaderAyahAction?> showReaderAyahSheet(
                 child: AyahBlock(verse: verse, tone: AyahTone.reading, fontSize: 22, justify: false),
               ),
             ),
-            const SizedBox(height: RubricSpace.s4),
+            const SizedBox(height: RubricSpace.s2),
+            // First after the ayah: on a small phone the sheet stops at 70%
+            // of the screen, and the meaning is what most taps come for.
+            const _Meaning(),
+            const SizedBox(height: RubricSpace.s3),
             if (bookmarked)
               OutlinedButton.icon(
                 onPressed: () => Navigator.pop(context, ReaderAyahAction.removeBookmark),
@@ -50,6 +55,12 @@ Future<ReaderAyahAction?> showReaderAyahSheet(
               ),
             const SizedBox(height: RubricSpace.s2),
             OutlinedButton.icon(
+              onPressed: () => Navigator.pop(context, ReaderAyahAction.note),
+              icon: Icon(noted ? Icons.edit_note : Icons.note_add_outlined, size: 20),
+              label: Text(noted ? context.l10n.editNote : context.l10n.addNote),
+            ),
+            const SizedBox(height: RubricSpace.s2),
+            OutlinedButton.icon(
               onPressed: () => Navigator.pop(context, ReaderAyahAction.share),
               icon: const Icon(Icons.ios_share, size: 20),
               label: Text(context.l10n.share),
@@ -61,7 +72,11 @@ Future<ReaderAyahAction?> showReaderAyahSheet(
               label: Text(context.l10n.copyAyah),
             ),
             const SizedBox(height: RubricSpace.s2),
-            const _ComingSoon(),
+            Text(
+              context.l10n.listenComingSoon,
+              textAlign: TextAlign.center,
+              style: RubricText.caption.copyWith(color: context.colors.inkSecondary),
+            ),
           ],
         ),
       ),
@@ -74,10 +89,11 @@ String ayahClipboardText(Verse verse, SurahNames names) =>
 Future<void> copyAyah(Verse verse, SurahNames names) =>
     Clipboard.setData(ClipboardData(text: ayahClipboardText(verse, names)));
 
-/// Listen, translation and tafsir will live here: shown, visibly not yet
-/// working, so the sheet does not change shape when they arrive.
-class _ComingSoon extends StatelessWidget {
-  const _ComingSoon();
+/// Translation and tafsir open the study view; Listen is shown, visibly not
+/// yet working (explained at the foot of the sheet), so the sheet does not
+/// change shape when it arrives.
+class _Meaning extends StatelessWidget {
+  const _Meaning();
 
   @override
   Widget build(BuildContext context) {
@@ -86,18 +102,17 @@ class _ComingSoon extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Divider(color: c.hairline),
         Row(
           children: [
-            for (final (icon, label) in [
-              (Icons.play_arrow_outlined, l.listen),
-              (Icons.translate, l.translation),
-              (Icons.menu_book_outlined, l.tafsir),
+            for (final (icon, label, action) in [
+              (Icons.translate, l.translation, ReaderAyahAction.translation),
+              (Icons.menu_book_outlined, l.tafsir, ReaderAyahAction.tafsir),
+              (Icons.play_arrow_outlined, l.listen, null),
             ])
               Expanded(
                 // Icon over label, so three fit side by side in any language.
                 child: TextButton(
-                  onPressed: null,
+                  onPressed: action == null ? null : () => Navigator.pop(context, action),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -115,11 +130,7 @@ class _ComingSoon extends StatelessWidget {
               ),
           ],
         ),
-        Text(
-          l.comingSoon,
-          textAlign: TextAlign.center,
-          style: RubricText.caption.copyWith(color: c.inkSecondary),
-        ),
+        Divider(color: c.hairline),
       ],
     );
   }

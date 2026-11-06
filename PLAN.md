@@ -460,3 +460,230 @@ Built on `feat/quran-reader`, in five commits, each with tests and goldens.
 - **Accessibility:** a screen reader announced the page view's long-press area as an unlabelled node. It is now hidden from screen readers, who bookmark through each ayah's sheet.
 
 **Totals:** 212 tests, 29 golden screenshots, and the Android debug build passes.
+
+## 21. Build 0.3 plan: khatm planner and notes (agreed 2026-11-05)
+
+**Scope now:** the khatm planner and notes, built to the same standard as 0.2: tests, goldens, three languages, accessibility.
+
+**Later, in this order:**
+1. Taraweeh on the phone, once the Galaxy A16 is plugged in for the §16 benchmark.
+2. A GitHub-style chart of reading discipline.
+3. Translations, tafsir and audio, once licensed sources are confirmed.
+4. The Play Console account. The iPhone needs a Mac.
+
+**Dropped:** recording real mosque audio (not permitted).
+
+**Starting state:** branch `feat/quran-reader`, at the end of §20, with history tidied. It is to be pushed and merged into `master` by the owner through a PR. Start 0.3 on a new branch from `master` once that is merged.
+
+**Rules, unchanged:**
+- **Simple, robust, scalable.** No feature added just to look bigger.
+- **Store rules:** save before showing; an unreadable record is copied aside (`<key>.unreadable.<time>`) before any write; a failed write is reported, never thrown.
+- **Same checks as 0.2:** every string in English, French and Arabic (`test/l10n`); every screen passes `test/accessibility_test.dart`; goldens for new screens via `mobile/tool/goldens.sh`.
+- **The owner commits and pushes.** No AI attribution in commits, PRs or files.
+
+### 21.1 Data (lib/data/)
+
+**First, `ReadingLog.keepDays`: 90 → 400.** The discipline chart will need a full year of history. It is a one-line change, with a test.
+
+**`khatm.dart`:**
+- `KhatmPlan` (immutable):
+  - `startedOn` and `endsOn`: local dates, `endsOn` inclusive.
+  - `startPage`: where the reading order begins.
+  - `pages`: `Map<int page, String dayKey>`, the day each page was *first* read during the plan.
+  - Derived values:
+    - `remaining = 604 − pages.length`;
+    - `readOn(day)` = the pages whose dayKey is that day;
+    - `daysLeft(today) = max(1, endsOn − today + 1)`;
+    - `overdue(today)`;
+    - `todayTarget(today) = ceil((remaining + readOn(today)) / daysLeft)`. Today's reading must not shrink today's target.
+    - `nextPage` = the first unread page, scanning from `startPage` and wrapping around.
+  - JSON `{"v":1, …}`.
+- `KhatmRecord {startedOn, completedOn}` and `KhatmBook {active?, finished: [KhatmRecord]}`.
+
+**`note.dart`:** `Note {verseId, text, createdAt, updatedAt}`.
+- One note per ayah.
+- Text trimmed, at most 2000 characters; an empty text deletes the note.
+
+**`ReadingStore`:** add `khatm()` / `saveKhatm(KhatmBook)` (key `khatm.v1`) and `notes()` / `saveNotes(List<Note>)` (key `notes.v1`).
+- Same validation as bookmarks: verse ids 1..6236, pages 1..604, unknown versions kept aside.
+- Update `FailingStore` in `test/features/reader_screen_test.dart`.
+
+### 21.2 Khatm planner
+
+**`features/khatm/khatm_controller.dart`** (`Notifier<KhatmBook>`, uses `clockProvider`):
+- `start(endsOn, startPage)`, `changeEnd(endsOn)` and `stop()` save first, then update the state.
+- `recordPages(pages)`: adds only pages not already in the plan, stamped with today's key.
+  - It is called from `ReadingProgressController.movedTo` for the pages it counts, so the "read past it" rule (§19) is the only definition of reading.
+  - Saving is fire-and-forget with a dirty flag, flushed with the reading position on pause, like `ReadingProgressController`.
+- **Completion:** when `pages` covers all 604, the plan moves to `finished` (`completedOn` = today) and `active` becomes null.
+
+**`khatm_screen.dart`**, opened from More (it replaces the "Khatm planner — Soon" row) and from the Bookmarks card:
+- **No plan:**
+  - A one-line explanation.
+  - Length choices: 15 days, 30 days ("a juz a day"), 60 days, or a date you pick (`showDatePicker`).
+  - Start choices: "where I am reading (page N)" or "from the beginning".
+  - A *Start* button.
+- **Active plan:**
+  - "Page X of 604 read" with a progress bar.
+  - "Today: a of b pages".
+  - "N days left · ends <date>", the date formatted by `intl` `DateFormat.yMMMd(locale)`.
+  - *Continue khatm (page N)*, which calls `readerRequestsProvider.open(pages.start(nextPage))`.
+  - *Change end date*.
+  - *Stop this khatm*, with a confirmation dialog.
+- **Overdue:** "Past the planned end · X pages left", and *Change end date*.
+- **Finished khatms:** a quiet list, "Completed <date> · in N days".
+- **Completion moment:** the reader shows one calm snackbar ("Khatm complete"). It reacts to `finished` growing, through `ref.listen`.
+
+**Integration:**
+- **Reader bar:** when a plan is active, "Today a/b" comes from the plan and supersedes the daily goal. The 2 px line follows it. The daily goal applies only when there is no plan.
+- **Bookmarks tab:** when a plan is active, a card at the top with "Khatm · page X of 604 · today a/b". Tapping it opens the khatm screen.
+
+**Tests:**
+- Target arithmetic, including: reading ahead lowers tomorrow's target; overdue; wrap-around of `nextPage`; re-reading a page adds nothing.
+- Completion moves the plan to `finished`.
+- Long plans (365 days) keep every page, independent of the log.
+- JSON round-trip, and unreadable records kept aside.
+- Widget flows: start, continue, change end, stop, the bar and the card.
+- Goldens: the screen with no plan and with an active plan.
+
+### 21.3 Notes
+
+**`features/notes/notes_controller.dart`** (`Notifier<List<Note>>`, newest updated first): `save(verseId, text)`, `delete(verseId)` and `restore(note)` for Undo. Save first, then update the state.
+
+**`note_sheet.dart`:**
+- A bottom sheet with the ayah's reference, a multiline `TextField` (autofocus, `maxLength` 2000) and *Save*.
+- *Delete* appears when a note already exists.
+- The text direction follows the note's content (`Bidi.detectRtlDirectionality` from `intl`), both while editing and when shown.
+
+**Entry point:** the ayah sheet gets *Add a note* / *Edit note*, next to Bookmark, Share and Copy.
+
+**In the text:** `AyahBlock.noted` and `QuranView.notedVerses` show a small note icon in the margin, under the bookmark ribbon. `MushafPageView` shows the same as a `WidgetSpan` before the ayah. The semantics label gains ", note".
+
+**Bookmarks tab:**
+- A segmented control: **Bookmarks | Notes**.
+- Notes list: reference, place, the note's first two lines and the date. Tap to read there. A trailing edit button opens the sheet. Swipe deletes, with Undo.
+- An empty state explains how to add a note.
+
+**More:** remove "Notes — Soon" (the feature now lives in the ayah sheet and Bookmarks).
+
+**Tests:**
+- Save, edit, empty text deletes, the 2000-character limit, Undo restores the note with its dates.
+- A failed save is reported and nothing changes.
+- The icon appears in both layouts.
+- RTL and LTR notes.
+- Goldens: the note sheet and the Notes list.
+
+### 21.4 Order of work (each step one commit, all checks green)
+1. Data models, the store, `keepDays` 400, and unit tests.
+2. The khatm controller and its hook into reading progress, with tests.
+3. The khatm screen, the reader bar, the Bookmarks card and More, with strings, tests and goldens.
+4. The notes controller, the sheet and the ayah-sheet entry, with tests.
+5. Note icons in both layouts, the Bookmarks | Notes tabs, strings, tests and goldens.
+6. `DESIGN.md`, this section's results, version 0.3.0, a release build, and a check on the emulator.
+
+### 21.5 Results (build 0.3, 2026-11-05)
+
+Built on `feat/khatm-notes` from `master`, in six commits as §21.4 planned, each with all checks green.
+
+- **Data:** `KhatmPlan` / `KhatmBook` (`khatm.v1`, pages grouped by day) and `Note` (`notes.v1`) in the reading store, with the same rules as bookmarks: readable parts kept, the original copied aside, failed writes reported. `ReadingLog.keepDays` is 400.
+- **Khatm planner:** as planned in §21.2. One deviation: Start's "from the beginning" has no "Page 1" caption, so the Start button fits on a 360 × 780 screen.
+- **Notes:** as planned in §21.3. Two deviations, both from the emulator check:
+  - *Save* sits beside the sheet's title, pinned above the field. Below the field, the keyboard hid it.
+  - The field starts at three lines, not four.
+- **Bookmarks | Notes** is a segmented control at the top of the tab's body, not in the app bar, so it grows with 200% system text.
+- **Strings:** 47 new messages in English, French and Arabic (full Arabic plural forms). The "Khatm planner" and "Notes" placeholders are gone from More.
+- **Totals:** 279 tests (212 before), 28 golden screenshots (4 new: the planner with and without a plan, the note sheet, Notes; More, Bookmarks and the ayah sheet re-rendered). The release APK builds as 0.3.0+3.
+- **Emulator** (Pixel XL API 36, release build, installed over 0.2): the reading position and bookmark from 0.2 were kept. Checked:
+  - starting a 30-day plan from page 423;
+  - *Continue*, then two page turns giving "Today 2/21" in the bar;
+  - the Bookmarks card, still there after two reinstalls;
+  - adding a note, its icon in the page view, and the Notes list.
+- **Emulator note:** with Docker Desktop running, the emulator hangs at boot (all vCPU threads). Quit Docker (and `wsl --shutdown`) first, and cold boot with `-gpu swiftshader_indirect`.
+
+**Open after 0.3:**
+1. Native review of the new French and Arabic strings.
+2. Not seen on a phone yet: the date picker in Arabic.
+
+### 21.6 Reading that counts (2026-11-05, after the owner's first try)
+
+**Why:** after trying 0.3 the owner found the tracking too easy to fool. A page counted when the reader moved past it, so scrolling through counted pages nobody read, and there was no way to undo a wrong count.
+
+**What changed** (agreed with the owner: time on the page, then a review; a page map for corrections):
+- **Time on the page** (`PageDwell`): a page is proposed once it has stayed in view long enough to read it.
+  - That is 0.15 s per word on the page, at least 4 s: about 20 s for a full page.
+  - Time runs only while the reader is in view, and goes to the page at the top. Two visits add up.
+  - This replaces "moved forward past it" everywhere. Flings and the scrubber count nothing.
+- **Review** (`ReadingSessionController`, the *Count this reading?* sheet):
+  - Proposed pages wait, saved, until a session is over: the next time the app opens, or after 3 minutes or more away.
+  - The sheet lists them by day as toggles. *Count* records the ticked ones in the daily log and the khatm. *Don't count these* sets them aside. *Not now* keeps them waiting.
+  - Waiting pages show in "Today" in the meantime.
+- **Page map** in the planner: 30 juz tiles; each opens its pages (mushaf juz boundaries) as toggles, with *Mark all read / unread*.
+  - For mistakes and paper-mushaf reading.
+  - It changes the khatm only, not the daily log.
+- **Simpler underneath:** the log and the khatm now take only explicit, saved-first changes. Their delayed saves are gone.
+- **Totals:** 297 tests, 30 golden screenshots (new: the review sheet, a juz sheet; the planner re-rendered), accessibility checks on both sheets. There are 15 new strings in three languages, and the daily-goal explanation was reworded.
+
+### 21.7 After 0.3
+- **Taraweeh on the phone:** the §16 benchmark on the Galaxy A16, then §17 M2.
+- **Reading discipline chart:** a year grid of days shaded by pages read, from `ReadingLog` (now kept 400 days). It goes in the Bookmarks or More area, with a weekly or yearly toggle and no streak pressure.
+
+## 22. Build 0.4: translations and tafsir (2026-11-06)
+
+**Sources (agreed with the owner):** all four come from [QuranEnc.com](https://quranenc.com), are bundled offline, and match our 6236 ayahs surah by surah.
+
+| | English | French | Arabic |
+|---|---|---|---|
+| Translation | Saheeh International (Noor International Center), 1.1.2 | Muhammad Hamidullah, 1.0.2 | — |
+| Tafsir | none licensed: Al-Muyassar, labelled "In Arabic" | Al-Mukhtasar (Tafsir Center for Quranic Studies), 1.0.0 | At-Tafsir Al-Muyassar (King Fahd Complex), 1.0.0 |
+
+**Why QuranEnc:**
+- **Tanzil is ruled out:** its translations are for non-commercial use only.
+- **QuranEnc's terms** allow republishing as long as:
+  - the text is not changed;
+  - the publisher, QuranEnc.com and the version are named;
+  - each text is kept at QuranEnc's latest version;
+  - no inappropriate ads are shown.
+- **Commercial use:** the terms say nothing about it. Rafiq is free and has no ads.
+- **English tafsir:** QuranEnc has none. Getting the English Mukhtasar needs the Tafsir Center's permission (a request was drafted for the owner).
+
+**Data** (`data/build_texts.py`, `data/texts.json`, `data/README.md`):
+- **Sources:** QuranEnc's SQLite databases, kept verbatim in `data/raw/quranenc/` with their SHA-256 pinned.
+- **Build:** text and footnotes are copied byte for byte to `mobile/assets/texts/<key>.json`, plus a `catalog.json`.
+- **Validation:** every text is checked against `quran-data.xml`. Any mismatch aborts the build.
+- **Commands:** `updates` reports a newer QuranEnc version (run it before each release), and `fetch` takes it.
+- **CI:** runs `pytest data` and `build_texts.py --check`.
+
+**App:**
+- **Study view** (`features/study/`):
+  - It opens from the ayah sheet's Translation and Tafsir buttons (now live; Listen stays "coming soon"), or from More → *Translation and tafsir* at the reading position.
+  - It shows the ayah, then a Translation | Tafsir switch.
+  - The text appears as published, with footnotes, the name, and "credit · version · QuranEnc.com".
+  - A translation also carries the note that it conveys the meanings and is not the Quran.
+  - Swipe, or tap *Previous ayah* / *Next ayah*, to move across surahs. The reader's position does not move.
+  - Each text keeps its own direction and language, so an Arabic tafsir reads right to left in English and a screen reader voices it as Arabic.
+- **Choice:** the text in the interface language by default. Otherwise English for translations and Arabic for tafsir. In the Arabic UI, the translation is English.
+  - It can be changed from the study view or from Settings → Translation and tafsir. Saved as `translation_key` / `tafsir_key`.
+  - A saved key that is no longer bundled falls back to the default.
+- **Loading:** texts load on first use, parsed in an isolate, and are kept in memory. A broken file shows a message instead of crashing, and is not retried.
+- **Attribution:** every text is listed in Settings → About, and in `assets/texts/NOTICE.txt`.
+- **Ayah sheet:** the Translation · Tafsir · Listen row now sits right under the ayah. On the emulator the sheet stops at 70% of the screen, and at the bottom the row was hidden until scrolled. "Listening … coming soon" moved to the foot of the sheet.
+- **Theme fix:** screen titles (Newsreader) had no Arabic fallback, so Arabic titles depended on the phone's fonts and showed as empty boxes in renders. They now fall back to IBM Plex Sans Arabic. No existing golden changed.
+
+**Totals:**
+- **Tests:** 315 (297 before) and 7 data-pipeline tests.
+- **Goldens:** 32 (new: the study view in English, and Al-Muyassar in the Arabic UI; re-rendered: ayah sheet, More, Settings, French Settings).
+- **Accessibility:** the study view and source sheet pass in both themes and at 200% text.
+- **Strings:** 17 new strings in three languages, and 4 placeholders removed.
+- **Size:** about 6.7 MB of JSON before APK compression.
+- **Version:** 0.4.0+4.
+
+**Emulator** (Pixel XL API 36, release build installed over 0.3):
+- The reading position from 0.3 was kept (page 339).
+- Ayah 22:58 → Translation showed Saheeh International with its credit line and the translation note.
+- Tafsir showed Al-Muyassar, labelled "In Arabic". It is the largest file (2.5 MB) and opened without a visible wait.
+- A swipe moved to 22:59.
+
+**Open after 0.4:**
+1. Native review of the new French and Arabic strings, and of the French and Arabic source names and credits.
+2. Ask the Tafsir Center for the English Mukhtasar.
+3. Optional: a second translation per language (Rowwad in English, Rachid Maach in French), one `texts.json` entry each.

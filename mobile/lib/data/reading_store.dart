@@ -1,5 +1,5 @@
 /// Where the user is: the personal reading position, where Taraweeh last
-/// ended, and bookmarks. Kept apart from [AppSettings]: these are the user's
+/// ended, bookmarks, notes, the reading log and the khatm plan. Kept apart from [AppSettings]: these are the user's
 /// data, not preferences, and must never be lost.
 ///
 /// Stored in shared preferences as small versioned JSON records keyed by
@@ -16,6 +16,8 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'khatm.dart';
+import 'note.dart';
 import 'quran.dart';
 
 /// A saved place in the Quran.
@@ -81,18 +83,33 @@ abstract interface class ReadingStore {
   List<Bookmark> bookmarks();
   Future<bool> saveBookmarks(List<Bookmark> bookmarks);
 
-  /// Pages read on each day (local `yyyy-mm-dd`).
+  /// Pages read on each day (local `yyyy-mm-dd`), as the user confirmed them.
   ReadingLog readingLog();
   Future<bool> saveReadingLog(ReadingLog log);
+
+  /// Pages that stayed on screen long enough to be read, waiting for the
+  /// user to confirm them, by the day they were read.
+  ReadingLog pendingReading();
+  Future<bool> savePendingReading(ReadingLog pending);
+
+  /// The active khatm plan and the finished ones.
+  KhatmBook khatm();
+  Future<bool> saveKhatm(KhatmBook book);
+
+  /// Newest edit first, one per ayah.
+  List<Note> notes();
+  Future<bool> saveNotes(List<Note> notes);
 }
 
-/// The pages read on each day, for the daily goal. Immutable.
+/// Pages by day: the confirmed reading log (the daily goal), or the pages
+/// waiting for review. Immutable.
 @immutable
 class ReadingLog {
   const ReadingLog([this.days = const {}]);
 
-  /// Days older than this are dropped when saving.
-  static const keepDays = 90;
+  /// Days older than this are dropped when saving: a year and a little
+  /// more, for a year of reading history.
+  static const keepDays = 400;
 
   final Map<String, Set<int>> days;
 
@@ -101,6 +118,38 @@ class ReadingLog {
       '${local.day.toString().padLeft(2, '0')}';
 
   Set<int> on(DateTime local) => days[dayKey(local)] ?? const {};
+
+  bool get isEmpty => days.values.every((p) => p.isEmpty);
+
+  /// How many (day, page) entries there are.
+  int get length => days.values.fold(0, (n, p) => n + p.length);
+
+  /// This log with each of [other]'s pages added to its own day.
+  ReadingLog merging(ReadingLog other) {
+    var out = this;
+    for (final e in other.days.entries) {
+      final day = parseDay(e.key);
+      if (day != null && e.value.isNotEmpty) out = out.adding(day, e.value);
+    }
+    return out;
+  }
+
+  /// This log without [other]'s (day, page) entries; empty days dropped.
+  ReadingLog removing(ReadingLog other) => ReadingLog({
+        for (final e in days.entries)
+          if (e.value.difference(other.days[e.key] ?? const {}).isNotEmpty)
+            e.key: e.value.difference(other.days[e.key] ?? const {}),
+      });
+
+  /// The local day a [dayKey] names.
+  static DateTime? parseDay(String key) {
+    final parts = key.split('-');
+    if (parts.length != 3) return null;
+    final y = int.tryParse(parts[0]), m = int.tryParse(parts[1]), d = int.tryParse(parts[2]);
+    if (y == null || m == null || d == null) return null;
+    final day = DateTime(y, m, d);
+    return dayKey(day) == key ? day : null;
+  }
 
   /// This log with [pages] added to [local]'s day, and days older than
   /// [keepDays] before it dropped.
@@ -145,6 +194,9 @@ class PrefsReadingStore implements ReadingStore {
   static const taraweehKey = 'taraweeh_position.v1';
   static const bookmarksKey = 'bookmarks.v1';
   static const logKey = 'reading_log.v1';
+  static const khatmKey = 'khatm.v1';
+  static const notesKey = 'notes.v1';
+  static const pendingKey = 'reading_pending.v1';
 
   /// The prefix of the keys an unreadable record is copied to, untouched
   /// (one per occurrence, suffixed with the time it was found).
@@ -209,6 +261,64 @@ class PrefsReadingStore implements ReadingStore {
 
   @override
   Future<bool> saveReadingLog(ReadingLog log) => _write(logKey, log.toJson());
+
+  @override
+  ReadingLog pendingReading() {
+    final json = _readJson(pendingKey);
+    if (json == null) return const ReadingLog();
+    final log = ReadingLog.fromJson(json);
+    if (log == null) _setAside(pendingKey);
+    return log ?? const ReadingLog();
+  }
+
+  @override
+  Future<bool> savePendingReading(ReadingLog pending) => _write(pendingKey, pending.toJson());
+
+  @override
+  KhatmBook khatm() {
+    final json = _readJson(khatmKey);
+    if (json == null) return KhatmBook.empty;
+    var dropped = false;
+    final book = KhatmBook.fromJson(json, onDropped: () => dropped = true);
+    // Unreadable, whole or in part: keep the original before a save rewrites it.
+    if (book == null || dropped) _setAside(khatmKey);
+    return book ?? KhatmBook.empty;
+  }
+
+  @override
+  Future<bool> saveKhatm(KhatmBook book) => _write(khatmKey, book.toJson());
+
+  @override
+  List<Note> notes() {
+    final json = _readJson(notesKey);
+    if (json == null) return const [];
+    final list = json is Map && json['v'] == 1 ? json['items'] : null;
+    if (list is! List) {
+      _setAside(notesKey);
+      return const [];
+    }
+    final byVerse = <int, Note>{};
+    var dropped = false;
+    for (final item in list) {
+      final n = Note.fromJson(item);
+      if (n == null) {
+        dropped = true;
+        continue;
+      }
+      final other = byVerse[n.verseId];
+      // Two notes on one ayah: keep the newer, and the original record.
+      if (other != null) dropped = true;
+      if (other == null || n.updatedAt.isAfter(other.updatedAt)) byVerse[n.verseId] = n;
+    }
+    if (dropped) _setAside(notesKey);
+    return List.unmodifiable(byVerse.values.toList()..sort((a, b) => b.updatedAt.compareTo(a.updatedAt)));
+  }
+
+  @override
+  Future<bool> saveNotes(List<Note> notes) => _write(notesKey, {
+        'v': 1,
+        'items': [for (final n in notes) n.toJson()]
+      });
 
   SavedPosition? _readPosition(String key) {
     final json = _readJson(key);

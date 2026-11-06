@@ -7,12 +7,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/audio/audio_source.dart';
 import '../core/recognition/recognition_engine.dart';
+import '../data/khatm.dart';
+import '../data/note.dart';
 import '../data/quran.dart';
 import '../data/reading_store.dart';
 import '../data/settings.dart';
+import '../data/study_text.dart';
 import '../data/surah_names.dart';
 import '../l10n/l10n.dart';
+import '../features/khatm/khatm_controller.dart';
 import '../features/listen/listen_controller.dart';
+import '../features/notes/notes_controller.dart';
 import '../features/listen/listen_state.dart';
 import '../features/listen/taraweeh_position.dart';
 import '../features/reader/bookmarks.dart';
@@ -24,6 +29,7 @@ import '../services/server_health.dart';
 import '../services/server_recognition_engine.dart';
 import '../services/sharer.dart';
 import '../features/reader/reading_progress.dart';
+import '../features/reader/reading_session.dart';
 
 /// Loaded once at startup (see main.dart) and injected with an override.
 final quranProvider = Provider<Quran>((ref) => throw UnimplementedError('quranProvider must be overridden'));
@@ -43,6 +49,32 @@ final appLocaleProvider = Provider<Locale>((ref) {
 final surahNamesProvider = Provider<SurahNames>((ref) {
   final language = NameLanguage.values.asNameMap()[ref.watch(appLocaleProvider).languageCode] ?? NameLanguage.en;
   return ref.watch(surahTableProvider).inLanguage(language);
+});
+
+/// The bundled translations and tafsirs (main.dart loads the catalog; the
+/// texts themselves load on first use).
+final studyCatalogProvider = Provider<StudyCatalog>((ref) => StudyCatalog.empty);
+
+/// Reads one bundled text (tests replace it to read from files, or to fail).
+final studyTextLoaderProvider = Provider<StudyTextLoader>((ref) => loadBundledStudyText);
+
+/// A whole translation or tafsir, by key: loaded once, then kept.
+final studyTextProvider = FutureProvider.family<StudyText, String>((ref, key) {
+  final source = ref.watch(studyCatalogProvider).byKey(key);
+  if (source == null) throw ArgumentError.value(key, 'key', 'not a bundled text');
+  return ref.watch(studyTextLoaderProvider)(source);
+  // A bundled file that fails to parse will not parse on a second try.
+}, retry: (_, __) => null);
+
+/// The translation or tafsir shown: the user's choice, else one in the
+/// interface language (see [StudyCatalog.pick]). Null if none is bundled.
+final studySourceProvider = Provider.family<StudySource?, StudyKind>((ref, kind) {
+  final settings = ref.watch(settingsProvider);
+  return ref.watch(studyCatalogProvider).pick(
+        kind,
+        languageCode: ref.watch(appLocaleProvider).languageCode,
+        chosen: kind == StudyKind.translation ? settings.translationKey : settings.tafsirKey,
+      );
 });
 
 /// Loaded once at startup (see main.dart) and injected with an override.
@@ -65,8 +97,18 @@ final quranSearchProvider =
 /// The time (tests replace it to cross midnight without waiting).
 final clockProvider = Provider<DateTime Function()>((ref) => DateTime.now);
 
-/// Pages read each day, for the daily goal.
+/// What the reader proposes as read (time on the page), waiting for the
+/// user's review.
+final readingSessionProvider = NotifierProvider<ReadingSessionController, ReadingSession>(ReadingSessionController.new);
+
+/// Pages read each day, as the user counted them: the daily goal.
 final readingProgressProvider = NotifierProvider<ReadingProgressController, ReadingLog>(ReadingProgressController.new);
+
+/// The khatm plan, if one is running, and the finished khatms.
+final khatmProvider = NotifierProvider<KhatmController, KhatmBook>(KhatmController.new);
+
+/// The user's notes, newest edit first, one per ayah.
+final notesProvider = NotifierProvider<NotesController, List<Note>>(NotesController.new);
 
 /// Bookmarked ayahs, newest first.
 final bookmarksProvider = NotifierProvider<BookmarksController, List<Bookmark>>(BookmarksController.new);

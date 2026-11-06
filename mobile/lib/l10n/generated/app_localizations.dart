@@ -1230,7 +1230,7 @@ abstract class AppLocalizations {
   /// No description provided for @dailyGoalExplanation.
   ///
   /// In en, this message translates to:
-  /// **'A page counts when you read past it, scrolling or turning. Jumps don\'t count. 20 pages a day is a juz: the whole Quran in a month.'**
+  /// **'A page counts once it has stayed on screen long enough to read, and you confirm it after reading. 20 pages a day is a juz: the whole Quran in a month.'**
   String get dailyGoalExplanation;
 
   /// No description provided for @dailyGoalOff.
@@ -1359,54 +1359,6 @@ abstract class AppLocalizations {
   /// **'Listen to an ayah, a page or a surah'**
   String get soonRecitationDetail;
 
-  /// No description provided for @soonTranslation.
-  ///
-  /// In en, this message translates to:
-  /// **'Translations'**
-  String get soonTranslation;
-
-  /// No description provided for @soonTranslationDetail.
-  ///
-  /// In en, this message translates to:
-  /// **'The meaning beside the Arabic, in your language'**
-  String get soonTranslationDetail;
-
-  /// No description provided for @soonTafsir.
-  ///
-  /// In en, this message translates to:
-  /// **'Tafsir'**
-  String get soonTafsir;
-
-  /// No description provided for @soonTafsirDetail.
-  ///
-  /// In en, this message translates to:
-  /// **'Commentary on each ayah'**
-  String get soonTafsirDetail;
-
-  /// No description provided for @soonKhatm.
-  ///
-  /// In en, this message translates to:
-  /// **'Khatm planner'**
-  String get soonKhatm;
-
-  /// No description provided for @soonKhatmDetail.
-  ///
-  /// In en, this message translates to:
-  /// **'Plan a complete reading and follow it day by day'**
-  String get soonKhatmDetail;
-
-  /// No description provided for @soonNotes.
-  ///
-  /// In en, this message translates to:
-  /// **'Notes'**
-  String get soonNotes;
-
-  /// No description provided for @soonNotesDetail.
-  ///
-  /// In en, this message translates to:
-  /// **'Your own notes on an ayah'**
-  String get soonNotesDetail;
-
   /// No description provided for @soonOffline.
   ///
   /// In en, this message translates to:
@@ -1436,6 +1388,480 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Tafsir'**
   String get tafsir;
+
+  /// No description provided for @khatmPlanner.
+  ///
+  /// In en, this message translates to:
+  /// **'Khatm planner'**
+  String get khatmPlanner;
+
+  /// No description provided for @khatmPlannerDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'Plan a complete reading and follow it day by day'**
+  String get khatmPlannerDetail;
+
+  /// No description provided for @khatmExplanation.
+  ///
+  /// In en, this message translates to:
+  /// **'Read the whole Quran by a date you choose. Today’s target adapts as you go: read ahead and the days after ask less.'**
+  String get khatmExplanation;
+
+  /// No description provided for @khatmFinishIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Finish in'**
+  String get khatmFinishIn;
+
+  /// No description provided for @khatmDays.
+  ///
+  /// In en, this message translates to:
+  /// **'{days, plural, =1{1 day} other{{days} days}}'**
+  String khatmDays(int days);
+
+  /// No description provided for @khatmJuzADay.
+  ///
+  /// In en, this message translates to:
+  /// **'A juz a day'**
+  String get khatmJuzADay;
+
+  /// No description provided for @khatmPickDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a date'**
+  String get khatmPickDate;
+
+  /// No description provided for @khatmLastDay.
+  ///
+  /// In en, this message translates to:
+  /// **'Last day of the khatm'**
+  String get khatmLastDay;
+
+  /// No description provided for @khatmStartAt.
+  ///
+  /// In en, this message translates to:
+  /// **'Start'**
+  String get khatmStartAt;
+
+  /// No description provided for @khatmFromHere.
+  ///
+  /// In en, this message translates to:
+  /// **'Where I am reading'**
+  String get khatmFromHere;
+
+  /// No description provided for @khatmFromBeginning.
+  ///
+  /// In en, this message translates to:
+  /// **'From the beginning'**
+  String get khatmFromBeginning;
+
+  /// No description provided for @khatmPreview.
+  ///
+  /// In en, this message translates to:
+  /// **'{pages, plural, =1{About 1 page a day} other{About {pages} pages a day}} · ends {date}'**
+  String khatmPreview(int pages, String date);
+
+  /// No description provided for @khatmStart.
+  ///
+  /// In en, this message translates to:
+  /// **'Start khatm'**
+  String get khatmStart;
+
+  /// No description provided for @khatmPagesRead.
+  ///
+  /// In en, this message translates to:
+  /// **'{read} of 604 pages read'**
+  String khatmPagesRead(int read);
+
+  /// No description provided for @khatmToday.
+  ///
+  /// In en, this message translates to:
+  /// **'Today: {read} of {target} pages'**
+  String khatmToday(int read, int target);
+
+  /// No description provided for @khatmDaysLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'{days, plural, =1{Last day} other{{days} days left}}'**
+  String khatmDaysLeft(int days);
+
+  /// No description provided for @khatmEnds.
+  ///
+  /// In en, this message translates to:
+  /// **'ends {date}'**
+  String khatmEnds(String date);
+
+  /// No description provided for @khatmPastEnd.
+  ///
+  /// In en, this message translates to:
+  /// **'Past the planned end'**
+  String get khatmPastEnd;
+
+  /// No description provided for @khatmPagesLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'{pages, plural, =1{1 page left} other{{pages} pages left}}'**
+  String khatmPagesLeft(int pages);
+
+  /// No description provided for @khatmContinue.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue khatm (page {page})'**
+  String khatmContinue(int page);
+
+  /// No description provided for @khatmChangeEnd.
+  ///
+  /// In en, this message translates to:
+  /// **'Change end date'**
+  String get khatmChangeEnd;
+
+  /// No description provided for @khatmStop.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop this khatm'**
+  String get khatmStop;
+
+  /// No description provided for @khatmStopTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop this khatm?'**
+  String get khatmStopTitle;
+
+  /// No description provided for @khatmStopBody.
+  ///
+  /// In en, this message translates to:
+  /// **'The pages read in this plan will be forgotten. Your reading log and finished khatms are kept.'**
+  String get khatmStopBody;
+
+  /// No description provided for @khatmStopConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop'**
+  String get khatmStopConfirm;
+
+  /// No description provided for @khatmSaveFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not save the khatm plan. Try again.'**
+  String get khatmSaveFailed;
+
+  /// No description provided for @khatmFinished.
+  ///
+  /// In en, this message translates to:
+  /// **'Finished khatms'**
+  String get khatmFinished;
+
+  /// No description provided for @khatmCompletedOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Completed {date}'**
+  String khatmCompletedOn(String date);
+
+  /// No description provided for @khatmInDays.
+  ///
+  /// In en, this message translates to:
+  /// **'{days, plural, =1{in 1 day} other{in {days} days}}'**
+  String khatmInDays(int days);
+
+  /// No description provided for @khatmComplete.
+  ///
+  /// In en, this message translates to:
+  /// **'Khatm complete'**
+  String get khatmComplete;
+
+  /// No description provided for @khatmSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Khatm'**
+  String get khatmSection;
+
+  /// No description provided for @khatmCard.
+  ///
+  /// In en, this message translates to:
+  /// **'{read} of 604 pages'**
+  String khatmCard(int read);
+
+  /// No description provided for @semKhatmToday.
+  ///
+  /// In en, this message translates to:
+  /// **'Khatm: {read} of {target} pages read today'**
+  String semKhatmToday(int read, int target);
+
+  /// No description provided for @addNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a note'**
+  String get addNote;
+
+  /// No description provided for @editNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit note'**
+  String get editNote;
+
+  /// No description provided for @noteOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Note on {reference}'**
+  String noteOn(String reference);
+
+  /// No description provided for @noteHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Write your note'**
+  String get noteHint;
+
+  /// No description provided for @saveNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get saveNote;
+
+  /// No description provided for @deleteNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete note'**
+  String get deleteNote;
+
+  /// No description provided for @noteSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Note saved'**
+  String get noteSaved;
+
+  /// No description provided for @noteDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Note deleted'**
+  String get noteDeleted;
+
+  /// No description provided for @noteSaveFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not save the note. Your text is still here.'**
+  String get noteSaveFailed;
+
+  /// No description provided for @noteDeleteFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not delete the note.'**
+  String get noteDeleteFailed;
+
+  /// No description provided for @notes.
+  ///
+  /// In en, this message translates to:
+  /// **'Notes'**
+  String get notes;
+
+  /// No description provided for @semNote.
+  ///
+  /// In en, this message translates to:
+  /// **'note'**
+  String get semNote;
+
+  /// No description provided for @notesCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{Notes} =1{1 note} other{{count} notes}}'**
+  String notesCount(int count);
+
+  /// No description provided for @noNotesHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap an ayah, then Add a note. Your notes appear here.'**
+  String get noNotesHint;
+
+  /// No description provided for @reviewTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Count this reading?'**
+  String get reviewTitle;
+
+  /// No description provided for @reviewExplanation.
+  ///
+  /// In en, this message translates to:
+  /// **'These pages stayed on screen long enough to read. Untick any you did not read.'**
+  String get reviewExplanation;
+
+  /// No description provided for @reviewCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{Count nothing} =1{Count 1 page} other{Count {count} pages}}'**
+  String reviewCount(int count);
+
+  /// No description provided for @reviewNotNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Not now'**
+  String get reviewNotNow;
+
+  /// No description provided for @reviewDiscard.
+  ///
+  /// In en, this message translates to:
+  /// **'Don’t count these'**
+  String get reviewDiscard;
+
+  /// No description provided for @reviewCounted.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 page counted} other{{count} pages counted}}'**
+  String reviewCounted(int count);
+
+  /// No description provided for @reviewFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not save your reading. It is still waiting; try again.'**
+  String get reviewFailed;
+
+  /// No description provided for @reviewWaiting.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 page waiting to be counted} other{{count} pages waiting to be counted}}'**
+  String reviewWaiting(int count);
+
+  /// No description provided for @reviewAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Review'**
+  String get reviewAction;
+
+  /// No description provided for @khatmMap.
+  ///
+  /// In en, this message translates to:
+  /// **'Pages read'**
+  String get khatmMap;
+
+  /// No description provided for @khatmMapHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap a juz to mark its pages read or unread: to fix a mistake, or to add reading from a paper mushaf.'**
+  String get khatmMapHint;
+
+  /// No description provided for @semJuzTile.
+  ///
+  /// In en, this message translates to:
+  /// **'Juz {juz}, {read} of {total} pages read'**
+  String semJuzTile(int juz, int read, int total);
+
+  /// No description provided for @khatmJuzPages.
+  ///
+  /// In en, this message translates to:
+  /// **'Pages {first}–{last} · {read} of {total} read'**
+  String khatmJuzPages(int first, int last, int read, int total);
+
+  /// No description provided for @khatmMarkAllRead.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark all read'**
+  String get khatmMarkAllRead;
+
+  /// No description provided for @khatmMarkAllUnread.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark all unread'**
+  String get khatmMarkAllUnread;
+
+  /// No description provided for @translationAndTafsir.
+  ///
+  /// In en, this message translates to:
+  /// **'Translation and tafsir'**
+  String get translationAndTafsir;
+
+  /// No description provided for @translationAndTafsirDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'The meaning of each ayah, from trusted publishers'**
+  String get translationAndTafsirDetail;
+
+  /// No description provided for @chooseTranslation.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a translation'**
+  String get chooseTranslation;
+
+  /// No description provided for @chooseTafsir.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a tafsir'**
+  String get chooseTafsir;
+
+  /// No description provided for @chooseTextExplanation.
+  ///
+  /// In en, this message translates to:
+  /// **'Each text is shown exactly as its publisher issued it.'**
+  String get chooseTextExplanation;
+
+  /// No description provided for @chooseText.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose the text'**
+  String get chooseText;
+
+  /// No description provided for @textLanguageEn.
+  ///
+  /// In en, this message translates to:
+  /// **'English'**
+  String get textLanguageEn;
+
+  /// No description provided for @textLanguageFr.
+  ///
+  /// In en, this message translates to:
+  /// **'French'**
+  String get textLanguageFr;
+
+  /// No description provided for @textLanguageAr.
+  ///
+  /// In en, this message translates to:
+  /// **'Arabic'**
+  String get textLanguageAr;
+
+  /// No description provided for @inLanguage.
+  ///
+  /// In en, this message translates to:
+  /// **'In {language}'**
+  String inLanguage(String language);
+
+  /// No description provided for @textSourceLine.
+  ///
+  /// In en, this message translates to:
+  /// **'{credit} · version {version} · QuranEnc.com'**
+  String textSourceLine(String credit, String version);
+
+  /// No description provided for @translationNote.
+  ///
+  /// In en, this message translates to:
+  /// **'A translation conveys the meanings of the Quran; it is not the Quran itself.'**
+  String get translationNote;
+
+  /// No description provided for @footnotes.
+  ///
+  /// In en, this message translates to:
+  /// **'Footnotes'**
+  String get footnotes;
+
+  /// No description provided for @previousAyah.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous ayah'**
+  String get previousAyah;
+
+  /// No description provided for @nextAyah.
+  ///
+  /// In en, this message translates to:
+  /// **'Next ayah'**
+  String get nextAyah;
+
+  /// No description provided for @textLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'This text could not be opened. Reinstalling Rafiq should fix it.'**
+  String get textLoadFailed;
+
+  /// No description provided for @listenComingSoon.
+  ///
+  /// In en, this message translates to:
+  /// **'Listening to the recitation is coming soon.'**
+  String get listenComingSoon;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {
