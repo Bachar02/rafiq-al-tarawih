@@ -42,11 +42,26 @@ class _HomeShellState extends ConsumerState<HomeShell> {
 
   bool _reviewing = false;
 
+  /// The daily reminders are rescheduled whenever the app is shown or
+  /// hidden: their text (today's target, where to continue) stays true, and
+  /// a day already read gets none.
+  late final AppLifecycleListener _lifecycle;
+
+  void _syncReminders() => ref.read(reminderSyncProvider).sync();
+
   @override
   void initState() {
     super.initState();
+    _lifecycle = AppLifecycleListener(onShow: _syncReminders, onHide: _syncReminders);
+    WidgetsBinding.instance.addPostFrameCallback((_) => _syncReminders());
     // Pages left from last time: ask once the app is on screen.
     if (ref.read(readingSessionProvider).ask > 0) WidgetsBinding.instance.addPostFrameCallback((_) => _review());
+  }
+
+  @override
+  void dispose() {
+    _lifecycle.dispose();
+    super.dispose();
   }
 
   /// Ask about the waiting pages, unless something else is on top (Taraweeh

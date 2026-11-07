@@ -13,11 +13,12 @@ import '../../data/reading_store.dart';
 import '../../l10n/l10n.dart';
 import '../khatm/khatm_screen.dart';
 import '../notes/note_sheet.dart';
+import '../progress/progress_screen.dart';
 import '../reader/reading_session.dart';
 
 /// Every saved place, in two views.
 ///
-/// **Bookmarks:** the khatm in progress, where the user stopped reading,
+/// **Bookmarks:** the reading chart, the khatm in progress, where the user stopped reading,
 /// where Taraweeh ended, then the bookmarks (newest first, or in Quran
 /// order). **Notes:** the user's notes, newest edit first.
 ///
@@ -130,6 +131,10 @@ class _BookmarksList extends ConsumerWidget {
     return ListView(
       padding: const EdgeInsets.only(bottom: RubricSpace.s6),
       children: [
+        const Padding(
+          padding: EdgeInsets.fromLTRB(RubricSpace.gutter, RubricSpace.s3, RubricSpace.gutter, 0),
+          child: ReadingCard(),
+        ),
         if (plan != null) ...[
           _Section(l.khatmSection),
           PlaceTile(

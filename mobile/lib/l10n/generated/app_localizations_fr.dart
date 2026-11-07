@@ -1117,4 +1117,152 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get listenComingSoon => 'L’écoute de la récitation arrive bientôt.';
+
+  @override
+  String get yourReading => 'Votre lecture';
+
+  @override
+  String readingRun(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count jours d’affilée',
+      one: '1 jour d’affilée',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get readingRunNone => 'Lisez une page aujourd’hui pour commencer.';
+
+  @override
+  String readingBestRun(String days) {
+    return 'Record : $days';
+  }
+
+  @override
+  String daysCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count jours',
+      one: '1 jour',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String daysReadThisYear(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count jours de lecture cette année',
+      one: '1 jour de lecture cette année',
+      zero: 'Aucun jour de lecture cette année',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get pagesThisMonth => 'Pages ce mois-ci';
+
+  @override
+  String get daysThisYear => 'Jours de lecture cette année';
+
+  @override
+  String dayPages(String day, String pages) {
+    return '$day : $pages';
+  }
+
+  @override
+  String get lastSevenDays => 'Les 7 derniers jours';
+
+  @override
+  String get chartLess => 'Moins';
+
+  @override
+  String get chartMore => 'Plus';
+
+  @override
+  String semReadingGrid(int weeks, String days) {
+    return 'Graphique de lecture, les $weeks dernières semaines : $days.';
+  }
+
+  @override
+  String daysWithReading(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count jours de lecture',
+      one: '1 jour de lecture',
+      zero: 'aucun jour de lecture',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get consistencyHadith =>
+      '« Les œuvres les plus aimées d’Allah sont les plus constantes, même si elles sont modestes. »';
+
+  @override
+  String get consistencyHadithSource => 'Al-Bukhari et Muslim';
+
+  @override
+  String get dailyReminder => 'Rappel quotidien';
+
+  @override
+  String dailyReminderDetail(String time) {
+    return 'Vers $time, les jours où vous n’avez pas encore lu';
+  }
+
+  @override
+  String get dailyReminderOff => 'Une notification les jours où vous n’avez pas encore lu';
+
+  @override
+  String get reminderTime => 'Heure du rappel';
+
+  @override
+  String get reminderOfferTitle => 'Un rappel chaque jour ?';
+
+  @override
+  String get reminderOfferBody =>
+      'Rafiq peut vous le rappeler chaque jour à l’heure de votre choix. Les jours où vous avez déjà lu, il reste silencieux.';
+
+  @override
+  String reminderOfferAt(String time) {
+    return 'Me le rappeler à $time';
+  }
+
+  @override
+  String get reminderOtherTime => 'Une autre heure';
+
+  @override
+  String reminderSet(String time) {
+    return 'Rappel réglé à $time';
+  }
+
+  @override
+  String get reminderBlocked =>
+      'Les notifications sont désactivées pour Rafiq. Vous pouvez les activer dans les réglages du téléphone.';
+
+  @override
+  String get reminderChannel => 'Rappel de lecture quotidienne';
+
+  @override
+  String get reminderTitle => 'Votre lecture du jour';
+
+  @override
+  String reminderBody(String surah, int page) {
+    return 'Reprenez à $surah, page $page.';
+  }
+
+  @override
+  String reminderBodyTarget(String pages, String surah, int page) {
+    return '$pages aujourd’hui. Reprenez à $surah, page $page.';
+  }
+
+  @override
+  String goalKhatmToday(String pages) {
+    return 'Khatm aujourd’hui : $pages';
+  }
 }

@@ -9,6 +9,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:rafiq/app/app.dart';
 import 'package:rafiq/app/components/quran_text.dart';
 import 'package:rafiq/core/recognition/models.dart';
+import 'package:rafiq/features/progress/progress_screen.dart';
 
 import 'support/fakes.dart';
 import 'support/app_nav.dart';
@@ -30,6 +31,9 @@ void main() {
     await tester.pumpWidget(ProviderScope(overrides: h.overrides, child: const RafiqApp()));
     await settle(tester);
   }
+
+  /// The Reading screen's own (vertical) list: the year grid scrolls too.
+  final readingList = find.descendant(of: find.byType(ProgressScreen), matching: find.byType(Scrollable)).first;
 
   Future<void> meetsGuidelines(WidgetTester tester) async {
     final handle = tester.ensureSemantics();
@@ -131,6 +135,34 @@ void main() {
         await meetsGuidelines(tester);
       });
 
+      testWidgets('the reading chart and the daily reminder', (tester) async {
+        await launch(tester, {
+          'theme_mode': theme,
+          'daily_goal_pages': 5,
+          'reminder_on': true,
+          'reading_log.v1': '{"v":1,"days":{"2026-11-02":[1,2,3],"2026-11-03":[4,5,6,7,8,9]}}',
+        });
+        await tapNav(tester, 'Bookmarks');
+        await meetsGuidelines(tester); // the card
+        await tester.tap(find.text('Your reading'));
+        await settle(tester);
+        await meetsGuidelines(tester);
+        await tester.scrollUntilVisible(find.text('Reminder time'), 200, scrollable: readingList);
+        await settle(tester);
+        await meetsGuidelines(tester);
+      });
+
+      testWidgets('the reminder, offered after the first counted reading', (tester) async {
+        await launch(tester, {
+          'theme_mode': theme,
+          'reading_pending.v1': '{"v":1,"days":{"2026-11-03":[40,41]}}',
+        });
+        await tester.tap(find.text('Count 2 pages'));
+        await settle(tester);
+        expect(find.text('A daily reminder?'), findsOneWidget);
+        await meetsGuidelines(tester);
+      });
+
       testWidgets('reviewing the last session', (tester) async {
         await launch(tester, {
           'theme_mode': theme,
@@ -205,6 +237,29 @@ void main() {
     await settle(tester);
     expect(find.text('Choose a translation'), findsOneWidget);
     expect(tester.takeException(), isNull, reason: 'source sheet');
+  });
+
+  testWidgets('200% system text: the reading card and screen, and the reminder offer', (tester) async {
+    tester.platformDispatcher.textScaleFactorTestValue = 2.0;
+    addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+    await launch(tester, {
+      'daily_goal_pages': 20,
+      'reminder_on': true,
+      'reading_log.v1': '{"v":1,"days":{"2026-11-02":[1,2,3],"2026-11-03":[4,5,6,7,8,9]}}',
+      'reading_pending.v1': '{"v":1,"days":{"2026-11-04":[40,41]}}',
+    });
+    await tester.ensureVisible(find.text('Not now'));
+    await settle(tester);
+    await tester.tap(find.text('Not now'));
+    await settle(tester);
+    await tapNav(tester, 'Bookmarks');
+    expect(tester.takeException(), isNull, reason: 'reading card');
+    await tester.tap(find.text('Your reading'));
+    await settle(tester);
+    expect(tester.takeException(), isNull, reason: 'reading screen');
+    await tester.scrollUntilVisible(find.text('Reminder time'), 200, scrollable: readingList);
+    await settle(tester);
+    expect(tester.takeException(), isNull, reason: 'reading screen, reminder');
   });
 
   testWidgets('200% system text: every main screen lays out without overflow', (tester) async {

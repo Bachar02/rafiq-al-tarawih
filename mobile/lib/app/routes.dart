@@ -9,6 +9,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../features/khatm/khatm_screen.dart';
 import '../features/listen/listen_screen.dart';
 import '../features/navigate/navigate_screen.dart';
+import '../features/progress/progress_screen.dart';
 import '../features/search/search_screen.dart';
 import '../features/settings/settings_screen.dart';
 import '../features/study/study_screen.dart';
@@ -23,6 +24,7 @@ abstract final class AppRoutes {
   static const searchName = '/search';
   static const khatmName = '/khatm';
   static const studyName = '/study';
+  static const readingName = '/reading';
 
   /// A route that keeps the theme it was opened from: settings opened in
   /// (dark) Taraweeh mode stay dark, as do their sheets and dialogs.
@@ -45,6 +47,10 @@ abstract final class AppRoutes {
   /// Choose a place (surah, juz, page, bookmark); returns its verse id.
   static Future<int?> navigate(BuildContext context, {required int current}) =>
       Navigator.of(context).push<int>(_route<int>(context, navigateName, (_) => NavigateScreen(current: current)));
+
+  /// The reading chart and the daily reminder.
+  static Future<void> reading(BuildContext context) =>
+      Navigator.of(context).push(_route<void>(context, readingName, (_) => const ProgressScreen()));
 
   /// The khatm planner.
   static Future<void> khatm(BuildContext context) =>

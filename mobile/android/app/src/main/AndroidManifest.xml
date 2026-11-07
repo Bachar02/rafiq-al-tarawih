@@ -3,6 +3,10 @@
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <!-- Reach the recognition server (v1: a laptop on the same Wi-Fi). -->
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- The daily reading reminder: kept across a restart of the phone.
+         (POST_NOTIFICATIONS comes with flutter_local_notifications; no exact
+         alarms: a reminder within minutes is fine.) -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
     <!-- usesCleartextTraffic: v1 talks to a laptop on the local network over ws://.
          A hosted server must use wss:// and this should then be turned off. -->
@@ -33,6 +37,17 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
+        <!-- flutter_local_notifications: show scheduled reminders, and
+             schedule them again after a restart or an app update. -->
+        <receiver android:exported="false" android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationReceiver" />
+        <receiver android:exported="false" android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationBootReceiver">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED"/>
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED"/>
+                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+                <action android:name="com.htc.intent.action.QUICKBOOT_POWERON"/>
+            </intent-filter>
+        </receiver>
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
         <meta-data

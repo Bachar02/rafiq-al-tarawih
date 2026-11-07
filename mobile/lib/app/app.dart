@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart' show DateFormat;
 
 import 'home_shell.dart';
 import '../l10n/l10n.dart';
@@ -18,6 +19,9 @@ class _RafiqAppState extends ConsumerState<RafiqApp> with WidgetsBindingObserver
   @override
   void initState() {
     super.initState();
+    // Dates in the Arabic interface use the digits the rest of it uses
+    // (0–9, as in 2:255 and page numbers), not ٠–٩ mixed in beside them.
+    DateFormat.useNativeDigitsByDefaultFor('ar', false);
     WidgetsBinding.instance.addObserver(this);
   }
 

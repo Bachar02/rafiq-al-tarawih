@@ -1113,4 +1113,150 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get listenComingSoon => 'Listening to the recitation is coming soon.';
+
+  @override
+  String get yourReading => 'Your reading';
+
+  @override
+  String readingRun(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count days in a row',
+      one: '1 day in a row',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get readingRunNone => 'Read a page today to start.';
+
+  @override
+  String readingBestRun(String days) {
+    return 'Best: $days';
+  }
+
+  @override
+  String daysCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count days',
+      one: '1 day',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String daysReadThisYear(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count days read this year',
+      one: '1 day read this year',
+      zero: 'No days read yet this year',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get pagesThisMonth => 'Pages this month';
+
+  @override
+  String get daysThisYear => 'Days read this year';
+
+  @override
+  String dayPages(String day, String pages) {
+    return '$day: $pages';
+  }
+
+  @override
+  String get lastSevenDays => 'Last 7 days';
+
+  @override
+  String get chartLess => 'Less';
+
+  @override
+  String get chartMore => 'More';
+
+  @override
+  String semReadingGrid(int weeks, String days) {
+    return 'Reading chart, the last $weeks weeks: $days.';
+  }
+
+  @override
+  String daysWithReading(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count days read',
+      one: '1 day read',
+      zero: 'no day read',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get consistencyHadith => '“The most beloved deeds to Allah are the most consistent, even if they are small.”';
+
+  @override
+  String get consistencyHadithSource => 'Al-Bukhari and Muslim';
+
+  @override
+  String get dailyReminder => 'Daily reminder';
+
+  @override
+  String dailyReminderDetail(String time) {
+    return 'Around $time, on days you haven’t read yet';
+  }
+
+  @override
+  String get dailyReminderOff => 'A notification on days you haven’t read yet';
+
+  @override
+  String get reminderTime => 'Reminder time';
+
+  @override
+  String get reminderOfferTitle => 'A daily reminder?';
+
+  @override
+  String get reminderOfferBody =>
+      'Rafiq can remind you each day at a time you choose. On days you have already read, it stays quiet.';
+
+  @override
+  String reminderOfferAt(String time) {
+    return 'Remind me at $time';
+  }
+
+  @override
+  String get reminderOtherTime => 'Another time';
+
+  @override
+  String reminderSet(String time) {
+    return 'Reminder set for $time';
+  }
+
+  @override
+  String get reminderBlocked => 'Notifications are off for Rafiq. You can turn them on in the phone’s settings.';
+
+  @override
+  String get reminderChannel => 'Daily reading reminder';
+
+  @override
+  String get reminderTitle => 'Your daily reading';
+
+  @override
+  String reminderBody(String surah, int page) {
+    return 'Continue at $surah, page $page.';
+  }
+
+  @override
+  String reminderBodyTarget(String pages, String surah, int page) {
+    return '$pages today. Continue at $surah, page $page.';
+  }
+
+  @override
+  String goalKhatmToday(String pages) {
+    return 'Khatm today: $pages';
+  }
 }
