@@ -8,6 +8,7 @@ import 'package:rafiq/features/quran_view/mushaf_page_view.dart';
 import 'package:rafiq/app/app.dart';
 import 'package:rafiq/app/components/quran_text.dart';
 import 'package:rafiq/app/providers.dart';
+import 'package:rafiq/features/bookmarks/bookmarks_screen.dart';
 import 'package:rafiq/data/reading_store.dart';
 import 'package:rafiq/features/listen/listen_screen.dart';
 import 'package:rafiq/features/quran_view/quran_view.dart';
@@ -266,6 +267,12 @@ void main() {
     expect(find.text('Ya-Sin 36:1'), findsOneWidget);
     expect(find.text('Where Taraweeh ended'), findsOneWidget);
     expect(find.text("Al-Ma'idah 5:81 · yesterday"), findsOneWidget);
+    // Under the reading card: scroll the list to see both.
+    await tester.dragUntilVisible(
+      find.text('Al-Baqarah 2:255'),
+      find.descendant(of: find.byType(BookmarksScreen), matching: find.byType(Scrollable)).first,
+      const Offset(0, -100),
+    );
     expect(find.text('2 BOOKMARKS'), findsOneWidget);
     // Newest first.
     expect(tester.getTopLeft(find.text('Al-Kahf 18:10')).dy,

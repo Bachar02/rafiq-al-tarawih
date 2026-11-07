@@ -223,13 +223,23 @@ void main() {
     h.engine.emit(heard(at(93, 3)));
     await settle(tester);
     // The test binding starts with no lifecycle state (no transitions from
-    // it), and a paused binding draws no frames: resumed → paused → resumed.
+    // it), and a paused binding draws no frames. The states follow Android's
+    // order (AppLifecycleListener asserts it): resumed → inactive → hidden →
+    // paused, and back.
     // Real async: the controller's teardown awaits a stream cancel, whose
     // root-zone future the fake test clock never completes.
     await tester.runAsync(() async {
-      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
-      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
-      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      for (final state in [
+        AppLifecycleState.resumed,
+        AppLifecycleState.inactive,
+        AppLifecycleState.hidden,
+        AppLifecycleState.paused,
+        AppLifecycleState.hidden,
+        AppLifecycleState.inactive,
+        AppLifecycleState.resumed,
+      ]) {
+        tester.binding.handleAppLifecycleStateChanged(state);
+      }
       await Future<void>.delayed(const Duration(milliseconds: 50));
     });
     await settle(tester);

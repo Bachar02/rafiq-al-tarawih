@@ -812,5 +812,142 @@
   "previousAyah": "Previous ayah",
   "nextAyah": "Next ayah",
   "textLoadFailed": "This text could not be opened. Reinstalling Rafiq should fix it.",
-  "listenComingSoon": "Listening to the recitation is coming soon."
+  "listenComingSoon": "Listening to the recitation is coming soon.",
+  "yourReading": "Your reading",
+  "readingRun": "{count, plural, =1{1 day in a row} other{{count} days in a row}}",
+  "@readingRun": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "readingRunNone": "Read a page today to start.",
+  "readingBestRun": "Best: {days}",
+  "@readingBestRun": {
+    "placeholders": {
+      "days": {
+        "type": "String"
+      }
+    }
+  },
+  "daysCount": "{count, plural, =1{1 day} other{{count} days}}",
+  "@daysCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "daysReadThisYear": "{count, plural, =0{No days read yet this year} =1{1 day read this year} other{{count} days read this year}}",
+  "@daysReadThisYear": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "pagesThisMonth": "Pages this month",
+  "daysThisYear": "Days read this year",
+  "dayPages": "{day}: {pages}",
+  "@dayPages": {
+    "placeholders": {
+      "day": {
+        "type": "String"
+      },
+      "pages": {
+        "type": "String"
+      }
+    }
+  },
+  "lastSevenDays": "Last 7 days",
+  "chartLess": "Less",
+  "chartMore": "More",
+  "semReadingGrid": "Reading chart, the last {weeks} weeks: {days}.",
+  "@semReadingGrid": {
+    "placeholders": {
+      "weeks": {
+        "type": "int"
+      },
+      "days": {
+        "type": "String"
+      }
+    }
+  },
+  "daysWithReading": "{count, plural, =0{no day read} =1{1 day read} other{{count} days read}}",
+  "@daysWithReading": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "consistencyHadith": "“The most beloved deeds to Allah are the most consistent, even if they are small.”",
+  "consistencyHadithSource": "Al-Bukhari and Muslim",
+  "dailyReminder": "Daily reminder",
+  "dailyReminderDetail": "Around {time}, on days you haven’t read yet",
+  "@dailyReminderDetail": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "dailyReminderOff": "A notification on days you haven’t read yet",
+  "reminderTime": "Reminder time",
+  "reminderOfferTitle": "A daily reminder?",
+  "reminderOfferBody": "Rafiq can remind you each day at a time you choose. On days you have already read, it stays quiet.",
+  "reminderOfferAt": "Remind me at {time}",
+  "@reminderOfferAt": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "reminderOtherTime": "Another time",
+  "reminderSet": "Reminder set for {time}",
+  "@reminderSet": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "reminderBlocked": "Notifications are off for Rafiq. You can turn them on in the phone’s settings.",
+  "reminderChannel": "Daily reading reminder",
+  "reminderTitle": "Your daily reading",
+  "reminderBody": "Continue at {surah}, page {page}.",
+  "@reminderBody": {
+    "placeholders": {
+      "surah": {
+        "type": "String"
+      },
+      "page": {
+        "type": "int"
+      }
+    }
+  },
+  "reminderBodyTarget": "{pages} today. Continue at {surah}, page {page}.",
+  "@reminderBodyTarget": {
+    "placeholders": {
+      "pages": {
+        "type": "String"
+      },
+      "surah": {
+        "type": "String"
+      },
+      "page": {
+        "type": "int"
+      }
+    }
+  },
+  "goalKhatmToday": "Khatm today: {pages}",
+  "@goalKhatmToday": {
+    "placeholders": {
+      "pages": {
+        "type": "String"
+      }
+    }
+  }
 }

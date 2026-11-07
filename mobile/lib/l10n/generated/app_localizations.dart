@@ -1862,6 +1862,192 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Listening to the recitation is coming soon.'**
   String get listenComingSoon;
+
+  /// No description provided for @yourReading.
+  ///
+  /// In en, this message translates to:
+  /// **'Your reading'**
+  String get yourReading;
+
+  /// No description provided for @readingRun.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 day in a row} other{{count} days in a row}}'**
+  String readingRun(int count);
+
+  /// No description provided for @readingRunNone.
+  ///
+  /// In en, this message translates to:
+  /// **'Read a page today to start.'**
+  String get readingRunNone;
+
+  /// No description provided for @readingBestRun.
+  ///
+  /// In en, this message translates to:
+  /// **'Best: {days}'**
+  String readingBestRun(String days);
+
+  /// No description provided for @daysCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 day} other{{count} days}}'**
+  String daysCount(int count);
+
+  /// No description provided for @daysReadThisYear.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{No days read yet this year} =1{1 day read this year} other{{count} days read this year}}'**
+  String daysReadThisYear(int count);
+
+  /// No description provided for @pagesThisMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'Pages this month'**
+  String get pagesThisMonth;
+
+  /// No description provided for @daysThisYear.
+  ///
+  /// In en, this message translates to:
+  /// **'Days read this year'**
+  String get daysThisYear;
+
+  /// No description provided for @dayPages.
+  ///
+  /// In en, this message translates to:
+  /// **'{day}: {pages}'**
+  String dayPages(String day, String pages);
+
+  /// No description provided for @lastSevenDays.
+  ///
+  /// In en, this message translates to:
+  /// **'Last 7 days'**
+  String get lastSevenDays;
+
+  /// No description provided for @chartLess.
+  ///
+  /// In en, this message translates to:
+  /// **'Less'**
+  String get chartLess;
+
+  /// No description provided for @chartMore.
+  ///
+  /// In en, this message translates to:
+  /// **'More'**
+  String get chartMore;
+
+  /// No description provided for @semReadingGrid.
+  ///
+  /// In en, this message translates to:
+  /// **'Reading chart, the last {weeks} weeks: {days}.'**
+  String semReadingGrid(int weeks, String days);
+
+  /// No description provided for @daysWithReading.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{no day read} =1{1 day read} other{{count} days read}}'**
+  String daysWithReading(int count);
+
+  /// No description provided for @consistencyHadith.
+  ///
+  /// In en, this message translates to:
+  /// **'“The most beloved deeds to Allah are the most consistent, even if they are small.”'**
+  String get consistencyHadith;
+
+  /// No description provided for @consistencyHadithSource.
+  ///
+  /// In en, this message translates to:
+  /// **'Al-Bukhari and Muslim'**
+  String get consistencyHadithSource;
+
+  /// No description provided for @dailyReminder.
+  ///
+  /// In en, this message translates to:
+  /// **'Daily reminder'**
+  String get dailyReminder;
+
+  /// No description provided for @dailyReminderDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'Around {time}, on days you haven’t read yet'**
+  String dailyReminderDetail(String time);
+
+  /// No description provided for @dailyReminderOff.
+  ///
+  /// In en, this message translates to:
+  /// **'A notification on days you haven’t read yet'**
+  String get dailyReminderOff;
+
+  /// No description provided for @reminderTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Reminder time'**
+  String get reminderTime;
+
+  /// No description provided for @reminderOfferTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'A daily reminder?'**
+  String get reminderOfferTitle;
+
+  /// No description provided for @reminderOfferBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Rafiq can remind you each day at a time you choose. On days you have already read, it stays quiet.'**
+  String get reminderOfferBody;
+
+  /// No description provided for @reminderOfferAt.
+  ///
+  /// In en, this message translates to:
+  /// **'Remind me at {time}'**
+  String reminderOfferAt(String time);
+
+  /// No description provided for @reminderOtherTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Another time'**
+  String get reminderOtherTime;
+
+  /// No description provided for @reminderSet.
+  ///
+  /// In en, this message translates to:
+  /// **'Reminder set for {time}'**
+  String reminderSet(String time);
+
+  /// No description provided for @reminderBlocked.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications are off for Rafiq. You can turn them on in the phone’s settings.'**
+  String get reminderBlocked;
+
+  /// No description provided for @reminderChannel.
+  ///
+  /// In en, this message translates to:
+  /// **'Daily reading reminder'**
+  String get reminderChannel;
+
+  /// No description provided for @reminderTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your daily reading'**
+  String get reminderTitle;
+
+  /// No description provided for @reminderBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue at {surah}, page {page}.'**
+  String reminderBody(String surah, int page);
+
+  /// No description provided for @reminderBodyTarget.
+  ///
+  /// In en, this message translates to:
+  /// **'{pages} today. Continue at {surah}, page {page}.'**
+  String reminderBodyTarget(String pages, String surah, int page);
+
+  /// No description provided for @goalKhatmToday.
+  ///
+  /// In en, this message translates to:
+  /// **'Khatm today: {pages}'**
+  String goalKhatmToday(String pages);
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

@@ -35,6 +35,9 @@ class AppSettings {
     this.bookmarksInQuranOrder = false,
     this.translationKey,
     this.tafsirKey,
+    this.reminderOn = false,
+    this.reminderMinutes = defaultReminderMinutes,
+    this.reminderOffered = false,
   });
 
   /// The daily reading goals offered, in pages; 0 is off. 20 pages is a juz
@@ -85,6 +88,17 @@ class AppSettings {
   final String? translationKey;
   final String? tafsirKey;
 
+  /// The daily reading reminder (a local notification), and its time in
+  /// minutes after midnight. Off until the user turns it on.
+  final bool reminderOn;
+  final int reminderMinutes;
+
+  /// The reminder was offered once (after the first counted reading).
+  final bool reminderOffered;
+
+  /// 20:00: after the day's work, before sleep.
+  static const defaultReminderMinutes = 20 * 60;
+
   AppSettings copyWith({
     String? serverAddress,
     bool? keepScreenOn,
@@ -99,6 +113,9 @@ class AppSettings {
     bool? bookmarksInQuranOrder,
     String? translationKey,
     String? tafsirKey,
+    bool? reminderOn,
+    int? reminderMinutes,
+    bool? reminderOffered,
   }) =>
       AppSettings(
         serverAddress: serverAddress ?? this.serverAddress,
@@ -114,6 +131,9 @@ class AppSettings {
         bookmarksInQuranOrder: bookmarksInQuranOrder ?? this.bookmarksInQuranOrder,
         translationKey: translationKey ?? this.translationKey,
         tafsirKey: tafsirKey ?? this.tafsirKey,
+        reminderOn: reminderOn ?? this.reminderOn,
+        reminderMinutes: reminderMinutes ?? this.reminderMinutes,
+        reminderOffered: reminderOffered ?? this.reminderOffered,
       );
 }
 
@@ -136,6 +156,9 @@ class SettingsStore {
   static const _bookmarkOrder = 'bookmarks_quran_order';
   static const _translation = 'translation_key';
   static const _tafsir = 'tafsir_key';
+  static const _reminder = 'reminder_on';
+  static const _reminderAt = 'reminder_minutes';
+  static const _reminderOffered = 'reminder_offered';
 
   AppSettings load() {
     const d = AppSettings();
@@ -156,6 +179,9 @@ class SettingsStore {
       // A key no longer bundled falls back to the default where it is used.
       translationKey: _prefs.getString(_translation),
       tafsirKey: _prefs.getString(_tafsir),
+      reminderOn: _prefs.getBool(_reminder) ?? d.reminderOn,
+      reminderMinutes: _validMinutes(_prefs.getInt(_reminderAt)) ?? d.reminderMinutes,
+      reminderOffered: _prefs.getBool(_reminderOffered) ?? d.reminderOffered,
     );
   }
 
@@ -173,7 +199,12 @@ class SettingsStore {
     await _prefs.setBool(_bookmarkOrder, s.bookmarksInQuranOrder);
     if (s.translationKey != null) await _prefs.setString(_translation, s.translationKey!);
     if (s.tafsirKey != null) await _prefs.setString(_tafsir, s.tafsirKey!);
+    await _prefs.setBool(_reminder, s.reminderOn);
+    await _prefs.setInt(_reminderAt, s.reminderMinutes);
+    await _prefs.setBool(_reminderOffered, s.reminderOffered);
   }
+
+  static int? _validMinutes(int? m) => m != null && m >= 0 && m < 24 * 60 ? m : null;
 
   static int? _knownGoal(int? pages) => AppSettings.dailyGoals.contains(pages) ? pages : null;
 }

@@ -12,6 +12,7 @@ import '../../data/study_text.dart';
 import '../../l10n/l10n.dart';
 import '../../services/server_health.dart';
 import '../bench/asr_bench_screen.dart';
+import '../progress/progress_screen.dart' show ReminderSettings;
 import '../study/study_source_sheet.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
@@ -185,6 +186,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               ),
             ],
           ),
+          const ReminderSettings(),
           if (translation != null || tafsir != null)
             RubricGroup(
               label: l.translationAndTafsir,

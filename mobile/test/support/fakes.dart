@@ -18,6 +18,7 @@ import 'package:rafiq/data/reading_store.dart';
 import 'package:rafiq/data/settings.dart';
 import 'package:rafiq/data/study_text.dart';
 import 'package:rafiq/data/surah_names.dart';
+import 'package:rafiq/services/reminders.dart';
 import 'package:rafiq/services/screen_awake.dart';
 import 'package:rafiq/services/server_health.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -119,6 +120,28 @@ class FakeSharer implements Sharer {
       images.add((bytes: png.length, fileName: fileName, text: text));
 }
 
+/// The phone's notifications: what was asked and what is scheduled.
+class FakeReminders implements Reminders {
+  bool allow = true;
+  int asked = 0;
+  int replaced = 0;
+  List<Reminder> scheduled = const [];
+  String? channel;
+
+  @override
+  Future<bool> requestPermission() async {
+    asked++;
+    return allow;
+  }
+
+  @override
+  Future<void> replace(List<Reminder> reminders, {required String channelName}) async {
+    replaced++;
+    scheduled = List.of(reminders);
+    channel = channelName;
+  }
+}
+
 class FakeScreenAwake implements ScreenAwake {
   bool enabled = false;
 
@@ -190,6 +213,7 @@ class Harness {
   final audio = FakeAudioSource();
   final awake = FakeScreenAwake();
   final sharer = FakeSharer();
+  final reminders = FakeReminders();
   final engines = <FakeEngine>[];
   final addresses = <String>[];
   ServerHealth health = const ServerHealth.ok(latency: Duration(milliseconds: 12), asr: true, device: 'cuda');
@@ -220,6 +244,7 @@ class Harness {
         audioSourceProvider.overrideWithValue(audio),
         screenAwakeProvider.overrideWithValue(awake),
         sharerProvider.overrideWithValue(sharer),
+        remindersProvider.overrideWithValue(reminders),
         clockProvider.overrideWithValue(() => now),
         healthCheckerProvider.overrideWithValue((_) async => health),
         engineFactoryProvider.overrideWithValue((address) {

@@ -8,6 +8,7 @@ import '../../app/providers.dart';
 import '../../app/theme.dart';
 import '../../data/reading_store.dart';
 import '../../l10n/l10n.dart';
+import '../progress/reminder.dart';
 
 /// "Count this reading?": the pages that stayed on screen long enough to
 /// read, by day, each a toggle (all on). *Count* adds the ticked ones to the
@@ -31,6 +32,8 @@ Future<void> showReadingReview(BuildContext context, WidgetRef ref) async {
             ? l.reviewCount(0)
             : l.reviewCounted(counted.length)),
   ));
+  // The first reading counted: a good moment to offer the daily reminder.
+  if (ok && counted.length > 0 && context.mounted) await maybeOfferReminder(context, ref);
 }
 
 class _ReviewSheet extends ConsumerStatefulWidget {

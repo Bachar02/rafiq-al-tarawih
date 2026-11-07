@@ -10,12 +10,14 @@ import '../core/recognition/recognition_engine.dart';
 import '../data/khatm.dart';
 import '../data/note.dart';
 import '../data/quran.dart';
+import '../data/reading_stats.dart';
 import '../data/reading_store.dart';
 import '../data/settings.dart';
 import '../data/study_text.dart';
 import '../data/surah_names.dart';
 import '../l10n/l10n.dart';
 import '../features/khatm/khatm_controller.dart';
+import '../features/progress/reminder.dart';
 import '../features/listen/listen_controller.dart';
 import '../features/notes/notes_controller.dart';
 import '../features/listen/listen_state.dart';
@@ -24,6 +26,7 @@ import '../features/reader/bookmarks.dart';
 import '../features/reader/reading_position.dart';
 import '../features/search/quran_search.dart';
 import '../services/mic_audio_source.dart';
+import '../services/reminders.dart';
 import '../services/screen_awake.dart';
 import '../services/server_health.dart';
 import '../services/server_recognition_engine.dart';
@@ -104,6 +107,19 @@ final readingSessionProvider = NotifierProvider<ReadingSessionController, Readin
 /// Pages read each day, as the user counted them: the daily goal.
 final readingProgressProvider = NotifierProvider<ReadingProgressController, ReadingLog>(ReadingProgressController.new);
 
+/// What the reading chart shows: pages per day (counted, and waiting for
+/// review), runs and totals, as of the last change.
+final readingStatsProvider = Provider<ReadingStats>(
+  (ref) => ReadingStats(
+    ref.watch(readingProgressProvider),
+    ref.watch(readingSessionProvider.select((s) => s.pending)),
+    ref.read(clockProvider)(),
+  ),
+);
+
+/// Keeps the scheduled daily reminders in step with the app.
+final reminderSyncProvider = Provider<ReminderSync>(ReminderSync.new);
+
 /// The khatm plan, if one is running, and the finished khatms.
 final khatmProvider = NotifierProvider<KhatmController, KhatmBook>(KhatmController.new);
 
@@ -132,6 +148,9 @@ final audioSourceProvider = Provider<AudioSource>((ref) {
 final engineFactoryProvider = Provider<RecognitionEngineFactory>(
   (ref) => (address) => ServerRecognitionEngine(address),
 );
+
+/// The phone's notifications, for the daily reading reminder (tests override it).
+final remindersProvider = Provider<Reminders>((ref) => LocalReminders());
 
 /// The phone's share sheet (tests override it).
 final sharerProvider = Provider<Sharer>((ref) => const PlatformSharer());

@@ -1144,4 +1144,162 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get listenComingSoon => 'الاستماع إلى التلاوة قريبًا.';
+
+  @override
+  String get yourReading => 'قراءتك';
+
+  @override
+  String readingRun(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count يوم متتالٍ',
+      many: '$count يومًا متتاليًا',
+      few: '$count أيام متتالية',
+      two: 'يومان متتاليان',
+      one: 'يوم واحد متتالٍ',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get readingRunNone => 'اقرأ صفحة اليوم لتبدأ.';
+
+  @override
+  String readingBestRun(String days) {
+    return 'الأطول: $days';
+  }
+
+  @override
+  String daysCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count يوم',
+      many: '$count يومًا',
+      few: '$count أيام',
+      two: 'يومان',
+      one: 'يوم واحد',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String daysReadThisYear(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count يوم قراءة هذا العام',
+      many: '$count يوم قراءة هذا العام',
+      few: '$count أيام قراءة هذا العام',
+      two: 'يوما قراءة هذا العام',
+      one: 'يوم قراءة واحد هذا العام',
+      zero: 'لا أيام قراءة هذا العام بعد',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get pagesThisMonth => 'صفحات هذا الشهر';
+
+  @override
+  String get daysThisYear => 'أيام القراءة هذا العام';
+
+  @override
+  String dayPages(String day, String pages) {
+    return '$day: $pages';
+  }
+
+  @override
+  String get lastSevenDays => 'آخر 7 أيام';
+
+  @override
+  String get chartLess => 'أقل';
+
+  @override
+  String get chartMore => 'أكثر';
+
+  @override
+  String semReadingGrid(int weeks, String days) {
+    return 'مخطط القراءة، آخر $weeks أسبوعًا: $days.';
+  }
+
+  @override
+  String daysWithReading(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count يوم قراءة',
+      many: '$count يوم قراءة',
+      few: '$count أيام قراءة',
+      two: 'يوما قراءة',
+      one: 'يوم قراءة واحد',
+      zero: 'لا يوم قراءة',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get consistencyHadith => '«أحبُّ الأعمالِ إلى اللهِ أدومُها وإن قلَّ»';
+
+  @override
+  String get consistencyHadithSource => 'متفق عليه';
+
+  @override
+  String get dailyReminder => 'تذكير يومي';
+
+  @override
+  String dailyReminderDetail(String time) {
+    return 'حوالي $time، في الأيام التي لم تقرأ فيها بعد';
+  }
+
+  @override
+  String get dailyReminderOff => 'إشعار في الأيام التي لم تقرأ فيها بعد';
+
+  @override
+  String get reminderTime => 'وقت التذكير';
+
+  @override
+  String get reminderOfferTitle => 'تذكير كل يوم؟';
+
+  @override
+  String get reminderOfferBody =>
+      'يستطيع رفيق أن يذكّرك كل يوم في الوقت الذي تختاره، ولا يذكّرك في الأيام التي قرأت فيها.';
+
+  @override
+  String reminderOfferAt(String time) {
+    return 'ذكّرني عند $time';
+  }
+
+  @override
+  String get reminderOtherTime => 'وقت آخر';
+
+  @override
+  String reminderSet(String time) {
+    return 'ضُبط التذكير عند $time';
+  }
+
+  @override
+  String get reminderBlocked => 'الإشعارات متوقفة لرفيق. يمكنك تفعيلها من إعدادات الهاتف.';
+
+  @override
+  String get reminderChannel => 'تذكير القراءة اليومية';
+
+  @override
+  String get reminderTitle => 'وِردك اليومي';
+
+  @override
+  String reminderBody(String surah, int page) {
+    return 'تابع من $surah، الصفحة $page.';
+  }
+
+  @override
+  String reminderBodyTarget(String pages, String surah, int page) {
+    return '$pages اليوم. تابع من $surah، الصفحة $page.';
+  }
+
+  @override
+  String goalKhatmToday(String pages) {
+    return 'الختمة اليوم: $pages';
+  }
 }

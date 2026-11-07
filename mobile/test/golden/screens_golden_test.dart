@@ -15,6 +15,7 @@ import 'package:rafiq/core/recognition/models.dart';
 import 'package:rafiq/data/khatm.dart';
 import 'package:rafiq/data/note.dart';
 import 'package:rafiq/data/reading_store.dart';
+import 'package:rafiq/features/progress/progress_screen.dart' show ReadingCard;
 
 import '../support/app_nav.dart';
 import '../support/fakes.dart';
@@ -368,6 +369,50 @@ void main() {
       await launch(tester, prefs: {...readingAt(2, 255), 'theme_mode': 'dark', 'language': 'ar'}, taraweeh: false);
       await study255(tester, 'تفسير');
       await expectGolden(tester, 'ar_study_tafsir');
+    });
+
+    /// Four months of reading before 4 November 2026: most days, a few
+    /// missed, some long, and a run of five days up to yesterday.
+    Map<String, Object> season() {
+      final days = <String, List<int>>{};
+      for (var i = 1; i <= 120; i++) {
+        final day = DateTime(2026, 11, 4 - i);
+        final pages = i <= 5 ? 6 + i : const [0, 3, 8, 12, 0, 20, 5, 2, 15, 0, 4, 9][i % 12];
+        if (pages > 0) days[ReadingLog.dayKey(day)] = [for (var p = 1; p <= pages; p++) (i * 7 + p) % 604 + 1];
+      }
+      return {
+        'reading_log.v1': jsonEncode({'v': 1, 'days': days})
+      };
+    }
+
+    Future<void> openReading(WidgetTester tester, String bookmarks) async {
+      await settle(tester);
+      await tapNav(tester, bookmarks);
+      await tester.tap(find.byType(ReadingCard));
+      await settle(tester);
+    }
+
+    testWidgets('reading chart: a season of reading, light', (tester) async {
+      await launch(
+        tester,
+        prefs: {...season(), 'theme_mode': 'light', 'daily_goal_pages': 10, 'reminder_on': true},
+        taraweeh: false,
+      );
+      await openReading(tester, 'Bookmarks');
+      await expectGolden(tester, 'reading_chart');
+    });
+
+    testWidgets('reading chart, Arabic interface: right to left, dark', (tester) async {
+      await launch(tester, prefs: {...season(), 'theme_mode': 'dark', 'language': 'ar'}, taraweeh: false);
+      await openReading(tester, 'العلامات');
+      await expectGolden(tester, 'ar_reading_chart');
+    });
+
+    testWidgets('Bookmarks: the reading card above the khatm and places, light', (tester) async {
+      await launch(tester, prefs: {...season(), 'theme_mode': 'light'}, taraweeh: false);
+      await settle(tester);
+      await tapNav(tester, 'Bookmarks');
+      await expectGolden(tester, 'reading_card');
     });
 
     testWidgets('reader: 320×568 at the largest Quran text, in juz 30', (tester) async {
