@@ -687,3 +687,61 @@ Built on `feat/khatm-notes` from `master`, in six commits as §21.4 planned, eac
 1. Native review of the new French and Arabic strings, and of the French and Arabic source names and credits.
 2. Ask the Tafsir Center for the English Mukhtasar.
 3. Optional: a second translation per language (Rowwad in English, Rachid Maach in French), one `texts.json` entry each.
+
+## 23. Build 0.5 plan: the reading chart and a daily reminder (agreed 2026-11-07)
+
+**Goal:** a reason to open Rafiq every day, without pressure. The owner chose:
+- **A gentle run:** "5 days in a row" and the best run. There are no flames and no "you lost your streak" message: a missed day is just an empty square, and today does not break the run until it is over.
+- **An opt-in daily reminder:** a local notification at a time the user picks. It is skipped on days the user has already read.
+- **Placement:** a card at the top of the Bookmarks tab, which opens a full Reading screen.
+
+**What counts:** pages in the daily reading log (confirmed in the review), plus pages waiting for review, the same as "Today" in the reader bar. The khatm page map is for corrections, so it does not count.
+
+**Chart:**
+- A grid of days, one column per week, the newest on the inline end. Each day is shaded by pages read: none, 1–4, 5–9, 10–19, or 20+ (a juz).
+- The card shows the weeks that fit and the run.
+- The Reading screen shows 53 weeks with month names, a tapped day's count, the last 7 days against the goal, the run and best run, days read this year, and pages this month. It also has the reminder setting and the hadith on consistency (al-Bukhari and Muslim).
+
+**Reminder** (`flutter_local_notifications` 22.x, which needs AGP 8.11; v23 needs AGP 9):
+- **Schedule:** up to 7 one-time notifications, one per day at the chosen time (default 20:00), starting tomorrow if today is already read. Each says the day's target and where to continue. They are rescheduled whenever the app is shown or hidden, so the text stays true.
+- **Stops after 7 days:** a user away for a week is not nagged.
+- **Offered once,** after the first counted reading, and in Settings and on the Reading screen.
+- **Permission:** Android 13+ asks for notification permission. If it is refused, the reminder stays off and the app says where to turn notifications on.
+- **No exact alarms:** they need a Play Store permission meant for alarm-clock apps. Inexact delivery comes within an hour of the time, so the setting says "around". Nothing leaves the phone.
+
+**Same checks as before:** three languages, accessibility in both themes and at 200% text, goldens, and an emulator run of a real notification.
+
+### 23.1 Results (build 0.5, 2026-11-07)
+
+Built on `feat/reading-chart` from `master` (after PR #2).
+
+- **Data:** `ReadingStats` (`lib/data/reading_stats.dart`) computes pages per day (log plus pending, each page once), the current and best run, days this year, and pages this month. Day arithmetic is by calendar, so it is safe across daylight saving.
+- **Chart** (`features/progress/`):
+  - `ReadingGrid` is a painted grid. Weeks start on the locale's first day. It mirrors in right-to-left layouts, rings today, and labels months on the full screen.
+  - Each bar of the last 7 days is its own screen-reader item. The test caught them merging into one.
+- **Placement:**
+  - The card at the top of Bookmarks opens the Reading screen.
+  - The reader bar is not an entry point after all. The whole bar is already one tap target (Surahs), and a separate small "Today" target would fail the 48 dp tap-target test.
+- **Goal line:** the daily goal, or "Khatm today: N pages" when a khatm sets the day's target.
+- **Reminder:**
+  - Built on `flutter_local_notifications` 22.3.3 and `timezone`. Core library desugaring is on, and the manifest has the boot and package-replaced receivers.
+  - It uses a monochrome book icon, kept from resource shrinking by `res/raw/keep.xml`.
+  - Each reminder is the local wall-clock time converted to an instant, so no time-zone database or plugin is needed.
+  - Rescheduled when the app is shown or hidden (`AppLifecycleListener` in the shell). Nothing is touched while the reminder is off.
+- **Arabic dates:** they now use the same Western digits as the rest of the Arabic interface (`DateFormat.useNativeDigitsByDefaultFor('ar', false)`). The hadith is not set in italics in Arabic.
+- **Tests:**
+  - **Count:** 348 (315 before).
+  - **Goldens:** 35 (new: the Reading screen in English light and Arabic dark, and the Bookmarks card; re-rendered: Bookmarks and both Settings).
+  - **Accessibility:** both themes and 200% text. 200% caught the legend overflowing, and it now wraps.
+  - **Test fixes:** one older test had to follow Android's real lifecycle order, which `AppLifecycleListener` asserts.
+- **Strings:** 31 new strings in three languages.
+- **Emulator** (Pixel XL API 36, release build over 0.4):
+  - The card and the screen matched the log.
+  - Android 16 asked for notification permission, and the app scheduled 7 alarms.
+  - With today unread, a reminder set for 18:54 arrived at 18:54: "Your daily reading — 22 pages today. Continue at Al-Hajj, page 340." Page 340 is the khatm's next unread page.
+  - Tapping it opened Rafiq.
+  - Alarms more than a few minutes away get Android's one-hour window, hence "around" in the setting.
+
+**Open after 0.5:**
+1. Native review of the new French and Arabic strings, including the hadith wording (al-Bukhari and Muslim; Arabic «أحب الأعمال إلى الله أدومها وإن قل»).
+2. Reading from a paper mushaf does not reach the chart. A way to add pages read elsewhere could come later.
