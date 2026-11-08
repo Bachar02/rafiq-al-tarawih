@@ -1265,4 +1265,19 @@ class AppLocalizationsFr extends AppLocalizations {
   String goalKhatmToday(String pages) {
     return 'Khatm aujourd’hui : $pages';
   }
+
+  @override
+  String get backToNotes => 'Retour aux notes';
+
+  @override
+  String get backToBookmarks => 'Retour aux signets';
+
+  @override
+  String get backToSurahs => 'Retour aux sourates';
+
+  @override
+  String get backToKhatm => 'Retour au khatm';
+
+  @override
+  String get backToSearch => 'Retour à la recherche';
 }

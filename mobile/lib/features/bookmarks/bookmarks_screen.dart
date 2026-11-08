@@ -23,22 +23,16 @@ import '../reader/reading_session.dart';
 /// order). **Notes:** the user's notes, newest edit first.
 ///
 /// Tap to read there; swipe (or the remove button) to delete, with Undo. A
-/// removal that cannot be saved does not disappear.
-class BookmarksScreen extends ConsumerStatefulWidget {
+/// removal that cannot be saved does not disappear. The tab opens on the
+/// view the user left ([bookmarksViewProvider]), so "Back to notes" from the
+/// reader lands on the notes, scrolled where they were.
+class BookmarksScreen extends ConsumerWidget {
   const BookmarksScreen({super.key});
 
   @override
-  ConsumerState<BookmarksScreen> createState() => _BookmarksScreenState();
-}
-
-enum _View { bookmarks, notes }
-
-class _BookmarksScreenState extends ConsumerState<BookmarksScreen> {
-  _View _view = _View.bookmarks;
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l = context.l10n;
+    final view = ref.watch(bookmarksViewProvider);
     final quranOrder = ref.watch(settingsProvider.select((s) => s.bookmarksInQuranOrder));
     final bookmarks = ref.watch(bookmarksProvider.select((b) => b.length));
     return Scaffold(
@@ -46,7 +40,7 @@ class _BookmarksScreenState extends ConsumerState<BookmarksScreen> {
         automaticallyImplyLeading: false,
         title: Text(l.navBookmarks),
         actions: [
-          if (_view == _View.bookmarks && bookmarks > 1)
+          if (view == BookmarksView.bookmarks && bookmarks > 1)
             PopupMenuButton<bool>(
               tooltip: l.sortBookmarks,
               icon: const Icon(Icons.sort),
@@ -65,24 +59,24 @@ class _BookmarksScreenState extends ConsumerState<BookmarksScreen> {
           // In the body, not the app bar: it grows with large system text.
           Padding(
             padding: const EdgeInsets.fromLTRB(RubricSpace.gutter, RubricSpace.s1, RubricSpace.gutter, 0),
-            child: SegmentedButton<_View>(
+            child: SegmentedButton<BookmarksView>(
               showSelectedIcon: false,
               segments: [
                 ButtonSegment(
-                  value: _View.bookmarks,
+                  value: BookmarksView.bookmarks,
                   icon: const Icon(Icons.bookmark_outline, size: 18),
                   label: Text(l.navBookmarks),
                 ),
-                ButtonSegment(value: _View.notes, icon: const Icon(noteIcon, size: 18), label: Text(l.notes)),
+                ButtonSegment(value: BookmarksView.notes, icon: const Icon(noteIcon, size: 18), label: Text(l.notes)),
               ],
-              selected: {_view},
-              onSelectionChanged: (s) => setState(() => _view = s.first),
+              selected: {view},
+              onSelectionChanged: (s) => ref.read(bookmarksViewProvider.notifier).select(s.first),
             ),
           ),
           Expanded(
-            child: switch (_view) {
-              _View.bookmarks => const _BookmarksList(),
-              _View.notes => const _NotesList(),
+            child: switch (view) {
+              BookmarksView.bookmarks => const _BookmarksList(),
+              BookmarksView.notes => const _NotesList(),
             },
           ),
         ],
@@ -109,7 +103,9 @@ class _BookmarksList extends ConsumerWidget {
     final plan = ref.watch(khatmProvider.select((b) => b.active));
     final pending = ref.watch(readingSessionProvider.select((s) => s.pending));
 
-    void open(int verseId, {bool mark = true}) => ref.read(readerRequestsProvider.notifier).open(verseId, mark: mark);
+    void open(int verseId, {bool mark = true}) => ref
+        .read(readerRequestsProvider.notifier)
+        .open(verseId, mark: mark, from: const TabOrigin(HomeTab.bookmarks, view: BookmarksView.bookmarks));
 
     Future<bool> remove(Bookmark bookmark) async {
       final controller = ref.read(bookmarksProvider.notifier);
@@ -129,6 +125,8 @@ class _BookmarksList extends ConsumerWidget {
     }
 
     return ListView(
+      // Back from the reader, the list is where the user left it.
+      key: const PageStorageKey('bookmarks'),
       padding: const EdgeInsets.only(bottom: RubricSpace.s6),
       children: [
         const Padding(
@@ -216,6 +214,7 @@ class _NotesList extends ConsumerWidget {
     }
 
     return ListView(
+      key: const PageStorageKey('notes'),
       padding: const EdgeInsets.only(bottom: RubricSpace.s6),
       children: [
         _Section(l.notesCount(notes.length)),
@@ -229,7 +228,9 @@ class _NotesList extends ConsumerWidget {
               confirmDismiss: (_) => delete(n),
               background: _SwipeBackground(Icons.delete_outline),
               child: ListTile(
-                onTap: () => ref.read(readerRequestsProvider.notifier).open(n.verseId, mark: true),
+                onTap: () => ref
+                    .read(readerRequestsProvider.notifier)
+                    .open(n.verseId, mark: true, from: const TabOrigin(HomeTab.bookmarks, view: BookmarksView.notes)),
                 contentPadding: const EdgeInsetsDirectional.only(start: RubricSpace.s4, end: RubricSpace.s2),
                 title:
                     Text(verseReference(quran.verse(n.verseId), names), maxLines: 1, overflow: TextOverflow.ellipsis),

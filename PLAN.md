@@ -745,3 +745,13 @@ Built on `feat/reading-chart` from `master` (after PR #2).
 **Open after 0.5:**
 1. Native review of the new French and Arabic strings, including the hadith wording (al-Bukhari and Muslim; Arabic «أحب الأعمال إلى الله أدومها وإن قل»).
 2. Reading from a paper mushaf does not reach the chart. A way to add pages read elsewhere could come later.
+
+## 24. The way back from the reader (2026-11-08, from the owner's testing)
+
+The owner tapped a note, landed on its ayah, and had no way back to the notes. The same was true of every jump into the reader: a bookmark, the Surahs tab, a search result, the khatm planner's Continue. The phone's back button left the app.
+
+- **What changed:** a jump into the reader now says where it came from (`ReaderOrigin` in `lib/app/navigation.dart`). While there is a way back, the reader shows a pill at the foot of the text ("Back to notes", "Back to bookmarks", "Back to surahs", "Back to search", "Back to the khatm"), and the phone's back button does the same.
+- **Where it lands:** the Notes view (the Bookmarks tab now remembers its view), the list scrolled where it was, the search with its query and results, the khatm planner over the tab it came from.
+- **The reading place:** if the user only looked (still on the page the jump landed on), the reading position goes back to where it was. If they read on, the new place is kept.
+- **When it ends:** when the user takes it, makes another jump, or leaves the Read tab. One level: a new jump replaces the previous way back.
+- **Tests:** 9 widget tests (`test/features/reader_return_test.dart`) and 2 goldens (English light after a note, Arabic dark after a search). 5 new strings in three languages.

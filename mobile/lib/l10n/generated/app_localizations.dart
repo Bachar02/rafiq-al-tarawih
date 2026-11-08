@@ -2048,6 +2048,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Khatm today: {pages}'**
   String goalKhatmToday(String pages);
+
+  /// No description provided for @backToNotes.
+  ///
+  /// In en, this message translates to:
+  /// **'Back to notes'**
+  String get backToNotes;
+
+  /// No description provided for @backToBookmarks.
+  ///
+  /// In en, this message translates to:
+  /// **'Back to bookmarks'**
+  String get backToBookmarks;
+
+  /// No description provided for @backToSurahs.
+  ///
+  /// In en, this message translates to:
+  /// **'Back to surahs'**
+  String get backToSurahs;
+
+  /// No description provided for @backToKhatm.
+  ///
+  /// In en, this message translates to:
+  /// **'Back to the khatm'**
+  String get backToKhatm;
+
+  /// No description provided for @backToSearch.
+  ///
+  /// In en, this message translates to:
+  /// **'Back to search'**
+  String get backToSearch;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

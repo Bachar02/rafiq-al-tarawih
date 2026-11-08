@@ -275,7 +275,10 @@ class _ActivePlan extends ConsumerWidget {
         const SizedBox(height: RubricSpace.s4),
         FilledButton.icon(
           onPressed: () {
-            ref.read(readerRequestsProvider.notifier).open(quran.pages.start(next));
+            // Back from the reader returns here, over the tab it came from.
+            ref
+                .read(readerRequestsProvider.notifier)
+                .open(quran.pages.start(next), from: KhatmOrigin(ref.read(homeTabProvider)));
             Navigator.of(context).popUntil((route) => route.isFirst);
           },
           icon: const Icon(Icons.menu_book_outlined, size: 20),

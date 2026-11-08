@@ -1259,4 +1259,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String goalKhatmToday(String pages) {
     return 'Khatm today: $pages';
   }
+
+  @override
+  String get backToNotes => 'Back to notes';
+
+  @override
+  String get backToBookmarks => 'Back to bookmarks';
+
+  @override
+  String get backToSurahs => 'Back to surahs';
+
+  @override
+  String get backToKhatm => 'Back to the khatm';
+
+  @override
+  String get backToSearch => 'Back to search';
 }

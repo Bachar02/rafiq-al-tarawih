@@ -325,5 +325,10 @@
   "reminderTitle": "وِردك اليومي",
   "reminderBody": "تابع من {surah}، الصفحة {page}.",
   "reminderBodyTarget": "{pages} اليوم. تابع من {surah}، الصفحة {page}.",
-  "goalKhatmToday": "الختمة اليوم: {pages}"
+  "goalKhatmToday": "الختمة اليوم: {pages}",
+  "backToNotes": "العودة إلى الملاحظات",
+  "backToBookmarks": "العودة إلى العلامات",
+  "backToSurahs": "العودة إلى السور",
+  "backToKhatm": "العودة إلى الختمة",
+  "backToSearch": "العودة إلى البحث"
 }

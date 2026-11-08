@@ -1302,4 +1302,19 @@ class AppLocalizationsAr extends AppLocalizations {
   String goalKhatmToday(String pages) {
     return 'الختمة اليوم: $pages';
   }
+
+  @override
+  String get backToNotes => 'العودة إلى الملاحظات';
+
+  @override
+  String get backToBookmarks => 'العودة إلى العلامات';
+
+  @override
+  String get backToSurahs => 'العودة إلى السور';
+
+  @override
+  String get backToKhatm => 'العودة إلى الختمة';
+
+  @override
+  String get backToSearch => 'العودة إلى البحث';
 }

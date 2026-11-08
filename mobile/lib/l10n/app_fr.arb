@@ -325,5 +325,10 @@
   "reminderTitle": "Votre lecture du jour",
   "reminderBody": "Reprenez à {surah}, page {page}.",
   "reminderBodyTarget": "{pages} aujourd’hui. Reprenez à {surah}, page {page}.",
-  "goalKhatmToday": "Khatm aujourd’hui : {pages}"
+  "goalKhatmToday": "Khatm aujourd’hui : {pages}",
+  "backToNotes": "Retour aux notes",
+  "backToBookmarks": "Retour aux signets",
+  "backToSurahs": "Retour aux sourates",
+  "backToKhatm": "Retour au khatm",
+  "backToSearch": "Retour à la recherche"
 }

@@ -949,5 +949,10 @@
         "type": "String"
       }
     }
-  }
+  },
+  "backToNotes": "Back to notes",
+  "backToBookmarks": "Back to bookmarks",
+  "backToSurahs": "Back to surahs",
+  "backToKhatm": "Back to the khatm",
+  "backToSearch": "Back to search"
 }

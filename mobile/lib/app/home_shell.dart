@@ -83,7 +83,8 @@ class _HomeShellState extends ConsumerState<HomeShell> {
     return PopScope(
       canPop: tab == HomeTab.read,
       onPopInvokedWithResult: (didPop, _) {
-        if (!didPop) tabs.select(HomeTab.read);
+        // On the Read tab, the reader's way back (if any) handles it.
+        if (!didPop && tab != HomeTab.read) tabs.select(HomeTab.read);
       },
       child: Scaffold(
         body: Stack(
@@ -146,7 +147,8 @@ class _SurahsTab extends ConsumerWidget {
         appBar: AppBar(automaticallyImplyLeading: false, title: Text(context.l10n.navSurahs)),
         body: QuranIndex(
           current: ref.read(readingPositionProvider),
-          onOpen: (verse) => ref.read(readerRequestsProvider.notifier).open(verse),
+          onOpen: (verse) =>
+              ref.read(readerRequestsProvider.notifier).open(verse, from: const TabOrigin(HomeTab.surahs)),
         ),
       );
 }
