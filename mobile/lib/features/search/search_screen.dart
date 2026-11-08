@@ -10,18 +10,34 @@ import 'quran_search.dart';
 import '../../l10n/l10n.dart';
 
 /// Search the Quran: one field for references, pages, juz, surah names and
-/// Arabic text. Pops with the chosen verse id.
+/// Arabic text. Pops with the chosen verse and what was typed, so the reader
+/// can bring the user back to these results.
 class SearchScreen extends ConsumerStatefulWidget {
-  const SearchScreen({super.key});
+  const SearchScreen({super.key, this.query = ''});
+
+  /// Already typed when the screen opens (back from a result).
+  final String query;
 
   @override
   ConsumerState<SearchScreen> createState() => _SearchScreenState();
 }
 
+/// A result the user chose, and the search that found it.
+typedef SearchChoice = ({int verseId, String query});
+
 class _SearchScreenState extends ConsumerState<SearchScreen> {
   final _field = TextEditingController();
   String _query = '';
   SearchResults _results = SearchResults.empty;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.query.isEmpty) return;
+    _field.text = widget.query;
+    _query = widget.query;
+    _results = ref.read(quranSearchProvider).search(widget.query);
+  }
 
   @override
   void dispose() {
@@ -38,7 +54,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     });
   }
 
-  void _open(int verseId) => Navigator.of(context).pop(verseId);
+  void _open(int verseId) => Navigator.of(context).pop<SearchChoice>((verseId: verseId, query: _query));
 
   @override
   Widget build(BuildContext context) {

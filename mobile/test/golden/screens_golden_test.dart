@@ -10,6 +10,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:rafiq/app/app.dart';
+import 'package:rafiq/app/components/place_tile.dart';
 import 'package:rafiq/app/components/quran_text.dart';
 import 'package:rafiq/core/recognition/models.dart';
 import 'package:rafiq/data/khatm.dart';
@@ -337,6 +338,42 @@ void main() {
       await tester.tap(find.text('Notes'));
       await settle(tester);
       await expectGolden(tester, 'notes');
+    });
+
+    testWidgets('reader after a note: "Back to notes", light', (tester) async {
+      final quran = loadQuran();
+      await launch(
+        tester,
+        prefs: notesPrefs([
+          Note(
+            verseId: quran.verseId(2, 255)!,
+            text: 'Read after every prayer',
+            createdAt: DateTime(2026, 11, 1),
+            updatedAt: DateTime(2026, 11, 3),
+          ),
+        ]),
+        taraweeh: false,
+      );
+      await tapNav(tester, 'Bookmarks');
+      await tester.tap(find.text('Notes'));
+      await settle(tester);
+      await tester.tap(find.text('Read after every prayer'));
+      // Past the two-second mark on the ayah.
+      await tester.pump(const Duration(seconds: 3));
+      await settle(tester);
+      await expectGolden(tester, 'reader_back_to_notes');
+    });
+
+    testWidgets('Arabic interface: "Back to search", right to left, dark', (tester) async {
+      await launch(tester, prefs: {'language': 'ar', 'theme_mode': 'dark'}, taraweeh: false);
+      await tester.tap(find.byTooltip('البحث في القرآن'));
+      await settle(tester);
+      await tester.enterText(find.byType(TextField), '2:255');
+      await settle(tester);
+      await tester.tap(find.byType(PlaceTile).first);
+      await tester.pump(const Duration(seconds: 3));
+      await settle(tester);
+      await expectGolden(tester, 'ar_back_to_search');
     });
 
     testWidgets('ayah sheet: bookmark, share, copy, translation and tafsir', (tester) async {

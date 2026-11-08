@@ -62,9 +62,10 @@ abstract final class AppRoutes {
         _route<void>(context, studyName, (_) => StudyScreen(verseId: verseId, kind: kind)),
       );
 
-  /// Search the Quran; returns the chosen verse id.
-  static Future<int?> search(BuildContext context) =>
-      Navigator.of(context).push<int>(_route<int>(context, searchName, (_) => const SearchScreen()));
+  /// Search the Quran, starting from [query]; returns the chosen verse and
+  /// the search that found it.
+  static Future<SearchChoice?> search(BuildContext context, {String query = ''}) => Navigator.of(context)
+      .push<SearchChoice>(_route<SearchChoice>(context, searchName, (_) => SearchScreen(query: query)));
 }
 
 /// Taraweeh mode's theme: dark whatever the reader uses, unless the user

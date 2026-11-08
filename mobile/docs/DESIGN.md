@@ -53,6 +53,16 @@ survive); the other tabs are rebuilt on each visit so their lists open at the cu
 from any tab returns to Read; back from Read leaves the app. Other tabs open places in the reader
 through `readerRequestsProvider` (`lib/app/navigation.dart`), never by reaching into its state.
 
+**The way back.** A jump into the reader from somewhere else (a note, a bookmark, the Surahs tab,
+a search result, the khatm planner's Continue) says where it came from. The reader then shows a
+pill at the foot of the text ("Back to notes", "Back to search", …), and the phone's back button
+does the same thing instead of leaving the app. Going back lands where the user was: the Notes
+view rather than Bookmarks, the list scrolled where it was, the search with its query and results,
+or the khatm planner over the tab it was opened from. If the user only looked (still on the page
+the jump landed on), the reading position returns to where it was before; if they read on, the new
+place is kept. The way back ends when the user takes it, makes another jump, or leaves the Read
+tab. There is one level: a new jump replaces the previous way back.
+
 **Read:**
 ```
 ┌───────────────────────────────┐

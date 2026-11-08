@@ -19,6 +19,7 @@ import '../notes/note_sheet.dart';
 import 'package:flutter/services.dart';
 import '../../app/navigation.dart';
 import 'widgets/page_scrubber.dart';
+import 'widgets/return_button.dart';
 
 /// The Read tab: the Quran, open where the user stopped reading.
 ///
@@ -101,7 +102,15 @@ class ReaderScreenState extends ConsumerState<ReaderScreen> with WidgetsBindingO
   }
 
   /// Open the text at [verseId] and mark it for a moment, so the eye finds it.
-  void openAt(int verseId, {bool mark = true}) {
+  /// A jump [from] another place offers the way back there.
+  void openAt(int verseId, {bool mark = true, ReaderOrigin? from}) {
+    if (from != null) {
+      ref.read(readerReturnProvider.notifier).set(ReaderReturn(
+            to: from,
+            previousVerse: ref.read(readingPositionProvider),
+            landedPage: ref.read(quranProvider).pageOf(verseId),
+          ));
+    }
     if (_layout == ReadingLayout.pages) {
       _pages.jumpToVerse(verseId);
     } else {
@@ -152,9 +161,31 @@ class ReaderScreenState extends ConsumerState<ReaderScreen> with WidgetsBindingO
     }
   }
 
-  Future<void> _search() async {
-    final verse = await AppRoutes.search(context);
-    if (verse != null && mounted) openAt(verse);
+  Future<void> _search({String query = ''}) async {
+    final choice = await AppRoutes.search(context, query: query);
+    if (choice != null && mounted) openAt(choice.verseId, from: SearchOrigin(choice.query));
+  }
+
+  /// Back to where the last jump came from (the button, or the phone's back).
+  /// If the user only looked (still on the page the jump landed on), the
+  /// reading position goes back to where it was.
+  void _goBack() {
+    final back = ref.read(readerReturnProvider);
+    if (back == null) return;
+    ref.read(readerReturnProvider.notifier).clear();
+    final quran = ref.read(quranProvider);
+    if (quran.pageOf(ref.read(readingPositionProvider)) == back.landedPage) openAt(back.previousVerse, mark: false);
+    final tabs = ref.read(homeTabProvider.notifier);
+    switch (back.to) {
+      case TabOrigin(:final tab, :final view):
+        if (view != null) ref.read(bookmarksViewProvider.notifier).select(view);
+        tabs.select(tab);
+      case KhatmOrigin(:final tab):
+        tabs.select(tab);
+        unawaited(AppRoutes.khatm(context));
+      case SearchOrigin(:final query):
+        unawaited(_search(query: query));
+    }
   }
 
   Future<void> _onAyahTap(Verse verse) async {
@@ -228,87 +259,105 @@ class ReaderScreenState extends ConsumerState<ReaderScreen> with WidgetsBindingO
         ..hideCurrentSnackBar()
         ..showSnackBar(SnackBar(content: Text('${l.khatmComplete} · ${l.khatmInDays(after.finished.first.days)}')));
     });
-    // Reading time runs only while the Read tab is shown.
+    // Reading time runs only while the Read tab is shown. Leaving the tab
+    // ends the way back: the user has gone somewhere else.
     ref.listen(homeTabProvider, (_, tab) {
       _tabShown = tab == HomeTab.read;
       _syncVisible();
+      if (!_tabShown) ref.read(readerReturnProvider.notifier).clear();
     });
     // Another tab asked for a place: open it here.
     ref.listen(readerRequestsProvider, (_, request) {
-      if (request != null) openAt(request.verseId, mark: request.mark);
+      if (request != null) openAt(request.verseId, mark: request.mark, from: request.from);
     });
+    final back = ref.watch(readerReturnProvider);
+    final bottomPadding = RubricSpace.s4 + (back == null ? 0 : 64);
 
-    return Scaffold(
-      body: SafeArea(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            ReaderBar(
-              onOpenSurahs: () => ref.read(homeTabProvider.notifier).select(HomeTab.surahs),
-              onToggleLayout: _toggleLayout,
-              onSearch: _search,
-            ),
-            Expanded(
-              child: Stack(
-                children: [
-                  Positioned.fill(
-                    child: layout == ReadingLayout.pages
-                        ? MushafPageView(
-                            key: const ValueKey(ReadingLayout.pages),
-                            quran: quran,
-                            names: names,
-                            initialVerse: opening,
-                            controller: _pages,
-                            textScale: textScale,
-                            highlightedVerse: _highlighted,
-                            bookmarkedVerses: bookmarked,
-                            notedVerses: noted,
-                            onAyahTap: _onAyahTap,
-                            onAyahLongPress: _toggleBookmark,
-                            onPageChanged: (page) {
-                              position.update(quran.pages.start(page));
-                              session.showPage(page);
-                              _moved();
-                            },
-                            onUserScroll: (_) => _moved(),
-                            bottomPadding: RubricSpace.s4,
-                          )
-                        : QuranView(
-                            key: const ValueKey(ReadingLayout.scroll),
-                            quran: quran,
-                            names: names,
-                            initialVerse: opening,
-                            controller: _view,
-                            textScale: textScale,
-                            highlightedVerse: _highlighted,
-                            bookmarkedVerses: bookmarked,
-                            notedVerses: noted,
-                            onAyahTap: _onAyahTap,
-                            onAyahLongPress: _toggleBookmark,
-                            onTopVerseChanged: (verse) {
-                              position.update(verse);
-                              session.showPage(quran.pageOf(verse));
-                              _moved();
-                            },
-                            bottomPadding: RubricSpace.s4,
-                          ),
-                  ),
-                  Positioned.fill(
-                    child: Consumer(
-                      // Only the scrubber follows the position as it moves.
-                      builder: (context, ref, _) => PageScrubber(
-                        quran: quran,
-                        names: names,
-                        page: quran.pageOf(ref.watch(readingPositionProvider)),
-                        activity: _activity,
-                        onScrub: _scrubTo,
+    return PopScope(
+      // With a way back, the phone's back button takes it.
+      canPop: back == null,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) _goBack();
+      },
+      child: Scaffold(
+        body: SafeArea(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              ReaderBar(
+                onOpenSurahs: () => ref.read(homeTabProvider.notifier).select(HomeTab.surahs),
+                onToggleLayout: _toggleLayout,
+                onSearch: _search,
+              ),
+              Expanded(
+                child: Stack(
+                  children: [
+                    Positioned.fill(
+                      child: layout == ReadingLayout.pages
+                          ? MushafPageView(
+                              key: const ValueKey(ReadingLayout.pages),
+                              quran: quran,
+                              names: names,
+                              initialVerse: opening,
+                              controller: _pages,
+                              textScale: textScale,
+                              highlightedVerse: _highlighted,
+                              bookmarkedVerses: bookmarked,
+                              notedVerses: noted,
+                              onAyahTap: _onAyahTap,
+                              onAyahLongPress: _toggleBookmark,
+                              onPageChanged: (page) {
+                                position.update(quran.pages.start(page));
+                                session.showPage(page);
+                                _moved();
+                              },
+                              onUserScroll: (_) => _moved(),
+                              bottomPadding: bottomPadding,
+                            )
+                          : QuranView(
+                              key: const ValueKey(ReadingLayout.scroll),
+                              quran: quran,
+                              names: names,
+                              initialVerse: opening,
+                              controller: _view,
+                              textScale: textScale,
+                              highlightedVerse: _highlighted,
+                              bookmarkedVerses: bookmarked,
+                              notedVerses: noted,
+                              onAyahTap: _onAyahTap,
+                              onAyahLongPress: _toggleBookmark,
+                              onTopVerseChanged: (verse) {
+                                position.update(verse);
+                                session.showPage(quran.pageOf(verse));
+                                _moved();
+                              },
+                              bottomPadding: bottomPadding,
+                            ),
+                    ),
+                    Positioned.fill(
+                      child: Consumer(
+                        // Only the scrubber follows the position as it moves.
+                        builder: (context, ref, _) => PageScrubber(
+                          quran: quran,
+                          names: names,
+                          page: quran.pageOf(ref.watch(readingPositionProvider)),
+                          activity: _activity,
+                          onScrub: _scrubTo,
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                    if (back != null)
+                      Positioned(
+                        left: RubricSpace.gutter,
+                        right: RubricSpace.gutter,
+                        bottom: RubricSpace.s3,
+                        child: Center(child: ReaderReturnButton(to: back.to, onTap: _goBack)),
+                      ),
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
