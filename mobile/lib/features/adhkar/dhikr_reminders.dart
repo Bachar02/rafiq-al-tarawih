@@ -70,12 +70,15 @@ class DhikrSync {
       if (i == previous) i = (i + 1) % pool.length; // never the same one twice in a row
       previous = i;
       final dhikr = pool[i];
-      // The words, then (except in Arabic) their meaning.
+      // Collapsed, the words alone: Android puts the lines on one, and
+      // Arabic and English mixed there read in the wrong order. Expanded,
+      // their meaning under them (except in Arabic).
       final meaning = dhikr.meaning(locale.languageCode);
       reminders.add(Reminder(
         at: at,
         title: l.dhikrNotificationTitle,
-        body: meaning == null ? dhikr.arabic! : '${dhikr.arabic}\n$meaning',
+        body: dhikr.arabic!,
+        expanded: meaning == null ? null : '${dhikr.arabic}\n$meaning',
       ));
     }
     return reminders;

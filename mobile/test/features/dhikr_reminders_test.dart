@@ -116,9 +116,10 @@ void main() {
       expect(dhikr.first.title, 'Remember Allah');
       final pool = loadAdhkar().forNotifications;
       for (final r in dhikr) {
-        final lines = r.body.split('\n');
-        final shown = pool.firstWhere((d) => d.arabic == lines.first);
-        expect(lines.last, shown.meaning('en'));
+        // Collapsed, the Arabic alone (mixed with English on one line it
+        // reads in the wrong order); expanded, its meaning under it.
+        final shown = pool.firstWhere((d) => d.arabic == r.body);
+        expect(r.expanded, '${shown.arabic}\n${shown.meaning('en')}');
       }
       for (var i = 1; i < dhikr.length; i++) {
         expect(dhikr[i].body, isNot(dhikr[i - 1].body), reason: 'never twice in a row');
@@ -130,7 +131,7 @@ void main() {
       await launch(tester, {'dhikr_reminders_on': true, 'language': 'ar'});
       expect(h.reminders.dhikr, hasLength(1 + 13 * 8), reason: 'scheduled when the app opens');
       expect(h.reminders.dhikr.first.title, 'اذكر الله');
-      expect(h.reminders.dhikr.first.body, isNot(contains('\n')), reason: 'no meaning: the words are Arabic');
+      expect(h.reminders.dhikr.first.expanded, isNull, reason: 'no meaning: the words are Arabic');
       await tapNav(tester, 'المزيد');
       await tester.tap(find.text('الأذكار'));
       await settle(tester);

@@ -7,17 +7,23 @@ import 'package:timezone/timezone.dart' as tz;
 
 /// One notification: when (local time) and what it says.
 class Reminder {
-  const Reminder({required this.at, required this.title, required this.body});
+  const Reminder({required this.at, required this.title, required this.body, this.expanded});
 
   final DateTime at;
   final String title;
+
+  /// One line when collapsed.
   final String body;
 
-  @override
-  bool operator ==(Object other) => other is Reminder && other.at == at && other.title == title && other.body == body;
+  /// The whole text when expanded, if more than [body].
+  final String? expanded;
 
   @override
-  int get hashCode => Object.hash(at, title, body);
+  bool operator ==(Object other) =>
+      other is Reminder && other.at == at && other.title == title && other.body == body && other.expanded == expanded;
+
+  @override
+  int get hashCode => Object.hash(at, title, body, expanded);
 }
 
 bool sameReminders(List<Reminder> a, List<Reminder> b) {
@@ -206,7 +212,7 @@ class LocalReminders implements Reminders {
           category: AndroidNotificationCategory.reminder,
           visibility: NotificationVisibility.public,
           // The whole dhikr and its meaning when expanded.
-          styleInformation: BigTextStyleInformation(r.body),
+          styleInformation: BigTextStyleInformation(r.expanded ?? r.body),
         ),
         iOS: const DarwinNotificationDetails(presentSound: false),
       );
