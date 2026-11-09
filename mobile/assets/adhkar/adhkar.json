@@ -1,0 +1,691 @@
+{
+  "v": 1,
+  "sources": {
+    "bukhari": {"en": "al-Bukhari", "fr": "al-Bukhari", "ar": "البخاري"},
+    "muslim": {"en": "Muslim", "fr": "Muslim", "ar": "مسلم"},
+    "abu_dawud": {"en": "Abu Dawud", "fr": "Abou Dawoud", "ar": "أبو داود"},
+    "tirmidhi": {"en": "al-Tirmidhi", "fr": "at-Tirmidhi", "ar": "الترمذي"},
+    "nasai": {"en": "al-Nasa’i", "fr": "an-Nasa’i", "ar": "النسائي"},
+    "ibn_majah": {"en": "Ibn Majah", "fr": "Ibn Majah", "ar": "ابن ماجه"},
+    "ahmad": {"en": "Ahmad", "fr": "Ahmad", "ar": "أحمد"},
+    "hakim": {"en": "al-Hakim", "fr": "al-Hakim", "ar": "الحاكم"},
+    "tabarani": {"en": "al-Tabarani", "fr": "at-Tabarani", "ar": "الطبراني"}
+  },
+  "collections": {
+    "morning_evening": [
+      {
+        "id": "me01",
+        "ar": "أَعُوذُ بِاللَّهِ مِنَ الشَّيْطَانِ الرَّجِيمِ",
+        "quran": ["2:255"],
+        "count": 1,
+        "meaning": {
+          "en": "I seek refuge in Allah from Satan, the accursed.",
+          "fr": "Je cherche refuge auprès d’Allah contre Satan le maudit."
+        },
+        "source": ["nasai", "hakim"]
+      },
+      {
+        "id": "me02",
+        "quran": ["112", "113", "114"],
+        "count": 3,
+        "source": ["abu_dawud", "tirmidhi"]
+      },
+      {
+        "id": "me03",
+        "ar": "أَصْبَحْنَا وَأَصْبَحَ الْمُلْكُ لِلَّهِ، وَالْحَمْدُ لِلَّهِ، لَا إِلَهَ إِلَّا اللَّهُ وَحْدَهُ لَا شَرِيكَ لَهُ، لَهُ الْمُلْكُ وَلَهُ الْحَمْدُ وَهُوَ عَلَى كُلِّ شَيْءٍ قَدِيرٌ، رَبِّ أَسْأَلُكَ خَيْرَ مَا فِي هَذَا الْيَوْمِ وَخَيْرَ مَا بَعْدَهُ، وَأَعُوذُ بِكَ مِنْ شَرِّ مَا فِي هَذَا الْيَوْمِ وَشَرِّ مَا بَعْدَهُ، رَبِّ أَعُوذُ بِكَ مِنَ الْكَسَلِ وَسُوءِ الْكِبَرِ، رَبِّ أَعُوذُ بِكَ مِنْ عَذَابٍ فِي النَّارِ وَعَذَابٍ فِي الْقَبْرِ",
+        "count": 1,
+        "meaning": {
+          "en": "We have reached the morning, and the whole kingdom belongs to Allah. Praise be to Allah. There is no god but Allah alone, with no partner; His is the kingdom and His is the praise, and He has power over all things. My Lord, I ask You for the good of this day and the good of what follows it, and I seek refuge in You from the evil of this day and the evil of what follows it. My Lord, I seek refuge in You from laziness and the miseries of old age. My Lord, I seek refuge in You from punishment in the Fire and punishment in the grave.",
+          "fr": "Nous voici au matin, et le royaume tout entier appartient à Allah. Louange à Allah. Il n’y a de dieu qu’Allah, Seul, sans associé ; à Lui la royauté, à Lui la louange, et Il est capable de toute chose. Seigneur, je Te demande le bien de ce jour et le bien de ce qui le suit, et je cherche refuge auprès de Toi contre le mal de ce jour et le mal de ce qui le suit. Seigneur, je cherche refuge auprès de Toi contre la paresse et les maux de la vieillesse. Seigneur, je cherche refuge auprès de Toi contre un châtiment dans le Feu et un châtiment dans la tombe."
+        },
+        "evening": {
+          "ar": "أَمْسَيْنَا وَأَمْسَى الْمُلْكُ لِلَّهِ، وَالْحَمْدُ لِلَّهِ، لَا إِلَهَ إِلَّا اللَّهُ وَحْدَهُ لَا شَرِيكَ لَهُ، لَهُ الْمُلْكُ وَلَهُ الْحَمْدُ وَهُوَ عَلَى كُلِّ شَيْءٍ قَدِيرٌ، رَبِّ أَسْأَلُكَ خَيْرَ مَا فِي هَذِهِ اللَّيْلَةِ وَخَيْرَ مَا بَعْدَهَا، وَأَعُوذُ بِكَ مِنْ شَرِّ مَا فِي هَذِهِ اللَّيْلَةِ وَشَرِّ مَا بَعْدَهَا، رَبِّ أَعُوذُ بِكَ مِنَ الْكَسَلِ وَسُوءِ الْكِبَرِ، رَبِّ أَعُوذُ بِكَ مِنْ عَذَابٍ فِي النَّارِ وَعَذَابٍ فِي الْقَبْرِ",
+          "meaning": {
+            "en": "We have reached the evening, and the whole kingdom belongs to Allah. Praise be to Allah. There is no god but Allah alone, with no partner; His is the kingdom and His is the praise, and He has power over all things. My Lord, I ask You for the good of this night and the good of what follows it, and I seek refuge in You from the evil of this night and the evil of what follows it. My Lord, I seek refuge in You from laziness and the miseries of old age. My Lord, I seek refuge in You from punishment in the Fire and punishment in the grave.",
+            "fr": "Nous voici au soir, et le royaume tout entier appartient à Allah. Louange à Allah. Il n’y a de dieu qu’Allah, Seul, sans associé ; à Lui la royauté, à Lui la louange, et Il est capable de toute chose. Seigneur, je Te demande le bien de cette nuit et le bien de ce qui la suit, et je cherche refuge auprès de Toi contre le mal de cette nuit et le mal de ce qui la suit. Seigneur, je cherche refuge auprès de Toi contre la paresse et les maux de la vieillesse. Seigneur, je cherche refuge auprès de Toi contre un châtiment dans le Feu et un châtiment dans la tombe."
+          }
+        },
+        "source": ["muslim"]
+      },
+      {
+        "id": "me04",
+        "ar": "اللَّهُمَّ بِكَ أَصْبَحْنَا، وَبِكَ أَمْسَيْنَا، وَبِكَ نَحْيَا، وَبِكَ نَمُوتُ، وَإِلَيْكَ النُّشُورُ",
+        "count": 1,
+        "meaning": {
+          "en": "O Allah, by You we reach the morning and by You we reach the evening, by You we live and by You we die, and to You is the rising.",
+          "fr": "Ô Allah, c’est par Toi que nous atteignons le matin et par Toi que nous atteignons le soir, par Toi que nous vivons et par Toi que nous mourons, et vers Toi est la résurrection."
+        },
+        "evening": {
+          "ar": "اللَّهُمَّ بِكَ أَمْسَيْنَا، وَبِكَ أَصْبَحْنَا، وَبِكَ نَحْيَا، وَبِكَ نَمُوتُ، وَإِلَيْكَ الْمَصِيرُ",
+          "meaning": {
+            "en": "O Allah, by You we reach the evening and by You we reach the morning, by You we live and by You we die, and to You is the return.",
+            "fr": "Ô Allah, c’est par Toi que nous atteignons le soir et par Toi que nous atteignons le matin, par Toi que nous vivons et par Toi que nous mourons, et vers Toi est le retour."
+          }
+        },
+        "source": ["tirmidhi"]
+      },
+      {
+        "id": "me05",
+        "ar": "اللَّهُمَّ أَنْتَ رَبِّي لَا إِلَهَ إِلَّا أَنْتَ، خَلَقْتَنِي وَأَنَا عَبْدُكَ، وَأَنَا عَلَى عَهْدِكَ وَوَعْدِكَ مَا اسْتَطَعْتُ، أَعُوذُ بِكَ مِنْ شَرِّ مَا صَنَعْتُ، أَبُوءُ لَكَ بِنِعْمَتِكَ عَلَيَّ، وَأَبُوءُ بِذَنْبِي، فَاغْفِرْ لِي فَإِنَّهُ لَا يَغْفِرُ الذُّنُوبَ إِلَّا أَنْتَ",
+        "count": 1,
+        "note": {
+          "en": "The best way to ask forgiveness (sayyid al-istighfar).",
+          "fr": "La meilleure demande de pardon (sayyid al-istighfar).",
+          "ar": "سيد الاستغفار"
+        },
+        "meaning": {
+          "en": "O Allah, You are my Lord; there is no god but You. You created me and I am Your servant, and I keep Your covenant and Your promise as best I can. I seek refuge in You from the evil of what I have done. I acknowledge Your favour upon me, and I acknowledge my sin, so forgive me, for none forgives sins but You.",
+          "fr": "Ô Allah, Tu es mon Seigneur, il n’y a de dieu que Toi. Tu m’as créé et je suis Ton serviteur ; je tiens Ton pacte et Ta promesse autant que je le peux. Je cherche refuge auprès de Toi contre le mal de ce que j’ai fait. Je reconnais Ton bienfait envers moi et je reconnais mon péché ; pardonne-moi donc, car nul ne pardonne les péchés en dehors de Toi."
+        },
+        "source": ["bukhari"]
+      },
+      {
+        "id": "me06",
+        "ar": "اللَّهُمَّ إِنِّي أَصْبَحْتُ أُشْهِدُكَ، وَأُشْهِدُ حَمَلَةَ عَرْشِكَ، وَمَلَائِكَتَكَ، وَجَمِيعَ خَلْقِكَ، أَنَّكَ أَنْتَ اللَّهُ لَا إِلَهَ إِلَّا أَنْتَ وَحْدَكَ لَا شَرِيكَ لَكَ، وَأَنَّ مُحَمَّدًا عَبْدُكَ وَرَسُولُكَ",
+        "count": 4,
+        "meaning": {
+          "en": "O Allah, this morning I call on You to witness, and on the bearers of Your Throne, Your angels and all Your creation, that You are Allah, there is no god but You alone, with no partner, and that Muhammad is Your servant and Your messenger.",
+          "fr": "Ô Allah, en ce matin je Te prends à témoin, ainsi que les porteurs de Ton Trône, Tes anges et toute Ta création, que Tu es Allah, qu’il n’y a de dieu que Toi, Seul, sans associé, et que Muhammad est Ton serviteur et Ton messager."
+        },
+        "evening": {
+          "ar": "اللَّهُمَّ إِنِّي أَمْسَيْتُ أُشْهِدُكَ، وَأُشْهِدُ حَمَلَةَ عَرْشِكَ، وَمَلَائِكَتَكَ، وَجَمِيعَ خَلْقِكَ، أَنَّكَ أَنْتَ اللَّهُ لَا إِلَهَ إِلَّا أَنْتَ وَحْدَكَ لَا شَرِيكَ لَكَ، وَأَنَّ مُحَمَّدًا عَبْدُكَ وَرَسُولُكَ",
+          "meaning": {
+            "en": "O Allah, this evening I call on You to witness, and on the bearers of Your Throne, Your angels and all Your creation, that You are Allah, there is no god but You alone, with no partner, and that Muhammad is Your servant and Your messenger.",
+            "fr": "Ô Allah, en ce soir je Te prends à témoin, ainsi que les porteurs de Ton Trône, Tes anges et toute Ta création, que Tu es Allah, qu’il n’y a de dieu que Toi, Seul, sans associé, et que Muhammad est Ton serviteur et Ton messager."
+          }
+        },
+        "source": ["abu_dawud"]
+      },
+      {
+        "id": "me07",
+        "ar": "اللَّهُمَّ مَا أَصْبَحَ بِي مِنْ نِعْمَةٍ أَوْ بِأَحَدٍ مِنْ خَلْقِكَ فَمِنْكَ وَحْدَكَ لَا شَرِيكَ لَكَ، فَلَكَ الْحَمْدُ وَلَكَ الشُّكْرُ",
+        "count": 1,
+        "meaning": {
+          "en": "O Allah, whatever blessing I or any of Your creation have this morning is from You alone, with no partner. To You be the praise and to You the thanks.",
+          "fr": "Ô Allah, tout bienfait dont je dispose ce matin, moi ou l’une de Tes créatures, vient de Toi Seul, sans associé. À Toi la louange et à Toi la gratitude."
+        },
+        "evening": {
+          "ar": "اللَّهُمَّ مَا أَمْسَى بِي مِنْ نِعْمَةٍ أَوْ بِأَحَدٍ مِنْ خَلْقِكَ فَمِنْكَ وَحْدَكَ لَا شَرِيكَ لَكَ، فَلَكَ الْحَمْدُ وَلَكَ الشُّكْرُ",
+          "meaning": {
+            "en": "O Allah, whatever blessing I or any of Your creation have this evening is from You alone, with no partner. To You be the praise and to You the thanks.",
+            "fr": "Ô Allah, tout bienfait dont je dispose ce soir, moi ou l’une de Tes créatures, vient de Toi Seul, sans associé. À Toi la louange et à Toi la gratitude."
+          }
+        },
+        "source": ["abu_dawud"]
+      },
+      {
+        "id": "me08",
+        "ar": "اللَّهُمَّ عَافِنِي فِي بَدَنِي، اللَّهُمَّ عَافِنِي فِي سَمْعِي، اللَّهُمَّ عَافِنِي فِي بَصَرِي، لَا إِلَهَ إِلَّا أَنْتَ. اللَّهُمَّ إِنِّي أَعُوذُ بِكَ مِنَ الْكُفْرِ وَالْفَقْرِ، وَأَعُوذُ بِكَ مِنْ عَذَابِ الْقَبْرِ، لَا إِلَهَ إِلَّا أَنْتَ",
+        "count": 3,
+        "meaning": {
+          "en": "O Allah, grant my body well-being. O Allah, grant my hearing well-being. O Allah, grant my sight well-being. There is no god but You. O Allah, I seek refuge in You from disbelief and poverty, and I seek refuge in You from the punishment of the grave. There is no god but You.",
+          "fr": "Ô Allah, accorde la santé à mon corps. Ô Allah, accorde la santé à mon ouïe. Ô Allah, accorde la santé à ma vue. Il n’y a de dieu que Toi. Ô Allah, je cherche refuge auprès de Toi contre la mécréance et la pauvreté, et je cherche refuge auprès de Toi contre le châtiment de la tombe. Il n’y a de dieu que Toi."
+        },
+        "source": ["abu_dawud"]
+      },
+      {
+        "id": "me09",
+        "ar": "حَسْبِيَ اللَّهُ لَا إِلَهَ إِلَّا هُوَ، عَلَيْهِ تَوَكَّلْتُ، وَهُوَ رَبُّ الْعَرْشِ الْعَظِيمِ",
+        "count": 7,
+        "meaning": {
+          "en": "Allah is enough for me. There is no god but He. In Him I put my trust, and He is the Lord of the mighty Throne.",
+          "fr": "Allah me suffit. Il n’y a de dieu que Lui. En Lui je place ma confiance, et Il est le Seigneur du Trône immense."
+        },
+        "source": ["abu_dawud"]
+      },
+      {
+        "id": "me10",
+        "ar": "اللَّهُمَّ إِنِّي أَسْأَلُكَ الْعَفْوَ وَالْعَافِيَةَ فِي الدُّنْيَا وَالْآخِرَةِ، اللَّهُمَّ إِنِّي أَسْأَلُكَ الْعَفْوَ وَالْعَافِيَةَ فِي دِينِي وَدُنْيَايَ وَأَهْلِي وَمَالِي، اللَّهُمَّ اسْتُرْ عَوْرَاتِي، وَآمِنْ رَوْعَاتِي، اللَّهُمَّ احْفَظْنِي مِنْ بَيْنِ يَدَيَّ، وَمِنْ خَلْفِي، وَعَنْ يَمِينِي، وَعَنْ شِمَالِي، وَمِنْ فَوْقِي، وَأَعُوذُ بِعَظَمَتِكَ أَنْ أُغْتَالَ مِنْ تَحْتِي",
+        "count": 1,
+        "meaning": {
+          "en": "O Allah, I ask You for pardon and well-being in this world and the Hereafter. O Allah, I ask You for pardon and well-being in my religion and my worldly life, my family and my wealth. O Allah, cover my faults and calm my fears. O Allah, guard me from in front of me and behind me, from my right and my left, and from above me, and I seek refuge in Your greatness from being taken unawares from beneath me.",
+          "fr": "Ô Allah, je Te demande le pardon et le salut dans ce monde et dans l’au-delà. Ô Allah, je Te demande le pardon et le salut dans ma religion et ma vie d’ici-bas, ma famille et mes biens. Ô Allah, couvre mes défauts et apaise mes craintes. Ô Allah, protège-moi par-devant et par-derrière, à ma droite et à ma gauche, et d’au-dessus de moi ; et je cherche refuge dans Ta grandeur contre le fait d’être pris par surprise par-dessous."
+        },
+        "source": ["abu_dawud", "ibn_majah"]
+      },
+      {
+        "id": "me11",
+        "ar": "اللَّهُمَّ عَالِمَ الْغَيْبِ وَالشَّهَادَةِ، فَاطِرَ السَّمَاوَاتِ وَالْأَرْضِ، رَبَّ كُلِّ شَيْءٍ وَمَلِيكَهُ، أَشْهَدُ أَنْ لَا إِلَهَ إِلَّا أَنْتَ، أَعُوذُ بِكَ مِنْ شَرِّ نَفْسِي، وَمِنْ شَرِّ الشَّيْطَانِ وَشِرْكِهِ، وَأَنْ أَقْتَرِفَ عَلَى نَفْسِي سُوءًا أَوْ أَجُرَّهُ إِلَى مُسْلِمٍ",
+        "count": 1,
+        "meaning": {
+          "en": "O Allah, Knower of the unseen and the seen, Originator of the heavens and the earth, Lord and Sovereign of all things, I bear witness that there is no god but You. I seek refuge in You from the evil of my own soul, from the evil of Satan and his call to associate others with You, and from doing wrong against myself or bringing it upon a Muslim.",
+          "fr": "Ô Allah, Connaisseur de l’invisible et du visible, Créateur des cieux et de la terre, Seigneur et Souverain de toute chose, j’atteste qu’il n’y a de dieu que Toi. Je cherche refuge auprès de Toi contre le mal de mon âme, contre le mal de Satan et son appel à l’association, et contre le fait de commettre un mal envers moi-même ou de l’attirer sur un musulman."
+        },
+        "source": ["tirmidhi", "abu_dawud"]
+      },
+      {
+        "id": "me12",
+        "ar": "بِسْمِ اللَّهِ الَّذِي لَا يَضُرُّ مَعَ اسْمِهِ شَيْءٌ فِي الْأَرْضِ وَلَا فِي السَّمَاءِ، وَهُوَ السَّمِيعُ الْعَلِيمُ",
+        "count": 3,
+        "meaning": {
+          "en": "In the name of Allah, with whose name nothing on earth or in the heavens can cause harm, and He is the All-Hearing, the All-Knowing.",
+          "fr": "Au nom d’Allah, avec le nom de qui rien ne peut nuire sur la terre ni dans le ciel, et Il est Celui qui entend tout, Celui qui sait tout."
+        },
+        "source": ["abu_dawud", "tirmidhi"]
+      },
+      {
+        "id": "me13",
+        "ar": "رَضِيتُ بِاللَّهِ رَبًّا، وَبِالْإِسْلَامِ دِينًا، وَبِمُحَمَّدٍ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ نَبِيًّا",
+        "count": 3,
+        "meaning": {
+          "en": "I am pleased with Allah as my Lord, with Islam as my religion, and with Muhammad, peace and blessings be upon him, as my Prophet.",
+          "fr": "J’agrée Allah comme Seigneur, l’islam comme religion et Muhammad, prière et paix sur lui, comme prophète."
+        },
+        "source": ["abu_dawud", "tirmidhi"]
+      },
+      {
+        "id": "me14",
+        "ar": "يَا حَيُّ يَا قَيُّومُ، بِرَحْمَتِكَ أَسْتَغِيثُ، أَصْلِحْ لِي شَأْنِي كُلَّهُ، وَلَا تَكِلْنِي إِلَى نَفْسِي طَرْفَةَ عَيْنٍ",
+        "count": 1,
+        "meaning": {
+          "en": "O Ever-Living, O Sustainer of all, by Your mercy I seek help: set right all my affairs, and do not leave me to myself even for the blink of an eye.",
+          "fr": "Ô Vivant, Ô Toi qui subsistes par Toi-même, j’implore le secours de Ta miséricorde : arrange toutes mes affaires et ne me laisse pas à moi-même, ne serait-ce que le temps d’un clin d’œil."
+        },
+        "source": ["hakim"]
+      },
+      {
+        "id": "me15",
+        "ar": "أَصْبَحْنَا وَأَصْبَحَ الْمُلْكُ لِلَّهِ رَبِّ الْعَالَمِينَ، اللَّهُمَّ إِنِّي أَسْأَلُكَ خَيْرَ هَذَا الْيَوْمِ: فَتْحَهُ، وَنَصْرَهُ، وَنُورَهُ، وَبَرَكَتَهُ، وَهُدَاهُ، وَأَعُوذُ بِكَ مِنْ شَرِّ مَا فِيهِ وَشَرِّ مَا بَعْدَهُ",
+        "count": 1,
+        "meaning": {
+          "en": "We have reached the morning, and the whole kingdom belongs to Allah, Lord of the worlds. O Allah, I ask You for the good of this day: its opening, its victory, its light, its blessing and its guidance; and I seek refuge in You from the evil in it and the evil of what follows it.",
+          "fr": "Nous voici au matin, et le royaume tout entier appartient à Allah, Seigneur des mondes. Ô Allah, je Te demande le bien de ce jour : son ouverture, sa victoire, sa lumière, sa bénédiction et sa guidée ; et je cherche refuge auprès de Toi contre le mal qu’il contient et le mal de ce qui le suit."
+        },
+        "evening": {
+          "ar": "أَمْسَيْنَا وَأَمْسَى الْمُلْكُ لِلَّهِ رَبِّ الْعَالَمِينَ، اللَّهُمَّ إِنِّي أَسْأَلُكَ خَيْرَ هَذِهِ اللَّيْلَةِ: فَتْحَهَا، وَنَصْرَهَا، وَنُورَهَا، وَبَرَكَتَهَا، وَهُدَاهَا، وَأَعُوذُ بِكَ مِنْ شَرِّ مَا فِيهَا وَشَرِّ مَا بَعْدَهَا",
+          "meaning": {
+            "en": "We have reached the evening, and the whole kingdom belongs to Allah, Lord of the worlds. O Allah, I ask You for the good of this night: its opening, its victory, its light, its blessing and its guidance; and I seek refuge in You from the evil in it and the evil of what follows it.",
+            "fr": "Nous voici au soir, et le royaume tout entier appartient à Allah, Seigneur des mondes. Ô Allah, je Te demande le bien de cette nuit : son ouverture, sa victoire, sa lumière, sa bénédiction et sa guidée ; et je cherche refuge auprès de Toi contre le mal qu’elle contient et le mal de ce qui la suit."
+          }
+        },
+        "source": ["abu_dawud"]
+      },
+      {
+        "id": "me16",
+        "ar": "أَصْبَحْنَا عَلَى فِطْرَةِ الْإِسْلَامِ، وَعَلَى كَلِمَةِ الْإِخْلَاصِ، وَعَلَى دِينِ نَبِيِّنَا مُحَمَّدٍ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ، وَعَلَى مِلَّةِ أَبِينَا إِبْرَاهِيمَ، حَنِيفًا مُسْلِمًا، وَمَا كَانَ مِنَ الْمُشْرِكِينَ",
+        "count": 1,
+        "meaning": {
+          "en": "We have reached the morning upon the natural way of Islam, upon the word of sincere faith, upon the religion of our Prophet Muhammad, peace and blessings be upon him, and upon the way of our father Abraham, upright and devoted to Allah, who was not of those who associate others with Him.",
+          "fr": "Nous voici au matin sur la saine nature de l’islam, sur la parole du monothéisme pur, sur la religion de notre Prophète Muhammad, prière et paix sur lui, et sur la voie de notre père Abraham, monothéiste pur et soumis à Allah, qui n’était pas du nombre des associateurs."
+        },
+        "evening": {
+          "ar": "أَمْسَيْنَا عَلَى فِطْرَةِ الْإِسْلَامِ، وَعَلَى كَلِمَةِ الْإِخْلَاصِ، وَعَلَى دِينِ نَبِيِّنَا مُحَمَّدٍ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ، وَعَلَى مِلَّةِ أَبِينَا إِبْرَاهِيمَ، حَنِيفًا مُسْلِمًا، وَمَا كَانَ مِنَ الْمُشْرِكِينَ",
+          "meaning": {
+            "en": "We have reached the evening upon the natural way of Islam, upon the word of sincere faith, upon the religion of our Prophet Muhammad, peace and blessings be upon him, and upon the way of our father Abraham, upright and devoted to Allah, who was not of those who associate others with Him.",
+            "fr": "Nous voici au soir sur la saine nature de l’islam, sur la parole du monothéisme pur, sur la religion de notre Prophète Muhammad, prière et paix sur lui, et sur la voie de notre père Abraham, monothéiste pur et soumis à Allah, qui n’était pas du nombre des associateurs."
+          }
+        },
+        "source": ["ahmad"]
+      },
+      {
+        "id": "me17",
+        "ar": "سُبْحَانَ اللَّهِ وَبِحَمْدِهِ",
+        "count": 100,
+        "meaning": {
+          "en": "Glory be to Allah, and praise be to Him.",
+          "fr": "Gloire et louange à Allah."
+        },
+        "source": ["muslim"]
+      },
+      {
+        "id": "me18",
+        "ar": "لَا إِلَهَ إِلَّا اللَّهُ وَحْدَهُ لَا شَرِيكَ لَهُ، لَهُ الْمُلْكُ وَلَهُ الْحَمْدُ، وَهُوَ عَلَى كُلِّ شَيْءٍ قَدِيرٌ",
+        "count": 10,
+        "note": {
+          "en": "Ten times, or once on a tired day.",
+          "fr": "Dix fois, ou une fois les jours de fatigue.",
+          "ar": "عشر مرات، أو مرة واحدة عند الكسل"
+        },
+        "meaning": {
+          "en": "There is no god but Allah alone, with no partner. His is the kingdom and His is the praise, and He has power over all things.",
+          "fr": "Il n’y a de dieu qu’Allah, Seul, sans associé. À Lui la royauté, à Lui la louange, et Il est capable de toute chose."
+        },
+        "source": ["nasai", "ahmad"]
+      },
+      {
+        "id": "me19",
+        "only": "morning",
+        "ar": "سُبْحَانَ اللَّهِ وَبِحَمْدِهِ: عَدَدَ خَلْقِهِ، وَرِضَا نَفْسِهِ، وَزِنَةَ عَرْشِهِ، وَمِدَادَ كَلِمَاتِهِ",
+        "count": 3,
+        "meaning": {
+          "en": "Glory be to Allah, and praise be to Him, as many times as the number of His creation, as much as pleases Him, as much as the weight of His Throne, and as much as the ink of His words.",
+          "fr": "Gloire et louange à Allah, autant que le nombre de Ses créatures, autant qu’il Lui plaît, autant que le poids de Son Trône et autant que l’encre de Ses paroles."
+        },
+        "source": ["muslim"]
+      },
+      {
+        "id": "me20",
+        "only": "morning",
+        "ar": "اللَّهُمَّ إِنِّي أَسْأَلُكَ عِلْمًا نَافِعًا، وَرِزْقًا طَيِّبًا، وَعَمَلًا مُتَقَبَّلًا",
+        "count": 1,
+        "meaning": {
+          "en": "O Allah, I ask You for knowledge that benefits, provision that is good, and deeds that are accepted.",
+          "fr": "Ô Allah, je Te demande une science utile, une subsistance pure et des œuvres agréées."
+        },
+        "source": ["ibn_majah"]
+      },
+      {
+        "id": "me21",
+        "ar": "أَسْتَغْفِرُ اللَّهَ وَأَتُوبُ إِلَيْهِ",
+        "count": 100,
+        "meaning": {
+          "en": "I ask Allah’s forgiveness and I turn to Him in repentance.",
+          "fr": "Je demande pardon à Allah et je me repens à Lui."
+        },
+        "source": ["bukhari", "muslim"]
+      },
+      {
+        "id": "me22",
+        "only": "evening",
+        "ar": "أَعُوذُ بِكَلِمَاتِ اللَّهِ التَّامَّاتِ مِنْ شَرِّ مَا خَلَقَ",
+        "count": 3,
+        "meaning": {
+          "en": "I seek refuge in the perfect words of Allah from the evil of what He has created.",
+          "fr": "Je cherche refuge dans les paroles parfaites d’Allah contre le mal de ce qu’Il a créé."
+        },
+        "source": ["ahmad", "tirmidhi"]
+      },
+      {
+        "id": "me23",
+        "ar": "اللَّهُمَّ صَلِّ وَسَلِّمْ عَلَى نَبِيِّنَا مُحَمَّدٍ",
+        "count": 10,
+        "meaning": {
+          "en": "O Allah, send blessings and peace upon our Prophet Muhammad.",
+          "fr": "Ô Allah, prie sur notre Prophète Muhammad et accorde-lui la paix."
+        },
+        "source": ["tabarani"]
+      }
+    ],
+    "prayer": [
+      {
+        "id": "pr01",
+        "ar": "أَسْتَغْفِرُ اللَّهَ، أَسْتَغْفِرُ اللَّهَ، أَسْتَغْفِرُ اللَّهَ. اللَّهُمَّ أَنْتَ السَّلَامُ، وَمِنْكَ السَّلَامُ، تَبَارَكْتَ يَا ذَا الْجَلَالِ وَالْإِكْرَامِ",
+        "count": 1,
+        "meaning": {
+          "en": "I ask Allah’s forgiveness (three times). O Allah, You are Peace and from You comes peace. Blessed are You, Possessor of majesty and honour.",
+          "fr": "Je demande pardon à Allah (trois fois). Ô Allah, Tu es la Paix et de Toi vient la paix. Béni sois-Tu, Ô Détenteur de la majesté et de la générosité."
+        },
+        "source": ["muslim"]
+      },
+      {
+        "id": "pr02",
+        "ar": "لَا إِلَهَ إِلَّا اللَّهُ وَحْدَهُ لَا شَرِيكَ لَهُ، لَهُ الْمُلْكُ وَلَهُ الْحَمْدُ، وَهُوَ عَلَى كُلِّ شَيْءٍ قَدِيرٌ. اللَّهُمَّ لَا مَانِعَ لِمَا أَعْطَيْتَ، وَلَا مُعْطِيَ لِمَا مَنَعْتَ، وَلَا يَنْفَعُ ذَا الْجَدِّ مِنْكَ الْجَدُّ",
+        "count": 1,
+        "meaning": {
+          "en": "There is no god but Allah alone, with no partner. His is the kingdom and His is the praise, and He has power over all things. O Allah, none can withhold what You give, and none can give what You withhold, and the wealth of the wealthy cannot avail him against You.",
+          "fr": "Il n’y a de dieu qu’Allah, Seul, sans associé. À Lui la royauté, à Lui la louange, et Il est capable de toute chose. Ô Allah, nul ne peut retenir ce que Tu donnes, ni donner ce que Tu retiens, et la fortune du fortuné ne lui sert à rien auprès de Toi."
+        },
+        "source": ["bukhari", "muslim"]
+      },
+      {
+        "id": "pr03",
+        "ar": "لَا إِلَهَ إِلَّا اللَّهُ وَحْدَهُ لَا شَرِيكَ لَهُ، لَهُ الْمُلْكُ وَلَهُ الْحَمْدُ، وَهُوَ عَلَى كُلِّ شَيْءٍ قَدِيرٌ. لَا حَوْلَ وَلَا قُوَّةَ إِلَّا بِاللَّهِ، لَا إِلَهَ إِلَّا اللَّهُ، وَلَا نَعْبُدُ إِلَّا إِيَّاهُ، لَهُ النِّعْمَةُ وَلَهُ الْفَضْلُ وَلَهُ الثَّنَاءُ الْحَسَنُ، لَا إِلَهَ إِلَّا اللَّهُ مُخْلِصِينَ لَهُ الدِّينَ وَلَوْ كَرِهَ الْكَافِرُونَ",
+        "count": 1,
+        "meaning": {
+          "en": "There is no god but Allah alone, with no partner. His is the kingdom and His is the praise, and He has power over all things. There is no might and no power except with Allah. There is no god but Allah, and we worship none but Him. His are all blessings, all grace and the most beautiful praise. There is no god but Allah; we devote our religion sincerely to Him, even though the disbelievers dislike it.",
+          "fr": "Il n’y a de dieu qu’Allah, Seul, sans associé. À Lui la royauté, à Lui la louange, et Il est capable de toute chose. Il n’y a de force ni de puissance qu’en Allah. Il n’y a de dieu qu’Allah et nous n’adorons que Lui. À Lui les bienfaits, à Lui la grâce et à Lui la belle louange. Il n’y a de dieu qu’Allah ; nous Lui vouons un culte sincère, même si les mécréants le détestent."
+        },
+        "source": ["muslim"]
+      },
+      {
+        "id": "pr04",
+        "ar": "سُبْحَانَ اللَّهِ",
+        "count": 33,
+        "meaning": {"en": "Glory be to Allah.", "fr": "Gloire à Allah."},
+        "source": ["muslim"]
+      },
+      {
+        "id": "pr05",
+        "ar": "الْحَمْدُ لِلَّهِ",
+        "count": 33,
+        "meaning": {"en": "Praise be to Allah.", "fr": "Louange à Allah."},
+        "source": ["muslim"]
+      },
+      {
+        "id": "pr06",
+        "ar": "اللَّهُ أَكْبَرُ",
+        "count": 33,
+        "meaning": {"en": "Allah is the Greatest.", "fr": "Allah est le plus Grand."},
+        "source": ["muslim"]
+      },
+      {
+        "id": "pr07",
+        "ar": "لَا إِلَهَ إِلَّا اللَّهُ وَحْدَهُ لَا شَرِيكَ لَهُ، لَهُ الْمُلْكُ وَلَهُ الْحَمْدُ، وَهُوَ عَلَى كُلِّ شَيْءٍ قَدِيرٌ",
+        "count": 1,
+        "note": {
+          "en": "Once, to complete a hundred.",
+          "fr": "Une fois, pour compléter la centaine.",
+          "ar": "مرة واحدة تمام المائة"
+        },
+        "meaning": {
+          "en": "There is no god but Allah alone, with no partner. His is the kingdom and His is the praise, and He has power over all things.",
+          "fr": "Il n’y a de dieu qu’Allah, Seul, sans associé. À Lui la royauté, à Lui la louange, et Il est capable de toute chose."
+        },
+        "source": ["muslim"]
+      },
+      {
+        "id": "pr08",
+        "quran": ["2:255"],
+        "count": 1,
+        "source": ["nasai"]
+      },
+      {
+        "id": "pr09",
+        "quran": ["112", "113", "114"],
+        "count": 1,
+        "note": {
+          "en": "Once after each prayer; three times after Fajr and Maghrib.",
+          "fr": "Une fois après chaque prière ; trois fois après Fajr et Maghrib.",
+          "ar": "مرة بعد كل صلاة، وثلاث مرات بعد الفجر والمغرب"
+        },
+        "source": ["abu_dawud", "nasai"]
+      },
+      {
+        "id": "pr10",
+        "ar": "لَا إِلَهَ إِلَّا اللَّهُ وَحْدَهُ لَا شَرِيكَ لَهُ، لَهُ الْمُلْكُ وَلَهُ الْحَمْدُ، يُحْيِي وَيُمِيتُ، وَهُوَ عَلَى كُلِّ شَيْءٍ قَدِيرٌ",
+        "count": 10,
+        "note": {
+          "en": "After Fajr and Maghrib.",
+          "fr": "Après Fajr et Maghrib.",
+          "ar": "بعد صلاة الفجر والمغرب"
+        },
+        "meaning": {
+          "en": "There is no god but Allah alone, with no partner. His is the kingdom and His is the praise; He gives life and causes death, and He has power over all things.",
+          "fr": "Il n’y a de dieu qu’Allah, Seul, sans associé. À Lui la royauté, à Lui la louange ; Il donne la vie et la mort, et Il est capable de toute chose."
+        },
+        "source": ["tirmidhi", "ahmad"]
+      },
+      {
+        "id": "pr11",
+        "ar": "اللَّهُمَّ إِنِّي أَسْأَلُكَ عِلْمًا نَافِعًا، وَرِزْقًا طَيِّبًا، وَعَمَلًا مُتَقَبَّلًا",
+        "count": 1,
+        "note": {
+          "en": "After Fajr.",
+          "fr": "Après Fajr.",
+          "ar": "بعد السلام من صلاة الفجر"
+        },
+        "meaning": {
+          "en": "O Allah, I ask You for knowledge that benefits, provision that is good, and deeds that are accepted.",
+          "fr": "Ô Allah, je Te demande une science utile, une subsistance pure et des œuvres agréées."
+        },
+        "source": ["ibn_majah"]
+      }
+    ],
+    "sleep": [
+      {
+        "id": "sl01",
+        "quran": ["112", "113", "114"],
+        "count": 3,
+        "note": {
+          "en": "Cup your hands, blow lightly into them and recite these three surahs, then wipe over as much of your body as you can, starting with your head and face.",
+          "fr": "Joignez les mains, soufflez légèrement dedans et récitez ces trois sourates, puis passez-les sur ce que vous pouvez de votre corps, en commençant par la tête et le visage.",
+          "ar": "تجمع كفيك ثم تنفث فيهما وتقرأ هذه السور، ثم تمسح بهما ما استطعت من جسدك، تبدأ برأسك ووجهك"
+        },
+        "source": ["bukhari"]
+      },
+      {
+        "id": "sl02",
+        "quran": ["2:255"],
+        "count": 1,
+        "source": ["bukhari"]
+      },
+      {
+        "id": "sl03",
+        "quran": ["2:285-286"],
+        "count": 1,
+        "source": ["bukhari", "muslim"]
+      },
+      {
+        "id": "sl04",
+        "ar": "بِاسْمِكَ رَبِّي وَضَعْتُ جَنْبِي، وَبِكَ أَرْفَعُهُ، فَإِنْ أَمْسَكْتَ نَفْسِي فَارْحَمْهَا، وَإِنْ أَرْسَلْتَهَا فَاحْفَظْهَا بِمَا تَحْفَظُ بِهِ عِبَادَكَ الصَّالِحِينَ",
+        "count": 1,
+        "meaning": {
+          "en": "In Your name, my Lord, I lay down my side, and by You I raise it. If You take my soul, have mercy on it; and if You send it back, protect it as You protect Your righteous servants.",
+          "fr": "En Ton nom, mon Seigneur, je m’allonge, et par Toi je me relève. Si Tu retiens mon âme, fais-lui miséricorde ; et si Tu la renvoies, protège-la comme Tu protèges Tes serviteurs vertueux."
+        },
+        "source": ["bukhari", "muslim"]
+      },
+      {
+        "id": "sl05",
+        "ar": "اللَّهُمَّ إِنَّكَ خَلَقْتَ نَفْسِي وَأَنْتَ تَوَفَّاهَا، لَكَ مَمَاتُهَا وَمَحْيَاهَا، إِنْ أَحْيَيْتَهَا فَاحْفَظْهَا، وَإِنْ أَمَتَّهَا فَاغْفِرْ لَهَا. اللَّهُمَّ إِنِّي أَسْأَلُكَ الْعَافِيَةَ",
+        "count": 1,
+        "meaning": {
+          "en": "O Allah, You created my soul and You take it back. Its death and its life are Yours. If You keep it alive, protect it; and if You cause it to die, forgive it. O Allah, I ask You for well-being.",
+          "fr": "Ô Allah, Tu as créé mon âme et c’est Toi qui la reprends. À Toi sa mort et sa vie. Si Tu la fais vivre, protège-la ; et si Tu la fais mourir, pardonne-lui. Ô Allah, je Te demande le salut."
+        },
+        "source": ["muslim"]
+      },
+      {
+        "id": "sl06",
+        "ar": "اللَّهُمَّ قِنِي عَذَابَكَ يَوْمَ تَبْعَثُ عِبَادَكَ",
+        "count": 3,
+        "note": {
+          "en": "With your right hand under your cheek.",
+          "fr": "La main droite sous la joue.",
+          "ar": "تضع يدك اليمنى تحت خدك"
+        },
+        "meaning": {
+          "en": "O Allah, protect me from Your punishment on the day You raise Your servants.",
+          "fr": "Ô Allah, préserve-moi de Ton châtiment le jour où Tu ressusciteras Tes serviteurs."
+        },
+        "source": ["abu_dawud", "tirmidhi"]
+      },
+      {
+        "id": "sl07",
+        "ar": "بِاسْمِكَ اللَّهُمَّ أَمُوتُ وَأَحْيَا",
+        "count": 1,
+        "meaning": {
+          "en": "In Your name, O Allah, I die and I live.",
+          "fr": "En Ton nom, ô Allah, je meurs et je vis."
+        },
+        "source": ["bukhari"]
+      },
+      {
+        "id": "sl08",
+        "ar": "سُبْحَانَ اللَّهِ",
+        "count": 33,
+        "meaning": {"en": "Glory be to Allah.", "fr": "Gloire à Allah."},
+        "source": ["bukhari", "muslim"]
+      },
+      {
+        "id": "sl09",
+        "ar": "الْحَمْدُ لِلَّهِ",
+        "count": 33,
+        "meaning": {"en": "Praise be to Allah.", "fr": "Louange à Allah."},
+        "source": ["bukhari", "muslim"]
+      },
+      {
+        "id": "sl10",
+        "ar": "اللَّهُ أَكْبَرُ",
+        "count": 34,
+        "meaning": {"en": "Allah is the Greatest.", "fr": "Allah est le plus Grand."},
+        "source": ["bukhari", "muslim"]
+      },
+      {
+        "id": "sl11",
+        "ar": "اللَّهُمَّ رَبَّ السَّمَاوَاتِ السَّبْعِ وَرَبَّ الْأَرْضِ وَرَبَّ الْعَرْشِ الْعَظِيمِ، رَبَّنَا وَرَبَّ كُلِّ شَيْءٍ، فَالِقَ الْحَبِّ وَالنَّوَى، وَمُنْزِلَ التَّوْرَاةِ وَالْإِنْجِيلِ وَالْفُرْقَانِ، أَعُوذُ بِكَ مِنْ شَرِّ كُلِّ شَيْءٍ أَنْتَ آخِذٌ بِنَاصِيَتِهِ. اللَّهُمَّ أَنْتَ الْأَوَّلُ فَلَيْسَ قَبْلَكَ شَيْءٌ، وَأَنْتَ الْآخِرُ فَلَيْسَ بَعْدَكَ شَيْءٌ، وَأَنْتَ الظَّاهِرُ فَلَيْسَ فَوْقَكَ شَيْءٌ، وَأَنْتَ الْبَاطِنُ فَلَيْسَ دُونَكَ شَيْءٌ، اقْضِ عَنَّا الدَّيْنَ وَأَغْنِنَا مِنَ الْفَقْرِ",
+        "count": 1,
+        "meaning": {
+          "en": "O Allah, Lord of the seven heavens and Lord of the earth, Lord of the mighty Throne, our Lord and the Lord of all things, who splits the grain and the date-stone, who sent down the Torah, the Gospel and the Criterion: I seek refuge in You from the evil of everything whose forelock You hold. O Allah, You are the First, and there is nothing before You; You are the Last, and there is nothing after You; You are the Manifest, and there is nothing above You; You are the Hidden, and there is nothing beyond You. Settle our debts for us and free us from poverty.",
+          "fr": "Ô Allah, Seigneur des sept cieux et Seigneur de la terre, Seigneur du Trône immense, notre Seigneur et Seigneur de toute chose, Toi qui fends la graine et le noyau, qui as révélé la Torah, l’Évangile et le Discernement : je cherche refuge auprès de Toi contre le mal de toute chose dont Tu tiens le toupet. Ô Allah, Tu es le Premier, rien n’est avant Toi ; Tu es le Dernier, rien n’est après Toi ; Tu es l’Apparent, rien n’est au-dessus de Toi ; Tu es le Caché, rien n’est en deçà de Toi. Acquitte nos dettes et préserve-nous de la pauvreté."
+        },
+        "source": ["muslim"]
+      },
+      {
+        "id": "sl12",
+        "ar": "الْحَمْدُ لِلَّهِ الَّذِي أَطْعَمَنَا وَسَقَانَا، وَكَفَانَا وَآوَانَا، فَكَمْ مِمَّنْ لَا كَافِيَ لَهُ وَلَا مُؤْوِيَ",
+        "count": 1,
+        "meaning": {
+          "en": "Praise be to Allah, who has fed us and given us drink, who has sufficed us and sheltered us: for how many have no one to suffice them and no one to shelter them.",
+          "fr": "Louange à Allah qui nous a nourris et abreuvés, qui nous a suffi et nous a abrités ; combien sont ceux qui n’ont personne pour leur suffire ni pour les abriter."
+        },
+        "source": ["muslim"]
+      },
+      {
+        "id": "sl13",
+        "ar": "اللَّهُمَّ أَسْلَمْتُ نَفْسِي إِلَيْكَ، وَفَوَّضْتُ أَمْرِي إِلَيْكَ، وَوَجَّهْتُ وَجْهِي إِلَيْكَ، وَأَلْجَأْتُ ظَهْرِي إِلَيْكَ، رَغْبَةً وَرَهْبَةً إِلَيْكَ، لَا مَلْجَأَ وَلَا مَنْجَا مِنْكَ إِلَّا إِلَيْكَ، آمَنْتُ بِكِتَابِكَ الَّذِي أَنْزَلْتَ، وَبِنَبِيِّكَ الَّذِي أَرْسَلْتَ",
+        "count": 1,
+        "note": {
+          "en": "Lying on your right side; let it be the last thing you say.",
+          "fr": "Couché sur le côté droit ; que ce soit la dernière chose que vous disiez.",
+          "ar": "على شقك الأيمن، واجعلها آخر ما تقول"
+        },
+        "meaning": {
+          "en": "O Allah, I submit myself to You, I entrust my affairs to You, I turn my face to You, and I lean my back on You, in hope of You and in awe of You. There is no refuge and no escape from You except to You. I believe in Your Book that You sent down and in Your Prophet whom You sent.",
+          "fr": "Ô Allah, je me soumets à Toi, je Te confie mes affaires, je tourne mon visage vers Toi et je m’appuie sur Toi, par désir et par crainte de Toi. Il n’y a de refuge ni de salut contre Toi qu’auprès de Toi. Je crois au Livre que Tu as révélé et au Prophète que Tu as envoyé."
+        },
+        "source": ["bukhari", "muslim"]
+      }
+    ],
+    "anytime": [
+      {
+        "id": "an01",
+        "ar": "سُبْحَانَ اللَّهِ وَبِحَمْدِهِ",
+        "count": 100,
+        "meaning": {"en": "Glory be to Allah, and praise be to Him.", "fr": "Gloire et louange à Allah."},
+        "source": ["bukhari", "muslim"]
+      },
+      {
+        "id": "an02",
+        "ar": "سُبْحَانَ اللَّهِ وَبِحَمْدِهِ، سُبْحَانَ اللَّهِ الْعَظِيمِ",
+        "count": 1,
+        "meaning": {
+          "en": "Glory be to Allah, and praise be to Him; glory be to Allah, the Almighty.",
+          "fr": "Gloire et louange à Allah ; gloire à Allah l’Immense."
+        },
+        "source": ["bukhari", "muslim"]
+      },
+      {
+        "id": "an03",
+        "ar": "سُبْحَانَ اللَّهِ، وَالْحَمْدُ لِلَّهِ، وَلَا إِلَهَ إِلَّا اللَّهُ، وَاللَّهُ أَكْبَرُ",
+        "count": 1,
+        "meaning": {
+          "en": "Glory be to Allah, praise be to Allah, there is no god but Allah, and Allah is the Greatest.",
+          "fr": "Gloire à Allah, louange à Allah, il n’y a de dieu qu’Allah, et Allah est le plus Grand."
+        },
+        "source": ["muslim"]
+      },
+      {
+        "id": "an04",
+        "ar": "لَا حَوْلَ وَلَا قُوَّةَ إِلَّا بِاللَّهِ",
+        "count": 1,
+        "meaning": {
+          "en": "There is no might and no power except with Allah.",
+          "fr": "Il n’y a de force ni de puissance qu’en Allah."
+        },
+        "source": ["bukhari", "muslim"]
+      },
+      {
+        "id": "an05",
+        "ar": "لَا إِلَهَ إِلَّا اللَّهُ وَحْدَهُ لَا شَرِيكَ لَهُ، لَهُ الْمُلْكُ وَلَهُ الْحَمْدُ، وَهُوَ عَلَى كُلِّ شَيْءٍ قَدِيرٌ",
+        "count": 10,
+        "meaning": {
+          "en": "There is no god but Allah alone, with no partner. His is the kingdom and His is the praise, and He has power over all things.",
+          "fr": "Il n’y a de dieu qu’Allah, Seul, sans associé. À Lui la royauté, à Lui la louange, et Il est capable de toute chose."
+        },
+        "source": ["bukhari", "muslim"]
+      },
+      {
+        "id": "an06",
+        "ar": "سُبْحَانَ اللَّهِ",
+        "count": 100,
+        "meaning": {"en": "Glory be to Allah.", "fr": "Gloire à Allah."},
+        "source": ["muslim"]
+      },
+      {
+        "id": "an07",
+        "ar": "سُبْحَانَ اللَّهِ الْعَظِيمِ وَبِحَمْدِهِ",
+        "count": 1,
+        "meaning": {
+          "en": "Glory be to Allah, the Almighty, and praise be to Him.",
+          "fr": "Gloire et louange à Allah l’Immense."
+        },
+        "source": ["tirmidhi"]
+      },
+      {
+        "id": "an08",
+        "ar": "أَسْتَغْفِرُ اللَّهَ وَأَتُوبُ إِلَيْهِ",
+        "count": 1,
+        "meaning": {
+          "en": "I ask Allah’s forgiveness and I turn to Him in repentance.",
+          "fr": "Je demande pardon à Allah et je me repens à Lui."
+        },
+        "source": ["bukhari"]
+      },
+      {
+        "id": "an09",
+        "ar": "اللَّهُمَّ صَلِّ وَسَلِّمْ عَلَى نَبِيِّنَا مُحَمَّدٍ",
+        "count": 1,
+        "meaning": {
+          "en": "O Allah, send blessings and peace upon our Prophet Muhammad.",
+          "fr": "Ô Allah, prie sur notre Prophète Muhammad et accorde-lui la paix."
+        },
+        "source": ["tabarani"]
+      },
+      {
+        "id": "an10",
+        "ar": "لَا إِلَهَ إِلَّا اللَّهُ",
+        "count": 1,
+        "meaning": {"en": "There is no god but Allah.", "fr": "Il n’y a de dieu qu’Allah."},
+        "source": ["tirmidhi", "ibn_majah"]
+      },
+      {
+        "id": "an11",
+        "ar": "الْحَمْدُ لِلَّهِ",
+        "count": 1,
+        "meaning": {"en": "Praise be to Allah.", "fr": "Louange à Allah."},
+        "source": ["tirmidhi", "ibn_majah"]
+      },
+      {
+        "id": "an12",
+        "ar": "لَا إِلَهَ إِلَّا اللَّهُ وَحْدَهُ لَا شَرِيكَ لَهُ، اللَّهُ أَكْبَرُ كَبِيرًا، وَالْحَمْدُ لِلَّهِ كَثِيرًا، سُبْحَانَ اللَّهِ رَبِّ الْعَالَمِينَ، لَا حَوْلَ وَلَا قُوَّةَ إِلَّا بِاللَّهِ الْعَزِيزِ الْحَكِيمِ",
+        "count": 1,
+        "meaning": {
+          "en": "There is no god but Allah alone, with no partner. Allah is truly the Greatest, much praise be to Allah, glory be to Allah, Lord of the worlds. There is no might and no power except with Allah, the Mighty, the Wise.",
+          "fr": "Il n’y a de dieu qu’Allah, Seul, sans associé. Allah est infiniment Grand, abondante louange à Allah, gloire à Allah, Seigneur des mondes. Il n’y a de force ni de puissance qu’en Allah, le Puissant, le Sage."
+        },
+        "source": ["muslim"]
+      },
+      {
+        "id": "an13",
+        "ar": "اللَّهُمَّ اغْفِرْ لِي، وَارْحَمْنِي، وَاهْدِنِي، وَعَافِنِي، وَارْزُقْنِي",
+        "count": 1,
+        "meaning": {
+          "en": "O Allah, forgive me, have mercy on me, guide me, grant me well-being and provide for me.",
+          "fr": "Ô Allah, pardonne-moi, fais-moi miséricorde, guide-moi, accorde-moi le salut et pourvois à ma subsistance."
+        },
+        "source": ["muslim"]
+      },
+      {
+        "id": "an14",
+        "ar": "يَا مُقَلِّبَ الْقُلُوبِ، ثَبِّتْ قَلْبِي عَلَى دِينِكَ",
+        "count": 1,
+        "meaning": {
+          "en": "O Turner of hearts, keep my heart firm on Your religion.",
+          "fr": "Ô Toi qui retournes les cœurs, affermis mon cœur sur Ta religion."
+        },
+        "source": ["tirmidhi"]
+      },
+      {
+        "id": "an15",
+        "ar": "حَسْبُنَا اللَّهُ وَنِعْمَ الْوَكِيلُ",
+        "count": 1,
+        "meaning": {
+          "en": "Allah is enough for us, and He is the best to rely on.",
+          "fr": "Allah nous suffit, et quel excellent garant !"
+        },
+        "source": ["bukhari"]
+      },
+      {
+        "id": "an16",
+        "ar": "سُبْحَانَ اللَّهِ وَبِحَمْدِهِ، عَدَدَ خَلْقِهِ، وَرِضَا نَفْسِهِ، وَزِنَةَ عَرْشِهِ، وَمِدَادَ كَلِمَاتِهِ",
+        "count": 1,
+        "meaning": {
+          "en": "Glory be to Allah, and praise be to Him, as many times as the number of His creation, as much as pleases Him, as much as the weight of His Throne, and as much as the ink of His words.",
+          "fr": "Gloire et louange à Allah, autant que le nombre de Ses créatures, autant qu’il Lui plaît, autant que le poids de Son Trône et autant que l’encre de Ses paroles."
+        },
+        "source": ["muslim"]
+      }
+    ]
+  }
+}

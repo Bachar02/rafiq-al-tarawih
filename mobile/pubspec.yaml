@@ -86,6 +86,8 @@ flutter:
     - assets/data/surah-names.json
     # Translations and tafsirs (data/build_texts.py, from QuranEnc.com).
     - assets/texts/
+    # The adhkar (lib/data/adhkar.dart; sources in assets/adhkar/NOTICE.txt).
+    - assets/adhkar/adhkar.json
     - assets/brand/wordmark-ar-small.png
 
   # Rubric identity (docs/DESIGN.md §2.3). Licences beside each file (OFL-*.txt).

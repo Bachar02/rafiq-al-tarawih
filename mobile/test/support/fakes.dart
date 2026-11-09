@@ -11,6 +11,7 @@ import 'package:rafiq/app/providers.dart';
 import 'package:rafiq/core/audio/audio_source.dart';
 import 'package:rafiq/core/recognition/models.dart';
 import 'package:rafiq/core/recognition/recognition_engine.dart';
+import 'package:rafiq/data/adhkar.dart';
 import 'package:rafiq/data/khatm.dart';
 import 'package:rafiq/data/note.dart';
 import 'package:rafiq/data/quran.dart';
@@ -194,6 +195,9 @@ Quran loadQuran() => _quran ??= Quran.fromJson(File('assets/quran/quran.json').r
 SurahNames? _names;
 SurahNames loadSurahNames() =>
     _names ??= SurahNames.fromJson(File('assets/data/surah-names.json').readAsStringSync(), loadQuran());
+
+Adhkar? _adhkar;
+Adhkar loadAdhkar() => _adhkar ??= Adhkar.fromJson(File('assets/adhkar/adhkar.json').readAsStringSync(), loadQuran());
 
 StudyCatalog? _catalog;
 StudyCatalog loadStudyCatalog() =>
