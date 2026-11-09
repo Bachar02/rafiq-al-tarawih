@@ -6,6 +6,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../data/adhkar.dart';
+import '../features/adhkar/adhkar_screen.dart';
 import '../features/khatm/khatm_screen.dart';
 import '../features/listen/listen_screen.dart';
 import '../features/navigate/navigate_screen.dart';
@@ -25,6 +27,8 @@ abstract final class AppRoutes {
   static const khatmName = '/khatm';
   static const studyName = '/study';
   static const readingName = '/reading';
+  static const adhkarName = '/adhkar';
+  static const dhikrListName = '/adhkar/list';
 
   /// A route that keeps the theme it was opened from: settings opened in
   /// (dark) Taraweeh mode stay dark, as do their sheets and dialogs.
@@ -51,6 +55,14 @@ abstract final class AppRoutes {
   /// The reading chart and the daily reminder.
   static Future<void> reading(BuildContext context) =>
       Navigator.of(context).push(_route<void>(context, readingName, (_) => const ProgressScreen()));
+
+  /// The adhkar: the five collections.
+  static Future<void> adhkar(BuildContext context) =>
+      Navigator.of(context).push(_route<void>(context, adhkarName, (_) => const AdhkarScreen()));
+
+  /// One collection of adhkar, to say and count.
+  static Future<void> dhikrList(BuildContext context, AdhkarCollection collection) =>
+      Navigator.of(context).push(_route<void>(context, dhikrListName, (_) => DhikrListScreen(collection: collection)));
 
   /// The khatm planner.
   static Future<void> khatm(BuildContext context) =>

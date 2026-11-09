@@ -218,6 +218,11 @@ abstract final class RubricText {
   /// Centred above ayah 1 of every surah except 1 and 9.
   static const quranBasmala = TextStyle(fontFamily: quranFont, fontSize: 22, height: 2.0);
 
+  /// A dhikr's words: Amiri (not the Quran's face), 22px × the user's text
+  /// size, with room for the tashkeel. Quran inside an adhkar card keeps
+  /// [quranBody]'s face at the same size.
+  static const dhikr = TextStyle(fontFamily: titleArFont, fontSize: 22, height: 2.0);
+
   /// The ayah number: the one thing read from across a prayer row.
   static final positionNumeral = _title(64, 60, letterSpacing: -0.64);
 

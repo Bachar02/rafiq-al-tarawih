@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/audio/audio_source.dart';
 import '../core/recognition/recognition_engine.dart';
+import '../data/adhkar.dart';
 import '../data/khatm.dart';
 import '../data/note.dart';
 import '../data/quran.dart';
@@ -16,6 +17,7 @@ import '../data/settings.dart';
 import '../data/study_text.dart';
 import '../data/surah_names.dart';
 import '../l10n/l10n.dart';
+import '../features/adhkar/adhkar_controller.dart';
 import '../features/khatm/khatm_controller.dart';
 import '../features/progress/reminder.dart';
 import '../features/listen/listen_controller.dart';
@@ -79,6 +81,17 @@ final studySourceProvider = Provider.family<StudySource?, StudyKind>((ref, kind)
         chosen: kind == StudyKind.translation ? settings.translationKey : settings.tafsirKey,
       );
 });
+
+/// The bundled adhkar (main.dart loads them; without them the Adhkar screen
+/// is empty and nothing else changes).
+final adhkarProvider = Provider<Adhkar>((ref) => Adhkar.empty);
+
+/// Loaded once at startup (see main.dart) and injected with an override.
+final adhkarStoreProvider =
+    Provider<AdhkarStore>((ref) => throw UnimplementedError('adhkarStoreProvider must be overridden'));
+
+/// Today's adhkar counts.
+final adhkarDayProvider = NotifierProvider<AdhkarDayController, AdhkarDay>(AdhkarDayController.new);
 
 /// Loaded once at startup (see main.dart) and injected with an override.
 final settingsStoreProvider =

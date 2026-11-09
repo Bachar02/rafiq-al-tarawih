@@ -6,9 +6,10 @@ import '../../app/providers.dart';
 import '../../app/routes.dart';
 import '../../app/theme.dart';
 import '../../l10n/l10n.dart';
+import '../adhkar/adhkar_controller.dart';
 
-/// Everything that is not the text itself: translation and tafsir, the
-/// khatm planner, settings, and the features still to come, shown where they
+/// Everything that is not the text itself: the adhkar, translation and
+/// tafsir, the khatm planner, settings, and the features still to come, shown where they
 /// will live, visibly not yet working.
 class MoreScreen extends ConsumerWidget {
   const MoreScreen({super.key});
@@ -18,6 +19,7 @@ class MoreScreen extends ConsumerWidget {
     final l = context.l10n;
     final c = context.colors;
     final plan = ref.watch(khatmProvider.select((b) => b.active));
+    final now = adhkarNow(ref.read(clockProvider)());
     return Scaffold(
       appBar: AppBar(automaticallyImplyLeading: false, title: Text(l.navMore)),
       body: ListView(
@@ -25,6 +27,13 @@ class MoreScreen extends ConsumerWidget {
         children: [
           RubricGroup(
             children: [
+              RubricRow(
+                label: l.adhkar,
+                // What this time of day calls for, else what is there.
+                detail: now == null ? l.adhkarDetail : l.adhkarNowDetail(collectionTitle(l, now)),
+                trailing: Icon(Icons.chevron_right, color: c.inkSecondary),
+                onTap: () => AppRoutes.adhkar(context),
+              ),
               RubricRow(
                 label: l.translationAndTafsir,
                 detail: l.translationAndTafsirDetail,

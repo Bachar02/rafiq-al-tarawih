@@ -2078,6 +2078,150 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Back to search'**
   String get backToSearch;
+
+  /// No description provided for @adhkar.
+  ///
+  /// In en, this message translates to:
+  /// **'Adhkar'**
+  String get adhkar;
+
+  /// No description provided for @adhkarDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'Morning, evening, after prayer, before sleep'**
+  String get adhkarDetail;
+
+  /// No description provided for @adhkarNowDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'Now: {collection}'**
+  String adhkarNowDetail(String collection);
+
+  /// No description provided for @adhkarMorning.
+  ///
+  /// In en, this message translates to:
+  /// **'Morning adhkar'**
+  String get adhkarMorning;
+
+  /// No description provided for @adhkarEvening.
+  ///
+  /// In en, this message translates to:
+  /// **'Evening adhkar'**
+  String get adhkarEvening;
+
+  /// No description provided for @adhkarPrayer.
+  ///
+  /// In en, this message translates to:
+  /// **'After prayer'**
+  String get adhkarPrayer;
+
+  /// No description provided for @adhkarSleep.
+  ///
+  /// In en, this message translates to:
+  /// **'Before sleep'**
+  String get adhkarSleep;
+
+  /// No description provided for @adhkarAnytime.
+  ///
+  /// In en, this message translates to:
+  /// **'Any time'**
+  String get adhkarAnytime;
+
+  /// No description provided for @adhkarMorningWhen.
+  ///
+  /// In en, this message translates to:
+  /// **'After Fajr'**
+  String get adhkarMorningWhen;
+
+  /// No description provided for @adhkarEveningWhen.
+  ///
+  /// In en, this message translates to:
+  /// **'After Asr'**
+  String get adhkarEveningWhen;
+
+  /// No description provided for @adhkarPrayerWhen.
+  ///
+  /// In en, this message translates to:
+  /// **'After each obligatory prayer'**
+  String get adhkarPrayerWhen;
+
+  /// No description provided for @adhkarSleepWhen.
+  ///
+  /// In en, this message translates to:
+  /// **'In bed, before sleeping'**
+  String get adhkarSleepWhen;
+
+  /// No description provided for @adhkarAnytimeWhen.
+  ///
+  /// In en, this message translates to:
+  /// **'Short adhkar for the whole day'**
+  String get adhkarAnytimeWhen;
+
+  /// No description provided for @adhkarNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Now'**
+  String get adhkarNow;
+
+  /// No description provided for @adhkarProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'{done} of {total} today'**
+  String adhkarProgress(int done, int total);
+
+  /// No description provided for @adhkarDoneToday.
+  ///
+  /// In en, this message translates to:
+  /// **'Done today'**
+  String get adhkarDoneToday;
+
+  /// No description provided for @adhkarTapToCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap a dhikr each time you say it.'**
+  String get adhkarTapToCount;
+
+  /// No description provided for @adhkarStartAgain.
+  ///
+  /// In en, this message translates to:
+  /// **'Start again'**
+  String get adhkarStartAgain;
+
+  /// No description provided for @adhkarStartedAgain.
+  ///
+  /// In en, this message translates to:
+  /// **'Started again'**
+  String get adhkarStartedAgain;
+
+  /// No description provided for @adhkarAllDone.
+  ///
+  /// In en, this message translates to:
+  /// **'All done. May Allah accept it from you.'**
+  String get adhkarAllDone;
+
+  /// No description provided for @adhkarSources.
+  ///
+  /// In en, this message translates to:
+  /// **'{first} and {second}'**
+  String adhkarSources(String first, String second);
+
+  /// No description provided for @semDhikrCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{said} of {count}'**
+  String semDhikrCount(int said, int count);
+
+  /// No description provided for @semDhikrDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get semDhikrDone;
+
+  /// No description provided for @hintDhikrCount.
+  ///
+  /// In en, this message translates to:
+  /// **'count'**
+  String get hintDhikrCount;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

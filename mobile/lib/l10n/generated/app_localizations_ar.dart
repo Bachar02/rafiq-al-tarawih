@@ -1317,4 +1317,84 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get backToSearch => 'العودة إلى البحث';
+
+  @override
+  String get adhkar => 'الأذكار';
+
+  @override
+  String get adhkarDetail => 'الصباح والمساء وبعد الصلاة وعند النوم';
+
+  @override
+  String adhkarNowDetail(String collection) {
+    return 'الآن: $collection';
+  }
+
+  @override
+  String get adhkarMorning => 'أذكار الصباح';
+
+  @override
+  String get adhkarEvening => 'أذكار المساء';
+
+  @override
+  String get adhkarPrayer => 'أذكار بعد الصلاة';
+
+  @override
+  String get adhkarSleep => 'أذكار النوم';
+
+  @override
+  String get adhkarAnytime => 'أذكار في كل وقت';
+
+  @override
+  String get adhkarMorningWhen => 'بعد صلاة الفجر';
+
+  @override
+  String get adhkarEveningWhen => 'بعد صلاة العصر';
+
+  @override
+  String get adhkarPrayerWhen => 'بعد كل صلاة مفروضة';
+
+  @override
+  String get adhkarSleepWhen => 'عند النوم';
+
+  @override
+  String get adhkarAnytimeWhen => 'أذكار قصيرة لكل وقت';
+
+  @override
+  String get adhkarNow => 'الآن';
+
+  @override
+  String adhkarProgress(int done, int total) {
+    return '$done من $total اليوم';
+  }
+
+  @override
+  String get adhkarDoneToday => 'أُتمّت اليوم';
+
+  @override
+  String get adhkarTapToCount => 'المس الذكر كلما قلته.';
+
+  @override
+  String get adhkarStartAgain => 'البدء من جديد';
+
+  @override
+  String get adhkarStartedAgain => 'بدأت من جديد';
+
+  @override
+  String get adhkarAllDone => 'تمّت. تقبّل الله منك.';
+
+  @override
+  String adhkarSources(String first, String second) {
+    return '$first و$second';
+  }
+
+  @override
+  String semDhikrCount(int said, int count) {
+    return '$said من $count';
+  }
+
+  @override
+  String get semDhikrDone => 'تمّ';
+
+  @override
+  String get hintDhikrCount => 'العدّ';
 }

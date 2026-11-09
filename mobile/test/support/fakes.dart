@@ -242,6 +242,8 @@ class Harness {
         quranProvider.overrideWithValue(loadQuran()),
         surahTableProvider.overrideWithValue(loadSurahNames()),
         studyCatalogProvider.overrideWithValue(loadStudyCatalog()),
+        adhkarProvider.overrideWithValue(loadAdhkar()),
+        adhkarStoreProvider.overrideWithValue(AdhkarStore(prefs)),
         studyTextLoaderProvider.overrideWithValue((s) => studyTexts(s)),
         settingsStoreProvider.overrideWithValue(SettingsStore(prefs)),
         readingStoreProvider.overrideWithValue(readingStore ?? PrefsReadingStore(prefs)),

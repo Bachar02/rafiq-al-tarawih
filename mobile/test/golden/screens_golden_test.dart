@@ -452,6 +452,72 @@ void main() {
       await expectGolden(tester, 'reading_card');
     });
 
+    /// Today's adhkar counts, as the store writes them.
+    Map<String, Object> adhkarCounts(Map<String, int> counts) => {
+          'adhkar_day.v1': jsonEncode({'v': 1, 'day': '2026-11-04', 'counts': counts}),
+        };
+
+    Future<void> openAdhkar(WidgetTester tester, String more, String adhkar, [String? collection]) async {
+      await settle(tester);
+      await tapNav(tester, more);
+      await tester.tap(find.text(adhkar));
+      await settle(tester);
+      if (collection != null) {
+        await tester.tap(find.text(collection));
+        await settle(tester);
+      }
+    }
+
+    testWidgets('adhkar: the five collections, the evening now, light', (tester) async {
+      await launch(
+        tester,
+        prefs: {
+          'theme_mode': 'light',
+          ...adhkarCounts({'morning/me01': 1, 'morning/me02': 3, 'morning/me03': 1, 'prayer/pr01': 1}),
+        },
+        taraweeh: false,
+      );
+      await openAdhkar(tester, 'More', 'Adhkar');
+      await expectGolden(tester, 'adhkar');
+    });
+
+    testWidgets('adhkar: the morning opens on Ayat al-Kursi, light', (tester) async {
+      await launch(tester, prefs: {'theme_mode': 'light'}, taraweeh: false);
+      await openAdhkar(tester, 'More', 'Adhkar', 'Morning adhkar');
+      await expectGolden(tester, 'adhkar_morning');
+    });
+
+    testWidgets('adhkar after prayer: one done, the tasbih under way, dark', (tester) async {
+      await launch(
+        tester,
+        prefs: {
+          'theme_mode': 'dark',
+          ...adhkarCounts({'prayer/pr01': 1, 'prayer/pr02': 1, 'prayer/pr04': 12})
+        },
+        taraweeh: false,
+      );
+      await openAdhkar(tester, 'More', 'Adhkar', 'After prayer');
+      await tester.drag(find.byType(Scrollable).first, const Offset(0, -900));
+      await settle(tester);
+      await expectGolden(tester, 'adhkar_prayer');
+    });
+
+    testWidgets('adhkar, Arabic interface: the evening, right to left, dark', (tester) async {
+      await launch(
+        tester,
+        prefs: {
+          'theme_mode': 'dark',
+          'language': 'ar',
+          ...adhkarCounts({'evening/me01': 1, 'evening/me02': 1})
+        },
+        taraweeh: false,
+      );
+      await openAdhkar(tester, 'المزيد', 'الأذكار', 'أذكار المساء');
+      await tester.drag(find.byType(Scrollable).first, const Offset(0, -1500));
+      await settle(tester);
+      await expectGolden(tester, 'ar_adhkar_evening');
+    });
+
     testWidgets('reader: 320×568 at the largest Quran text, in juz 30', (tester) async {
       await launch(tester, prefs: {...readingAt(78, 1), 'text_scale': 1.6}, size: smallPhone, taraweeh: false);
       await settle(tester);
