@@ -360,7 +360,7 @@
   "dhikrRemindersDetail": "{every}, de {from} à {to}",
   "dhikrEvery": "{hours, plural, =1{Toutes les heures} other{Toutes les {hours} heures}}",
   "dhikrHowOften": "Fréquence",
-  "dhikrHowOftenExplanation": "Un court dhikr s’affiche en haut de l’écran, sans son, pendant 8 secondes, entre {from} et {to}. Touchez-le pour ouvrir les adhkar, ou balayez-le. Android peut le décaler de quelques minutes pour économiser la batterie.",
+  "dhikrHowOftenExplanation": "Un court dhikr s’affiche en haut de l’écran, sans son, pendant 8 secondes, entre {from} et {to}. Touchez-le pour ouvrir les adhkar, ou balayez-le. Android peut le décaler un peu pour économiser la batterie.",
   "dhikrRemindersSet": "Rappels de dhikr activés",
   "dhikrNotificationTitle": "Souvenez-vous d’Allah"
 }

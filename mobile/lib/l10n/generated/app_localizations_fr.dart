@@ -1388,7 +1388,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String dhikrHowOftenExplanation(String from, String to) {
-    return 'Un court dhikr s’affiche en haut de l’écran, sans son, pendant 8 secondes, entre $from et $to. Touchez-le pour ouvrir les adhkar, ou balayez-le. Android peut le décaler de quelques minutes pour économiser la batterie.';
+    return 'Un court dhikr s’affiche en haut de l’écran, sans son, pendant 8 secondes, entre $from et $to. Touchez-le pour ouvrir les adhkar, ou balayez-le. Android peut le décaler un peu pour économiser la batterie.';
   }
 
   @override

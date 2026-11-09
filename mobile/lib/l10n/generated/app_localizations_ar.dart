@@ -1427,7 +1427,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String dhikrHowOftenExplanation(String from, String to) {
-    return 'يظهر ذكر قصير أعلى الشاشة، بلا صوت، لمدة 8 ثوانٍ، بين $from و$to. المسه لفتح الأذكار، أو اسحبه لإخفائه. قد يؤخره أندرويد بضع دقائق لتوفير البطارية.';
+    return 'يظهر ذكر قصير أعلى الشاشة، بلا صوت، لمدة 8 ثوانٍ، بين $from و$to. المسه لفتح الأذكار، أو اسحبه لإخفائه. قد يؤخره أندرويد قليلًا لتوفير البطارية.';
   }
 
   @override

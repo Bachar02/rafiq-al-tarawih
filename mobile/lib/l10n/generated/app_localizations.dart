@@ -2256,7 +2256,7 @@ abstract class AppLocalizations {
   /// No description provided for @dhikrHowOftenExplanation.
   ///
   /// In en, this message translates to:
-  /// **'A short dhikr appears at the top of the screen, without sound, for 8 seconds, between {from} and {to}. Tap it to open the adhkar, or swipe it away. Android may move it by a few minutes to save battery.'**
+  /// **'A short dhikr appears at the top of the screen, without sound, for 8 seconds, between {from} and {to}. Tap it to open the adhkar, or swipe it away. Android may shift it a little to save battery.'**
   String dhikrHowOftenExplanation(String from, String to);
 
   /// No description provided for @dhikrRemindersSet.
