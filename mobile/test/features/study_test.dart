@@ -234,6 +234,8 @@ void main() {
       await openSettings(tester);
       expect(find.text('Saheeh International'), findsOneWidget);
       expect(find.text('At-Tafsir Al-Muyassar'), findsOneWidget);
+      await tester.ensureVisible(find.text('At-Tafsir Al-Muyassar')); // below the reminders
+      await settle(tester);
       await tester.tap(find.text('At-Tafsir Al-Muyassar'));
       await settle(tester);
       await tester.tap(find.text('Al-Mukhtasar (French)'));

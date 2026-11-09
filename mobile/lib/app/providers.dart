@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/audio/audio_source.dart';
 import '../core/recognition/recognition_engine.dart';
+import '../data/adhkar.dart';
 import '../data/khatm.dart';
 import '../data/note.dart';
 import '../data/quran.dart';
@@ -16,6 +17,8 @@ import '../data/settings.dart';
 import '../data/study_text.dart';
 import '../data/surah_names.dart';
 import '../l10n/l10n.dart';
+import '../features/adhkar/adhkar_controller.dart';
+import '../features/adhkar/dhikr_reminders.dart';
 import '../features/khatm/khatm_controller.dart';
 import '../features/progress/reminder.dart';
 import '../features/listen/listen_controller.dart';
@@ -80,6 +83,17 @@ final studySourceProvider = Provider.family<StudySource?, StudyKind>((ref, kind)
       );
 });
 
+/// The bundled adhkar (main.dart loads them; without them the Adhkar screen
+/// is empty and nothing else changes).
+final adhkarProvider = Provider<Adhkar>((ref) => Adhkar.empty);
+
+/// Loaded once at startup (see main.dart) and injected with an override.
+final adhkarStoreProvider =
+    Provider<AdhkarStore>((ref) => throw UnimplementedError('adhkarStoreProvider must be overridden'));
+
+/// Today's adhkar counts.
+final adhkarDayProvider = NotifierProvider<AdhkarDayController, AdhkarDay>(AdhkarDayController.new);
+
 /// Loaded once at startup (see main.dart) and injected with an override.
 final settingsStoreProvider =
     Provider<SettingsStore>((ref) => throw UnimplementedError('settingsStoreProvider must be overridden'));
@@ -120,6 +134,9 @@ final readingStatsProvider = Provider<ReadingStats>(
 /// Keeps the scheduled daily reminders in step with the app.
 final reminderSyncProvider = Provider<ReminderSync>(ReminderSync.new);
 
+/// Keeps the scheduled dhikr reminders in step with the app.
+final dhikrSyncProvider = Provider<DhikrSync>(DhikrSync.new);
+
 /// The khatm plan, if one is running, and the finished khatms.
 final khatmProvider = NotifierProvider<KhatmController, KhatmBook>(KhatmController.new);
 
@@ -149,7 +166,8 @@ final engineFactoryProvider = Provider<RecognitionEngineFactory>(
   (ref) => (address) => ServerRecognitionEngine(address),
 );
 
-/// The phone's notifications, for the daily reading reminder (tests override it).
+/// The phone's notifications: the daily reading reminder and dhikr reminders
+/// (tests override it).
 final remindersProvider = Provider<Reminders>((ref) => LocalReminders());
 
 /// The phone's share sheet (tests override it).

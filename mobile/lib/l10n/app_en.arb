@@ -954,5 +954,104 @@
   "backToBookmarks": "Back to bookmarks",
   "backToSurahs": "Back to surahs",
   "backToKhatm": "Back to the khatm",
-  "backToSearch": "Back to search"
+  "backToSearch": "Back to search",
+  "adhkar": "Adhkar",
+  "adhkarDetail": "Morning, evening, after prayer, before sleep",
+  "adhkarNowDetail": "Now: {collection}",
+  "@adhkarNowDetail": {
+    "placeholders": {
+      "collection": {
+        "type": "String"
+      }
+    }
+  },
+  "adhkarMorning": "Morning adhkar",
+  "adhkarEvening": "Evening adhkar",
+  "adhkarPrayer": "After prayer",
+  "adhkarSleep": "Before sleep",
+  "adhkarAnytime": "Any time",
+  "adhkarMorningWhen": "After Fajr",
+  "adhkarEveningWhen": "After Asr",
+  "adhkarPrayerWhen": "After each obligatory prayer",
+  "adhkarSleepWhen": "In bed, before sleeping",
+  "adhkarAnytimeWhen": "Short adhkar for the whole day",
+  "adhkarNow": "Now",
+  "adhkarProgress": "{done} of {total} today",
+  "@adhkarProgress": {
+    "placeholders": {
+      "done": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "adhkarDoneToday": "Done today",
+  "adhkarTapToCount": "Tap a dhikr each time you say it.",
+  "adhkarStartAgain": "Start again",
+  "adhkarStartedAgain": "Started again",
+  "adhkarAllDone": "All done. May Allah accept it from you.",
+  "adhkarSources": "{first} and {second}",
+  "@adhkarSources": {
+    "placeholders": {
+      "first": {
+        "type": "String"
+      },
+      "second": {
+        "type": "String"
+      }
+    }
+  },
+  "semDhikrCount": "{said} of {count}",
+  "@semDhikrCount": {
+    "placeholders": {
+      "said": {
+        "type": "int"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "semDhikrDone": "Done",
+  "hintDhikrCount": "count",
+  "dhikrReminders": "Dhikr reminders",
+  "dhikrRemindersOff": "A short dhikr at the top of the screen now and then, even when Rafiq is closed",
+  "dhikrRemindersDetail": "{every}, from {from} to {to}",
+  "@dhikrRemindersDetail": {
+    "placeholders": {
+      "every": {
+        "type": "String"
+      },
+      "from": {
+        "type": "String"
+      },
+      "to": {
+        "type": "String"
+      }
+    }
+  },
+  "dhikrEvery": "{hours, plural, =1{Every hour} other{Every {hours} hours}}",
+  "@dhikrEvery": {
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      }
+    }
+  },
+  "dhikrHowOften": "How often",
+  "dhikrHowOftenExplanation": "A short dhikr appears at the top of the screen, without sound, for 8 seconds, between {from} and {to}. Tap it to open the adhkar, or swipe it away. Android may shift it a little to save battery.",
+  "@dhikrHowOftenExplanation": {
+    "placeholders": {
+      "from": {
+        "type": "String"
+      },
+      "to": {
+        "type": "String"
+      }
+    }
+  },
+  "dhikrRemindersSet": "Dhikr reminders on",
+  "dhikrNotificationTitle": "Remember Allah"
 }

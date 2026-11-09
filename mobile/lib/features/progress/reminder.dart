@@ -73,7 +73,7 @@ class ReminderSync {
     // Off since the app started and nothing scheduled by this run: leave the
     // notification system alone (turning off cancels explicitly).
     if (!force && next.isEmpty && _scheduled == null) return;
-    if (!force && _scheduled != null && _sameList(_scheduled!, next)) return;
+    if (!force && _scheduled != null && sameReminders(_scheduled!, next)) return;
     try {
       final l = lookupAppLocalizations(_ref.read(appLocaleProvider));
       await _ref.read(remindersProvider).replace(next, channelName: l.reminderChannel);
@@ -81,14 +81,6 @@ class ReminderSync {
     } catch (e, stack) {
       FlutterError.reportError(FlutterErrorDetails(exception: e, stack: stack, library: 'reminders'));
     }
-  }
-
-  static bool _sameList(List<Reminder> a, List<Reminder> b) {
-    if (a.length != b.length) return false;
-    for (var i = 0; i < a.length; i++) {
-      if (a[i] != b[i]) return false;
-    }
-    return true;
   }
 }
 

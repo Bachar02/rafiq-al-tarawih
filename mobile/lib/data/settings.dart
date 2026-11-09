@@ -38,6 +38,8 @@ class AppSettings {
     this.reminderOn = false,
     this.reminderMinutes = defaultReminderMinutes,
     this.reminderOffered = false,
+    this.dhikrRemindersOn = false,
+    this.dhikrEveryHours = defaultDhikrEveryHours,
   });
 
   /// The daily reading goals offered, in pages; 0 is off. 20 pages is a juz
@@ -99,6 +101,15 @@ class AppSettings {
   /// 20:00: after the day's work, before sleep.
   static const defaultReminderMinutes = 20 * 60;
 
+  /// A dhikr that pops up at the top of the screen every [dhikrEveryHours]
+  /// through the day. Off until the user turns it on.
+  final bool dhikrRemindersOn;
+  final int dhikrEveryHours;
+
+  /// The intervals offered, in hours.
+  static const dhikrIntervals = [1, 2, 3, 4];
+  static const defaultDhikrEveryHours = 2;
+
   AppSettings copyWith({
     String? serverAddress,
     bool? keepScreenOn,
@@ -116,6 +127,8 @@ class AppSettings {
     bool? reminderOn,
     int? reminderMinutes,
     bool? reminderOffered,
+    bool? dhikrRemindersOn,
+    int? dhikrEveryHours,
   }) =>
       AppSettings(
         serverAddress: serverAddress ?? this.serverAddress,
@@ -134,6 +147,8 @@ class AppSettings {
         reminderOn: reminderOn ?? this.reminderOn,
         reminderMinutes: reminderMinutes ?? this.reminderMinutes,
         reminderOffered: reminderOffered ?? this.reminderOffered,
+        dhikrRemindersOn: dhikrRemindersOn ?? this.dhikrRemindersOn,
+        dhikrEveryHours: dhikrEveryHours ?? this.dhikrEveryHours,
       );
 }
 
@@ -159,6 +174,8 @@ class SettingsStore {
   static const _reminder = 'reminder_on';
   static const _reminderAt = 'reminder_minutes';
   static const _reminderOffered = 'reminder_offered';
+  static const _dhikr = 'dhikr_reminders_on';
+  static const _dhikrEvery = 'dhikr_every_hours';
 
   AppSettings load() {
     const d = AppSettings();
@@ -182,6 +199,8 @@ class SettingsStore {
       reminderOn: _prefs.getBool(_reminder) ?? d.reminderOn,
       reminderMinutes: _validMinutes(_prefs.getInt(_reminderAt)) ?? d.reminderMinutes,
       reminderOffered: _prefs.getBool(_reminderOffered) ?? d.reminderOffered,
+      dhikrRemindersOn: _prefs.getBool(_dhikr) ?? d.dhikrRemindersOn,
+      dhikrEveryHours: _knownInterval(_prefs.getInt(_dhikrEvery)) ?? d.dhikrEveryHours,
     );
   }
 
@@ -202,9 +221,13 @@ class SettingsStore {
     await _prefs.setBool(_reminder, s.reminderOn);
     await _prefs.setInt(_reminderAt, s.reminderMinutes);
     await _prefs.setBool(_reminderOffered, s.reminderOffered);
+    await _prefs.setBool(_dhikr, s.dhikrRemindersOn);
+    await _prefs.setInt(_dhikrEvery, s.dhikrEveryHours);
   }
 
   static int? _validMinutes(int? m) => m != null && m >= 0 && m < 24 * 60 ? m : null;
+
+  static int? _knownInterval(int? hours) => AppSettings.dhikrIntervals.contains(hours) ? hours : null;
 
   static int? _knownGoal(int? pages) => AppSettings.dailyGoals.contains(pages) ? pages : null;
 }

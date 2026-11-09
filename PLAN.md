@@ -755,3 +755,52 @@ The owner tapped a note, landed on its ayah, and had no way back to the notes. T
 - **The reading place:** if the user only looked (still on the page the jump landed on), the reading position goes back to where it was. If they read on, the new place is kept.
 - **When it ends:** when the user takes it, makes another jump, or leaves the Read tab. One level: a new jump replaces the previous way back.
 - **Tests:** 9 widget tests (`test/features/reader_return_test.dart`) and 2 goldens (English light after a note, Arabic dark after a search). 5 new strings in three languages.
+
+## 25. Build 0.6: the adhkar and dhikr reminders (2026-11-09)
+
+The owner asked for adhkar, simple to use, and for an opt-in reminder: a dhikr at the top of the screen every couple of hours, shown for 8 seconds or until tapped, even when the app is closed.
+
+**Collections** (morning and evening were the owner's starting point):
+- **Morning** (after Fajr) and **Evening** (after Asr) share one list. The evening says its own words where they differ (أمسينا for أصبحنا), and a few adhkar belong to only one of the two.
+- **After prayer**: the istighfar, the tahlil, and the tasbih as three counters (33, 33, 33) and the hundredth.
+- **Before sleep**: the three Quls, Ayat al-Kursi, the end of al-Baqarah, and the sleeping adhkar (33, 33, 34).
+- **Any time**: 16 short adhkar. These are what the reminders draw on, so a morning dhikr never arrives at night.
+- Waking up, entering the mosque and other occasions can come later as further collections.
+
+**Content** (`assets/adhkar/adhkar.json`, `NOTICE.txt` beside it):
+- **Arabic:** chosen and worded after Hisn al-Muslim, with full tashkeel and each dhikr's sources (al-Bukhari, Muslim, Abu Dawud…).
+- **Counts:** set by hand. The site's JSON has wrong repeat counts (7 recorded as 1, for example).
+- **Quran:** never retyped. A dhikr holds references (`2:255`, `112`, `2:285-286`), and the app shows the ayahs from its own Tanzil text, with "Translation and tafsir" one tap away.
+- **Meanings:** English and French meanings written for Rafiq. Arabic shows the words alone.
+- **Checks:** the file is checked when it loads, for real ayahs, known sources, unique ids and counts of at least 1. A broken file leaves the Adhkar empty and the Quran working.
+
+**Screen** (More → Adhkar, the first row, saying "Now: Evening adhkar" when the hour fits):
+- **Home:** the five collections with today's progress ("3 of 22 today", "Done today"), and "Now" on the one this hour suggests. It is a word on a row; the list order never changes.
+- **A collection:** one card per dhikr, in order. Tap a card each time it is said: a light tick (haptic), the counter goes down to a check, and the list moves on to the next. "Start again" has an undo.
+- **Today's counts:** kept on the phone and started again each day. Losing them is harmless, so an unreadable record simply starts again.
+- **Text size:** the Arabic follows the Quran text-size setting.
+
+**Dhikr reminders** (on the Adhkar screen and in Settings, off by default):
+- **Every 1, 2, 3 or 4 hours** (default 2), from 8:00 to 22:00, never at night. Scheduled 14 days ahead, so they come with the app closed, and moved on whenever the app is shown or hidden.
+- **The pop-up:** a heads-up notification on its own channel ("Dhikr reminders"): high importance, no sound, no vibration, `timeoutAfter` 8 s. A tap opens the Adhkar; a swipe dismisses it. The title is "Remember Allah", then the dhikr, and its meaning (not in Arabic).
+- **Collapsed:** the Arabic alone. The emulator showed Android joining the dhikr and its meaning on one line, where Arabic and English mixed read in the wrong order. Expanded, the meaning sits under it.
+- **Where it shows:** on a phone, Android puts it at the top of the screen, across the width. An app cannot choose the top-right corner: that would need the "display over other apps" permission, which Play restricts and users distrust.
+- **Which dhikr:** random-looking but fixed per hour, so rescheduling only cancels or adds what changed (a hundred or so alarms). Never the same dhikr twice in a row.
+- **Taraweeh mode:** keeps them away for 3 hours. Nothing pops up over the imam's ayah.
+- **Inexact alarms**, as for the daily reminder: one more than a few minutes away may come up to an hour late, so the setting says "a little". The reading reminder now cancels only its own notifications (ids 0–15); dhikr reminders use ids 1000–1499.
+
+**Tests:**
+- **Count:** 401 (357 before): data checks, counting, the evening's words, the Quran references, three languages, scheduling, the quiet spell during Taraweeh, and a tap opening the Adhkar.
+- **Goldens:** 4 new (the Adhkar home, the morning on Ayat al-Kursi, after prayer in dark, the evening in Arabic) and 3 re-rendered (More, Settings in English and French). The real fonts showed a pause mark touching the passage label, now spaced.
+- **Accessibility:** both themes and 200% text.
+
+**Emulator** (Pixel XL API 36, release build over 0.5):
+- Turning it on scheduled 107 dhikr alarms (18:00 to 22:00 today, then 8 a day), and the reading reminder kept its own.
+- The clock was moved past the 18:00 window (`cmd alarm set-time`), with the app in the background. The dhikr popped up at the top of the screen, silent ("Remember Allah", then the dhikr). Within 12 seconds it had gone, from the screen and from the shade.
+- Tapping one opened the Adhkar.
+- Alarms a while away get Android's inexact window (here +33 min to +1 h), as for the daily reminder.
+
+**Open:**
+1. Native review of the French and Arabic strings, the English and French meanings, and the Arabic notes.
+2. A scholar's look at the selection and the sources.
+3. A real phone over a day: the heads-up, the 8 seconds, and how far Android moves inexact alarms.

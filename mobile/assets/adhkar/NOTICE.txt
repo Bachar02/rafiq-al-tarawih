@@ -1,0 +1,18 @@
+Adhkar (adhkar.json)
+
+Selection and Arabic wording: Hisn al-Muslim (Fortress of the Muslim), by
+Sa'id ibn Ali ibn Wahf al-Qahtani: the chapters on the morning and the
+evening, after the prayer, before sleep, and the excellence of remembrance.
+The texts are hadith; each dhikr names the collections that report it
+("source"). Counts follow the hadith (for example 33, 33 and 34 before sleep).
+
+Quranic passages (Ayat al-Kursi, al-Ikhlas, al-Falaq, an-Nas, the end of
+al-Baqarah) are not copied here: "quran" holds a reference, and the app shows
+the ayahs from its own Quran text (assets/quran, Tanzil Project).
+
+The English and French meanings, and the notes on how or when to say a
+dhikr, were written for Rafiq. They are drafts for native review, like the
+app's other French and Arabic strings (PLAN.md §25).
+
+Morning and evening share one list: "evening" gives the evening's own words
+(amsayna for asbahna) and "only" marks a dhikr said at one of the two.

@@ -2,10 +2,14 @@
 /// other's routes, and the names make navigation visible in tests and logs.
 library;
 
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../data/adhkar.dart';
+import '../features/adhkar/adhkar_screen.dart';
 import '../features/khatm/khatm_screen.dart';
 import '../features/listen/listen_screen.dart';
 import '../features/navigate/navigate_screen.dart';
@@ -25,6 +29,8 @@ abstract final class AppRoutes {
   static const khatmName = '/khatm';
   static const studyName = '/study';
   static const readingName = '/reading';
+  static const adhkarName = '/adhkar';
+  static const dhikrListName = '/adhkar/list';
 
   /// A route that keeps the theme it was opened from: settings opened in
   /// (dark) Taraweeh mode stay dark, as do their sheets and dialogs.
@@ -36,13 +42,22 @@ abstract final class AppRoutes {
   static Future<void> settings(BuildContext context) =>
       Navigator.of(context).push(_route<void>(context, settingsName, (_) => const SettingsScreen()));
 
-  /// Taraweeh mode, full screen over the reader.
-  static Future<void> taraweeh(BuildContext context) => Navigator.of(context).push(
+  /// Taraweeh mode, full screen over the reader. No dhikr reminder pops up
+  /// over the imam's ayah while it is open.
+  static Future<void> taraweeh(BuildContext context) async {
+    final dhikr = ProviderScope.containerOf(context, listen: false).read(dhikrSyncProvider);
+    unawaited(dhikr.taraweeh(on: true));
+    try {
+      await Navigator.of(context).push(
         MaterialPageRoute<void>(
           settings: const RouteSettings(name: taraweehName),
           builder: (_) => const TaraweehTheme(child: ListenScreen(autoStart: true)),
         ),
       );
+    } finally {
+      unawaited(dhikr.taraweeh(on: false));
+    }
+  }
 
   /// Choose a place (surah, juz, page, bookmark); returns its verse id.
   static Future<int?> navigate(BuildContext context, {required int current}) =>
@@ -51,6 +66,14 @@ abstract final class AppRoutes {
   /// The reading chart and the daily reminder.
   static Future<void> reading(BuildContext context) =>
       Navigator.of(context).push(_route<void>(context, readingName, (_) => const ProgressScreen()));
+
+  /// The adhkar: the five collections.
+  static Future<void> adhkar(BuildContext context) =>
+      Navigator.of(context).push(_route<void>(context, adhkarName, (_) => const AdhkarScreen()));
+
+  /// One collection of adhkar, to say and count.
+  static Future<void> dhikrList(BuildContext context, AdhkarCollection collection) =>
+      Navigator.of(context).push(_route<void>(context, dhikrListName, (_) => DhikrListScreen(collection: collection)));
 
   /// The khatm planner.
   static Future<void> khatm(BuildContext context) =>

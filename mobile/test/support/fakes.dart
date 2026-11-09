@@ -11,6 +11,7 @@ import 'package:rafiq/app/providers.dart';
 import 'package:rafiq/core/audio/audio_source.dart';
 import 'package:rafiq/core/recognition/models.dart';
 import 'package:rafiq/core/recognition/recognition_engine.dart';
+import 'package:rafiq/data/adhkar.dart';
 import 'package:rafiq/data/khatm.dart';
 import 'package:rafiq/data/note.dart';
 import 'package:rafiq/data/quran.dart';
@@ -124,9 +125,21 @@ class FakeSharer implements Sharer {
 class FakeReminders implements Reminders {
   bool allow = true;
   int asked = 0;
+
+  /// Daily reading reminders.
   int replaced = 0;
   List<Reminder> scheduled = const [];
   String? channel;
+
+  /// Dhikr reminders.
+  int dhikrReplaced = 0;
+  List<Reminder> dhikr = const [];
+  String? dhikrChannel;
+
+  void Function(String payload)? _onOpen;
+
+  /// The user taps a notification carrying [payload].
+  void tap(String payload) => _onOpen?.call(payload);
 
   @override
   Future<bool> requestPermission() async {
@@ -135,11 +148,25 @@ class FakeReminders implements Reminders {
   }
 
   @override
-  Future<void> replace(List<Reminder> reminders, {required String channelName}) async {
-    replaced++;
-    scheduled = List.of(reminders);
-    channel = channelName;
+  Future<void> replace(
+    List<Reminder> reminders, {
+    required String channelName,
+    ReminderKind kind = ReminderKind.reading,
+  }) async {
+    switch (kind) {
+      case ReminderKind.reading:
+        replaced++;
+        scheduled = List.of(reminders);
+        channel = channelName;
+      case ReminderKind.dhikr:
+        dhikrReplaced++;
+        dhikr = List.of(reminders);
+        dhikrChannel = channelName;
+    }
   }
+
+  @override
+  Future<void> onOpen(void Function(String payload) handler) async => _onOpen = handler;
 }
 
 class FakeScreenAwake implements ScreenAwake {
@@ -195,6 +222,9 @@ SurahNames? _names;
 SurahNames loadSurahNames() =>
     _names ??= SurahNames.fromJson(File('assets/data/surah-names.json').readAsStringSync(), loadQuran());
 
+Adhkar? _adhkar;
+Adhkar loadAdhkar() => _adhkar ??= Adhkar.fromJson(File('assets/adhkar/adhkar.json').readAsStringSync(), loadQuran());
+
 StudyCatalog? _catalog;
 StudyCatalog loadStudyCatalog() =>
     _catalog ??= StudyCatalog.fromJson(File('assets/texts/catalog.json').readAsStringSync());
@@ -238,6 +268,8 @@ class Harness {
         quranProvider.overrideWithValue(loadQuran()),
         surahTableProvider.overrideWithValue(loadSurahNames()),
         studyCatalogProvider.overrideWithValue(loadStudyCatalog()),
+        adhkarProvider.overrideWithValue(loadAdhkar()),
+        adhkarStoreProvider.overrideWithValue(AdhkarStore(prefs)),
         studyTextLoaderProvider.overrideWithValue((s) => studyTexts(s)),
         settingsStoreProvider.overrideWithValue(SettingsStore(prefs)),
         readingStoreProvider.overrideWithValue(readingStore ?? PrefsReadingStore(prefs)),

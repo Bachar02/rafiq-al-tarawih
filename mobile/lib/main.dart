@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'app/app.dart';
 import 'app/providers.dart';
 import 'app/theme.dart';
+import 'data/adhkar.dart';
 import 'data/quran.dart';
 import 'data/reading_store.dart';
 import 'data/settings.dart';
@@ -21,6 +22,7 @@ Future<void> main() async {
     final quran = await compute(Quran.fromJson, raw);
     final names = SurahNames.fromJson(await rootBundle.loadString('assets/data/surah-names.json'), quran);
     final texts = StudyCatalog.fromJson(await rootBundle.loadString('assets/texts/catalog.json'));
+    final adhkar = await _loadAdhkar(quran);
     final prefs = await SharedPreferences.getInstance();
     runApp(
       ProviderScope(
@@ -28,6 +30,8 @@ Future<void> main() async {
           quranProvider.overrideWithValue(quran),
           surahTableProvider.overrideWithValue(names),
           studyCatalogProvider.overrideWithValue(texts),
+          adhkarProvider.overrideWithValue(adhkar),
+          adhkarStoreProvider.overrideWithValue(AdhkarStore(prefs)),
           settingsStoreProvider.overrideWithValue(SettingsStore(prefs)),
           readingStoreProvider.overrideWithValue(PrefsReadingStore(prefs)),
         ],
@@ -38,6 +42,17 @@ Future<void> main() async {
     // A broken install should say so, not show a blank screen.
     FlutterError.reportError(FlutterErrorDetails(exception: e, stack: stack));
     runApp(_StartupError(error: '$e'));
+  }
+}
+
+/// The adhkar, or none if the file cannot be read: the Quran must open
+/// whatever happens to them (the tests check the bundled file).
+Future<Adhkar> _loadAdhkar(Quran quran) async {
+  try {
+    return Adhkar.fromJson(await rootBundle.loadString('assets/adhkar/adhkar.json'), quran);
+  } catch (e, stack) {
+    FlutterError.reportError(FlutterErrorDetails(exception: e, stack: stack, library: 'adhkar'));
+    return Adhkar.empty;
   }
 }
 

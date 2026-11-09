@@ -1280,4 +1280,120 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get backToSearch => 'Retour à la recherche';
+
+  @override
+  String get adhkar => 'Adhkar';
+
+  @override
+  String get adhkarDetail => 'Matin, soir, après la prière, avant de dormir';
+
+  @override
+  String adhkarNowDetail(String collection) {
+    return 'Maintenant : $collection';
+  }
+
+  @override
+  String get adhkarMorning => 'Adhkar du matin';
+
+  @override
+  String get adhkarEvening => 'Adhkar du soir';
+
+  @override
+  String get adhkarPrayer => 'Après la prière';
+
+  @override
+  String get adhkarSleep => 'Avant de dormir';
+
+  @override
+  String get adhkarAnytime => 'À tout moment';
+
+  @override
+  String get adhkarMorningWhen => 'Après Fajr';
+
+  @override
+  String get adhkarEveningWhen => 'Après Asr';
+
+  @override
+  String get adhkarPrayerWhen => 'Après chaque prière obligatoire';
+
+  @override
+  String get adhkarSleepWhen => 'Au lit, avant de dormir';
+
+  @override
+  String get adhkarAnytimeWhen => 'De courts adhkar pour toute la journée';
+
+  @override
+  String get adhkarNow => 'Maintenant';
+
+  @override
+  String adhkarProgress(int done, int total) {
+    return '$done sur $total aujourd’hui';
+  }
+
+  @override
+  String get adhkarDoneToday => 'Faits aujourd’hui';
+
+  @override
+  String get adhkarTapToCount => 'Touchez un dhikr chaque fois que vous le dites.';
+
+  @override
+  String get adhkarStartAgain => 'Recommencer';
+
+  @override
+  String get adhkarStartedAgain => 'C’est reparti';
+
+  @override
+  String get adhkarAllDone => 'Terminé. Qu’Allah l’accepte de vous.';
+
+  @override
+  String adhkarSources(String first, String second) {
+    return '$first et $second';
+  }
+
+  @override
+  String semDhikrCount(int said, int count) {
+    return '$said sur $count';
+  }
+
+  @override
+  String get semDhikrDone => 'Fait';
+
+  @override
+  String get hintDhikrCount => 'compter';
+
+  @override
+  String get dhikrReminders => 'Rappels de dhikr';
+
+  @override
+  String get dhikrRemindersOff => 'Un court dhikr en haut de l’écran de temps en temps, même quand Rafiq est fermé';
+
+  @override
+  String dhikrRemindersDetail(String every, String from, String to) {
+    return '$every, de $from à $to';
+  }
+
+  @override
+  String dhikrEvery(int hours) {
+    String _temp0 = intl.Intl.pluralLogic(
+      hours,
+      locale: localeName,
+      other: 'Toutes les $hours heures',
+      one: 'Toutes les heures',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get dhikrHowOften => 'Fréquence';
+
+  @override
+  String dhikrHowOftenExplanation(String from, String to) {
+    return 'Un court dhikr s’affiche en haut de l’écran, sans son, pendant 8 secondes, entre $from et $to. Touchez-le pour ouvrir les adhkar, ou balayez-le. Android peut le décaler un peu pour économiser la batterie.';
+  }
+
+  @override
+  String get dhikrRemindersSet => 'Rappels de dhikr activés';
+
+  @override
+  String get dhikrNotificationTitle => 'Souvenez-vous d’Allah';
 }
