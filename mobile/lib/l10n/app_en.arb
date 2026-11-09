@@ -1015,5 +1015,43 @@
     }
   },
   "semDhikrDone": "Done",
-  "hintDhikrCount": "count"
+  "hintDhikrCount": "count",
+  "dhikrReminders": "Dhikr reminders",
+  "dhikrRemindersOff": "A short dhikr at the top of the screen now and then, even when Rafiq is closed",
+  "dhikrRemindersDetail": "{every}, from {from} to {to}",
+  "@dhikrRemindersDetail": {
+    "placeholders": {
+      "every": {
+        "type": "String"
+      },
+      "from": {
+        "type": "String"
+      },
+      "to": {
+        "type": "String"
+      }
+    }
+  },
+  "dhikrEvery": "{hours, plural, =1{Every hour} other{Every {hours} hours}}",
+  "@dhikrEvery": {
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      }
+    }
+  },
+  "dhikrHowOften": "How often",
+  "dhikrHowOftenExplanation": "A short dhikr appears at the top of the screen, without sound, for 8 seconds, between {from} and {to}. Tap it to open the adhkar, or swipe it away. Android may move it by a few minutes to save battery.",
+  "@dhikrHowOftenExplanation": {
+    "placeholders": {
+      "from": {
+        "type": "String"
+      },
+      "to": {
+        "type": "String"
+      }
+    }
+  },
+  "dhikrRemindersSet": "Dhikr reminders on",
+  "dhikrNotificationTitle": "Remember Allah"
 }

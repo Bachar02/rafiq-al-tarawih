@@ -2,6 +2,8 @@
 /// other's routes, and the names make navigation visible in tests and logs.
 library;
 
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -40,13 +42,22 @@ abstract final class AppRoutes {
   static Future<void> settings(BuildContext context) =>
       Navigator.of(context).push(_route<void>(context, settingsName, (_) => const SettingsScreen()));
 
-  /// Taraweeh mode, full screen over the reader.
-  static Future<void> taraweeh(BuildContext context) => Navigator.of(context).push(
+  /// Taraweeh mode, full screen over the reader. No dhikr reminder pops up
+  /// over the imam's ayah while it is open.
+  static Future<void> taraweeh(BuildContext context) async {
+    final dhikr = ProviderScope.containerOf(context, listen: false).read(dhikrSyncProvider);
+    unawaited(dhikr.taraweeh(on: true));
+    try {
+      await Navigator.of(context).push(
         MaterialPageRoute<void>(
           settings: const RouteSettings(name: taraweehName),
           builder: (_) => const TaraweehTheme(child: ListenScreen(autoStart: true)),
         ),
       );
+    } finally {
+      unawaited(dhikr.taraweeh(on: false));
+    }
+  }
 
   /// Choose a place (surah, juz, page, bookmark); returns its verse id.
   static Future<int?> navigate(BuildContext context, {required int current}) =>

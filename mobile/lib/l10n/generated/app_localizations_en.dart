@@ -1354,4 +1354,40 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get hintDhikrCount => 'count';
+
+  @override
+  String get dhikrReminders => 'Dhikr reminders';
+
+  @override
+  String get dhikrRemindersOff => 'A short dhikr at the top of the screen now and then, even when Rafiq is closed';
+
+  @override
+  String dhikrRemindersDetail(String every, String from, String to) {
+    return '$every, from $from to $to';
+  }
+
+  @override
+  String dhikrEvery(int hours) {
+    String _temp0 = intl.Intl.pluralLogic(
+      hours,
+      locale: localeName,
+      other: 'Every $hours hours',
+      one: 'Every hour',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get dhikrHowOften => 'How often';
+
+  @override
+  String dhikrHowOftenExplanation(String from, String to) {
+    return 'A short dhikr appears at the top of the screen, without sound, for 8 seconds, between $from and $to. Tap it to open the adhkar, or swipe it away. Android may move it by a few minutes to save battery.';
+  }
+
+  @override
+  String get dhikrRemindersSet => 'Dhikr reminders on';
+
+  @override
+  String get dhikrNotificationTitle => 'Remember Allah';
 }

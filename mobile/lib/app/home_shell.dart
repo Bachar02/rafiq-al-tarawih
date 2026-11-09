@@ -7,6 +7,7 @@ import '../features/navigate/navigate_screen.dart';
 import '../features/reader/reader_screen.dart';
 import '../features/reader/reading_review_sheet.dart';
 import '../l10n/l10n.dart';
+import '../services/reminders.dart' show dhikrPayload;
 import 'navigation.dart';
 import 'providers.dart';
 import 'routes.dart';
@@ -44,16 +45,35 @@ class _HomeShellState extends ConsumerState<HomeShell> {
 
   /// The daily reminders are rescheduled whenever the app is shown or
   /// hidden: their text (today's target, where to continue) stays true, and
-  /// a day already read gets none.
+  /// a day already read gets none. Dhikr reminders move their two weeks on.
   late final AppLifecycleListener _lifecycle;
 
-  void _syncReminders() => ref.read(reminderSyncProvider).sync();
+  void _syncReminders() {
+    ref.read(reminderSyncProvider).sync();
+    ref.read(dhikrSyncProvider).sync();
+  }
+
+  /// A dhikr reminder tapped (or one that launched the app): the adhkar.
+  void _opened(String payload) {
+    if (payload == dhikrPayload && mounted) AppRoutes.adhkar(context);
+  }
+
+  Future<void> _listenForTaps() async {
+    try {
+      await ref.read(remindersProvider).onOpen(_opened);
+    } catch (e, stack) {
+      FlutterError.reportError(FlutterErrorDetails(exception: e, stack: stack, library: 'reminders'));
+    }
+  }
 
   @override
   void initState() {
     super.initState();
     _lifecycle = AppLifecycleListener(onShow: _syncReminders, onHide: _syncReminders);
-    WidgetsBinding.instance.addPostFrameCallback((_) => _syncReminders());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _syncReminders();
+      _listenForTaps();
+    });
     // Pages left from last time: ask once the app is on screen.
     if (ref.read(readingSessionProvider).ask > 0) WidgetsBinding.instance.addPostFrameCallback((_) => _review());
   }

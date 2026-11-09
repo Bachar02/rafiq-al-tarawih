@@ -193,6 +193,20 @@ void main() {
         await meetsGuidelines(tester); // a card done, one under way
       });
 
+      testWidgets('dhikr reminders: the setting and how often', (tester) async {
+        await launch(tester, {'theme_mode': theme, 'dhikr_reminders_on': true});
+        await tapNav(tester, 'More');
+        await tester.tap(find.text('Adhkar'));
+        await settle(tester);
+        await tester.ensureVisible(find.text('How often'));
+        await settle(tester);
+        await meetsGuidelines(tester);
+        await tester.tap(find.text('How often'));
+        await settle(tester);
+        expect(find.text('Every 4 hours'), findsOneWidget);
+        await meetsGuidelines(tester);
+      });
+
       testWidgets('Taraweeh mode, following', (tester) async {
         await launch(tester, {'theme_mode': theme, 'dark_during_taraweeh': theme == 'dark'});
         await tester.tap(find.byIcon(Icons.mic_none));
@@ -250,6 +264,21 @@ void main() {
         scrollable: find.byType(Scrollable).first);
     await settle(tester);
     expect(tester.takeException(), isNull, reason: 'a long dhikr, its meaning and a three-digit counter');
+  });
+
+  testWidgets('200% system text: dhikr reminders and how often', (tester) async {
+    tester.platformDispatcher.textScaleFactorTestValue = 2.0;
+    addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+    await launch(tester, {'dhikr_reminders_on': true});
+    await tapNav(tester, 'More');
+    await tester.tap(find.text('Adhkar'));
+    await settle(tester);
+    await tester.scrollUntilVisible(find.text('How often'), 200, scrollable: find.byType(Scrollable).first);
+    await settle(tester);
+    expect(tester.takeException(), isNull, reason: 'the setting');
+    await tester.tap(find.text('How often'));
+    await settle(tester);
+    expect(tester.takeException(), isNull, reason: 'the sheet');
   });
 
   testWidgets('200% system text: the study view and its source sheet', (tester) async {

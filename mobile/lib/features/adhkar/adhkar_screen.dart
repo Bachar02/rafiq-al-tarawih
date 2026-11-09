@@ -13,6 +13,7 @@ import '../../core/text/quran_display.dart';
 import '../../data/adhkar.dart';
 import '../../l10n/l10n.dart';
 import 'adhkar_controller.dart';
+import 'dhikr_reminders.dart';
 
 /// The Adhkar screen: the five collections, each with today's progress, the
 /// one for this time of day marked "Now".
@@ -54,6 +55,7 @@ class AdhkarScreen extends ConsumerWidget {
                 }),
             ],
           ),
+          const DhikrReminderSettings(),
         ],
       ),
     );

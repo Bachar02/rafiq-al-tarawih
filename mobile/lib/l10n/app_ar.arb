@@ -354,5 +354,13 @@
   "adhkarSources": "{first} و{second}",
   "semDhikrCount": "{said} من {count}",
   "semDhikrDone": "تمّ",
-  "hintDhikrCount": "العدّ"
+  "hintDhikrCount": "العدّ",
+  "dhikrReminders": "التذكير بالذكر",
+  "dhikrRemindersOff": "ذكر قصير أعلى الشاشة بين حين وآخر، حتى وإن كان رفيق مغلقًا",
+  "dhikrRemindersDetail": "{every}، من {from} إلى {to}",
+  "dhikrEvery": "{hours, plural, =1{كل ساعة} =2{كل ساعتين} few{كل {hours} ساعات} other{كل {hours} ساعة}}",
+  "dhikrHowOften": "كم مرة",
+  "dhikrHowOftenExplanation": "يظهر ذكر قصير أعلى الشاشة، بلا صوت، لمدة 8 ثوانٍ، بين {from} و{to}. المسه لفتح الأذكار، أو اسحبه لإخفائه. قد يؤخره أندرويد بضع دقائق لتوفير البطارية.",
+  "dhikrRemindersSet": "تم تفعيل التذكير بالذكر",
+  "dhikrNotificationTitle": "اذكر الله"
 }

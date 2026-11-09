@@ -2222,6 +2222,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'count'**
   String get hintDhikrCount;
+
+  /// No description provided for @dhikrReminders.
+  ///
+  /// In en, this message translates to:
+  /// **'Dhikr reminders'**
+  String get dhikrReminders;
+
+  /// No description provided for @dhikrRemindersOff.
+  ///
+  /// In en, this message translates to:
+  /// **'A short dhikr at the top of the screen now and then, even when Rafiq is closed'**
+  String get dhikrRemindersOff;
+
+  /// No description provided for @dhikrRemindersDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'{every}, from {from} to {to}'**
+  String dhikrRemindersDetail(String every, String from, String to);
+
+  /// No description provided for @dhikrEvery.
+  ///
+  /// In en, this message translates to:
+  /// **'{hours, plural, =1{Every hour} other{Every {hours} hours}}'**
+  String dhikrEvery(int hours);
+
+  /// No description provided for @dhikrHowOften.
+  ///
+  /// In en, this message translates to:
+  /// **'How often'**
+  String get dhikrHowOften;
+
+  /// No description provided for @dhikrHowOftenExplanation.
+  ///
+  /// In en, this message translates to:
+  /// **'A short dhikr appears at the top of the screen, without sound, for 8 seconds, between {from} and {to}. Tap it to open the adhkar, or swipe it away. Android may move it by a few minutes to save battery.'**
+  String dhikrHowOftenExplanation(String from, String to);
+
+  /// No description provided for @dhikrRemindersSet.
+  ///
+  /// In en, this message translates to:
+  /// **'Dhikr reminders on'**
+  String get dhikrRemindersSet;
+
+  /// No description provided for @dhikrNotificationTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Remember Allah'**
+  String get dhikrNotificationTitle;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

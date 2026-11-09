@@ -1397,4 +1397,42 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get hintDhikrCount => 'العدّ';
+
+  @override
+  String get dhikrReminders => 'التذكير بالذكر';
+
+  @override
+  String get dhikrRemindersOff => 'ذكر قصير أعلى الشاشة بين حين وآخر، حتى وإن كان رفيق مغلقًا';
+
+  @override
+  String dhikrRemindersDetail(String every, String from, String to) {
+    return '$every، من $from إلى $to';
+  }
+
+  @override
+  String dhikrEvery(int hours) {
+    String _temp0 = intl.Intl.pluralLogic(
+      hours,
+      locale: localeName,
+      other: 'كل $hours ساعة',
+      few: 'كل $hours ساعات',
+      two: 'كل ساعتين',
+      one: 'كل ساعة',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get dhikrHowOften => 'كم مرة';
+
+  @override
+  String dhikrHowOftenExplanation(String from, String to) {
+    return 'يظهر ذكر قصير أعلى الشاشة، بلا صوت، لمدة 8 ثوانٍ، بين $from و$to. المسه لفتح الأذكار، أو اسحبه لإخفائه. قد يؤخره أندرويد بضع دقائق لتوفير البطارية.';
+  }
+
+  @override
+  String get dhikrRemindersSet => 'تم تفعيل التذكير بالذكر';
+
+  @override
+  String get dhikrNotificationTitle => 'اذكر الله';
 }

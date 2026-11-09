@@ -125,9 +125,21 @@ class FakeSharer implements Sharer {
 class FakeReminders implements Reminders {
   bool allow = true;
   int asked = 0;
+
+  /// Daily reading reminders.
   int replaced = 0;
   List<Reminder> scheduled = const [];
   String? channel;
+
+  /// Dhikr reminders.
+  int dhikrReplaced = 0;
+  List<Reminder> dhikr = const [];
+  String? dhikrChannel;
+
+  void Function(String payload)? _onOpen;
+
+  /// The user taps a notification carrying [payload].
+  void tap(String payload) => _onOpen?.call(payload);
 
   @override
   Future<bool> requestPermission() async {
@@ -136,11 +148,25 @@ class FakeReminders implements Reminders {
   }
 
   @override
-  Future<void> replace(List<Reminder> reminders, {required String channelName}) async {
-    replaced++;
-    scheduled = List.of(reminders);
-    channel = channelName;
+  Future<void> replace(
+    List<Reminder> reminders, {
+    required String channelName,
+    ReminderKind kind = ReminderKind.reading,
+  }) async {
+    switch (kind) {
+      case ReminderKind.reading:
+        replaced++;
+        scheduled = List.of(reminders);
+        channel = channelName;
+      case ReminderKind.dhikr:
+        dhikrReplaced++;
+        dhikr = List.of(reminders);
+        dhikrChannel = channelName;
+    }
   }
+
+  @override
+  Future<void> onOpen(void Function(String payload) handler) async => _onOpen = handler;
 }
 
 class FakeScreenAwake implements ScreenAwake {
