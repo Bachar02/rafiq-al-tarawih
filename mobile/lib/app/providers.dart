@@ -8,8 +8,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/audio/audio_source.dart';
 import '../core/recognition/recognition_engine.dart';
 import '../data/adhkar.dart';
+import '../data/cities.dart';
 import '../data/khatm.dart';
 import '../data/note.dart';
+import '../data/prayer_settings.dart';
 import '../data/quran.dart';
 import '../data/reading_stats.dart';
 import '../data/reading_store.dart';
@@ -23,11 +25,14 @@ import '../features/khatm/khatm_controller.dart';
 import '../features/progress/reminder.dart';
 import '../features/listen/listen_controller.dart';
 import '../features/notes/notes_controller.dart';
+import '../features/prayer/adhan_sync.dart';
+import '../features/prayer/prayer_controller.dart';
 import '../features/listen/listen_state.dart';
 import '../features/listen/taraweeh_position.dart';
 import '../features/reader/bookmarks.dart';
 import '../features/reader/reading_position.dart';
 import '../features/search/quran_search.dart';
+import '../services/location.dart';
 import '../services/mic_audio_source.dart';
 import '../services/reminders.dart';
 import '../services/screen_awake.dart';
@@ -137,6 +142,45 @@ final reminderSyncProvider = Provider<ReminderSync>(ReminderSync.new);
 /// Keeps the scheduled dhikr reminders in step with the app.
 final dhikrSyncProvider = Provider<DhikrSync>(DhikrSync.new);
 
+/// Loaded once at startup (see main.dart) and injected with an override.
+final prayerStoreProvider =
+    Provider<PrayerSettingsStore>((ref) => throw UnimplementedError('prayerStoreProvider must be overridden'));
+
+/// The place the prayer times are for, how they are computed, and how each
+/// prayer's adhan is called.
+final prayerSettingsProvider = NotifierProvider<PrayerSettingsController, PrayerSettings>(PrayerSettingsController.new);
+
+/// Reads the bundled list of towns (tests replace it to read from files).
+final citiesLoaderProvider = Provider<Future<Cities> Function()>((ref) => loadBundledCities);
+
+/// The towns a place can be chosen from, and that name a position: read
+/// the first time a place is set, then kept. Empty if the list cannot be
+/// read: a position still gives prayer times, named by its coordinates.
+final citiesProvider = FutureProvider<Cities>((ref) async {
+  try {
+    return await ref.watch(citiesLoaderProvider)();
+  } catch (e, stack) {
+    FlutterError.reportError(FlutterErrorDetails(exception: e, stack: stack, library: 'prayer times'));
+    return Cities.empty;
+  }
+});
+
+/// The phone's location, read once when the user asks (tests override it).
+final locationProvider = Provider<LocationSource>((ref) => const DeviceLocation());
+
+/// What the phone's clock shows for an instant (tests fix the time zone).
+final wallClockProvider = Provider<DateTime Function(DateTime utc)>((ref) => (utc) => utc.toLocal());
+
+/// Keeps the scheduled adhans in step with the app.
+final adhanSyncProvider = Provider<AdhanSync>(AdhanSync.new);
+
+/// Whether Android lets the adhan be shown, and on the minute. Read again
+/// when the app comes back from the phone's settings.
+final adhanStatusProvider = FutureProvider.autoDispose<AdhanStatus>((ref) async {
+  final reminders = ref.watch(remindersProvider);
+  return (allowed: await reminders.allowed(), exact: await reminders.canScheduleExact());
+});
+
 /// The khatm plan, if one is running, and the finished khatms.
 final khatmProvider = NotifierProvider<KhatmController, KhatmBook>(KhatmController.new);
 
@@ -166,8 +210,8 @@ final engineFactoryProvider = Provider<RecognitionEngineFactory>(
   (ref) => (address) => ServerRecognitionEngine(address),
 );
 
-/// The phone's notifications: the daily reading reminder and dhikr reminders
-/// (tests override it).
+/// The phone's notifications: the daily reading reminder, dhikr reminders
+/// and the adhan (tests override it).
 final remindersProvider = Provider<Reminders>((ref) => LocalReminders());
 
 /// The phone's share sheet (tests override it).

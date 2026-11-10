@@ -13,6 +13,8 @@ import '../features/adhkar/adhkar_screen.dart';
 import '../features/khatm/khatm_screen.dart';
 import '../features/listen/listen_screen.dart';
 import '../features/navigate/navigate_screen.dart';
+import '../features/prayer/place_screen.dart';
+import '../features/prayer/prayer_screen.dart';
 import '../features/progress/progress_screen.dart';
 import '../features/search/search_screen.dart';
 import '../features/settings/settings_screen.dart';
@@ -31,6 +33,8 @@ abstract final class AppRoutes {
   static const readingName = '/reading';
   static const adhkarName = '/adhkar';
   static const dhikrListName = '/adhkar/list';
+  static const prayerName = '/prayer';
+  static const placeName = '/prayer/place';
 
   /// A route that keeps the theme it was opened from: settings opened in
   /// (dark) Taraweeh mode stay dark, as do their sheets and dialogs.
@@ -43,10 +47,14 @@ abstract final class AppRoutes {
       Navigator.of(context).push(_route<void>(context, settingsName, (_) => const SettingsScreen()));
 
   /// Taraweeh mode, full screen over the reader. No dhikr reminder pops up
-  /// over the imam's ayah while it is open.
+  /// over the imam's ayah while it is open, and no adhan sounds into the
+  /// microphone.
   static Future<void> taraweeh(BuildContext context) async {
-    final dhikr = ProviderScope.containerOf(context, listen: false).read(dhikrSyncProvider);
+    final container = ProviderScope.containerOf(context, listen: false);
+    final dhikr = container.read(dhikrSyncProvider);
+    final adhan = container.read(adhanSyncProvider);
     unawaited(dhikr.taraweeh(on: true));
+    unawaited(adhan.taraweeh(on: true));
     try {
       await Navigator.of(context).push(
         MaterialPageRoute<void>(
@@ -56,6 +64,7 @@ abstract final class AppRoutes {
       );
     } finally {
       unawaited(dhikr.taraweeh(on: false));
+      unawaited(adhan.taraweeh(on: false));
     }
   }
 
@@ -74,6 +83,14 @@ abstract final class AppRoutes {
   /// One collection of adhkar, to say and count.
   static Future<void> dhikrList(BuildContext context, AdhkarCollection collection) =>
       Navigator.of(context).push(_route<void>(context, dhikrListName, (_) => DhikrListScreen(collection: collection)));
+
+  /// Prayer times and the adhan.
+  static Future<void> prayer(BuildContext context) =>
+      Navigator.of(context).push(_route<void>(context, prayerName, (_) => const PrayerScreen()));
+
+  /// Where the prayer times are for; [search] opens ready to type a town.
+  static Future<void> place(BuildContext context, {bool search = false}) =>
+      Navigator.of(context).push(_route<void>(context, placeName, (_) => PlaceScreen(search: search)));
 
   /// The khatm planner.
   static Future<void> khatm(BuildContext context) =>

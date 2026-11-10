@@ -7,7 +7,7 @@ import '../features/navigate/navigate_screen.dart';
 import '../features/reader/reader_screen.dart';
 import '../features/reader/reading_review_sheet.dart';
 import '../l10n/l10n.dart';
-import '../services/reminders.dart' show dhikrPayload;
+import '../services/reminders.dart' show dhikrPayload, isAdhanPayload;
 import 'navigation.dart';
 import 'providers.dart';
 import 'routes.dart';
@@ -45,17 +45,33 @@ class _HomeShellState extends ConsumerState<HomeShell> {
 
   /// The daily reminders are rescheduled whenever the app is shown or
   /// hidden: their text (today's target, where to continue) stays true, and
-  /// a day already read gets none. Dhikr reminders move their two weeks on.
+  /// a day already read gets none. Dhikr reminders move their two weeks on,
+  /// and the adhans their month.
   late final AppLifecycleListener _lifecycle;
 
   void _syncReminders() {
     ref.read(reminderSyncProvider).sync();
     ref.read(dhikrSyncProvider).sync();
+    ref.read(adhanSyncProvider).sync();
+  }
+
+  /// On screen again, perhaps in another town: a place that came from the
+  /// phone's location follows it (which schedules the adhans again).
+  void _shown() {
+    _syncReminders();
+    ref.read(prayerSettingsProvider.notifier).followLocation();
   }
 
   /// A dhikr reminder tapped (or one that launched the app): the adhkar.
+  /// An adhan: the prayer times, once (a second tap finds them open).
   void _opened(String payload) {
-    if (payload == dhikrPayload && mounted) AppRoutes.adhkar(context);
+    if (!mounted) return;
+    if (payload == dhikrPayload) {
+      AppRoutes.adhkar(context);
+    } else if (isAdhanPayload(payload)) {
+      Navigator.of(context).popUntil((route) => route.settings.name != AppRoutes.prayerName);
+      AppRoutes.prayer(context);
+    }
   }
 
   Future<void> _listenForTaps() async {
@@ -69,9 +85,9 @@ class _HomeShellState extends ConsumerState<HomeShell> {
   @override
   void initState() {
     super.initState();
-    _lifecycle = AppLifecycleListener(onShow: _syncReminders, onHide: _syncReminders);
+    _lifecycle = AppLifecycleListener(onShow: _shown, onHide: _syncReminders);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _syncReminders();
+      _shown();
       _listenForTaps();
     });
     // Pages left from last time: ask once the app is on screen.
