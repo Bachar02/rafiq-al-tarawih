@@ -804,3 +804,55 @@ The owner asked for adhkar, simple to use, and for an opt-in reminder: a dhikr a
 1. Native review of the French and Arabic strings, the English and French meanings, and the Arabic notes.
 2. A scholar's look at the selection and the sources.
 3. A real phone over a day: the heads-up, the 8 seconds, and how far Android moves inexact alarms.
+
+## 26. Build 0.7: prayer times and the adhan (2026-11-10)
+
+The owner asked for the adhan: based on where the user is, on or off, with sound or vibration.
+
+**Prayer times** (More → Prayer times, the first row, saying "Next: Asr, 2:52 PM" once a place is known):
+- **Computed on the phone** with `adhan_dart` (MIT, after Meeus), behind `lib/core/prayer/prayer_times.dart`. Nothing is fetched.
+- **The place:** "Use my location" (approximate permission only, read once, never in the background) or a town typed and chosen. A position is kept to two decimals (about a kilometre) and never leaves the phone.
+- **The towns:** 64,634 towns of 5,000 people or more with their English, French and Arabic names, and 252 countries (`assets/places/`, 2.2 MB, GeoNames CC BY 4.0, built by `data/build_places.py`). The same list names a position (the nearest town) and serves the search, so no geocoding server is asked.
+- **The method** follows the place's country (Tunisia, Algeria, Morocco, Egypt, Umm al-Qura, France UOIF, and 16 others; the Muslim World League elsewhere). The user can choose another, the Hanafi Asr, and move each time by up to 30 minutes to match the mosque.
+- **Far north:** above 48° Fajr and Isha take a seventh of the night. Inside the polar circles the package gives nonsense, so the nearest latitude with a sunrise and a sunset stands in.
+- **Travelling:** when the app is shown, a place that came from the phone's location follows the phone once it is 25 km away. A chosen town never moves.
+
+**The adhan** (off by default; a switch on the Prayer times screen):
+- **Each prayer its own way:** adhan, vibration, silent notification, or off. Tap the prayer's row.
+- **Recording:** the whole adhan (2 min 34 s) or its opening takbir (31 s). "Test the adhan" calls it at once on the real channel.
+- **How it sounds:** a notification's sound on a channel per tone (`adhan_full`, `adhan_takbir`, `adhan_vibrate`, `adhan_silent`), since Android fixes sound and vibration per channel. It follows the notification volume and is quiet when the phone is on silent. A swipe or a tap stops it. The notification leaves the shade after 30 minutes.
+- **On the minute:** exact alarms (`SCHEDULE_EXACT_ALARM`), for the adhan only. This reverses §23's "no exact alarms" for this one feature; the reading and dhikr reminders stay inexact. Android 14+ leaves the permission off until the user allows it: the app explains, opens the setting, and until then each prayer gets a silent notification (a call to prayer an hour late is worse than none) and the screen says so.
+- **Scheduled 30 days ahead** (about 150 alarms, ids 2000–2498, the same prayer of the same day keeping its id), moved on whenever the app is shown or hidden. After the last day's Isha a notification asks the user to open Rafiq once.
+- **Force-stop:** the plugin's list of pending notifications is its own record, not Android's. A phone that force-stops the app drops the alarms and leaves the record. So the first scheduling of each process sets every adhan again (12 at once, the rest 40 ms apart); later ones only what changed.
+- **Taraweeh mode** keeps the adhan silent for 3 hours: the microphone is listening.
+
+**The recording** (`android/app/src/main/res/raw/`, notice in `assets/adhan/NOTICE.txt`, built by `data/build_adhan.py`):
+- "Beautiful adhan.ogg" by Adam-synagda, Wikimedia Commons, CC0 1.0 (public domain dedication). Kept byte for byte (SHA-1 pinned); the takbir is its first two phrases, cut in the silence after them without re-encoding.
+- Checked by machine, not by ear: twelve phrases in the order of the adhan, by their silences and a rough transcription. **The owner should listen to it before release.**
+- Other recordings were set aside: one "public domain" file is a 1985 performance taken from YouTube; a 42-second CC0 file is an iqama.
+- **No Fajr adhan** ("as-salatu khayrun mina n-nawm") was found under a public-domain dedication, so Fajr plays the general adhan.
+
+**Emulator** (Pixel XL, Android 16, debug build over 0.6):
+- Android asked for the approximate location only. Tunis was found in about 20 seconds, and the times matched the tests.
+- With alarms not allowed: 147 inexact alarms, Isha with a 17-minute window, and the notice on the screen. Allowed from the notice: the same 147 became exact (`window=0`).
+- **The whole adhan plays.** The test's sound was still playing at 147 s and had ended by 160 s. No 30-second cut on Android 16.
+- **On time, asleep:** screen off, deep Doze forced, the clock set 20 s before Isha: the notification was posted 18 ms after the minute.
+- **A platform trap, found and fixed.** Android 16 gathers an app's ungrouped notifications into one group, and marks a newcomer silent before it sounds when another is already in the shade. The first adhan with a reading reminder present was mute (`MUTE_REASON_FLAG_SILENT`, read from the event log and Android's source). The adhan now names its own group: with a reading reminder and four adhans in the shade, Fajr sounded at full volume and kept playing.
+
+**Tests:** 478 (401 before).
+- The times against the NOAA solar equations, worked out apart from the package (Tunis on two dates, Makkah, Jakarta, Honolulu), the methods, the Hanafi Asr, offsets, the far north and the poles.
+- The settings record (round trip, parts a later version wrote, unreadable records set aside), the town list (search in three languages, nearest town, bad rows), scheduling, each alert, the permission refused and taken back, Taraweeh, travelling, the day moving on.
+- Accessibility in both themes and at 200% text. 200% found two real faults: the times list opened scrolled after the intro, and a row overflowed.
+- 6 new goldens, More re-rendered. 107 new strings in three languages.
+
+**Decisions for the owner:**
+1. **Jerusalem** is listed once, in Palestine, and PS is named "Palestine" in English. GeoNames files the city under IL. This is an editorial choice, written in `data/build_places.py` (`COUNTRY_OF`) and `assets/places/NOTICE.txt`, and one line to change.
+2. **The recording:** listen to it; replace it if another muezzin is preferred (one file and its SHA-1).
+3. **Play:** confirm in the Play Console whether `SCHEDULE_EXACT_ALARM` needs a declaration. Data safety now includes approximate location, used on the device only.
+
+**Open:**
+1. A real phone (Galaxy A16): the whole adhan with the screen off, and what Samsung's battery saver does to the alarms.
+2. The same Android 16 grouping silences the daily reading reminder when a dhikr is in the shade (seen on the emulator). Giving those two kinds a group is the likely fix; not done here, untested.
+3. A Fajr recording. iOS: the default sound only (a 30-second limit, 64 pending notifications), unverified without a Mac.
+4. Native review of the new French and Arabic strings and of the method names.
+5. Later: a background top-up of the month, a reminder before the prayer, Qibla, adhkar "Now" from the real prayer times.
