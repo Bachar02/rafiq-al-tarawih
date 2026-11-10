@@ -12,11 +12,15 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:rafiq/app/app.dart';
 import 'package:rafiq/app/components/place_tile.dart';
 import 'package:rafiq/app/components/quran_text.dart';
+import 'package:rafiq/core/prayer/prayer_times.dart';
 import 'package:rafiq/core/recognition/models.dart';
 import 'package:rafiq/data/khatm.dart';
 import 'package:rafiq/data/note.dart';
+import 'package:rafiq/data/prayer_settings.dart';
 import 'package:rafiq/data/reading_store.dart';
 import 'package:rafiq/features/progress/progress_screen.dart' show ReadingCard;
+
+import 'package:rafiq/services/location.dart';
 
 import '../support/app_nav.dart';
 import '../support/fakes.dart';
@@ -45,9 +49,11 @@ void main() {
     Map<String, Object> prefs = const {},
     Size size = phone,
     bool taraweeh = true,
+    DateTime? now,
   }) async {
     // The one-time introduction has been seen: entering starts following.
     h = await Harness.create(prefs: {'taraweeh_intro_seen': true, ...prefs});
+    if (now != null) h.now = now;
     tester.view.physicalSize = size * ratio;
     tester.view.devicePixelRatio = ratio;
     addTearDown(tester.view.reset);
@@ -516,6 +522,105 @@ void main() {
       await tester.drag(find.byType(Scrollable).first, const Offset(0, -1500));
       await settle(tester);
       await expectGolden(tester, 'ar_adhkar_evening');
+    });
+
+    /// Prayer times for Tunis, as the phone's location finds it.
+    final tunis = const PrayerSettings().withPlace(loadCities().located(36.8065, 10.1815));
+
+    /// The adhan on, each prayer its own way: Fajr on vibration, Asr silent,
+    /// Isha off, the others sounding; Fajr two minutes later for the mosque.
+    final tunisWithAdhan = tunis
+        .withAdhan(on: true)
+        .withAlert(Prayer.fajr, AdhanAlert.vibrate)
+        .withAlert(Prayer.asr, AdhanAlert.silent)
+        .withAlert(Prayer.isha, AdhanAlert.off)
+        .withOffset(Prayer.fajr, 2);
+
+    Map<String, Object> prayerPrefs(PrayerSettings settings) =>
+        {PrayerSettingsStore.key: jsonEncode(settings.toJson())};
+
+    /// Tuesday 10 November 2026, half past nine: Dhuhr is next.
+    final morning = DateTime(2026, 11, 10, 9, 30);
+
+    Future<void> openPrayer(WidgetTester tester, String more, String prayerTimes) async {
+      await tapNav(tester, more);
+      await tester.tap(find.text(prayerTimes));
+      await settle(tester);
+    }
+
+    testWidgets('prayer times: no place yet, location refused, light', (tester) async {
+      await launch(tester, prefs: {'theme_mode': 'light'}, taraweeh: false, now: morning);
+      h.location.result = const LocationResult.failed(LocationFailure.deniedForever);
+      await openPrayer(tester, 'More', 'Prayer times');
+      await tester.tap(find.text('Use my location'));
+      await settle(tester);
+      await expectGolden(tester, 'prayer_intro');
+    });
+
+    testWidgets('prayer times: Tunis in the morning, each prayer called its own way, light', (tester) async {
+      await launch(
+        tester,
+        prefs: {'theme_mode': 'light', ...prayerPrefs(tunisWithAdhan)},
+        taraweeh: false,
+        now: morning,
+      );
+      await openPrayer(tester, 'More', 'Prayer times');
+      await expectGolden(tester, 'prayer_times');
+    });
+
+    testWidgets('prayer times: the adhan may come late, and the calculation, dark', (tester) async {
+      await launch(
+        tester,
+        prefs: {'theme_mode': 'dark', ...prayerPrefs(tunisWithAdhan)},
+        taraweeh: false,
+        now: morning,
+      );
+      h.reminders.exact = false;
+      await openPrayer(tester, 'More', 'Prayer times');
+      await tester.drag(find.byType(Scrollable).first, const Offset(0, -900));
+      await settle(tester);
+      await expectGolden(tester, 'prayer_calculation');
+    });
+
+    testWidgets('prayer times, Arabic interface: after Isha, right to left, dark', (tester) async {
+      await launch(
+        tester,
+        prefs: {'theme_mode': 'dark', 'language': 'ar', ...prayerPrefs(tunisWithAdhan)},
+        taraweeh: false,
+        now: DateTime(2026, 11, 10, 21, 15),
+      );
+      await openPrayer(tester, 'المزيد', 'مواقيت الصلاة');
+      await expectGolden(tester, 'ar_prayer_times');
+    });
+
+    testWidgets('prayer times: how Maghrib is called, light', (tester) async {
+      await launch(
+        tester,
+        prefs: {'theme_mode': 'light', ...prayerPrefs(tunisWithAdhan)},
+        taraweeh: false,
+        now: morning,
+      );
+      await openPrayer(tester, 'More', 'Prayer times');
+      await tester.tap(find.text('Maghrib'));
+      await settle(tester);
+      await expectGolden(tester, 'prayer_alert');
+    });
+
+    testWidgets('prayer times, French interface: choosing a town, light', (tester) async {
+      await launch(
+        tester,
+        prefs: {'theme_mode': 'light', 'language': 'fr', ...prayerPrefs(tunis)},
+        taraweeh: false,
+        now: morning,
+      );
+      await openPrayer(tester, 'Plus', 'Heures de prière');
+      await tester.scrollUntilVisible(find.text('Lieu'), 200, scrollable: find.byType(Scrollable).first);
+      await settle(tester);
+      await tester.tap(find.text('Lieu'));
+      await settle(tester);
+      await tester.enterText(find.byType(TextField), 'la m');
+      await settle(tester);
+      await expectGolden(tester, 'fr_prayer_place');
     });
 
     testWidgets('reader: 320×568 at the largest Quran text, in juz 30', (tester) async {

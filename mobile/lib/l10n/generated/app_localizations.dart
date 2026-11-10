@@ -2270,6 +2270,648 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Remember Allah'**
   String get dhikrNotificationTitle;
+
+  /// No description provided for @prayerTimes.
+  ///
+  /// In en, this message translates to:
+  /// **'Prayer times'**
+  String get prayerTimes;
+
+  /// No description provided for @prayerTimesDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'For where you are, with the adhan'**
+  String get prayerTimesDetail;
+
+  /// No description provided for @prayerNext.
+  ///
+  /// In en, this message translates to:
+  /// **'Next: {prayer}, {time}'**
+  String prayerNext(String prayer, String time);
+
+  /// No description provided for @prayerFajr.
+  ///
+  /// In en, this message translates to:
+  /// **'Fajr'**
+  String get prayerFajr;
+
+  /// No description provided for @prayerSunrise.
+  ///
+  /// In en, this message translates to:
+  /// **'Sunrise'**
+  String get prayerSunrise;
+
+  /// No description provided for @prayerDhuhr.
+  ///
+  /// In en, this message translates to:
+  /// **'Dhuhr'**
+  String get prayerDhuhr;
+
+  /// No description provided for @prayerAsr.
+  ///
+  /// In en, this message translates to:
+  /// **'Asr'**
+  String get prayerAsr;
+
+  /// No description provided for @prayerMaghrib.
+  ///
+  /// In en, this message translates to:
+  /// **'Maghrib'**
+  String get prayerMaghrib;
+
+  /// No description provided for @prayerIsha.
+  ///
+  /// In en, this message translates to:
+  /// **'Isha'**
+  String get prayerIsha;
+
+  /// No description provided for @prayerIntroTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Prayer times where you are'**
+  String get prayerIntroTitle;
+
+  /// No description provided for @prayerIntroBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Rafiq computes them on your phone, from the position of the sun. Your place stays on your phone.'**
+  String get prayerIntroBody;
+
+  /// No description provided for @useMyLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Use my location'**
+  String get useMyLocation;
+
+  /// No description provided for @useMyLocationDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'Approximate, read once, kept on your phone'**
+  String get useMyLocationDetail;
+
+  /// No description provided for @chooseCity.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a city'**
+  String get chooseCity;
+
+  /// No description provided for @prayerNextLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Next prayer'**
+  String get prayerNextLabel;
+
+  /// No description provided for @prayerIn.
+  ///
+  /// In en, this message translates to:
+  /// **'in {duration}'**
+  String prayerIn(String duration);
+
+  /// No description provided for @prayerNow.
+  ///
+  /// In en, this message translates to:
+  /// **'now'**
+  String get prayerNow;
+
+  /// No description provided for @durationHoursMinutes.
+  ///
+  /// In en, this message translates to:
+  /// **'{hours} h {minutes} min'**
+  String durationHoursMinutes(int hours, int minutes);
+
+  /// No description provided for @durationHours.
+  ///
+  /// In en, this message translates to:
+  /// **'{hours} h'**
+  String durationHours(int hours);
+
+  /// No description provided for @durationMinutes.
+  ///
+  /// In en, this message translates to:
+  /// **'{minutes} min'**
+  String durationMinutes(int minutes);
+
+  /// No description provided for @prayerPlace.
+  ///
+  /// In en, this message translates to:
+  /// **'Place'**
+  String get prayerPlace;
+
+  /// No description provided for @prayerPlaceLocated.
+  ///
+  /// In en, this message translates to:
+  /// **'From your location'**
+  String get prayerPlaceLocated;
+
+  /// No description provided for @placeAndCountry.
+  ///
+  /// In en, this message translates to:
+  /// **'{city}, {country}'**
+  String placeAndCountry(String city, String country);
+
+  /// No description provided for @placeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your place'**
+  String get placeTitle;
+
+  /// No description provided for @searchCity.
+  ///
+  /// In en, this message translates to:
+  /// **'Search for a city'**
+  String get searchCity;
+
+  /// No description provided for @placeHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Prayer times depend on where you are. Use your location, or type the name of your city. Either way, it stays on your phone.'**
+  String get placeHelp;
+
+  /// No description provided for @noCityFound.
+  ///
+  /// In en, this message translates to:
+  /// **'No city found for “{query}”. Try another spelling, or a larger town nearby.'**
+  String noCityFound(String query);
+
+  /// No description provided for @locating.
+  ///
+  /// In en, this message translates to:
+  /// **'Finding your position…'**
+  String get locating;
+
+  /// No description provided for @locationDenied.
+  ///
+  /// In en, this message translates to:
+  /// **'Location is not allowed for Rafiq. You can choose a city instead.'**
+  String get locationDenied;
+
+  /// No description provided for @locationDeniedForever.
+  ///
+  /// In en, this message translates to:
+  /// **'Location is turned off for Rafiq. Allow it in the phone’s settings, or choose a city.'**
+  String get locationDeniedForever;
+
+  /// No description provided for @locationServiceOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Location is turned off on this phone. Turn it on, or choose a city.'**
+  String get locationServiceOff;
+
+  /// No description provided for @locationUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Your position could not be found. Try again in a moment, or choose a city.'**
+  String get locationUnavailable;
+
+  /// No description provided for @openSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Open settings'**
+  String get openSettings;
+
+  /// No description provided for @prayerNotSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'This could not be saved. The phone’s storage may be full.'**
+  String get prayerNotSaved;
+
+  /// No description provided for @prayerUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Prayer times cannot be computed for this place.'**
+  String get prayerUnavailable;
+
+  /// No description provided for @adhan.
+  ///
+  /// In en, this message translates to:
+  /// **'Adhan'**
+  String get adhan;
+
+  /// No description provided for @adhanOffDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'The call to prayer at each prayer time, even when Rafiq is closed'**
+  String get adhanOffDetail;
+
+  /// No description provided for @adhanOnDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap a prayer above to choose how it is called'**
+  String get adhanOnDetail;
+
+  /// No description provided for @adhanSet.
+  ///
+  /// In en, this message translates to:
+  /// **'Adhan on'**
+  String get adhanSet;
+
+  /// No description provided for @adhanFor.
+  ///
+  /// In en, this message translates to:
+  /// **'Adhan for {prayer}'**
+  String adhanFor(String prayer);
+
+  /// No description provided for @adhanAlertExplanation.
+  ///
+  /// In en, this message translates to:
+  /// **'The sound follows the phone’s notification volume, and stays quiet when the phone is on silent.'**
+  String get adhanAlertExplanation;
+
+  /// No description provided for @alertSound.
+  ///
+  /// In en, this message translates to:
+  /// **'Adhan'**
+  String get alertSound;
+
+  /// No description provided for @alertVibrate.
+  ///
+  /// In en, this message translates to:
+  /// **'Vibration'**
+  String get alertVibrate;
+
+  /// No description provided for @alertSilent.
+  ///
+  /// In en, this message translates to:
+  /// **'Silent notification'**
+  String get alertSilent;
+
+  /// No description provided for @alertOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Off'**
+  String get alertOff;
+
+  /// No description provided for @semAdhanAlert.
+  ///
+  /// In en, this message translates to:
+  /// **'Adhan: {alert}'**
+  String semAdhanAlert(String alert);
+
+  /// No description provided for @hintAdhanAlert.
+  ///
+  /// In en, this message translates to:
+  /// **'choose how it is called'**
+  String get hintAdhanAlert;
+
+  /// No description provided for @adhanSound.
+  ///
+  /// In en, this message translates to:
+  /// **'Recording'**
+  String get adhanSound;
+
+  /// No description provided for @adhanSoundFull.
+  ///
+  /// In en, this message translates to:
+  /// **'The whole adhan'**
+  String get adhanSoundFull;
+
+  /// No description provided for @adhanSoundTakbir.
+  ///
+  /// In en, this message translates to:
+  /// **'The opening takbir only'**
+  String get adhanSoundTakbir;
+
+  /// No description provided for @adhanSoundExplanation.
+  ///
+  /// In en, this message translates to:
+  /// **'The whole adhan lasts about two and a half minutes, its opening takbir half a minute. Swipe the notification away to stop it.'**
+  String get adhanSoundExplanation;
+
+  /// No description provided for @adhanTest.
+  ///
+  /// In en, this message translates to:
+  /// **'Test the adhan'**
+  String get adhanTest;
+
+  /// No description provided for @adhanTestDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'Calls it now, as at prayer time'**
+  String get adhanTestDetail;
+
+  /// No description provided for @adhanTestTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Adhan test'**
+  String get adhanTestTitle;
+
+  /// No description provided for @adhanTestBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This is how Rafiq will call the adhan. Swipe to stop.'**
+  String get adhanTestBody;
+
+  /// No description provided for @adhanLateTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'The adhan may come late'**
+  String get adhanLateTitle;
+
+  /// No description provided for @adhanLateBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Android lets Rafiq call the adhan on the minute only if Rafiq may set alarms. Until then, each prayer gets a silent notification that may come up to an hour late.'**
+  String get adhanLateBody;
+
+  /// No description provided for @adhanAllowAlarms.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow alarms'**
+  String get adhanAllowAlarms;
+
+  /// No description provided for @adhanExactAsk.
+  ///
+  /// In en, this message translates to:
+  /// **'One more step: on the next screen, allow Rafiq to set alarms and reminders, so that the adhan comes on the minute.'**
+  String get adhanExactAsk;
+
+  /// No description provided for @continueAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue'**
+  String get continueAction;
+
+  /// No description provided for @adhanBlockedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications are off'**
+  String get adhanBlockedTitle;
+
+  /// No description provided for @adhanChannelFull.
+  ///
+  /// In en, this message translates to:
+  /// **'Adhan: the whole adhan'**
+  String get adhanChannelFull;
+
+  /// No description provided for @adhanChannelTakbir.
+  ///
+  /// In en, this message translates to:
+  /// **'Adhan: the takbir only'**
+  String get adhanChannelTakbir;
+
+  /// No description provided for @adhanChannelVibrate.
+  ///
+  /// In en, this message translates to:
+  /// **'Adhan: vibration'**
+  String get adhanChannelVibrate;
+
+  /// No description provided for @adhanChannelSilent.
+  ///
+  /// In en, this message translates to:
+  /// **'Adhan: silent'**
+  String get adhanChannelSilent;
+
+  /// No description provided for @adhanNotificationTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'{prayer} · {time}'**
+  String adhanNotificationTitle(String prayer, String time);
+
+  /// No description provided for @adhanNotificationBody.
+  ///
+  /// In en, this message translates to:
+  /// **'It is time to pray · {place}'**
+  String adhanNotificationBody(String place);
+
+  /// No description provided for @adhanRenewTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Open Rafiq to keep the adhan'**
+  String get adhanRenewTitle;
+
+  /// No description provided for @adhanRenewBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Rafiq prepares the adhan a month ahead. Open it once to prepare the next month.'**
+  String get adhanRenewBody;
+
+  /// No description provided for @groupCalculation.
+  ///
+  /// In en, this message translates to:
+  /// **'Calculation'**
+  String get groupCalculation;
+
+  /// No description provided for @prayerMethod.
+  ///
+  /// In en, this message translates to:
+  /// **'Method'**
+  String get prayerMethod;
+
+  /// No description provided for @prayerMethodExplanation.
+  ///
+  /// In en, this message translates to:
+  /// **'Mosques follow their country’s authority for Fajr and Isha. Rafiq picks it from your place. Change it if your mosque follows another.'**
+  String get prayerMethodExplanation;
+
+  /// No description provided for @methodAutomatic.
+  ///
+  /// In en, this message translates to:
+  /// **'Automatic: {method}'**
+  String methodAutomatic(String method);
+
+  /// No description provided for @methodMuslimWorldLeague.
+  ///
+  /// In en, this message translates to:
+  /// **'Muslim World League'**
+  String get methodMuslimWorldLeague;
+
+  /// No description provided for @methodTunisia.
+  ///
+  /// In en, this message translates to:
+  /// **'Tunisia'**
+  String get methodTunisia;
+
+  /// No description provided for @methodAlgeria.
+  ///
+  /// In en, this message translates to:
+  /// **'Algeria'**
+  String get methodAlgeria;
+
+  /// No description provided for @methodMorocco.
+  ///
+  /// In en, this message translates to:
+  /// **'Morocco'**
+  String get methodMorocco;
+
+  /// No description provided for @methodEgypt.
+  ///
+  /// In en, this message translates to:
+  /// **'Egypt'**
+  String get methodEgypt;
+
+  /// No description provided for @methodUmmAlQura.
+  ///
+  /// In en, this message translates to:
+  /// **'Umm al-Qura, Makkah'**
+  String get methodUmmAlQura;
+
+  /// No description provided for @methodGulf.
+  ///
+  /// In en, this message translates to:
+  /// **'Gulf region'**
+  String get methodGulf;
+
+  /// No description provided for @methodDubai.
+  ///
+  /// In en, this message translates to:
+  /// **'Dubai'**
+  String get methodDubai;
+
+  /// No description provided for @methodKuwait.
+  ///
+  /// In en, this message translates to:
+  /// **'Kuwait'**
+  String get methodKuwait;
+
+  /// No description provided for @methodQatar.
+  ///
+  /// In en, this message translates to:
+  /// **'Qatar'**
+  String get methodQatar;
+
+  /// No description provided for @methodJordan.
+  ///
+  /// In en, this message translates to:
+  /// **'Jordan'**
+  String get methodJordan;
+
+  /// No description provided for @methodTurkiye.
+  ///
+  /// In en, this message translates to:
+  /// **'Türkiye (Diyanet)'**
+  String get methodTurkiye;
+
+  /// No description provided for @methodFrance.
+  ///
+  /// In en, this message translates to:
+  /// **'France (UOIF, 12°)'**
+  String get methodFrance;
+
+  /// No description provided for @methodKarachi.
+  ///
+  /// In en, this message translates to:
+  /// **'Karachi (Pakistan, India, Bangladesh)'**
+  String get methodKarachi;
+
+  /// No description provided for @methodNorthAmerica.
+  ///
+  /// In en, this message translates to:
+  /// **'North America (ISNA)'**
+  String get methodNorthAmerica;
+
+  /// No description provided for @methodMoonsighting.
+  ///
+  /// In en, this message translates to:
+  /// **'Moonsighting Committee'**
+  String get methodMoonsighting;
+
+  /// No description provided for @methodSingapore.
+  ///
+  /// In en, this message translates to:
+  /// **'Singapore, Malaysia'**
+  String get methodSingapore;
+
+  /// No description provided for @methodIndonesia.
+  ///
+  /// In en, this message translates to:
+  /// **'Indonesia'**
+  String get methodIndonesia;
+
+  /// No description provided for @methodRussia.
+  ///
+  /// In en, this message translates to:
+  /// **'Russia'**
+  String get methodRussia;
+
+  /// No description provided for @methodPortugal.
+  ///
+  /// In en, this message translates to:
+  /// **'Portugal'**
+  String get methodPortugal;
+
+  /// No description provided for @methodTehran.
+  ///
+  /// In en, this message translates to:
+  /// **'Tehran'**
+  String get methodTehran;
+
+  /// No description provided for @methodJafari.
+  ///
+  /// In en, this message translates to:
+  /// **'Jafari'**
+  String get methodJafari;
+
+  /// No description provided for @asrTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Asr'**
+  String get asrTime;
+
+  /// No description provided for @asrExplanation.
+  ///
+  /// In en, this message translates to:
+  /// **'Asr begins when a shadow is as long as what casts it, or twice as long in the Hanafi school.'**
+  String get asrExplanation;
+
+  /// No description provided for @asrStandard.
+  ///
+  /// In en, this message translates to:
+  /// **'Maliki, Shafi’i, Hanbali'**
+  String get asrStandard;
+
+  /// No description provided for @asrHanafi.
+  ///
+  /// In en, this message translates to:
+  /// **'Hanafi (later)'**
+  String get asrHanafi;
+
+  /// No description provided for @adjustTimes.
+  ///
+  /// In en, this message translates to:
+  /// **'Adjust the times'**
+  String get adjustTimes;
+
+  /// No description provided for @adjustTimesNone.
+  ///
+  /// In en, this message translates to:
+  /// **'As computed'**
+  String get adjustTimesNone;
+
+  /// No description provided for @adjustTimesSome.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 time adjusted} other{{count} times adjusted}}'**
+  String adjustTimesSome(int count);
+
+  /// No description provided for @adjustExplanation.
+  ///
+  /// In en, this message translates to:
+  /// **'Add or take away minutes so that a time matches your mosque’s.'**
+  String get adjustExplanation;
+
+  /// No description provided for @offsetMinutes.
+  ///
+  /// In en, this message translates to:
+  /// **'{signed} min'**
+  String offsetMinutes(String signed);
+
+  /// No description provided for @semEarlier.
+  ///
+  /// In en, this message translates to:
+  /// **'{prayer}: one minute earlier'**
+  String semEarlier(String prayer);
+
+  /// No description provided for @semLater.
+  ///
+  /// In en, this message translates to:
+  /// **'{prayer}: one minute later'**
+  String semLater(String prayer);
+
+  /// No description provided for @prayerNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Computed on your phone. A mosque’s timetable may differ by a minute or two.'**
+  String get prayerNote;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

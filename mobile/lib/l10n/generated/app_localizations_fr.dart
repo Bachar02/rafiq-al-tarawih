@@ -1396,4 +1396,377 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get dhikrNotificationTitle => 'Souvenez-vous d’Allah';
+
+  @override
+  String get prayerTimes => 'Heures de prière';
+
+  @override
+  String get prayerTimesDetail => 'Là où vous êtes, avec l’adhan';
+
+  @override
+  String prayerNext(String prayer, String time) {
+    return 'Prochaine : $prayer, $time';
+  }
+
+  @override
+  String get prayerFajr => 'Fajr';
+
+  @override
+  String get prayerSunrise => 'Lever du soleil';
+
+  @override
+  String get prayerDhuhr => 'Dhuhr';
+
+  @override
+  String get prayerAsr => 'Asr';
+
+  @override
+  String get prayerMaghrib => 'Maghrib';
+
+  @override
+  String get prayerIsha => 'Isha';
+
+  @override
+  String get prayerIntroTitle => 'Les heures de prière là où vous êtes';
+
+  @override
+  String get prayerIntroBody =>
+      'Rafiq les calcule sur votre téléphone, d’après la position du soleil. Votre lieu reste sur votre téléphone.';
+
+  @override
+  String get useMyLocation => 'Utiliser ma position';
+
+  @override
+  String get useMyLocationDetail => 'Approximative, lue une fois, gardée sur votre téléphone';
+
+  @override
+  String get chooseCity => 'Choisir une ville';
+
+  @override
+  String get prayerNextLabel => 'Prochaine prière';
+
+  @override
+  String prayerIn(String duration) {
+    return 'dans $duration';
+  }
+
+  @override
+  String get prayerNow => 'maintenant';
+
+  @override
+  String durationHoursMinutes(int hours, int minutes) {
+    return '$hours h $minutes min';
+  }
+
+  @override
+  String durationHours(int hours) {
+    return '$hours h';
+  }
+
+  @override
+  String durationMinutes(int minutes) {
+    return '$minutes min';
+  }
+
+  @override
+  String get prayerPlace => 'Lieu';
+
+  @override
+  String get prayerPlaceLocated => 'D’après votre position';
+
+  @override
+  String placeAndCountry(String city, String country) {
+    return '$city, $country';
+  }
+
+  @override
+  String get placeTitle => 'Votre lieu';
+
+  @override
+  String get searchCity => 'Rechercher une ville';
+
+  @override
+  String get placeHelp =>
+      'Les heures de prière dépendent du lieu. Utilisez votre position, ou saisissez le nom de votre ville. Dans les deux cas, cela reste sur votre téléphone.';
+
+  @override
+  String noCityFound(String query) {
+    return 'Aucune ville trouvée pour « $query ». Essayez une autre orthographe, ou une ville plus grande à proximité.';
+  }
+
+  @override
+  String get locating => 'Recherche de votre position…';
+
+  @override
+  String get locationDenied =>
+      'La localisation n’est pas autorisée pour Rafiq. Vous pouvez choisir une ville à la place.';
+
+  @override
+  String get locationDeniedForever =>
+      'La localisation est désactivée pour Rafiq. Autorisez-la dans les réglages du téléphone, ou choisissez une ville.';
+
+  @override
+  String get locationServiceOff =>
+      'La localisation est désactivée sur ce téléphone. Activez-la, ou choisissez une ville.';
+
+  @override
+  String get locationUnavailable =>
+      'Votre position n’a pas pu être trouvée. Réessayez dans un instant, ou choisissez une ville.';
+
+  @override
+  String get openSettings => 'Ouvrir les réglages';
+
+  @override
+  String get prayerNotSaved => 'Cela n’a pas pu être enregistré. Le stockage du téléphone est peut-être plein.';
+
+  @override
+  String get prayerUnavailable => 'Les heures de prière ne peuvent pas être calculées pour ce lieu.';
+
+  @override
+  String get adhan => 'Adhan';
+
+  @override
+  String get adhanOffDetail => 'L’appel à la prière à chaque heure de prière, même quand Rafiq est fermé';
+
+  @override
+  String get adhanOnDetail => 'Touchez une prière ci-dessus pour choisir comment elle est annoncée';
+
+  @override
+  String get adhanSet => 'Adhan activé';
+
+  @override
+  String adhanFor(String prayer) {
+    return 'Adhan de $prayer';
+  }
+
+  @override
+  String get adhanAlertExplanation =>
+      'Le son suit le volume des notifications du téléphone, et se tait quand le téléphone est en silencieux.';
+
+  @override
+  String get alertSound => 'Adhan';
+
+  @override
+  String get alertVibrate => 'Vibreur';
+
+  @override
+  String get alertSilent => 'Notification silencieuse';
+
+  @override
+  String get alertOff => 'Désactivé';
+
+  @override
+  String semAdhanAlert(String alert) {
+    return 'Adhan : $alert';
+  }
+
+  @override
+  String get hintAdhanAlert => 'choisir comment elle est annoncée';
+
+  @override
+  String get adhanSound => 'Enregistrement';
+
+  @override
+  String get adhanSoundFull => 'L’adhan en entier';
+
+  @override
+  String get adhanSoundTakbir => 'Le takbir d’ouverture seulement';
+
+  @override
+  String get adhanSoundExplanation =>
+      'L’adhan en entier dure environ deux minutes et demie, son takbir d’ouverture une demi-minute. Balayez la notification pour l’arrêter.';
+
+  @override
+  String get adhanTest => 'Tester l’adhan';
+
+  @override
+  String get adhanTestDetail => 'Le lance maintenant, comme à l’heure de la prière';
+
+  @override
+  String get adhanTestTitle => 'Test de l’adhan';
+
+  @override
+  String get adhanTestBody => 'Voici comment Rafiq lancera l’adhan. Balayez pour arrêter.';
+
+  @override
+  String get adhanLateTitle => 'L’adhan peut arriver en retard';
+
+  @override
+  String get adhanLateBody =>
+      'Android ne laisse Rafiq lancer l’adhan à la minute que s’il peut régler des alarmes. En attendant, chaque prière reçoit une notification silencieuse, qui peut avoir jusqu’à une heure de retard.';
+
+  @override
+  String get adhanAllowAlarms => 'Autoriser les alarmes';
+
+  @override
+  String get adhanExactAsk =>
+      'Encore une étape : sur l’écran suivant, autorisez Rafiq à régler des alarmes et des rappels, pour que l’adhan arrive à la minute.';
+
+  @override
+  String get continueAction => 'Continuer';
+
+  @override
+  String get adhanBlockedTitle => 'Les notifications sont désactivées';
+
+  @override
+  String get adhanChannelFull => 'Adhan : l’adhan en entier';
+
+  @override
+  String get adhanChannelTakbir => 'Adhan : le takbir seulement';
+
+  @override
+  String get adhanChannelVibrate => 'Adhan : vibreur';
+
+  @override
+  String get adhanChannelSilent => 'Adhan : silencieux';
+
+  @override
+  String adhanNotificationTitle(String prayer, String time) {
+    return '$prayer · $time';
+  }
+
+  @override
+  String adhanNotificationBody(String place) {
+    return 'C’est l’heure de la prière · $place';
+  }
+
+  @override
+  String get adhanRenewTitle => 'Ouvrez Rafiq pour garder l’adhan';
+
+  @override
+  String get adhanRenewBody =>
+      'Rafiq prépare l’adhan un mois à l’avance. Ouvrez-le une fois pour préparer le mois suivant.';
+
+  @override
+  String get groupCalculation => 'Calcul';
+
+  @override
+  String get prayerMethod => 'Méthode';
+
+  @override
+  String get prayerMethodExplanation =>
+      'Les mosquées suivent l’autorité de leur pays pour Fajr et Isha. Rafiq la choisit d’après votre lieu. Changez-la si votre mosquée en suit une autre.';
+
+  @override
+  String methodAutomatic(String method) {
+    return 'Automatique : $method';
+  }
+
+  @override
+  String get methodMuslimWorldLeague => 'Ligue islamique mondiale';
+
+  @override
+  String get methodTunisia => 'Tunisie';
+
+  @override
+  String get methodAlgeria => 'Algérie';
+
+  @override
+  String get methodMorocco => 'Maroc';
+
+  @override
+  String get methodEgypt => 'Égypte';
+
+  @override
+  String get methodUmmAlQura => 'Oumm al-Qura, La Mecque';
+
+  @override
+  String get methodGulf => 'Région du Golfe';
+
+  @override
+  String get methodDubai => 'Dubaï';
+
+  @override
+  String get methodKuwait => 'Koweït';
+
+  @override
+  String get methodQatar => 'Qatar';
+
+  @override
+  String get methodJordan => 'Jordanie';
+
+  @override
+  String get methodTurkiye => 'Turquie (Diyanet)';
+
+  @override
+  String get methodFrance => 'France (UOIF, 12°)';
+
+  @override
+  String get methodKarachi => 'Karachi (Pakistan, Inde, Bangladesh)';
+
+  @override
+  String get methodNorthAmerica => 'Amérique du Nord (ISNA)';
+
+  @override
+  String get methodMoonsighting => 'Moonsighting Committee';
+
+  @override
+  String get methodSingapore => 'Singapour, Malaisie';
+
+  @override
+  String get methodIndonesia => 'Indonésie';
+
+  @override
+  String get methodRussia => 'Russie';
+
+  @override
+  String get methodPortugal => 'Portugal';
+
+  @override
+  String get methodTehran => 'Téhéran';
+
+  @override
+  String get methodJafari => 'Jafarite';
+
+  @override
+  String get asrTime => 'Asr';
+
+  @override
+  String get asrExplanation =>
+      'Asr commence quand une ombre est aussi longue que l’objet qui la projette, ou deux fois plus longue selon l’école hanafite.';
+
+  @override
+  String get asrStandard => 'Malikite, chafiite, hanbalite';
+
+  @override
+  String get asrHanafi => 'Hanafite (plus tard)';
+
+  @override
+  String get adjustTimes => 'Ajuster les heures';
+
+  @override
+  String get adjustTimesNone => 'Telles que calculées';
+
+  @override
+  String adjustTimesSome(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count heures ajustées',
+      one: '1 heure ajustée',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get adjustExplanation =>
+      'Ajoutez ou retirez des minutes pour qu’une heure corresponde à celle de votre mosquée.';
+
+  @override
+  String offsetMinutes(String signed) {
+    return '$signed min';
+  }
+
+  @override
+  String semEarlier(String prayer) {
+    return '$prayer : une minute plus tôt';
+  }
+
+  @override
+  String semLater(String prayer) {
+    return '$prayer : une minute plus tard';
+  }
+
+  @override
+  String get prayerNote => 'Calculées sur votre téléphone. L’horaire d’une mosquée peut différer d’une minute ou deux.';
 }

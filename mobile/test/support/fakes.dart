@@ -12,13 +12,16 @@ import 'package:rafiq/core/audio/audio_source.dart';
 import 'package:rafiq/core/recognition/models.dart';
 import 'package:rafiq/core/recognition/recognition_engine.dart';
 import 'package:rafiq/data/adhkar.dart';
+import 'package:rafiq/data/cities.dart';
 import 'package:rafiq/data/khatm.dart';
 import 'package:rafiq/data/note.dart';
+import 'package:rafiq/data/prayer_settings.dart';
 import 'package:rafiq/data/quran.dart';
 import 'package:rafiq/data/reading_store.dart';
 import 'package:rafiq/data/settings.dart';
 import 'package:rafiq/data/study_text.dart';
 import 'package:rafiq/data/surah_names.dart';
+import 'package:rafiq/services/location.dart';
 import 'package:rafiq/services/reminders.dart';
 import 'package:rafiq/services/screen_awake.dart';
 import 'package:rafiq/services/server_health.dart';
@@ -136,6 +139,19 @@ class FakeReminders implements Reminders {
   List<Reminder> dhikr = const [];
   String? dhikrChannel;
 
+  /// The adhans.
+  int adhanReplaced = 0;
+  List<Reminder> adhan = const [];
+
+  /// Whether Android lets notifications come on the minute, how often the
+  /// user was sent to its setting, and what they do there.
+  bool exact = true;
+  int exactAsked = 0;
+  bool grantExact = true;
+
+  /// Notifications shown at once (the adhan's test).
+  final shown = <Reminder>[];
+
   void Function(String payload)? _onOpen;
 
   /// The user taps a notification carrying [payload].
@@ -162,11 +178,55 @@ class FakeReminders implements Reminders {
         dhikrReplaced++;
         dhikr = List.of(reminders);
         dhikrChannel = channelName;
+      case ReminderKind.adhan:
+        adhanReplaced++;
+        adhan = List.of(reminders);
     }
   }
 
   @override
+  Future<bool> allowed() async => allow;
+
+  @override
+  Future<bool> canScheduleExact() async => exact;
+
+  @override
+  Future<bool> requestExact() async {
+    exactAsked++;
+    if (grantExact) exact = true;
+    return exact;
+  }
+
+  @override
+  Future<void> show(Reminder reminder) async => shown.add(reminder);
+
+  @override
   Future<void> onOpen(void Function(String payload) handler) async => _onOpen = handler;
+}
+
+/// The phone's location: what it answers, and what was asked of it.
+class FakeLocation implements LocationSource {
+  /// What [locate] answers: Tunis, until a test says otherwise.
+  LocationResult result = const LocationResult.found(36.8065, 10.1815);
+
+  /// What the phone already knows, without asking (null: nothing, or the
+  /// app may not read it).
+  LocationResult? known;
+
+  int located = 0;
+  final settingsOpened = <LocationFailure>[];
+
+  @override
+  Future<LocationResult> locate() async {
+    located++;
+    return result;
+  }
+
+  @override
+  Future<LocationResult?> lastKnown() async => known;
+
+  @override
+  Future<void> openSettings(LocationFailure failure) async => settingsOpened.add(failure);
 }
 
 class FakeScreenAwake implements ScreenAwake {
@@ -225,6 +285,21 @@ SurahNames loadSurahNames() =>
 Adhkar? _adhkar;
 Adhkar loadAdhkar() => _adhkar ??= Adhkar.fromJson(File('assets/adhkar/adhkar.json').readAsStringSync(), loadQuran());
 
+Cities? _cities;
+
+/// The bundled towns, read from the files (parsed once per test run).
+Cities loadCities() => _cities ??= Cities.parse((
+      cities: File('assets/places/cities.tsv').readAsStringSync(),
+      countries: File('assets/places/countries.tsv').readAsStringSync(),
+    ));
+
+/// The phone's clock in the tests: an hour ahead of UTC all year (Tunis),
+/// whatever the time zone of the machine that runs them.
+DateTime tunisClock(DateTime utc) {
+  final t = utc.toUtc().add(const Duration(hours: 1));
+  return DateTime(t.year, t.month, t.day, t.hour, t.minute, t.second);
+}
+
 StudyCatalog? _catalog;
 StudyCatalog loadStudyCatalog() =>
     _catalog ??= StudyCatalog.fromJson(File('assets/texts/catalog.json').readAsStringSync());
@@ -244,6 +319,7 @@ class Harness {
   final awake = FakeScreenAwake();
   final sharer = FakeSharer();
   final reminders = FakeReminders();
+  final location = FakeLocation();
   final engines = <FakeEngine>[];
   final addresses = <String>[];
   ServerHealth health = const ServerHealth.ok(latency: Duration(milliseconds: 12), asr: true, device: 'cuda');
@@ -270,6 +346,10 @@ class Harness {
         studyCatalogProvider.overrideWithValue(loadStudyCatalog()),
         adhkarProvider.overrideWithValue(loadAdhkar()),
         adhkarStoreProvider.overrideWithValue(AdhkarStore(prefs)),
+        prayerStoreProvider.overrideWithValue(PrayerSettingsStore(prefs)),
+        citiesLoaderProvider.overrideWithValue(() async => loadCities()),
+        locationProvider.overrideWithValue(location),
+        wallClockProvider.overrideWithValue(tunisClock),
         studyTextLoaderProvider.overrideWithValue((s) => studyTexts(s)),
         settingsStoreProvider.overrideWithValue(SettingsStore(prefs)),
         readingStoreProvider.overrideWithValue(readingStore ?? PrefsReadingStore(prefs)),

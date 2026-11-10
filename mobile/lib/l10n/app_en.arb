@@ -1053,5 +1053,236 @@
     }
   },
   "dhikrRemindersSet": "Dhikr reminders on",
-  "dhikrNotificationTitle": "Remember Allah"
+  "dhikrNotificationTitle": "Remember Allah",
+  "prayerTimes": "Prayer times",
+  "prayerTimesDetail": "For where you are, with the adhan",
+  "prayerNext": "Next: {prayer}, {time}",
+  "@prayerNext": {
+    "placeholders": {
+      "prayer": {
+        "type": "String"
+      },
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "prayerFajr": "Fajr",
+  "prayerSunrise": "Sunrise",
+  "prayerDhuhr": "Dhuhr",
+  "prayerAsr": "Asr",
+  "prayerMaghrib": "Maghrib",
+  "prayerIsha": "Isha",
+  "prayerIntroTitle": "Prayer times where you are",
+  "prayerIntroBody": "Rafiq computes them on your phone, from the position of the sun. Your place stays on your phone.",
+  "useMyLocation": "Use my location",
+  "useMyLocationDetail": "Approximate, read once, kept on your phone",
+  "chooseCity": "Choose a city",
+  "prayerNextLabel": "Next prayer",
+  "prayerIn": "in {duration}",
+  "@prayerIn": {
+    "placeholders": {
+      "duration": {
+        "type": "String"
+      }
+    }
+  },
+  "prayerNow": "now",
+  "durationHoursMinutes": "{hours} h {minutes} min",
+  "@durationHoursMinutes": {
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      },
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "durationHours": "{hours} h",
+  "@durationHours": {
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      }
+    }
+  },
+  "durationMinutes": "{minutes} min",
+  "@durationMinutes": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "prayerPlace": "Place",
+  "prayerPlaceLocated": "From your location",
+  "placeAndCountry": "{city}, {country}",
+  "@placeAndCountry": {
+    "placeholders": {
+      "city": {
+        "type": "String"
+      },
+      "country": {
+        "type": "String"
+      }
+    }
+  },
+  "placeTitle": "Your place",
+  "searchCity": "Search for a city",
+  "placeHelp": "Prayer times depend on where you are. Use your location, or type the name of your city. Either way, it stays on your phone.",
+  "noCityFound": "No city found for “{query}”. Try another spelling, or a larger town nearby.",
+  "@noCityFound": {
+    "placeholders": {
+      "query": {
+        "type": "String"
+      }
+    }
+  },
+  "locating": "Finding your position…",
+  "locationDenied": "Location is not allowed for Rafiq. You can choose a city instead.",
+  "locationDeniedForever": "Location is turned off for Rafiq. Allow it in the phone’s settings, or choose a city.",
+  "locationServiceOff": "Location is turned off on this phone. Turn it on, or choose a city.",
+  "locationUnavailable": "Your position could not be found. Try again in a moment, or choose a city.",
+  "openSettings": "Open settings",
+  "prayerNotSaved": "This could not be saved. The phone’s storage may be full.",
+  "prayerUnavailable": "Prayer times cannot be computed for this place.",
+  "adhan": "Adhan",
+  "adhanOffDetail": "The call to prayer at each prayer time, even when Rafiq is closed",
+  "adhanOnDetail": "Tap a prayer above to choose how it is called",
+  "adhanSet": "Adhan on",
+  "adhanFor": "Adhan for {prayer}",
+  "@adhanFor": {
+    "placeholders": {
+      "prayer": {
+        "type": "String"
+      }
+    }
+  },
+  "adhanAlertExplanation": "The sound follows the phone’s notification volume, and stays quiet when the phone is on silent.",
+  "alertSound": "Adhan",
+  "alertVibrate": "Vibration",
+  "alertSilent": "Silent notification",
+  "alertOff": "Off",
+  "semAdhanAlert": "Adhan: {alert}",
+  "@semAdhanAlert": {
+    "placeholders": {
+      "alert": {
+        "type": "String"
+      }
+    }
+  },
+  "hintAdhanAlert": "choose how it is called",
+  "adhanSound": "Recording",
+  "adhanSoundFull": "The whole adhan",
+  "adhanSoundTakbir": "The opening takbir only",
+  "adhanSoundExplanation": "The whole adhan lasts about two and a half minutes, its opening takbir half a minute. Swipe the notification away to stop it.",
+  "adhanTest": "Test the adhan",
+  "adhanTestDetail": "Calls it now, as at prayer time",
+  "adhanTestTitle": "Adhan test",
+  "adhanTestBody": "This is how Rafiq will call the adhan. Swipe to stop.",
+  "adhanLateTitle": "The adhan may come late",
+  "adhanLateBody": "Android lets Rafiq call the adhan on the minute only if Rafiq may set alarms. Until then, each prayer gets a silent notification that may come up to an hour late.",
+  "adhanAllowAlarms": "Allow alarms",
+  "adhanExactAsk": "One more step: on the next screen, allow Rafiq to set alarms and reminders, so that the adhan comes on the minute.",
+  "continueAction": "Continue",
+  "adhanBlockedTitle": "Notifications are off",
+  "adhanChannelFull": "Adhan: the whole adhan",
+  "adhanChannelTakbir": "Adhan: the takbir only",
+  "adhanChannelVibrate": "Adhan: vibration",
+  "adhanChannelSilent": "Adhan: silent",
+  "adhanNotificationTitle": "{prayer} · {time}",
+  "@adhanNotificationTitle": {
+    "placeholders": {
+      "prayer": {
+        "type": "String"
+      },
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "adhanNotificationBody": "It is time to pray · {place}",
+  "@adhanNotificationBody": {
+    "placeholders": {
+      "place": {
+        "type": "String"
+      }
+    }
+  },
+  "adhanRenewTitle": "Open Rafiq to keep the adhan",
+  "adhanRenewBody": "Rafiq prepares the adhan a month ahead. Open it once to prepare the next month.",
+  "groupCalculation": "Calculation",
+  "prayerMethod": "Method",
+  "prayerMethodExplanation": "Mosques follow their country’s authority for Fajr and Isha. Rafiq picks it from your place. Change it if your mosque follows another.",
+  "methodAutomatic": "Automatic: {method}",
+  "@methodAutomatic": {
+    "placeholders": {
+      "method": {
+        "type": "String"
+      }
+    }
+  },
+  "methodMuslimWorldLeague": "Muslim World League",
+  "methodTunisia": "Tunisia",
+  "methodAlgeria": "Algeria",
+  "methodMorocco": "Morocco",
+  "methodEgypt": "Egypt",
+  "methodUmmAlQura": "Umm al-Qura, Makkah",
+  "methodGulf": "Gulf region",
+  "methodDubai": "Dubai",
+  "methodKuwait": "Kuwait",
+  "methodQatar": "Qatar",
+  "methodJordan": "Jordan",
+  "methodTurkiye": "Türkiye (Diyanet)",
+  "methodFrance": "France (UOIF, 12°)",
+  "methodKarachi": "Karachi (Pakistan, India, Bangladesh)",
+  "methodNorthAmerica": "North America (ISNA)",
+  "methodMoonsighting": "Moonsighting Committee",
+  "methodSingapore": "Singapore, Malaysia",
+  "methodIndonesia": "Indonesia",
+  "methodRussia": "Russia",
+  "methodPortugal": "Portugal",
+  "methodTehran": "Tehran",
+  "methodJafari": "Jafari",
+  "asrTime": "Asr",
+  "asrExplanation": "Asr begins when a shadow is as long as what casts it, or twice as long in the Hanafi school.",
+  "asrStandard": "Maliki, Shafi’i, Hanbali",
+  "asrHanafi": "Hanafi (later)",
+  "adjustTimes": "Adjust the times",
+  "adjustTimesNone": "As computed",
+  "adjustTimesSome": "{count, plural, =1{1 time adjusted} other{{count} times adjusted}}",
+  "@adjustTimesSome": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "adjustExplanation": "Add or take away minutes so that a time matches your mosque’s.",
+  "offsetMinutes": "{signed} min",
+  "@offsetMinutes": {
+    "placeholders": {
+      "signed": {
+        "type": "String"
+      }
+    }
+  },
+  "semEarlier": "{prayer}: one minute earlier",
+  "@semEarlier": {
+    "placeholders": {
+      "prayer": {
+        "type": "String"
+      }
+    }
+  },
+  "semLater": "{prayer}: one minute later",
+  "@semLater": {
+    "placeholders": {
+      "prayer": {
+        "type": "String"
+      }
+    }
+  },
+  "prayerNote": "Computed on your phone. A mosque’s timetable may differ by a minute or two."
 }

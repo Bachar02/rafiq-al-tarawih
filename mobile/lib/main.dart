@@ -8,6 +8,7 @@ import 'app/app.dart';
 import 'app/providers.dart';
 import 'app/theme.dart';
 import 'data/adhkar.dart';
+import 'data/prayer_settings.dart';
 import 'data/quran.dart';
 import 'data/reading_store.dart';
 import 'data/settings.dart';
@@ -32,6 +33,7 @@ Future<void> main() async {
           studyCatalogProvider.overrideWithValue(texts),
           adhkarProvider.overrideWithValue(adhkar),
           adhkarStoreProvider.overrideWithValue(AdhkarStore(prefs)),
+          prayerStoreProvider.overrideWithValue(PrayerSettingsStore(prefs)),
           settingsStoreProvider.overrideWithValue(SettingsStore(prefs)),
           readingStoreProvider.overrideWithValue(PrefsReadingStore(prefs)),
         ],

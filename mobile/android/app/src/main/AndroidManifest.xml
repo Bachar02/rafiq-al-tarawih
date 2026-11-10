@@ -7,6 +7,15 @@
          (POST_NOTIFICATIONS comes with flutter_local_notifications; no exact
          alarms: a reminder within minutes is fine.) -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <!-- Prayer times: where the phone is, to the nearest town, read once
+         when the user asks and kept on the phone. Approximate only, and
+         never in the background. -->
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <!-- The adhan: called at the prayer's minute. Android 12+ shows this to
+         the user as "Alarms & reminders"; Android 14+ leaves it off until
+         they allow it, and the adhan is then a silent, late notification.
+         The reading and dhikr reminders never use it. -->
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
 
     <!-- usesCleartextTraffic: v1 talks to a laptop on the local network over ws://.
          A hosted server must use wss:// and this should then be turned off. -->

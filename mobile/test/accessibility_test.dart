@@ -3,14 +3,19 @@
 /// text contrast. Large system text is covered by the small-phone tests.
 library;
 
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:rafiq/app/app.dart';
 import 'package:rafiq/app/components/quran_text.dart';
+import 'package:rafiq/core/prayer/prayer_times.dart';
 import 'package:rafiq/core/recognition/models.dart';
+import 'package:rafiq/data/prayer_settings.dart';
 import 'package:rafiq/features/adhkar/adhkar_screen.dart';
 import 'package:rafiq/features/progress/progress_screen.dart';
+import 'package:rafiq/services/location.dart';
 
 import 'support/fakes.dart';
 import 'support/app_nav.dart';
@@ -32,6 +37,18 @@ void main() {
     await tester.pumpWidget(ProviderScope(overrides: h.overrides, child: const RafiqApp()));
     await settle(tester);
   }
+
+  /// Prayer times for Tunis, the adhan on: Fajr on vibration, Asr off, and
+  /// Fajr moved two minutes for the mosque.
+  final prayerPrefs = {
+    PrayerSettingsStore.key: jsonEncode(const PrayerSettings()
+        .withPlace(loadCities().located(36.8065, 10.1815))
+        .withAdhan(on: true)
+        .withAlert(Prayer.fajr, AdhanAlert.vibrate)
+        .withAlert(Prayer.asr, AdhanAlert.off)
+        .withOffset(Prayer.fajr, 2)
+        .toJson()),
+  };
 
   /// The Reading screen's own (vertical) list: the year grid scrolls too.
   final readingList = find.descendant(of: find.byType(ProgressScreen), matching: find.byType(Scrollable)).first;
@@ -207,6 +224,58 @@ void main() {
         await meetsGuidelines(tester);
       });
 
+      testWidgets('prayer times: before a place, and choosing one', (tester) async {
+        await launch(tester, {'theme_mode': theme});
+        await tapNav(tester, 'More');
+        await tester.tap(find.text('Prayer times'));
+        await settle(tester);
+        expect(find.text('Prayer times where you are'), findsOneWidget);
+        await meetsGuidelines(tester);
+        h.location.result = const LocationResult.failed(LocationFailure.deniedForever);
+        await tester.tap(find.text('Use my location'));
+        await settle(tester);
+        expect(find.text('Open settings'), findsOneWidget);
+        await meetsGuidelines(tester); // the notice and its action
+        await tester.tap(find.text('Choose a city'));
+        await settle(tester);
+        await meetsGuidelines(tester);
+        await tester.enterText(find.byType(TextField), 'tun');
+        await settle(tester);
+        expect(find.text('Tunis'), findsOneWidget);
+        await meetsGuidelines(tester); // the towns found
+      });
+
+      testWidgets('prayer times and the adhan: the day, an alert, the method, adjusting', (tester) async {
+        await launch(tester, {'theme_mode': theme, ...prayerPrefs});
+        h.reminders.exact = false; // the notice about late adhans shows
+        await tapNav(tester, 'More');
+        await meetsGuidelines(tester); // "Next: ..." on the row
+        await tester.tap(find.text('Prayer times'));
+        await settle(tester);
+        expect(find.text('NEXT PRAYER'), findsOneWidget);
+        await meetsGuidelines(tester);
+        await tester.tap(find.text('Isha'));
+        await settle(tester);
+        expect(find.text('Adhan for Isha'), findsOneWidget);
+        await meetsGuidelines(tester);
+        await tester.tapAt(const Offset(20, 20)); // close the sheet
+        await settle(tester);
+        await tester.scrollUntilVisible(find.text('Adjust the times'), 200, scrollable: find.byType(Scrollable).first);
+        await settle(tester);
+        expect(find.text('The adhan may come late'), findsOneWidget);
+        await meetsGuidelines(tester); // the notice, the recording, the calculation
+        await tester.tap(find.text('Method'));
+        await settle(tester);
+        expect(find.text('Automatic: Tunisia'), findsOneWidget);
+        await meetsGuidelines(tester);
+        await tester.tapAt(const Offset(20, 20));
+        await settle(tester);
+        await tester.tap(find.text('Adjust the times'));
+        await settle(tester);
+        expect(find.text('+2 min'), findsOneWidget);
+        await meetsGuidelines(tester);
+      });
+
       testWidgets('Taraweeh mode, following', (tester) async {
         await launch(tester, {'theme_mode': theme, 'dark_during_taraweeh': theme == 'dark'});
         await tester.tap(find.byIcon(Icons.mic_none));
@@ -279,6 +348,65 @@ void main() {
     await tester.tap(find.text('How often'));
     await settle(tester);
     expect(tester.takeException(), isNull, reason: 'the sheet');
+  });
+
+  testWidgets('200% system text: prayer times, from no place to the adhan and its sheets', (tester) async {
+    tester.platformDispatcher.textScaleFactorTestValue = 2.0;
+    addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+    await launch(tester, {});
+    await tapNav(tester, 'More');
+    await tester.tap(find.text('Prayer times'));
+    await settle(tester);
+    expect(tester.takeException(), isNull, reason: 'the intro');
+    h.location.result = const LocationResult.failed(LocationFailure.serviceOff);
+    await tester.scrollUntilVisible(find.text('Use my location'), 200, scrollable: find.byType(Scrollable).first);
+    await settle(tester);
+    await tester.tap(find.text('Use my location'));
+    await settle(tester);
+    expect(tester.takeException(), isNull, reason: 'the intro, location off');
+    await tester.scrollUntilVisible(find.text('Open settings'), 200, scrollable: find.byType(Scrollable).first);
+    await settle(tester);
+    expect(tester.takeException(), isNull, reason: 'the notice');
+    await tester.ensureVisible(find.text('Choose a city'));
+    await settle(tester);
+    await tester.tap(find.text('Choose a city'));
+    await settle(tester);
+    expect(tester.takeException(), isNull, reason: 'the place screen');
+    await tester.enterText(find.byType(TextField), 'saint');
+    await settle(tester);
+    expect(tester.takeException(), isNull, reason: 'towns with long names');
+    await tester.enterText(find.byType(TextField), 'tunis');
+    await settle(tester);
+    await tester.tap(find.text('Tunis'));
+    await settle(tester);
+    expect(find.text('NEXT PRAYER'), findsOneWidget);
+    expect(tester.takeException(), isNull, reason: 'the day');
+    h.reminders.exact = false;
+    h.reminders.grantExact = false;
+    await tester.scrollUntilVisible(find.text('Adhan'), 200, scrollable: find.byType(Scrollable).first);
+    await settle(tester);
+    await tester.tap(find.text('Adhan'));
+    await settle(tester);
+    expect(tester.takeException(), isNull, reason: 'why alarms are asked for');
+    await tester.ensureVisible(find.text('Continue'));
+    await settle(tester);
+    await tester.tap(find.text('Continue'));
+    await settle(tester);
+    expect(tester.takeException(), isNull, reason: 'the adhan on, with its icons');
+    await tester.scrollUntilVisible(find.text('Adjust the times'), 200, scrollable: find.byType(Scrollable).first);
+    await settle(tester);
+    expect(tester.takeException(), isNull, reason: 'the late notice and the calculation');
+    await tester.tap(find.text('Adjust the times'));
+    await settle(tester);
+    expect(tester.takeException(), isNull, reason: 'adjusting');
+    await tester.tapAt(const Offset(20, 20));
+    await settle(tester);
+    await tester.ensureVisible(find.text('Method'));
+    await settle(tester);
+    await tester.tap(find.text('Method'));
+    await settle(tester);
+    expect(find.text('Automatic: Tunisia'), findsOneWidget);
+    expect(tester.takeException(), isNull, reason: 'the methods');
   });
 
   testWidgets('200% system text: the study view and its source sheet', (tester) async {

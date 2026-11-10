@@ -14,7 +14,8 @@
 
 | In | Not in (by decision, not by omission) |
 |---|---|
-| Reading, navigation, search, bookmarks, notes, a khatm plan, two independent positions | Accounts, sync, prayer times, adhkar, streaks |
+| Reading, navigation, search, bookmarks, notes, a khatm plan, two independent positions | Accounts, sync, streaks |
+| Adhkar and dhikr reminders; prayer times and the adhan, computed on the phone (PLAN.md §25, §26) | A server for prayer times, background location |
 | Taraweeh mode, Ḥafṣ only | Other riwāyāt (Qālūn, Warsh) |
 | A page *number* for every ayah (page starts) | A facsimile of the printed page (the text flows) |
 | Recognition on the laptop server (this build) | On-device recognition (PLAN.md §17 M2), offline claims |

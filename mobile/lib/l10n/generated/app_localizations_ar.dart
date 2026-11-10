@@ -1435,4 +1435,370 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get dhikrNotificationTitle => 'اذكر الله';
+
+  @override
+  String get prayerTimes => 'مواقيت الصلاة';
+
+  @override
+  String get prayerTimesDetail => 'حيث أنت، مع الأذان';
+
+  @override
+  String prayerNext(String prayer, String time) {
+    return 'التالية: $prayer، $time';
+  }
+
+  @override
+  String get prayerFajr => 'الفجر';
+
+  @override
+  String get prayerSunrise => 'الشروق';
+
+  @override
+  String get prayerDhuhr => 'الظهر';
+
+  @override
+  String get prayerAsr => 'العصر';
+
+  @override
+  String get prayerMaghrib => 'المغرب';
+
+  @override
+  String get prayerIsha => 'العشاء';
+
+  @override
+  String get prayerIntroTitle => 'مواقيت الصلاة حيث أنت';
+
+  @override
+  String get prayerIntroBody => 'يحسبها رفيق على هاتفك من موضع الشمس. مكانك لا يغادر هاتفك.';
+
+  @override
+  String get useMyLocation => 'استخدام موقعي';
+
+  @override
+  String get useMyLocationDetail => 'تقريبي، يُقرأ مرة واحدة، ويبقى على هاتفك';
+
+  @override
+  String get chooseCity => 'اختيار مدينة';
+
+  @override
+  String get prayerNextLabel => 'الصلاة القادمة';
+
+  @override
+  String prayerIn(String duration) {
+    return 'بعد $duration';
+  }
+
+  @override
+  String get prayerNow => 'الآن';
+
+  @override
+  String durationHoursMinutes(int hours, int minutes) {
+    return '$hours س $minutes د';
+  }
+
+  @override
+  String durationHours(int hours) {
+    return '$hours س';
+  }
+
+  @override
+  String durationMinutes(int minutes) {
+    return '$minutes د';
+  }
+
+  @override
+  String get prayerPlace => 'المكان';
+
+  @override
+  String get prayerPlaceLocated => 'من موقعك';
+
+  @override
+  String placeAndCountry(String city, String country) {
+    return '$city، $country';
+  }
+
+  @override
+  String get placeTitle => 'مكانك';
+
+  @override
+  String get searchCity => 'ابحث عن مدينة';
+
+  @override
+  String get placeHelp =>
+      'تختلف مواقيت الصلاة باختلاف المكان. استخدم موقعك، أو اكتب اسم مدينتك. في الحالتين يبقى ذلك على هاتفك.';
+
+  @override
+  String noCityFound(String query) {
+    return 'لا توجد مدينة باسم «$query». جرّب كتابة أخرى، أو مدينة أكبر قريبة.';
+  }
+
+  @override
+  String get locating => 'جارٍ تحديد موقعك…';
+
+  @override
+  String get locationDenied => 'لم يُسمح لرفيق بتحديد الموقع. يمكنك اختيار مدينة بدلًا من ذلك.';
+
+  @override
+  String get locationDeniedForever => 'تحديد الموقع متوقف لرفيق. اسمح به من إعدادات الهاتف، أو اختر مدينة.';
+
+  @override
+  String get locationServiceOff => 'تحديد الموقع متوقف في هذا الهاتف. فعّله، أو اختر مدينة.';
+
+  @override
+  String get locationUnavailable => 'تعذّر تحديد موقعك. حاول بعد قليل، أو اختر مدينة.';
+
+  @override
+  String get openSettings => 'فتح الإعدادات';
+
+  @override
+  String get prayerNotSaved => 'تعذّر الحفظ. قد تكون ذاكرة الهاتف ممتلئة.';
+
+  @override
+  String get prayerUnavailable => 'تعذّر حساب مواقيت الصلاة لهذا المكان.';
+
+  @override
+  String get adhan => 'الأذان';
+
+  @override
+  String get adhanOffDetail => 'النداء عند كل صلاة، حتى وإن كان رفيق مغلقًا';
+
+  @override
+  String get adhanOnDetail => 'المس صلاة في الأعلى لتختار طريقة التنبيه لها';
+
+  @override
+  String get adhanSet => 'تم تفعيل الأذان';
+
+  @override
+  String adhanFor(String prayer) {
+    return 'أذان $prayer';
+  }
+
+  @override
+  String get adhanAlertExplanation => 'يتبع الصوت مستوى صوت الإشعارات في الهاتف، ولا يُسمع والهاتف على الوضع الصامت.';
+
+  @override
+  String get alertSound => 'أذان';
+
+  @override
+  String get alertVibrate => 'اهتزاز';
+
+  @override
+  String get alertSilent => 'إشعار صامت';
+
+  @override
+  String get alertOff => 'بلا تنبيه';
+
+  @override
+  String semAdhanAlert(String alert) {
+    return 'الأذان: $alert';
+  }
+
+  @override
+  String get hintAdhanAlert => 'اختيار طريقة التنبيه';
+
+  @override
+  String get adhanSound => 'التسجيل';
+
+  @override
+  String get adhanSoundFull => 'الأذان كاملًا';
+
+  @override
+  String get adhanSoundTakbir => 'تكبير البداية فقط';
+
+  @override
+  String get adhanSoundExplanation =>
+      'يستغرق الأذان كاملًا نحو دقيقتين ونصف، وتكبير البداية نصف دقيقة. اسحب الإشعار لإيقافه.';
+
+  @override
+  String get adhanTest => 'تجربة الأذان';
+
+  @override
+  String get adhanTestDetail => 'يُسمعك إياه الآن كما في وقت الصلاة';
+
+  @override
+  String get adhanTestTitle => 'تجربة الأذان';
+
+  @override
+  String get adhanTestBody => 'هكذا سيؤذّن رفيق. اسحب للإيقاف.';
+
+  @override
+  String get adhanLateTitle => 'قد يتأخر الأذان';
+
+  @override
+  String get adhanLateBody =>
+      'لا يسمح أندرويد لرفيق بالأذان في دقيقته إلا إذا سُمح له بضبط المنبهات. وإلى ذلك الحين يصل لكل صلاة إشعار صامت قد يتأخر حتى ساعة.';
+
+  @override
+  String get adhanAllowAlarms => 'السماح بالمنبهات';
+
+  @override
+  String get adhanExactAsk =>
+      'خطوة أخيرة: في الشاشة التالية اسمح لرفيق بضبط المنبهات والتذكيرات، ليصل الأذان في دقيقته.';
+
+  @override
+  String get continueAction => 'متابعة';
+
+  @override
+  String get adhanBlockedTitle => 'الإشعارات متوقفة';
+
+  @override
+  String get adhanChannelFull => 'الأذان: كاملًا';
+
+  @override
+  String get adhanChannelTakbir => 'الأذان: التكبير فقط';
+
+  @override
+  String get adhanChannelVibrate => 'الأذان: اهتزاز';
+
+  @override
+  String get adhanChannelSilent => 'الأذان: صامت';
+
+  @override
+  String adhanNotificationTitle(String prayer, String time) {
+    return '$prayer · $time';
+  }
+
+  @override
+  String adhanNotificationBody(String place) {
+    return 'حان وقت الصلاة · $place';
+  }
+
+  @override
+  String get adhanRenewTitle => 'افتح رفيق ليستمر الأذان';
+
+  @override
+  String get adhanRenewBody => 'يجهّز رفيق الأذان لشهر مقبل. افتحه مرة ليجهّز الشهر التالي.';
+
+  @override
+  String get groupCalculation => 'الحساب';
+
+  @override
+  String get prayerMethod => 'طريقة الحساب';
+
+  @override
+  String get prayerMethodExplanation =>
+      'تتبع المساجد جهة بلدها في الفجر والعشاء. يختارها رفيق من مكانك. غيّرها إن كان مسجدك يتبع جهة أخرى.';
+
+  @override
+  String methodAutomatic(String method) {
+    return 'تلقائي: $method';
+  }
+
+  @override
+  String get methodMuslimWorldLeague => 'رابطة العالم الإسلامي';
+
+  @override
+  String get methodTunisia => 'تونس';
+
+  @override
+  String get methodAlgeria => 'الجزائر';
+
+  @override
+  String get methodMorocco => 'المغرب';
+
+  @override
+  String get methodEgypt => 'مصر';
+
+  @override
+  String get methodUmmAlQura => 'أم القرى، مكة المكرمة';
+
+  @override
+  String get methodGulf => 'منطقة الخليج';
+
+  @override
+  String get methodDubai => 'دبي';
+
+  @override
+  String get methodKuwait => 'الكويت';
+
+  @override
+  String get methodQatar => 'قطر';
+
+  @override
+  String get methodJordan => 'الأردن';
+
+  @override
+  String get methodTurkiye => 'تركيا (ديانت)';
+
+  @override
+  String get methodFrance => 'فرنسا (UOIF، 12°)';
+
+  @override
+  String get methodKarachi => 'كراتشي (باكستان، الهند، بنغلاديش)';
+
+  @override
+  String get methodNorthAmerica => 'أمريكا الشمالية (ISNA)';
+
+  @override
+  String get methodMoonsighting => 'لجنة رؤية الهلال (Moonsighting)';
+
+  @override
+  String get methodSingapore => 'سنغافورة، ماليزيا';
+
+  @override
+  String get methodIndonesia => 'إندونيسيا';
+
+  @override
+  String get methodRussia => 'روسيا';
+
+  @override
+  String get methodPortugal => 'البرتغال';
+
+  @override
+  String get methodTehran => 'طهران';
+
+  @override
+  String get methodJafari => 'الجعفري';
+
+  @override
+  String get asrTime => 'العصر';
+
+  @override
+  String get asrExplanation => 'يبدأ العصر حين يصير ظل الشيء مثله، أو مثليه عند الحنفية.';
+
+  @override
+  String get asrStandard => 'المالكية والشافعية والحنابلة';
+
+  @override
+  String get asrHanafi => 'الحنفية (متأخر)';
+
+  @override
+  String get adjustTimes => 'تعديل المواقيت';
+
+  @override
+  String get adjustTimesNone => 'كما حُسبت';
+
+  @override
+  String adjustTimesSome(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count وقتًا معدَّلًا',
+      few: '$count أوقات معدَّلة',
+      two: 'وقتان معدَّلان',
+      one: 'وقت واحد معدَّل',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get adjustExplanation => 'أضف دقائق أو أنقصها ليوافق الوقت وقت مسجدك.';
+
+  @override
+  String offsetMinutes(String signed) {
+    return '$signed د';
+  }
+
+  @override
+  String semEarlier(String prayer) {
+    return '$prayer: أبكر بدقيقة';
+  }
+
+  @override
+  String semLater(String prayer) {
+    return '$prayer: أبعد بدقيقة';
+  }
+
+  @override
+  String get prayerNote => 'تُحسب على هاتفك. قد يختلف جدول المسجد بدقيقة أو دقيقتين.';
 }

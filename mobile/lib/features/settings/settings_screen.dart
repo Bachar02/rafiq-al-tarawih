@@ -328,6 +328,9 @@ const _attributions = 'Quran text: Tanzil Project (tanzil.net), Uthmani and Simp
     'SIL Open Font License 1.1.\n'
     'Adhkar: chosen and worded after Hisn al-Muslim by Sa’id ibn Ali ibn Wahf al-Qahtani, '
     'with their hadith sources; English and French meanings written for Rafiq.\n'
+    'Prayer times: computed on the phone with adhan_dart (MIT), after Jean Meeus, Astronomical Algorithms.\n'
+    'Towns and countries: GeoNames (geonames.org), CC BY 4.0.\n'
+    'Adhan: “Beautiful adhan” by Adam-synagda, Wikimedia Commons, public domain (CC0 1.0).\n'
     'Speech model: Tarteel whisper-base-ar-quran, Apache 2.0.\n'
     'On-device runtime: sherpa-onnx (k2-fsa), Apache 2.0.';
 

@@ -57,15 +57,16 @@ python tool/perf_report.py --markdown
 
 | Path | What |
 |---|---|
-| `lib/core/` | framework-free logic: models, wire protocol, PCM, backoff, endpoints, normalize |
+| `lib/core/` | framework-free logic: models, wire protocol, PCM, backoff, endpoints, normalize, prayer times |
 | `lib/data/` | bundled Quran (with juz, page and hizb lookups), settings, the reading store |
 | `lib/l10n/` | strings (ARB) and the generated localizations |
-| `lib/services/` | platform adapters: microphone, WebSocket engine, wakelock, health check |
+| `lib/services/` | platform adapters: microphone, WebSocket engine, wakelock, health check, notifications, location |
 | `lib/app/` | app shell, routes, theme, shared components |
 | `lib/features/quran_view/` | `QuranView`: the whole Quran as one virtualized text, shared by both modes |
 | `lib/features/reader/` | the home screen, reading position, bookmarks |
 | `lib/features/navigate/`, `search/` | Go to (surahs, juz, pages, bookmarks) and search |
 | `lib/features/listen/` | Taraweeh mode: the session state machine (`ListenController`) and its screen |
+| `lib/features/prayer/` | prayer times, the place, and the adhan's scheduling (`AdhanSync`) |
 | `lib/features/settings/` | settings screen |
 | `test/support/fakes.dart` | fakes for every seam, and a test harness wired like `main.dart` |
 
@@ -74,4 +75,7 @@ Quran text: Tanzil Project, CC BY 3.0 (`assets/quran/NOTICE.txt`).
 Fonts (all SIL OFL 1.1, licence beside each in `assets/fonts/`): Amiri Quran (`OFL.txt`),
 Amiri (`OFL-Amiri.txt`), Newsreader (`OFL-Newsreader.txt`), IBM Plex Sans (`OFL-IBMPlexSans.txt`),
 IBM Plex Sans Arabic (`OFL-IBMPlexSansArabic.txt`).
+Towns and countries: GeoNames, CC BY 4.0 (`assets/places/NOTICE.txt`; rebuild with `py data/build_places.py fetch` then `py data/build_places.py`).
+Adhan recording: "Beautiful adhan" by Adam-synagda, Wikimedia Commons, CC0 1.0 (`assets/adhan/NOTICE.txt`).
+Prayer times: `adhan_dart`, MIT.
 Brand assets (wordmark, app icon) and the surah display-name table: Rubric Phase 3 handoff.

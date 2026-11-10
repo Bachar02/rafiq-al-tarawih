@@ -12,6 +12,8 @@
 	</array>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Rafiq listens to the imam's recitation to show you the current surah and ayah.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Rafiq uses your approximate location once, to compute the prayer times where you are. It stays on your phone.</string>
 	<key>NSLocalNetworkUsageDescription</key>
 	<string>Rafiq connects to the recognition server on your local network.</string>
 	<key>NSAppTransportSecurity</key>

@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- The reminder's icon is named only from Dart (flutter_local_notifications),
-     so resource shrinking must not remove it. -->
+<!-- The reminder's icon and the adhan's recordings are named only from Dart
+     (flutter_local_notifications), so resource shrinking must not remove
+     them. -->
 <resources xmlns:tools="http://schemas.android.com/tools"
-    tools:keep="@drawable/ic_stat_rafiq" />
+    tools:keep="@drawable/ic_stat_rafiq,@raw/adhan_full,@raw/adhan_takbir" />
