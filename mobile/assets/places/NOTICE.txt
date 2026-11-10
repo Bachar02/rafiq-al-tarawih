@@ -1,0 +1,21 @@
+Towns and countries (cities.tsv, countries.tsv)
+
+Source: GeoNames (https://www.geonames.org), the "cities5000", "countryInfo"
+and "alternateNamesV2" dumps of 10 November 2026.
+License: Creative Commons Attribution 4.0 (https://creativecommons.org/licenses/by/4.0/)
+
+Built by data/build_places.py, which says what is kept: every populated
+place of 5,000 people or more that is a town in its own right (sections and
+numbered districts of a town, and places abandoned or historical, are left
+out), with its name, its
+French and Arabic names where GeoNames has them, its country and its
+coordinates to three decimals; and each country's English, French and Arabic
+names. Invisible direction marks are removed from the names.
+
+Changes from GeoNames, each made on purpose and listed in the script:
+- Jerusalem is kept as one entry, placed in Palestine (GeoNames files the
+  city under IL and its eastern part, as a section, under PS).
+- The English name of PS is "Palestine" (GeoNames: "Palestinian Territory").
+
+The list is used on the phone only: to name the position the phone finds,
+and to let someone choose a town by hand. No position is sent anywhere.

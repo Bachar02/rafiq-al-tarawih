@@ -12,6 +12,9 @@ venv/
 # Generated Quran artifacts (rebuild with: py data/build_quran.py)
 /data/quran.json
 
+# GeoNames dumps (large, change daily; fetch with: py data/build_places.py fetch)
+/data/raw/geonames/
+
 # Audio: never commit recitation recordings, they are large and often rights-encumbered.
 # Keep eval manifests (*.jsonl) which reference audio by path/checksum.
 /eval/audio/
