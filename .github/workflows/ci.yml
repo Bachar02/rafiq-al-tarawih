@@ -46,6 +46,7 @@ jobs:
           python data/build_quran.py
           python mobile/tool/sync_quran.py --check
           python data/build_texts.py --check
+          python data/build_adhan.py --check
           python tools/golden/make_golden.py --check
       - uses: actions/setup-java@v4
         with:
