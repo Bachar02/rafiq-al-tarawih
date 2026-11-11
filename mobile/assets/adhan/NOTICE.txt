@@ -1,19 +1,17 @@
-The adhan (android/app/src/main/res/raw/adhan_full.ogg, adhan_takbir.ogg)
+The adhan (android/app/src/main/res/raw/adhan_full.mp3, adhan_takbir.mp3)
 
 Android plays a notification's sound from the app's raw resources, so the
 recordings live there and not among the Flutter assets.
 
-Recording: "Beautiful adhan.ogg", by Adam-synagda, 29 April 2022, own work.
-Source: https://commons.wikimedia.org/wiki/File:Beautiful_adhan.ogg
-License: Creative Commons CC0 1.0 Universal (Public Domain Dedication),
-https://creativecommons.org/publicdomain/zero/1.0/
+Recording: the adhan chosen by Rafiq's owner for every prayer, Fajr included
+(data/adhan/adhan.mp3, SHA-1 db4e5f8390785e544bcdd2a317f68c1709de092e).
+Source and licence: TO BE RECORDED HERE before release (who recited it, where
+it was published, and the permission or licence that allows Rafiq to ship it).
 
-adhan_full.ogg is the recording itself, byte for byte
-(SHA-1 a1fa4fd942401922c5c3301816384aae86956522): the whole adhan, twelve
-phrases, 2 min 34 s. adhan_takbir.ogg is its first 31 seconds, the four
-opening takbirs, cut in the silence after them without re-encoding
-(data/build_adhan.py).
+adhan_full.mp3 is the whole recording (twelve phrases, 2 min 32 s), raised to
+a peak of -1 dBFS so a phone plays it loud enough. adhan_takbir.mp3 is its
+first 26 seconds, the four opening takbirs, cut in the silence after them
+with a short fade. Both are made by data/build_adhan.py.
 
-The recording is the general adhan. It is also played for Fajr: no recording
-of the Fajr adhan (with "as-salatu khayrun mina n-nawm") under a public-domain
-dedication was found.
+Earlier builds (0.7 to 0.9) played "Beautiful adhan.ogg" by Adam-synagda,
+Wikimedia Commons, CC0 1.0 (public domain dedication).

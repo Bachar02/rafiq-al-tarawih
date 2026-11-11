@@ -935,3 +935,9 @@ The owner, testing 0.8: the adhkar "disappear quickly" and "appear only in the n
 1. **The Galaxy A16:** the card with One UI ("Appear on top"), and whether Samsung's battery saver lets the alarms through with the app closed for a day. If it does not, Settings → Apps → Rafiq → Battery → Unrestricted, and perhaps a hint in the app.
 2. **Play:** `SYSTEM_ALERT_WINDOW` is a special permission the user grants; confirm in the Play Console that it needs no declaration, alongside `SCHEDULE_EXACT_ALARM` (§26).
 3. Native review of the new French and Arabic strings.
+
+**The adhan recording** (same day, the owner's choice, for every prayer):
+- `data/adhan/adhan.mp3` (MP3, 16 kHz mono, 2 min 32 s, twelve phrases), SHA-1 pinned in `data/build_adhan.py`, which now makes both sounds from it: `adhan_full.mp3` (the whole adhan) and `adhan_takbir.mp3` (the four opening takbirs, cut at 26.0 s in the silence after them, with a 0.3 s fade).
+- **Louder:** the recording peaked at -9.9 dBFS; both files are raised to -1 dBFS (+8.9 dB). A notification plays at the notification volume, so a quiet file is a quiet adhan.
+- **Same names** (`adhan_full`, `adhan_takbir`): Android finds a channel's sound by name, so phones with the app already installed play the new one after the update, with no new channel. The `.ogg` files are gone (two raw resources of one name do not build); the check in CI says so if one comes back.
+- **Its source and licence are not recorded yet.** The CC0 credit for the earlier recording left Settings → About and the README. Before release, write in `assets/adhan/NOTICE.txt` who recited it and what allows Rafiq to ship it, and add a credit if the licence asks for one.
