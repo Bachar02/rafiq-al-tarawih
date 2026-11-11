@@ -87,7 +87,7 @@ void main() {
         await tester.pump(const Duration(milliseconds: 100));
       }
       expect(Directionality.of(tester.element(find.byType(ListenScreen))), TextDirection.rtl);
-      expect(find.text('جارٍ الاتصال…'), findsOneWidget);
+      expect(find.text('جارٍ التهيئة…'), findsOneWidget);
       expect(tester.takeException(), isNull);
     });
 
@@ -98,7 +98,7 @@ void main() {
       for (var i = 0; i < 10; i++) {
         await tester.pump(const Duration(milliseconds: 100));
       }
-      expect(find.text('Connexion…'), findsOneWidget);
+      expect(find.text('Mise en route…'), findsOneWidget);
     });
 
     testWidgets('choosing a language in settings applies at once and is kept', (tester) async {

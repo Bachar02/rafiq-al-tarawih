@@ -144,7 +144,7 @@ abstract class AppLocalizations {
   /// No description provided for @statusConnecting.
   ///
   /// In en, this message translates to:
-  /// **'Connecting…'**
+  /// **'Getting ready…'**
   String get statusConnecting;
 
   /// No description provided for @statusListening.
@@ -216,7 +216,7 @@ abstract class AppLocalizations {
   /// No description provided for @captionConnecting.
   ///
   /// In en, this message translates to:
-  /// **'The first time, the recognition server loads its speech model.'**
+  /// **'Loading the speech model. The first time takes a little longer.'**
   String get captionConnecting;
 
   /// No description provided for @captionListening.
@@ -681,12 +681,6 @@ abstract class AppLocalizations {
   /// **'It uses the microphone only while following. The screen stays on.'**
   String get introMic;
 
-  /// No description provided for @introServer.
-  ///
-  /// In en, this message translates to:
-  /// **'This test build recognises on a computer on the same Wi-Fi (Settings → Recognition server).'**
-  String get introServer;
-
   /// No description provided for @introHafs.
   ///
   /// In en, this message translates to:
@@ -1062,7 +1056,7 @@ abstract class AppLocalizations {
   /// No description provided for @serverExplanation.
   ///
   /// In en, this message translates to:
-  /// **'This build recognises on a computer on the same Wi-Fi; it does not work without it.'**
+  /// **'Taraweeh mode then recognises on this computer instead of the phone. For development only.'**
   String get serverExplanation;
 
   /// No description provided for @serverAddress.
@@ -1104,7 +1098,7 @@ abstract class AppLocalizations {
   /// No description provided for @asrBenchDetail.
   ///
   /// In en, this message translates to:
-  /// **'Can this phone recognise the imam without the computer? A test, not a feature.'**
+  /// **'How fast this phone recognises recitation. For development: its test clips come from the server.'**
   String get asrBenchDetail;
 
   /// No description provided for @groupAbout.
@@ -1358,18 +1352,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Listen to an ayah, a page or a surah'**
   String get soonRecitationDetail;
-
-  /// No description provided for @soonOffline.
-  ///
-  /// In en, this message translates to:
-  /// **'Taraweeh without a computer'**
-  String get soonOffline;
-
-  /// No description provided for @soonOfflineDetail.
-  ///
-  /// In en, this message translates to:
-  /// **'Recognition on the phone itself'**
-  String get soonOfflineDetail;
 
   /// No description provided for @listen.
   ///
@@ -2912,6 +2894,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Computed on your phone. A mosque’s timetable may differ by a minute or two.'**
   String get prayerNote;
+
+  /// No description provided for @noticeModelTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'The speech model could not start'**
+  String get noticeModelTitle;
+
+  /// No description provided for @noticeModelBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Rafiq recognises the recitation on this phone, and its speech model did not load. Close other apps and try again. If it keeps happening, restart the phone.'**
+  String get noticeModelBody;
+
+  /// No description provided for @noticeModelMissingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'This build has no speech model'**
+  String get noticeModelMissingTitle;
+
+  /// No description provided for @noticeModelMissingBody.
+  ///
+  /// In en, this message translates to:
+  /// **'It was built without one. Install a complete build, or recognise on a computer (Settings → Developer).'**
+  String get noticeModelMissingBody;
+
+  /// No description provided for @warningFellBehind.
+  ///
+  /// In en, this message translates to:
+  /// **'The phone fell behind and skipped {seconds} s to catch up with the imam.'**
+  String warningFellBehind(String seconds);
+
+  /// No description provided for @introOffline.
+  ///
+  /// In en, this message translates to:
+  /// **'Everything happens on this phone, without internet. The recitation is never recorded or sent.'**
+  String get introOffline;
+
+  /// No description provided for @useServer.
+  ///
+  /// In en, this message translates to:
+  /// **'Recognise on a computer'**
+  String get useServer;
+
+  /// No description provided for @useServerDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'For development: the recognition server on the same Wi-Fi, instead of this phone'**
+  String get useServerDetail;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

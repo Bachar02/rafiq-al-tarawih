@@ -371,9 +371,8 @@ void main() {
     await launch(tester);
     await tapNav(tester, 'More');
     expect(find.text('COMING SOON'), findsOneWidget);
-    for (final soon in ['Recitation audio', 'Taraweeh without a computer']) {
-      expect(find.text(soon), findsOneWidget);
-    }
+    expect(find.text('Recitation audio'), findsOneWidget);
+    expect(find.text('Taraweeh without a computer'), findsNothing, reason: 'it works on the phone now');
     expect(find.text('Translations'), findsNothing, reason: 'no longer a placeholder');
     expect(find.text('Translation and tafsir'), findsOneWidget, reason: 'working now');
     expect(find.text('Khatm planner'), findsOneWidget, reason: 'working now, above Settings');

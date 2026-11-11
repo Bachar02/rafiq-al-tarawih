@@ -118,7 +118,7 @@ void main() {
 
   testWidgets('one tap from the reader: connects, then follows the imam with the ayah marked', (tester) async {
     await launch(tester);
-    expect(find.text('Connecting…'), findsOneWidget);
+    expect(find.text('Getting ready…'), findsOneWidget);
     expect(find.text('Preparing…'), findsOneWidget);
 
     h.engine.emit(const EngineReady());
@@ -207,6 +207,47 @@ void main() {
     expect(find.text('Settings'), findsOneWidget);
   });
 
+  testWidgets('the speech model cannot start: says so, and offers to try again', (tester) async {
+    await launch(tester);
+    h.engine.emit(const EngineFailure('Failed to load model: out of memory', kind: FailureKind.model));
+    await settle(tester);
+    expect(find.text('The speech model could not start'), findsOneWidget);
+    expect(find.textContaining('Close other apps and try again'), findsOneWidget);
+    expect(find.textContaining('out of memory'), findsNothing, reason: "the engine's words are for developers");
+    await tester.ensureVisible(find.text('Try again'));
+    await tapAndFinish(tester, find.text('Try again'));
+    expect(h.engines, hasLength(2), reason: 'a new session');
+  });
+
+  testWidgets('a build without the speech model: says so, and where the alternative is', (tester) async {
+    await launch(tester);
+    h.engine.emit(const EngineFailure('This build has no speech model.', kind: FailureKind.missingModel));
+    await settle(tester);
+    expect(find.text('This build has no speech model'), findsOneWidget);
+    expect(find.textContaining('Settings → Developer'), findsOneWidget);
+  });
+
+  testWidgets('the phone fell behind: a short notice, in the interface language', (tester) async {
+    await launch(tester);
+    await startListening(tester);
+    h.engine.emit(const EngineWarning.fellBehind(3.24));
+    await settle(tester);
+    expect(find.text('The phone fell behind and skipped 3.2 s to catch up with the imam.'), findsOneWidget);
+  });
+
+  testWidgets('settings: the server is a developer option, off by default', (tester) async {
+    await launch(tester);
+    await tester.tap(find.byTooltip('Settings'));
+    await settle(tester);
+    expect(find.text('Test connection'), findsNothing, reason: 'recognition is on the phone');
+    await revealInSettings(tester, find.text('Recognise on a computer'));
+    await tester.tap(find.text('Recognise on a computer'));
+    await settle(tester);
+    expect(h.prefs.getBool('recognition_server'), isTrue);
+    await revealInSettings(tester, find.text('Test connection'));
+    expect(find.text('Test connection'), findsOneWidget);
+  });
+
   testWidgets('denied microphone: explains how to allow it', (tester) async {
     h.audio.permission = false;
     await launch(tester);
@@ -268,6 +309,7 @@ void main() {
   });
 
   testWidgets('settings: test connection reports the server and model', (tester) async {
+    h = await Harness.create(prefs: {...introSeen, 'recognition_server': true});
     await launch(tester);
     await tester.tap(find.byTooltip('Settings'));
     await settle(tester);
@@ -285,6 +327,7 @@ void main() {
   });
 
   testWidgets('settings: an invalid address is rejected and not saved', (tester) async {
+    h = await Harness.create(prefs: {...introSeen, 'recognition_server': true});
     await launch(tester);
     await tester.tap(find.byTooltip('Settings'));
     await settle(tester);
@@ -448,7 +491,7 @@ void main() {
     await launch(tester);
     expect(find.text('Taraweeh mode'), findsOneWidget);
     expect(find.textContaining('Ḥafṣ ʿan ʿĀṣim only'), findsOneWidget);
-    expect(find.textContaining('same Wi-Fi'), findsOneWidget); // no offline claim in this build
+    expect(find.textContaining('without internet'), findsOneWidget, reason: 'it works offline');
     expect(h.engines, isEmpty, reason: 'nothing starts behind the introduction');
     await tester.ensureVisible(find.text('Not now'));
     await tapAndFinish(tester, find.text('Not now'));
@@ -459,7 +502,7 @@ void main() {
     await tester.tap(taraweehButton);
     await settle(tester);
     expect(find.text('Taraweeh mode'), findsNothing);
-    expect(find.text('Connecting…'), findsOneWidget);
+    expect(find.text('Getting ready…'), findsOneWidget);
   });
 
   testWidgets('the introduction\'s Start following starts at once', (tester) async {
@@ -469,7 +512,7 @@ void main() {
     await tester.ensureVisible(start);
     await tester.tap(start);
     await settle(tester);
-    expect(find.text('Connecting…'), findsOneWidget);
+    expect(find.text('Getting ready…'), findsOneWidget);
     expect(h.engines, hasLength(1));
   });
 
