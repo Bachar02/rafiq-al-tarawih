@@ -856,3 +856,44 @@ The owner asked for the adhan: based on where the user is, on or off, with sound
 3. A Fajr recording. iOS: the default sound only (a 30-second limit, 64 pending notifications), unverified without a Mac.
 4. Native review of the new French and Arabic strings and of the method names.
 5. Later: a background top-up of the month, a reminder before the prayer, Qibla, adhkar "Now" from the real prayer times.
+
+## 27. Taraweeh on the phone, offline (2026-11-11)
+
+The owner asked for Taraweeh mode to work with no laptop and no internet. It now does: the whole recognition pipeline runs on the phone (§15's shipping target, §17 M2).
+
+**The engine in Dart** (`mobile/lib/core/engine/`): index, matcher, tracker, energy VAD, segmenter and listener, a port of `engine/src/rafiq/` (normalize was ported in §16).
+- **Exact parity, checked:** `tools/golden/make_golden.py` now also writes the matcher's results on 190 queries, the tracker's state after every step of 15 scenarios (10 recordings of real speech-model output from `eval/results/transcripts`, 4 simulated noisy streams with al-Fatiha every rakʿah, and one with hint, lock, "the imam is here", preview and reset: over 1,500 steps), and the segmenter's chunks on synthetic audio built from integers. The Dart tests reproduce them all exactly (confidence to the 3 places Python reports). CI checks the files are current.
+- **rapidfuzz** was reimplemented (Levenshtein similarity, `fuzz.ratio`, `process.extract`'s order) and checked against it on 1,614 real misheard words and 20,000 word pairs: no difference.
+- **One change to the Python tracker:** its "check right where I expect" loop iterated a set, whose order follows hashing. It now uses a fixed order (end, then anchor), which the port reproduces. The engine tests and both benchmark gates are unchanged.
+
+**On the phone** (`OnDeviceRecognitionEngine`, `lib/services/ondevice/`), behind the existing `RecognitionEngine` interface, so the Taraweeh screen did not change:
+- **One background isolate** runs segmenter, speech model and tracker; the UI isolate only batches the microphone into 250 ms frames. The reader never waits on recognition.
+- **Catch-up, as the server does it (§11, §12):** audio that arrives during a transcription is merged and transcribed as one block, so the next result is about *now*. Past 15 s the oldest is dropped, and a short notice says so in the interface language.
+- **Partials adapt to the phone:** live previews only while a transcription costs under half the audio's length (a running average), and at most half the model's time. Otherwise finals only. On the emulator, uncapped previews kept the model busy 95% of the time, which over a Taraweeh means heat and battery.
+- **Speech model:** the Quran Whisper `quran-basetrim` (int8, 55 MB, §16), 2 threads, 0.5 s of trailing silence. It is **bundled in the app** (`assets/models/`) and copied once to the app's storage, where sherpa-onnx opens it by path: no download, so it works offline from the first run. A new model version replaces the old copy.
+- **Not in git:** the model files are 55 MB. `tools/whisper_export/install_model.py` copies them from `build/whisper_onnx/` and writes a manifest (sizes, SHA-256). A build without them works, and Taraweeh mode says it has no speech model.
+- **Failures** are explained, not shown raw: the model could not start (memory or storage: try again), or the build has no model.
+- **The development server** stays, behind Settings → Developer → *Recognise on a computer* (off by default). Its address and *Test connection* show only while that is on. The introduction now says Taraweeh mode works on the phone without internet, and "Taraweeh without a computer" left the *Coming soon* list.
+
+**End to end on the emulator** (`integration_test/ondevice_test.dart`): four recitations built by `eval/phone_streams.py` from EveryAyah (three reciters; clean, mosque and the back of a mosque, as in `eval/audio_bench.py`), each joined late, told nothing, played in real time through the bundled model. Scored like the server benchmark: a final is acceptable when the ayah on screen is within one of an ayah heard in it.
+
+| Recording | Right ayah | Found after | Wrong finals | Ayah delay (median) | Model busy |
+|---|---|---|---|---|---|
+| Alafasy, Ad-Duha 1–11, clean | 100% | 4.9 s | 0 | 0.7 s | 51% |
+| Alafasy, al-Fatiha then al-Kahf 1–6, mosque | 91% | 8.2 s | 1 | 2.3 s | 49% |
+| Husary, al-Hajj 30–33, mosque | 77% | 2.9 s | 0 | 1.8 s | 42% |
+| Sudais, al-Aʿrāf 29–32, back of a mosque | 42% | 30 s | 0 | 3.1 s | 56% |
+
+Before the cap on previews, the same run: 100%, 91%, 81% and 67% right; 0.4 s delay on the clean one; the model busy 71–96% of the time. The far room's score moves most between runs: it takes 30 s to find the imam in both, and the finals before that count as wrong with only 12 in all. No wrong jump on screen in any run but one final in the mosque al-Fatiha stream.
+
+- **First run:** copying the model out of the bundle took 2.4 s, and loading it 4.4 s the first time (1.1–1.2 s after).
+- **The emulator is not a phone.** It runs on this laptop's x86 CPU, several times faster than a budget phone's (the Galaxy A32 needed 3.1 s for a typical chunk, §16). On such a phone the engine falls back to finals only, and each ayah shows when the imam pauses after it.
+
+**Tests:** 494 (482 before): the golden parity tests above, the engine through a real isolate with a scripted model (each ayah, partials, lock and "the imam is here" in order, falling behind, the three failures, cancel), the listener's adaptive and capped partials, which engine the app uses, the new notices and the developer switch. Goldens re-rendered for More, the introduction and the hint sheet ("Getting ready…" behind it). Strings: 8 new and 4 reworded in three languages, 3 removed.
+
+**Next, on the owner's phone (Galaxy A16):**
+1. `integration_test/ondevice_test.dart` on the phone itself: the real speed, and whether previews stay on.
+2. A real Taraweeh-like test: the phone on a table during a jahrī prayer (Maghrib, ʿIshāʾ).
+3. A 90-minute session: battery and heat.
+4. If it is too slow: a smaller or distilled Quran model behind the same loader (§16's decision rule).
+5. Release: the release APK for arm64 phones is 91 MB (the model is 55 MB of it). Play Asset Delivery can move the model to an install-time pack.

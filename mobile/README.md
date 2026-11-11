@@ -5,27 +5,40 @@ bookmark navigation and Arabic search) with a Taraweeh mode: one tap, and the
 app follows the imam's recitation live in the same text. English, French and
 Arabic (right to left). Design and architecture: [docs/DESIGN.md](docs/DESIGN.md).
 
-Taraweeh mode records on the phone and, in this build, recognises on the Rafiq
-server (a laptop on the same Wi-Fi). On-device recognition comes later, behind
-the same `RecognitionEngine` interface. The reader needs nothing but the phone.
+Taraweeh mode runs entirely on the phone, offline: the Quran Whisper model
+(bundled, 55 MB) and the Dart port of the engine, in a background isolate.
+The development server is still there for experiments (Settings → Developer
+→ *Recognise on a computer*).
 
 ## Run it
 
-1. **Start the server** on the laptop, reachable from the network:
+1. **Bundle the speech model** (once; it is not in git):
    ```bash
-   python -m rafiq_server --host 0.0.0.0 --port 8765
+   py tools/whisper_export/install_model.py
    ```
+   It copies `build/whisper_onnx/quran-basetrim-*` (made by `tools/whisper_export/`)
+   into `assets/models/`. Without it the app builds, but Taraweeh mode says
+   it has no speech model.
 2. **Run the app**:
    ```bash
    cd mobile
    flutter run
    ```
-3. **Point the app at the server** (⚙ Settings → Recognition server → *Test connection*):
-   - Android emulator: `10.0.2.2:8765` (the default)
-   - real phone: the laptop's Wi-Fi IP, e.g. `192.168.1.5:8765`
 
 On the emulator, let it hear the laptop's microphone with
 `adb emu avd hostmicon` (off by default).
+
+**Check it on a phone** with real recitations, in real time, no server:
+```bash
+py eval/phone_streams.py
+flutter test integration_test/ondevice_test.dart -d <device>
+# while it waits (the install empties the app's folder):
+adb push eval/results/phone_streams/. /sdcard/Android/data/app.rafiq.rafiq/files/streams/
+```
+
+**The development server** (optional): `python -m rafiq_server --host 0.0.0.0 --port 8765`,
+then Settings → Developer → *Recognise on a computer*, and the address
+(`10.0.2.2:8765` on the emulator, the laptop's Wi-Fi address on a phone).
 
 ## Toolchain
 - Flutter 3.47.9 (Dart 3.13), the version CI pins.
@@ -58,6 +71,7 @@ python tool/perf_report.py --markdown
 | Path | What |
 |---|---|
 | `lib/core/` | framework-free logic: models, wire protocol, PCM, backoff, endpoints, normalize, prayer times |
+| `lib/core/engine/` | the recognition engine in Dart (index, matcher, tracker, VAD, segmenter, listener), a port of `engine/` checked against its golden files |
 | `lib/data/` | bundled Quran (with juz, page and hizb lookups), settings, the reading store |
 | `lib/l10n/` | strings (ARB) and the generated localizations |
 | `lib/services/` | platform adapters: microphone, WebSocket engine, wakelock, health check, notifications, location |
@@ -78,4 +92,5 @@ IBM Plex Sans Arabic (`OFL-IBMPlexSansArabic.txt`).
 Towns and countries: GeoNames, CC BY 4.0 (`assets/places/NOTICE.txt`; rebuild with `py data/build_places.py fetch` then `py data/build_places.py`).
 Adhan recording: "Beautiful adhan" by Adam-synagda, Wikimedia Commons, CC0 1.0 (`assets/adhan/NOTICE.txt`).
 Prayer times: `adhan_dart`, MIT.
+Speech model: Tarteel `whisper-base-ar-quran`, Apache 2.0, run with sherpa-onnx (Apache 2.0).
 Brand assets (wordmark, app icon) and the surah display-name table: Rubric Phase 3 handoff.
