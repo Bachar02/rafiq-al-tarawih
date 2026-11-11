@@ -1,5 +1,5 @@
 /// What the recognition engine reports, independent of how it is produced
-/// (the laptop server today, an on-device engine later).
+/// (on the phone, or on the development server).
 library;
 
 /// The tracker's verdict on the latest audio.
@@ -143,8 +143,15 @@ class Heard extends RecognitionEvent {
 
 /// Something was skipped; the session continues.
 class EngineWarning extends RecognitionEvent {
-  const EngineWarning(this.message);
+  const EngineWarning(this.message) : skippedSeconds = null;
+
+  /// Recognition fell behind and dropped this much old audio, to follow the
+  /// imam now (the app says it in the interface language).
+  const EngineWarning.fellBehind(double this.skippedSeconds) : message = '';
+
+  /// The engine's own words (the server's), when not [skippedSeconds].
   final String message;
+  final double? skippedSeconds;
 }
 
 /// Unrecoverable: the session is over.
@@ -160,6 +167,12 @@ enum FailureKind {
 
   /// The server reported an error (model failed, bad request...).
   server,
+
+  /// The speech model on the phone could not be prepared or run.
+  model,
+
+  /// The app was built without its speech model.
+  missingModel,
 }
 
 /// The connection dropped and the engine is retrying. Audio keeps flowing.

@@ -4,9 +4,9 @@ import 'models.dart';
 
 /// Turns live audio into "where is the imam?" events.
 ///
-/// v1 implementation: `ServerRecognitionEngine` (the laptop server over a
-/// WebSocket). Phase 6 adds an on-device engine behind this same interface,
-/// so nothing in the UI changes.
+/// Two implementations: `OnDeviceRecognitionEngine` (everything on the phone,
+/// the default) and `ServerRecognitionEngine` (the development server over a
+/// WebSocket). The UI never knows which one it has.
 ///
 /// Lifecycle: [start] once, [addAudio] many times, then [finish] (graceful:
 /// the last chunk is still recognised) or [cancel] (immediate). Every outcome,

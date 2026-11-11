@@ -40,6 +40,7 @@ class AppSettings {
     this.reminderOffered = false,
     this.dhikrRemindersOn = false,
     this.dhikrEveryHours = defaultDhikrEveryHours,
+    this.useServer = false,
   });
 
   /// The daily reading goals offered, in pages; 0 is off. 20 pages is a juz
@@ -51,6 +52,11 @@ class AppSettings {
   static const defaultServerAddress = '10.0.2.2:8765';
 
   final String serverAddress;
+
+  /// Recognise on the development server at [serverAddress] instead of on
+  /// the phone (Settings → Developer). Off: Taraweeh mode is fully offline.
+  final bool useServer;
+
   final bool keepScreenOn;
 
   /// Multiplier for Quran text size, [minTextScale] .. [maxTextScale]: the
@@ -129,6 +135,7 @@ class AppSettings {
     bool? reminderOffered,
     bool? dhikrRemindersOn,
     int? dhikrEveryHours,
+    bool? useServer,
   }) =>
       AppSettings(
         serverAddress: serverAddress ?? this.serverAddress,
@@ -149,6 +156,7 @@ class AppSettings {
         reminderOffered: reminderOffered ?? this.reminderOffered,
         dhikrRemindersOn: dhikrRemindersOn ?? this.dhikrRemindersOn,
         dhikrEveryHours: dhikrEveryHours ?? this.dhikrEveryHours,
+        useServer: useServer ?? this.useServer,
       );
 }
 
@@ -176,6 +184,7 @@ class SettingsStore {
   static const _reminderOffered = 'reminder_offered';
   static const _dhikr = 'dhikr_reminders_on';
   static const _dhikrEvery = 'dhikr_every_hours';
+  static const _useServer = 'recognition_server';
 
   AppSettings load() {
     const d = AppSettings();
@@ -201,6 +210,7 @@ class SettingsStore {
       reminderOffered: _prefs.getBool(_reminderOffered) ?? d.reminderOffered,
       dhikrRemindersOn: _prefs.getBool(_dhikr) ?? d.dhikrRemindersOn,
       dhikrEveryHours: _knownInterval(_prefs.getInt(_dhikrEvery)) ?? d.dhikrEveryHours,
+      useServer: _prefs.getBool(_useServer) ?? d.useServer,
     );
   }
 
@@ -223,6 +233,7 @@ class SettingsStore {
     await _prefs.setBool(_reminderOffered, s.reminderOffered);
     await _prefs.setBool(_dhikr, s.dhikrRemindersOn);
     await _prefs.setInt(_dhikrEvery, s.dhikrEveryHours);
+    await _prefs.setBool(_useServer, s.useServer);
   }
 
   static int? _validMinutes(int? m) => m != null && m >= 0 && m < 24 * 60 ? m : null;

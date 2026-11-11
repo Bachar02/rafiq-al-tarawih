@@ -33,7 +33,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get statusStopped => 'المتابعة متوقفة';
 
   @override
-  String get statusConnecting => 'جارٍ الاتصال…';
+  String get statusConnecting => 'جارٍ التهيئة…';
 
   @override
   String get statusListening => 'يستمع إلى الإمام';
@@ -69,7 +69,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get captionStopped => 'يُعرض آخر موضع.';
 
   @override
-  String get captionConnecting => 'في المرة الأولى، يحمّل خادم التعرّف نموذجه الصوتي.';
+  String get captionConnecting => 'جارٍ تحميل نموذج التعرّف. تستغرق المرة الأولى وقتًا أطول قليلًا.';
 
   @override
   String get captionListening => 'تظهر الآية بعد بضع كلمات.';
@@ -360,10 +360,6 @@ class AppLocalizationsAr extends AppLocalizations {
   String get introMic => 'لا يُستخدم الميكروفون إلا أثناء المتابعة. وتبقى الشاشة مضاءة.';
 
   @override
-  String get introServer =>
-      'يتعرّف هذا الإصدار التجريبي على التلاوة عبر حاسوب على شبكة الواي فاي نفسها (الإعدادات ← خادم التعرّف).';
-
-  @override
   String get introHafs => 'يتابع التلاوة برواية حفص عن عاصم فقط.';
 
   @override
@@ -583,7 +579,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get groupServer => 'خادم التعرّف';
 
   @override
-  String get serverExplanation => 'يتعرّف هذا الإصدار على التلاوة عبر حاسوب على شبكة الواي فاي نفسها، ولا يعمل بدونه.';
+  String get serverExplanation => 'يتعرّف وضع التراويح حينها على هذا الحاسوب بدل الهاتف. للتطوير فقط.';
 
   @override
   String get serverAddress => 'عنوان الخادم';
@@ -605,7 +601,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get asrBench => 'اختبار التعرّف على الجهاز';
 
   @override
-  String get asrBenchDetail => 'هل يستطيع هذا الهاتف التعرّف على الإمام دون الحاسوب؟ اختبار وليس ميزة.';
+  String get asrBenchDetail => 'سرعة تعرّف هذا الهاتف على التلاوة. للتطوير: مقاطع الاختبار من الخادم.';
 
   @override
   String get groupAbout => 'حول التطبيق';
@@ -766,12 +762,6 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get soonRecitationDetail => 'الاستماع إلى آية أو صفحة أو سورة';
-
-  @override
-  String get soonOffline => 'التراويح دون حاسوب';
-
-  @override
-  String get soonOfflineDetail => 'التعرّف على الهاتف نفسه';
 
   @override
   String get listen => 'استماع';
@@ -1801,4 +1791,32 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get prayerNote => 'تُحسب على هاتفك. قد يختلف جدول المسجد بدقيقة أو دقيقتين.';
+
+  @override
+  String get noticeModelTitle => 'تعذّر تشغيل نموذج التعرّف على التلاوة';
+
+  @override
+  String get noticeModelBody =>
+      'يتعرّف رفيق على التلاوة على هذا الهاتف، ولم يُحمَّل نموذجه. أغلق التطبيقات الأخرى وحاول مجددًا. وإن تكرّر ذلك فأعد تشغيل الهاتف.';
+
+  @override
+  String get noticeModelMissingTitle => 'هذا الإصدار بلا نموذج للتعرّف على التلاوة';
+
+  @override
+  String get noticeModelMissingBody =>
+      'بُني دونه. ثبّت إصدارًا كاملًا، أو استخدم التعرّف على حاسوب (الإعدادات ← المطوّر).';
+
+  @override
+  String warningFellBehind(String seconds) {
+    return 'تأخّر الهاتف فتجاوز $seconds ث ليلحق بالإمام.';
+  }
+
+  @override
+  String get introOffline => 'كل شيء يجري على هذا الهاتف دون إنترنت. لا تُسجَّل التلاوة ولا تُرسَل.';
+
+  @override
+  String get useServer => 'التعرّف على حاسوب';
+
+  @override
+  String get useServerDetail => 'للتطوير: خادم التعرّف على شبكة Wi-Fi نفسها بدل هذا الهاتف';
 }

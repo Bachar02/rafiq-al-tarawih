@@ -24,7 +24,14 @@ class SettingsScreen extends ConsumerStatefulWidget {
 }
 
 class _SettingsScreenState extends ConsumerState<SettingsScreen> {
-  late final TextEditingController _address = TextEditingController(text: ref.read(settingsProvider).serverAddress);
+  late final TextEditingController _address;
+
+  @override
+  void initState() {
+    super.initState();
+    _address = TextEditingController(text: ref.read(settingsProvider).serverAddress);
+  }
+
   String? _addressError;
   ServerHealth? _health;
   bool _testing = false;
@@ -240,53 +247,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               ),
             ],
           ),
-          // Server build only: removed with on-device recognition.
-          RubricGroup(
-            label: l.groupServer,
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(RubricSpace.s4),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Text(l.serverExplanation, style: caption),
-                    const SizedBox(height: RubricSpace.s3),
-                    TextField(
-                      controller: _address,
-                      keyboardType: TextInputType.url,
-                      autocorrect: false,
-                      // An address reads left to right in every language.
-                      textDirection: TextDirection.ltr,
-                      decoration: InputDecoration(
-                        labelText: l.serverAddress,
-                        hintText: '192.168.1.5:8765',
-                        errorText: _addressError,
-                      ),
-                      onSubmitted: (_) => _saveAddress(),
-                      onEditingComplete: _saveAddress,
-                    ),
-                    const SizedBox(height: RubricSpace.s3),
-                    Wrap(
-                      spacing: RubricSpace.s3,
-                      runSpacing: RubricSpace.s2,
-                      crossAxisAlignment: WrapCrossAlignment.center,
-                      children: [
-                        OutlinedButton(
-                          onPressed: _testing ? null : _test,
-                          child: _testing
-                              ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
-                              : Text(l.actionTestConnection),
-                        ),
-                        if (_health != null) _HealthText(_health!),
-                      ],
-                    ),
-                    const SizedBox(height: RubricSpace.s3),
-                    Text(l.serverHelp, style: caption),
-                  ],
-                ),
-              ),
-            ],
-          ),
           RubricGroup(
             label: l.groupDeveloper,
             children: [
@@ -300,6 +260,15 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 ),
               ),
               RubricRow(
+                label: l.useServer,
+                detail: l.useServerDetail,
+                onTap: () => update((s) => s.copyWith(useServer: !s.useServer)),
+                trailing: Switch(
+                  value: settings.useServer,
+                  onChanged: (v) => update((s) => s.copyWith(useServer: v)),
+                ),
+              ),
+              RubricRow(
                 label: l.asrBench,
                 detail: l.asrBenchDetail,
                 trailing: Icon(Icons.chevron_right, color: c.inkSecondary),
@@ -307,6 +276,55 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               ),
             ],
           ),
+          // Development only: Taraweeh mode recognises on a computer.
+          if (settings.useServer)
+            RubricGroup(
+              label: l.groupServer,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(RubricSpace.s4),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Text(l.serverExplanation, style: caption),
+                      const SizedBox(height: RubricSpace.s3),
+                      TextField(
+                        controller: _address,
+                        keyboardType: TextInputType.url,
+                        autocorrect: false,
+                        // An address reads left to right in every language.
+                        textDirection: TextDirection.ltr,
+                        decoration: InputDecoration(
+                          labelText: l.serverAddress,
+                          hintText: '192.168.1.5:8765',
+                          errorText: _addressError,
+                        ),
+                        onSubmitted: (_) => _saveAddress(),
+                        onEditingComplete: _saveAddress,
+                      ),
+                      const SizedBox(height: RubricSpace.s3),
+                      Wrap(
+                        spacing: RubricSpace.s3,
+                        runSpacing: RubricSpace.s2,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        children: [
+                          OutlinedButton(
+                            onPressed: _testing ? null : _test,
+                            child: _testing
+                                ? const SizedBox(
+                                    width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
+                                : Text(l.actionTestConnection),
+                          ),
+                          if (_health != null) _HealthText(_health!),
+                        ],
+                      ),
+                      const SizedBox(height: RubricSpace.s3),
+                      Text(l.serverHelp, style: caption),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           RubricGroup(
             label: l.groupAbout,
             children: [

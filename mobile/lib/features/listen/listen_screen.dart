@@ -579,7 +579,25 @@ class _Notices extends StatelessWidget {
           onDismiss: onDismiss,
           alert: true,
         ),
-      // Server build only: removed with on-device recognition.
+      ListenError.model => Notice(
+          icon: Icons.error_outline,
+          title: l.noticeModelTitle,
+          body: l.noticeModelBody,
+          actionLabel: l.actionTryAgain,
+          onAction: onRetry,
+          onDismiss: onDismiss,
+          alert: true,
+        ),
+      ListenError.missingModel => Notice(
+          icon: Icons.error_outline,
+          title: l.noticeModelMissingTitle,
+          body: l.noticeModelMissingBody,
+          actionLabel: l.settings,
+          onAction: onOpenSettings,
+          onDismiss: onDismiss,
+          alert: true,
+        ),
+      // The development server only (Settings → Developer).
       ListenError.unreachable => Notice(
           icon: Icons.wifi_off_outlined,
           title: l.noticeUnreachableTitle,

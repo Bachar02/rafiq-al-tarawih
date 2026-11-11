@@ -71,11 +71,7 @@ class MoreScreen extends ConsumerWidget {
           RubricGroup(
             label: l.comingSoon,
             children: [
-              for (final (label, detail) in [
-                (l.soonRecitation, l.soonRecitationDetail),
-                (l.soonOffline, l.soonOfflineDetail),
-              ])
-                RubricRow(label: label, detail: detail, value: l.soon, enabled: false),
+              RubricRow(label: l.soonRecitation, detail: l.soonRecitationDetail, value: l.soon, enabled: false),
             ],
           ),
         ],

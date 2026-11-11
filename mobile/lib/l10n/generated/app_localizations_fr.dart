@@ -33,7 +33,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get statusStopped => 'Suivi arrêté';
 
   @override
-  String get statusConnecting => 'Connexion…';
+  String get statusConnecting => 'Mise en route…';
 
   @override
   String get statusListening => 'À l’écoute de l’imam';
@@ -69,7 +69,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get captionStopped => 'La dernière position reste affichée.';
 
   @override
-  String get captionConnecting => 'La première fois, le serveur de reconnaissance charge son modèle vocal.';
+  String get captionConnecting => 'Chargement du modèle vocal. La première fois prend un peu plus de temps.';
 
   @override
   String get captionListening => 'Le verset apparaît après quelques mots.';
@@ -360,10 +360,6 @@ class AppLocalizationsFr extends AppLocalizations {
   String get introMic => 'Le micro n’est utilisé que pendant le suivi. L’écran reste allumé.';
 
   @override
-  String get introServer =>
-      'Cette version de test reconnaît sur un ordinateur du même Wi-Fi (Réglages → Serveur de reconnaissance).';
-
-  @override
   String get introHafs => 'Il suit uniquement la récitation Ḥafṣ ʿan ʿĀṣim.';
 
   @override
@@ -583,7 +579,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get serverExplanation =>
-      'Cette version reconnaît sur un ordinateur du même Wi-Fi ; elle ne fonctionne pas sans lui.';
+      'Le mode Tarawih reconnaît alors sur cet ordinateur au lieu du téléphone. Pour le développement seulement.';
 
   @override
   String get serverAddress => 'Adresse du serveur';
@@ -605,7 +601,8 @@ class AppLocalizationsFr extends AppLocalizations {
   String get asrBench => 'Test de reconnaissance sur l’appareil';
 
   @override
-  String get asrBenchDetail => 'Ce téléphone peut-il reconnaître l’imam sans l’ordinateur ? Un test, pas une fonction.';
+  String get asrBenchDetail =>
+      'La vitesse de reconnaissance de ce téléphone. Pour le développement : les extraits de test viennent du serveur.';
 
   @override
   String get groupAbout => 'À propos';
@@ -763,12 +760,6 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get soonRecitationDetail => 'Écouter un verset, une page ou une sourate';
-
-  @override
-  String get soonOffline => 'Tarawih sans ordinateur';
-
-  @override
-  String get soonOfflineDetail => 'La reconnaissance sur le téléphone lui-même';
 
   @override
   String get listen => 'Écouter';
@@ -1769,4 +1760,34 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get prayerNote => 'Calculées sur votre téléphone. L’horaire d’une mosquée peut différer d’une minute ou deux.';
+
+  @override
+  String get noticeModelTitle => 'Le modèle vocal n’a pas pu démarrer';
+
+  @override
+  String get noticeModelBody =>
+      'Rafiq reconnaît la récitation sur ce téléphone, et son modèle vocal ne s’est pas chargé. Fermez les autres applications et réessayez. Si cela se répète, redémarrez le téléphone.';
+
+  @override
+  String get noticeModelMissingTitle => 'Cette version n’a pas de modèle vocal';
+
+  @override
+  String get noticeModelMissingBody =>
+      'Elle a été construite sans. Installez une version complète, ou faites la reconnaissance sur un ordinateur (Réglages → Développeur).';
+
+  @override
+  String warningFellBehind(String seconds) {
+    return 'Le téléphone a pris du retard et a sauté $seconds s pour rattraper l’imam.';
+  }
+
+  @override
+  String get introOffline =>
+      'Tout se passe sur ce téléphone, sans internet. La récitation n’est jamais enregistrée ni envoyée.';
+
+  @override
+  String get useServer => 'Reconnaissance sur un ordinateur';
+
+  @override
+  String get useServerDetail =>
+      'Pour le développement : le serveur de reconnaissance sur le même Wi-Fi, au lieu de ce téléphone';
 }

@@ -24,7 +24,7 @@ enum SessionPhase {
   failed,
 }
 
-enum ListenError { micPermission, unreachable, server, microphone }
+enum ListenError { micPermission, unreachable, server, microphone, model, missingModel }
 
 /// One line of the diagnostics transcript.
 class TranscriptLine {

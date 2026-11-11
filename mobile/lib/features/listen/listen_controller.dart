@@ -8,6 +8,7 @@ import '../../core/audio/audio_source.dart';
 import '../../core/audio/pcm.dart';
 import '../../core/recognition/models.dart';
 import '../../core/recognition/recognition_engine.dart';
+import '../../l10n/l10n.dart';
 import '../../services/screen_awake.dart';
 import 'listen_state.dart';
 
@@ -195,9 +196,12 @@ class ListenController extends Notifier<ListenState> {
         state = state.copyWith(phase: SessionPhase.listening, device: device, reconnectAttempt: 0);
       case Heard():
         _onHeard(event);
-      case EngineWarning(:final message):
+      case EngineWarning(:final message, :final skippedSeconds):
         _warningTimer?.cancel();
-        state = state.copyWith(warning: message);
+        final text = skippedSeconds == null
+            ? message
+            : lookupAppLocalizations(ref.read(appLocaleProvider)).warningFellBehind(skippedSeconds.toStringAsFixed(1));
+        state = state.copyWith(warning: text);
         _warningTimer = Timer(const Duration(seconds: 6), () {
           if (generation == _generation) state = state.copyWith(warning: null);
         });
@@ -206,7 +210,13 @@ class ListenController extends Notifier<ListenState> {
           state = state.copyWith(phase: SessionPhase.reconnecting, reconnectAttempt: attempt, livePartial: null);
         }
       case EngineFailure(:final message, :final kind):
-        _fail(generation, kind == FailureKind.unreachable ? ListenError.unreachable : ListenError.server, message);
+        final error = switch (kind) {
+          FailureKind.unreachable => ListenError.unreachable,
+          FailureKind.server => ListenError.server,
+          FailureKind.model => ListenError.model,
+          FailureKind.missingModel => ListenError.missingModel,
+        };
+        _fail(generation, error, message);
       case EngineDone():
         break; // stop() completes the shutdown
     }

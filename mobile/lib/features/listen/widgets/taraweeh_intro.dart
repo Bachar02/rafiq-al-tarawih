@@ -31,7 +31,7 @@ Future<bool?> showTaraweehIntro(BuildContext context) => showRubricSheet<bool>(
               SheetHeader(title: l.introTitle, explanation: l.introLead),
               const SizedBox(height: RubricSpace.s4),
               point(Icons.mic_none, l.introMic),
-              point(Icons.wifi_outlined, l.introServer),
+              point(Icons.offline_bolt_outlined, l.introOffline),
               point(Icons.menu_book_outlined, l.introHafs),
               point(Icons.back_hand_outlined, l.introCorrect),
               const SizedBox(height: RubricSpace.s2),

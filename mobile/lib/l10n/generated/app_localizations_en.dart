@@ -33,7 +33,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get statusStopped => 'Not following';
 
   @override
-  String get statusConnecting => 'Connecting…';
+  String get statusConnecting => 'Getting ready…';
 
   @override
   String get statusListening => 'Listening for the imam';
@@ -69,7 +69,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get captionStopped => 'Showing the last position.';
 
   @override
-  String get captionConnecting => 'The first time, the recognition server loads its speech model.';
+  String get captionConnecting => 'Loading the speech model. The first time takes a little longer.';
 
   @override
   String get captionListening => 'The ayah appears after a few words.';
@@ -359,10 +359,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get introMic => 'It uses the microphone only while following. The screen stays on.';
 
   @override
-  String get introServer =>
-      'This test build recognises on a computer on the same Wi-Fi (Settings → Recognition server).';
-
-  @override
   String get introHafs => 'It follows recitation in Ḥafṣ ʿan ʿĀṣim only.';
 
   @override
@@ -581,7 +577,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get groupServer => 'Recognition server';
 
   @override
-  String get serverExplanation => 'This build recognises on a computer on the same Wi-Fi; it does not work without it.';
+  String get serverExplanation =>
+      'Taraweeh mode then recognises on this computer instead of the phone. For development only.';
 
   @override
   String get serverAddress => 'Server address';
@@ -603,7 +600,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get asrBench => 'On-device speech benchmark';
 
   @override
-  String get asrBenchDetail => 'Can this phone recognise the imam without the computer? A test, not a feature.';
+  String get asrBenchDetail =>
+      'How fast this phone recognises recitation. For development: its test clips come from the server.';
 
   @override
   String get groupAbout => 'About';
@@ -760,12 +758,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get soonRecitationDetail => 'Listen to an ayah, a page or a surah';
-
-  @override
-  String get soonOffline => 'Taraweeh without a computer';
-
-  @override
-  String get soonOfflineDetail => 'Recognition on the phone itself';
 
   @override
   String get listen => 'Listen';
@@ -1758,4 +1750,33 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get prayerNote => 'Computed on your phone. A mosque’s timetable may differ by a minute or two.';
+
+  @override
+  String get noticeModelTitle => 'The speech model could not start';
+
+  @override
+  String get noticeModelBody =>
+      'Rafiq recognises the recitation on this phone, and its speech model did not load. Close other apps and try again. If it keeps happening, restart the phone.';
+
+  @override
+  String get noticeModelMissingTitle => 'This build has no speech model';
+
+  @override
+  String get noticeModelMissingBody =>
+      'It was built without one. Install a complete build, or recognise on a computer (Settings → Developer).';
+
+  @override
+  String warningFellBehind(String seconds) {
+    return 'The phone fell behind and skipped $seconds s to catch up with the imam.';
+  }
+
+  @override
+  String get introOffline =>
+      'Everything happens on this phone, without internet. The recitation is never recorded or sent.';
+
+  @override
+  String get useServer => 'Recognise on a computer';
+
+  @override
+  String get useServerDetail => 'For development: the recognition server on the same Wi-Fi, instead of this phone';
 }

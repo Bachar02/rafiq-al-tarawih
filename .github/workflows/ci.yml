@@ -42,7 +42,7 @@ jobs:
           python-version: "3.11"
       - name: Bundled Quran, translations and Dart-port golden files match the Python pipeline
         run: |
-          pip install -e engine
+          pip install -e "engine[dev]"  # numpy: the segmenter's golden file
           python data/build_quran.py
           python mobile/tool/sync_quran.py --check
           python data/build_texts.py --check

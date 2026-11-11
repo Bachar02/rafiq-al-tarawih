@@ -34,6 +34,9 @@ import '../features/reader/reading_position.dart';
 import '../features/search/quran_search.dart';
 import '../services/location.dart';
 import '../services/mic_audio_source.dart';
+import '../services/ondevice/model_store.dart';
+import '../services/ondevice/ondevice_engine.dart';
+import '../services/ondevice/ondevice_transcriber.dart';
 import '../services/reminders.dart';
 import '../services/screen_awake.dart';
 import '../services/server_health.dart';
@@ -206,9 +209,16 @@ final audioSourceProvider = Provider<AudioSource>((ref) {
   return source;
 });
 
-final engineFactoryProvider = Provider<RecognitionEngineFactory>(
-  (ref) => (address) => ServerRecognitionEngine(address),
-);
+/// Recognition on the phone (the default), or on the development server
+/// when Settings → Developer says so.
+final engineFactoryProvider = Provider<RecognitionEngineFactory>((ref) {
+  if (ref.watch(settingsProvider.select((s) => s.useServer))) return (address) => ServerRecognitionEngine(address);
+  final quran = ref.watch(quranProvider);
+  return (_) => OnDeviceRecognitionEngine(
+        quran: quran,
+        prepare: () async => whisperLoader(await ModelStore.prepare()),
+      );
+});
 
 /// The phone's notifications: the daily reading reminder, dhikr reminders
 /// and the adhan (tests override it).

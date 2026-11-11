@@ -18,11 +18,11 @@
 | Adhkar and dhikr reminders; prayer times and the adhan, computed on the phone (PLAN.md §25, §26) | A server for prayer times, background location |
 | Taraweeh mode, Ḥafṣ only | Other riwāyāt (Qālūn, Warsh) |
 | A page *number* for every ayah (page starts) | A facsimile of the printed page (the text flows) |
-| Recognition on the laptop server (this build) | On-device recognition (PLAN.md §17 M2), offline claims |
+| Recognition on the phone, offline (PLAN.md §27); the development server as an option | Recording or sending the recitation |
 
-**Recognition runs on the laptop server** (`/ws/listen`, see `server/src/rafiq_server/listen.py`).
-The phone captures audio and renders the result. On-device recognition replaces the server behind
-the same interface later (§4.2), without UI changes. The reader needs no server.
+**Recognition runs on the phone** (§4.3): the speech model is bundled, and nothing is recorded or
+sent. The development server (`/ws/listen`, `server/src/rafiq_server/listen.py`) stays available
+behind the same interface (Settings → Developer). The reader needs nothing but the phone.
 
 ## 2. Experience
 
@@ -30,7 +30,7 @@ the same interface later (§4.2), without UI changes. The reader needs no server
 1. **The Quran first.** The text is the screen; chrome stays small. The reader opens straight on the
    text, where the user stopped.
 2. **One tap to follow.** No setup on the hot path: the reader's Taraweeh button starts listening (after a
-   one-time introduction). The server address is remembered.
+   one-time introduction).
 3. **Never confidently wrong.** Show nothing rather than a wrong ayah. Uncertainty is
    visible (hollow marker, dimmed number, dashed rule, alternatives), never hidden.
 4. **Readable in a dark mosque, at arm's length.** Large Arabic, Taraweeh mode dark by default,
@@ -187,7 +187,7 @@ juz, page), surah names in any language the app knows, Arabic words: matched aft
 └───────────────────────────────┘
 ```
 - **Entering** starts listening at once. The first time only, an introduction sheet says what the mode
-  does, that this build needs the server on the same Wi-Fi, that it follows Ḥafṣ only, and how to
+  does, that it works on the phone without internet, that it follows Ḥafṣ only, and how to
   correct it; *Not now* leaves following off.
 - **Last night:** if a session ended within 36 hours, the juz of the ayah after where it ended is applied
   as a soft hint (PLAN.md §9: a wrong hint costs almost nothing), shown as a chip with
@@ -227,8 +227,9 @@ recognition stopped, following paused, and transient engine warnings.
 
 **Settings:** grouped rows. Reading (Quran text size with a live 93:3 preview, appearance:
 system/light/dark, language: system/English/Français/العربية), Taraweeh (dark during Taraweeh, keep
-screen on), Recitation (Ḥafṣ ʿan ʿĀṣim; Qālūn and Warsh not supported), Recognition server (server
-build only: address, *Test connection*), Developer (diagnostics, on-device benchmark), About.
+screen on), Recitation (Ḥafṣ ʿan ʿĀṣim; Qālūn and Warsh not supported), Developer (diagnostics,
+*Recognise on a computer*, the on-device benchmark), Recognition server (only while that switch is on:
+address, *Test connection*), About.
 
 **Diagnostics (opt-in):** a live transcript feed under the Quran column, for field testing (English only).
 
@@ -295,7 +296,9 @@ Tokens live in `lib/app/theme.dart` (from the Phase 3 handoff `tokens.json`).
   (0.5 s → 8 s, unlimited while the user is listening), keep only the newest 2 s of
   audio. The last ayah stays on screen, marked as reconnecting.
 - **Mic denied:** explain why the mic is needed and how to allow it, and offer *Try again*.
-- **Server unreachable at start:** say so and link to server settings.
+- **Speech model cannot start** (memory, storage): say so in plain words and offer *Try again*; a build made without the model says so and points to Settings → Developer.
+- **The phone falls behind:** old audio is dropped and a short notice says how much; the screen follows the imam *now*.
+- **Server unreachable at start** (development server only): say so and link to server settings.
 
 ## 4. Architecture
 
@@ -303,10 +306,12 @@ Tokens live in `lib/app/theme.dart` (from the Phase 3 handoff `tokens.json`).
 ```
 lib/
   app/        shell (app.dart), routes, theme, providers, shared components
-  core/       framework-free logic: models, protocol codec, PCM, backoff, normalize
+  core/       framework-free logic: models, protocol codec, PCM, backoff, normalize, prayer times
+    engine/   the recognition engine in Dart: index, matcher, tracker, VAD, segmenter, listener
   data/       Quran (+ juz/page/hizb lookups), settings, reading store, surah names
   l10n/       ARB strings and the generated localizations
-  services/   platform adapters: microphone, WebSocket recognition, wakelock
+  services/   platform adapters: microphone, on-device and WebSocket recognition, wakelock,
+              notifications, location
   features/
     quran_view/  the shared Quran text (BookIndex, QuranView, headers and marks)
     reader/      home: reading position, reading progress, bookmarks, ayah sheet
@@ -334,26 +339,45 @@ an earlier version stored (a theme saved as dark stays dark).
 | Interface | Implementation | Later |
 |---|---|---|
 | `AudioSource`: 16 kHz mono float32 frames + level | `MicAudioSource` (`record` package) | file playback for demos |
-| `RecognitionEngine`: audio in, `RecognitionEvent`s out | `ServerRecognitionEngine` (WebSocket) | on-device engine (PLAN.md §17 M2) |
+| `RecognitionEngine`: audio in, `RecognitionEvent`s out | `OnDeviceRecognitionEngine` (the default), `ServerRecognitionEngine` (development) | a faster model behind the same loader |
 | `ReadingStore`: positions, bookmarks, notes, reading log, khatm | `PrefsReadingStore` (shared_preferences) | SQLite, if notes outgrow it |
 | `Quran` | bundled `assets/quran/quran.json` | |
 
 `ListenController` (a Riverpod `Notifier`) is a state machine over those
 interfaces. Tests drive it with fakes.
 
-### 4.3 Wire protocol
+### 4.3 Recognition on the phone
+The default engine runs everything on the phone, offline (PLAN.md §27):
+```
+mic (UI isolate) ─► 250 ms frames ─► recognition isolate:
+    Segmenter (energy VAD) ─► Whisper (sherpa-onnx, 2 threads) ─► Tracker ─► events back
+```
+- **The engine in Dart** (`lib/core/engine/`) is a port of the Python engine (`engine/src/rafiq/`):
+  normalize, index, matcher, tracker, VAD, segmenter, listener. Golden files generated from the
+  Python engine (`tools/golden/make_golden.py`: real recorded speech-model output, simulated noisy
+  recitation, synthetic audio) must be reproduced exactly; CI checks they are current.
+- **One isolate does all the work**, so the reader never stutters. If transcription falls behind,
+  the worker merges the waiting audio and transcribes only *now*; past 15 s the oldest is dropped.
+- **Partials adapt to the phone:** live previews only while transcription costs under half the
+  audio's length (a running average); otherwise finals only, so a slow phone stays current.
+- **The model** is bundled in the app (`assets/models/`, 55 MB, not in git:
+  `tools/whisper_export/install_model.py`) and copied once to the app's storage, where sherpa-onnx
+  opens it by path. A new model version replaces the old copy.
+
+### 4.4 Wire protocol (development server)
 Unchanged server protocol (see `listen.py`): binary float32 LE PCM frames at 16 kHz, and
 JSON `ready / partial / heard / warning / done / error`. The client batches audio into
 ~250 ms frames, tolerates unknown message types and fields (forward compatible), and
 treats `error` as fatal and `warning` as informational.
 
-### 4.4 Tech choices
+### 4.5 Tech choices
 | Concern | Choice | Why |
 |---|---|---|
 | UI | Flutter (3.47, Dart 3.13) | one codebase for Android and iOS |
 | State | flutter_riverpod | testable, no codegen, explicit dependencies |
 | Mic | record (PCM16 stream at 16 kHz) | native resampling, Android and iOS |
-| Socket | web_socket_channel | standard; wrapped behind `RecognitionEngine` |
+| Speech | sherpa-onnx (Whisper, int8 ONNX) | runs the Quran Whisper on Android and iOS, Flutter bindings |
+| Socket | web_socket_channel | development server; wrapped behind `RecognitionEngine` |
 | Storage | shared_preferences | settings, positions, bookmarks, notes, khatm (versioned JSON) |
 | Strings | flutter_localizations + gen-l10n (intl) | the official stack; generated code committed |
 | Screen awake | wakelock_plus | maintained, both platforms |
@@ -364,7 +388,13 @@ treats `error` as fatal and `warning` as informational.
   (adaptive target, overdue, wrap-around, re-reading, a 365-day plan), notes, search, settings,
   `BookIndex` round-trips for all 6,350 items, translations complete in every language.
 - **Controller tests:** the full session state machine with fake audio and a fake engine.
-- **Engine integration test:** `ServerRecognitionEngine` against a real local WebSocket server.
+- **Engine parity:** the Dart engine reproduces the Python engine's golden files exactly (matcher,
+  tracker over 1,500+ steps of real speech-model output, segmenter).
+- **Engine integration tests:** `OnDeviceRecognitionEngine` through a real isolate with a scripted
+  model (controls, falling behind, failures, cancel); `ServerRecognitionEngine` against a real
+  local WebSocket server.
+- **On a phone:** `integration_test/ondevice_test.dart` replays real recitations in real time
+  through the bundled model and scores them like `eval/audio_bench.py`.
 - **Widget tests:** the reader (restore after restart, background save, failed saves, bookmarks, notes,
   copy, search, Go to), the khatm planner (start, continue, change end, stop, the bar and the card,
   completion), the Notes view, Taraweeh mode in every state (auto-start, the introduction once, leaving, both
