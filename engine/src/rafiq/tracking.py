@@ -275,7 +275,9 @@ class Tracker:
         # Always check "right where I expect", so a poor global ranking can
         # never make the tracker lose a hypothesis that is still correct.
         for h in self._hyps[: cfg.local_hyps]:
-            for origin in {h.end, h.anchor} - {None}:
+            # In a fixed order (a set's order follows hashing), so the Dart port
+            # (mobile/lib/core/engine) can reproduce ties exactly.
+            for origin in dict.fromkeys(o for o in (h.end, h.anchor) if o is not None):
                 local = self.matcher.score_window(tokens, origin, origin + cfg.local_ahead)
                 if local.score > 0:
                     found.append(local)
