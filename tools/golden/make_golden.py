@@ -14,6 +14,7 @@ import argparse
 import json
 import random
 import sys
+from dataclasses import replace
 from pathlib import Path
 
 from rafiq.asr import EnergyVad, Segmenter
@@ -22,6 +23,8 @@ from rafiq.normalize import normalize
 from rafiq.quran import get_quran
 from rafiq.simulate import NoiseConfig, simulate
 from rafiq.tracking import Tracker
+from rafiq.word_sim import LetterNoise, run, simulate_letters
+from rafiq.words import WordTracker
 
 ROOT = Path(__file__).resolve().parents[2]
 OUT = ROOT / "mobile" / "test" / "golden"
@@ -182,6 +185,81 @@ def tracker_cases() -> list[dict]:
     return cases
 
 
+class _Recorder:
+    """A word tracker that writes down every call and the state it returned."""
+
+    def __init__(self, tracker: WordTracker) -> None:
+        self._t = tracker
+        self.ops: list[list] = []
+        self.states: list[list] = []
+
+    def __getattr__(self, name: str):
+        return getattr(self._t, name)
+
+    def _log(self, op: list, st) -> object:
+        self.ops.append(op)
+        self.states.append([st.word, st.status, round(st.confidence, 12), st.basmala])
+        return st
+
+    def reset(self) -> None:
+        self._t.reset()
+        self._log(["reset"], self._t.state)
+
+    def anchor(self, word: int):
+        return self._log(["anchor", word], self._t.anchor(word))
+
+    def pause(self):
+        return self._log(["pause"], self._t.pause())
+
+    def feed(self, tokens):
+        tokens = [tokens] if isinstance(tokens, str) else list(tokens)
+        return self._log(["feed", tokens], self._t.feed(tokens))
+
+
+def word_tracker_cases() -> list[dict]:
+    """Scenarios of letters fed to the word tracker, and its state after each call."""
+    index = get_index()
+    light, heavy = LetterNoise.preset("light"), LetterNoise.preset("heavy")
+    streams = [
+        ("light, mid-surah", 1500, 1507, light, 3),
+        ("heavy with al-Fatiha, ar-Rahman's refrain", 4901, 4910, replace(heavy, fatiha_every=4), 5),
+        ("clean across short surahs and their basmala", 6205, 6221, LetterNoise.preset("clean"), 1),
+        ("light with al-Fatiha", 300, 308, replace(light, fatiha_every=4), 4),
+        ("a model that hears little", 2050, 2054, LetterNoise.preset("broken"), 2),
+    ]
+    cases = []
+    for name, a, b, noise, seed in streams:
+        rec = _Recorder(WordTracker(index))
+        run(rec, simulate_letters(index, a, b, noise, seed=seed))
+        cases.append({"name": name, "ops": rec.ops, "states": rec.states})
+
+    # By hand: idle, al-Fatiha's own window, "amin", a pause, subwords in model spelling.
+    rec = _Recorder(WordTracker(index))
+    rec.feed("بسم")
+    rec.anchor(0)
+    for p in range(*index.verse_span(1)):
+        rec.feed(f"▁{index.words[p][:2]}ِ")
+        rec.feed(index.words[p][2:])
+    for p in range(index.verse_span(2)[0], index.verse_span(7)[1]):
+        for ch in index.words[p]:
+            rec.feed(ch)
+    for ch in "امين":
+        rec.feed(ch)
+    rec.pause()
+    lo, _ = index.verse_span(3000)
+    rec.anchor(lo)
+    for p in range(lo + 3, lo + 14):
+        rec.feed(list(index.words[p]))
+    rec.pause()
+    for p in range(lo + 14, lo + 18):
+        for ch in index.words[p]:
+            rec.feed(ch)
+    rec.reset()
+    rec.feed("الله")
+    cases.append({"name": "by hand", "ops": rec.ops, "states": rec.states})
+    return cases
+
+
 # Synthetic audio for the segmenter, from integers only, so Python and Dart
 # build the very same samples: (seconds, amplitude, period in samples).
 # Recitation-like bursts and pauses over a low hum, then a long run-on.
@@ -234,6 +312,7 @@ def main() -> int:
         "match.json": match_cases(),
         "tracker.json": tracker_cases(),
         "segmenter.json": segmenter_cases(),
+        "word_tracker.json": word_tracker_cases(),
     }
     stale = []
     for name, cases in files.items():

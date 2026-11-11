@@ -38,6 +38,7 @@ extend-immutable-calls = [
     "rafiq.matching.matcher.MatchConfig",
     "rafiq.simulate.NoiseConfig",
     "rafiq.tracking.TrackerConfig",
+    "rafiq.words.WordTrackerConfig",
     "rafiq.asr.segmenter.SegmenterConfig",
     "rafiq.asr.listener.ListenerConfig",
 ]

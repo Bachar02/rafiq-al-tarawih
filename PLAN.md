@@ -941,3 +941,41 @@ The owner, testing 0.8: the adhkar "disappear quickly" and "appear only in the n
 - **Louder:** the recording peaked at -9.9 dBFS; both files are raised to -1 dBFS (+8.9 dB). A notification plays at the notification volume, so a quiet file is a quiet adhan.
 - **Same names** (`adhan_full`, `adhan_takbir`): Android finds a channel's sound by name, so phones with the app already installed play the new one after the update, with no new channel. The `.ogg` files are gone (two raw resources of one name do not build); the check in CI says so if one comes back.
 - **Its source and licence are not recorded yet.** The CC0 credit for the earlier recording left Settings → About and the README. Before release, write in `assets/adhan/NOTICE.txt` who recited it and what allows Rafiq to ship it, and add a credit if the licence asks for one.
+
+## 29. Word tracking, phase 1: the WordTracker before any model (2026-11-12)
+
+**The decision behind it** (research, 2026-11-11/12): keep the Quran Whisper for finding the ayah and recovering, and add word-by-word tracking from a small **streaming CTC model** whose letters are *aligned* against the known text, not recognised. Aligning is almost free; Whisper's per-chunk decoder (≈1.9 s fixed on the Galaxy A32, §16) is what is expensive.
+- **The model:** our own Zipformer2 CTC (icefall, causal, ~20–25M parameters, letter units), aiming at 22–30 MB int8. It loads through the sherpa-onnx we already ship (`OnlineZipformer2CtcModelConfig` is in 1.13.4; results carry `tokens` and `timestamps`, not probabilities).
+- **Not Muno459/zipformer_p-arabic-v2** (the best ready model, 73 MB): its licence forbids paid or ad-supported apps, and the owner wants the core free of that. **NVIDIA's Arabic FastConformer** (CC BY 4.0, EveryAyah in training, ~115M parameters, not streaming) serves as an offline labeller and baseline, not on the phone.
+- **Data:** EveryAyah (about 390 h; its card: "Licensing of the individual recordings is not documented") plus CC BY word timings (cpfair/quran-align, QuranLab). Tadabur is non-commercial: excluded. No corpus documents the rights to the recordings themselves, the Whisper model we ship included: get advice before monetising.
+- **The benchmark reciters** (`eval/audio_bench.py`, `eval/phone_streams.py`) must be held out of training.
+
+**Phase 1, done:** the word tracker, built and measured on simulated letter streams, independent of any model.
+- **`rafiq.words.WordTracker`** (Python reference) and `mobile/lib/core/engine/word_tracker.dart` (port). Anchored by the ayah tracker at a word; then fed letters, one row of an edit-distance alignment per letter against a window of the text (20 words behind, 30 ahead, sliding with the imam). About 100–170 µs a letter in Python; a CTC model emits about 12 a second.
+- **What it handles:** silent letters cheap to drop (long vowels, hamzat al-wasl, the lam of al- before a sun letter) and similar sounds cheap to confuse; madd and pauses cost nothing; going back to any earlier word start at a fixed cost (repeats); the basmala as an optional segment; any position in the window found again within a few words.
+- **Failing safe:** it stops highlighting when the recent error rate climbs, at once after a burst of bad letters, and once past the end of its window. Anchored in al-Fatiha, the window ends with 1:7 ("amin" is close to 2:1 "الم"). `pause()` after a long silence (rukuʿ, sujud) makes it re-confirm with fresh letters, because bism and al- fit almost anywhere. Lost after 30 unsure letters, for the ayah tracker to anchor it again.
+- **Model-independent:** any tokens that normalize to Arabic letters (letters, subwords, words, with diacritics) and no use of time. Confidence is sums and ratios, so Dart reproduces Python exactly.
+- **`rafiq.word_sim`:** letter streams with timing and the truth per letter: misheard, dropped (silent ones three times as often) and invented letters, garbled words, repeats of 2–6 words, a whole ayah again, fillers ("amin", takbir, coughs), the basmala aloud half the time, al-Fatiha every few ayahs after 15–40 s of silence. `run` plays the ayah tracker: anchors 4 s late at the word heard 2 s before, at the start, after each far jump, and when lost.
+
+**`eval/word_benchmark.py`** (30 passages; CI runs `--quick --check`, 4 s). Over the letters after the first anchor:
+
+| Scenario | Shown | Exact | Within one word | Wrong (> 2 words off) |
+|---|---|---|---|---|
+| clean | 97.8% | 98.6% | 99.9% | 0.06% |
+| light | 88.5% | 95.5% | 99.5% | 0.37% |
+| light + al-Fatiha | 78.8% | 95.6% | 99.4% | 0.39% |
+| heavy | 62.9% | 90.8% | 99.0% | 0.49% |
+| heavy + al-Fatiha | 55.8% | 91.3% | 98.9% | 0.49% |
+| broken (a model that hears little) | 9.1% | 82.2% | 97.0% | 0.63% |
+
+The wrong highlights left are blips of 1–4 letters (0.1–0.4 s) when the imam goes back: his first letters also fit what he would have said next. Tuning chose fewer wrong words over more time shown (`burst_cost` 2.0 over 2.5). Simulated letters are kinder and more regular than a real model's, so these are regression floors, not promises.
+
+**Tests:** 11 Python (`engine/tests/test_words.py`: clean, a late anchor, a repeat, the basmala aloud and not, leaving the text, al-Fatiha's window, a pause, subword tokens, simulated and broken streams). Dart: `test/core/word_tracker_golden_test.dart` replays `test/golden/word_tracker.json` (6 scenarios, about 3,200 calls: idle, tracking, uncertain, lost, the basmala, pauses, re-anchors, window slides), every state exact. 501 Flutter tests (499 before), 119 engine tests (108 before).
+
+**Not yet:** nothing in the app uses it. No model, no UI, no change to `RecognitionEngine` or `TrackState`.
+
+**Next:**
+1. **Real streams without our model:** NVIDIA's CTC (offline, laptop) and faster-whisper's word timestamps over `eval/phone_streams.py`, scored against CC BY word timings (quran-align covers Alafasy and Husary). Needs those downloads: ask first.
+2. **Training data pipeline and a first Zipformer2-small CTC run** (cloud GPU), with a provenance file for every source.
+3. **Go/no-go:** letter error on held-out reciters with mosque augmentation, real-time factor on the A32 and A16 (bench screen), and the word tracker within one word on real streams.
+4. **Integration** behind a flag after the Ramadan release candidate: the engine anchors the word tracker from the ayah tracker, calls `pause()` on long silences, and adds the word to what the screen shows.

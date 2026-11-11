@@ -32,6 +32,8 @@ jobs:
         run: python eval/text_benchmark.py --quick --check
       - name: Detection regression gate
         run: python eval/detection_benchmark.py --quick --check
+      - name: Word tracking regression gate
+        run: python eval/word_benchmark.py --quick --check
 
   mobile:
     runs-on: ubuntu-latest
