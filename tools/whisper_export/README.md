@@ -13,6 +13,7 @@ py -m venv .venv-export                         # heavy, export-only deps (torch
 .venv/Scripts/python        tools/whisper_export/prepare_clips.py          # reference clips + server transcripts
 .venv-export/Scripts/python tools/whisper_export/validate_onnx.py          # ONNX vs server, same audio
 .venv-export/Scripts/python tools/whisper_export/trim_vocab.py --model base   # -> quran-basetrim-* (55 MB)
+.venv/Scripts/python        tools/whisper_export/install_model.py              # -> mobile/assets/models/ (the app's bundle)
 ```
 
 Then on a phone: run the server (`python -m rafiq_server --host 0.0.0.0`), open
@@ -26,6 +27,7 @@ the model and clips from `/dev/asr` and reports speed and accuracy.
 | `prepare_clips.py` | 22 clips (6 reciters × clean/mosque) with the server model's transcripts |
 | `validate_onnx.py` | word accuracy, ayah detection and speed of the ONNX model vs the server |
 | `trim_vocab.py` | keep only the 660 tokens Quran transcripts use; re-quantize (what the app ships) |
+| `install_model.py` | copy the trimmed model into the app bundle, with a manifest (sizes, SHA-256, version) |
 
 **Findings (2026-11-03, laptop CPU):**
 - **Accuracy:** 97.4% word accuracy, against 98.6% for the server model on the same audio.

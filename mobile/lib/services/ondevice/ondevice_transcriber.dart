@@ -3,6 +3,9 @@ import 'dart:typed_data';
 
 import 'package:sherpa_onnx/sherpa_onnx.dart' as sherpa;
 
+import 'model_store.dart';
+import 'ondevice_engine.dart' show TranscriberLoader;
+
 /// Speech -> text on the phone: the Quran Whisper model via sherpa-onnx.
 ///
 /// Two findings from tools/whisper_export/validate_onnx.py are baked in:
@@ -63,6 +66,17 @@ class OnDeviceTranscriber {
   }
 
   void dispose() => _recognizer.free();
+}
+
+/// Loads [paths] in the recognition isolate. Two threads: on big.LITTLE
+/// phones more threads spill onto the slow cores and get slower (PLAN.md §16).
+/// Half a second of trailing silence keeps the last word (§16).
+TranscriberLoader whisperLoader(ModelPaths paths, {int threads = 2}) {
+  final encoder = paths.encoder, decoder = paths.decoder, tokens = paths.tokens;
+  return () {
+    final asr = OnDeviceTranscriber.load(encoder: encoder, decoder: decoder, tokens: tokens, threads: threads);
+    return (transcribe: asr.transcribe, dispose: asr.dispose, device: 'phone, $threads threads');
+  };
 }
 
 /// One benchmark measurement.

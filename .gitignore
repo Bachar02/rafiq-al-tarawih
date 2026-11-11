@@ -12,8 +12,15 @@ venv/
 # Generated Quran artifacts (rebuild with: py data/build_quran.py)
 /data/quran.json
 
+# The on-device speech model, bundled at build time (tools/whisper_export/install_model.py)
+/mobile/assets/models/*
+!/mobile/assets/models/README.md
+
 # GeoNames dumps (large, change daily; fetch with: py data/build_places.py fetch)
 /data/raw/geonames/
+
+# Test recitations for the phone, rebuilt by eval/phone_streams.py
+/eval/results/phone_streams/
 
 # Audio: never commit recitation recordings, they are large and often rights-encumbered.
 # Keep eval manifests (*.jsonl) which reference audio by path/checksum.

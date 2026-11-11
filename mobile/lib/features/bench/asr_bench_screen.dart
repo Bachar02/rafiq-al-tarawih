@@ -25,7 +25,7 @@ class AsrBenchScreen extends ConsumerStatefulWidget {
 }
 
 class _AsrBenchScreenState extends ConsumerState<AsrBenchScreen> {
-  String _status = 'Downloads ~55 MB from your Rafiq server the first time (Wi-Fi recommended).';
+  String _status = 'Uses the speech model bundled with the app; the test clips come from your Rafiq server.';
   double? _progress;
   bool _busy = false;
   String? _report;
@@ -40,12 +40,11 @@ class _AsrBenchScreenState extends ConsumerState<AsrBenchScreen> {
     final address = ref.read(settingsProvider).serverAddress;
     final quran = ref.read(quranProvider);
     try {
-      final store = await ModelStore.open();
+      _set('Preparing the speech model…');
+      final paths = await ModelStore.prepare(onProgress: (p) => _set('Preparing the speech model…', progress: p));
+      final modelBytes = [paths.encoder, paths.decoder, paths.tokens].fold<int>(0, (n, f) => n + File(f).lengthSync());
       _set('Checking the server…');
       final manifest = await fetchManifest(address);
-      if (!store.isInstalled) {
-        await store.install(address, onProgress: (p) => _set('Downloading the speech model…', progress: p));
-      }
       final clips = <(String, Float32List)>[];
       for (final (i, c) in manifest.clips.indexed) {
         _set('Downloading test audio ${i + 1}/${manifest.clips.length}…', progress: i / manifest.clips.length);
@@ -55,7 +54,7 @@ class _AsrBenchScreenState extends ConsumerState<AsrBenchScreen> {
       final lines = <String>[
         'Rafiq on-device speech benchmark',
         'Device: ${Platform.operatingSystem} ${Platform.operatingSystemVersion}, ${Platform.numberOfProcessors} cores',
-        'Model: ${ModelStore.model} int8 via sherpa-onnx (${(store.installedBytes / 1e6).round()} MB)',
+        'Model: ${paths.name} int8 via sherpa-onnx (${(modelBytes / 1e6).round()} MB)',
         'Clips: ${clips.length} (6 reciters, clean + mosque echo)',
         '',
       ];
@@ -67,9 +66,9 @@ class _AsrBenchScreenState extends ConsumerState<AsrBenchScreen> {
       for (final (threads, padMs) in configs) {
         _set('Transcribing on the phone: $threads thread(s), ${padMs / 1000} s padding…', progress: null);
         final run = await runBenchmark(
-          encoder: store.path(ModelStore.encoder),
-          decoder: store.path(ModelStore.decoder),
-          tokens: store.path(ModelStore.tokens),
+          encoder: paths.encoder,
+          decoder: paths.decoder,
+          tokens: paths.tokens,
           threads: threads,
           silencePad: Duration(milliseconds: padMs),
           clips: clips,
@@ -160,16 +159,6 @@ class _AsrBenchScreenState extends ConsumerState<AsrBenchScreen> {
               label: const Text('Copy results'),
             ),
           ],
-          const SizedBox(height: 24),
-          TextButton(
-            onPressed: _busy
-                ? null
-                : () async {
-                    await ModelStore.deleteAll();
-                    _set('Downloaded models deleted from the phone.');
-                  },
-            child: const Text('Delete downloaded model'),
-          ),
         ],
       ),
     );
