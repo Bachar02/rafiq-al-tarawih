@@ -152,6 +152,15 @@ class FakeReminders implements Reminders {
   /// Notifications shown at once (the adhan's test).
   final shown = <Reminder>[];
 
+  /// The dhikr's card on the screen ("Appear on top"): whether Android
+  /// allows it, how often the user was sent to its setting, what they do
+  /// there, and the adhkar shown at once.
+  bool onScreen = false;
+  int onScreenAsked = 0;
+  bool grantOnScreen = true;
+  final dhikrShown = <Reminder>[];
+  String? closeLabel;
+
   void Function(String payload)? _onOpen;
 
   /// The user taps a notification carrying [payload].
@@ -168,6 +177,7 @@ class FakeReminders implements Reminders {
     List<Reminder> reminders, {
     required String channelName,
     ReminderKind kind = ReminderKind.reading,
+    String closeLabel = '',
   }) async {
     switch (kind) {
       case ReminderKind.reading:
@@ -178,6 +188,7 @@ class FakeReminders implements Reminders {
         dhikrReplaced++;
         dhikr = List.of(reminders);
         dhikrChannel = channelName;
+        this.closeLabel = closeLabel;
       case ReminderKind.adhan:
         adhanReplaced++;
         adhan = List.of(reminders);
@@ -199,6 +210,20 @@ class FakeReminders implements Reminders {
 
   @override
   Future<void> show(Reminder reminder) async => shown.add(reminder);
+
+  @override
+  Future<bool> canShowOnScreen() async => onScreen;
+
+  @override
+  Future<bool> requestShowOnScreen() async {
+    onScreenAsked++;
+    onScreen = grantOnScreen;
+    return onScreen;
+  }
+
+  @override
+  Future<void> showDhikr(Reminder reminder, {required String channelName, required String closeLabel}) async =>
+      dhikrShown.add(reminder);
 
   @override
   Future<void> onOpen(void Function(String payload) handler) async => _onOpen = handler;

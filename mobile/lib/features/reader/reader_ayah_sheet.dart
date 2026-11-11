@@ -71,12 +71,6 @@ Future<ReaderAyahAction?> showReaderAyahSheet(
               icon: const Icon(Icons.copy_outlined, size: 20),
               label: Text(context.l10n.copyAyah),
             ),
-            const SizedBox(height: RubricSpace.s2),
-            Text(
-              context.l10n.listenComingSoon,
-              textAlign: TextAlign.center,
-              style: RubricText.caption.copyWith(color: context.colors.inkSecondary),
-            ),
           ],
         ),
       ),
@@ -89,9 +83,7 @@ String ayahClipboardText(Verse verse, SurahNames names) =>
 Future<void> copyAyah(Verse verse, SurahNames names) =>
     Clipboard.setData(ClipboardData(text: ayahClipboardText(verse, names)));
 
-/// Translation and tafsir open the study view; Listen is shown, visibly not
-/// yet working (explained at the foot of the sheet), so the sheet does not
-/// change shape when it arrives.
+/// Translation and tafsir, which open the study view.
 class _Meaning extends StatelessWidget {
   const _Meaning();
 
@@ -107,12 +99,11 @@ class _Meaning extends StatelessWidget {
             for (final (icon, label, action) in [
               (Icons.translate, l.translation, ReaderAyahAction.translation),
               (Icons.menu_book_outlined, l.tafsir, ReaderAyahAction.tafsir),
-              (Icons.play_arrow_outlined, l.listen, null),
             ])
               Expanded(
-                // Icon over label, so three fit side by side in any language.
+                // Icon over label, so both fit side by side in any language.
                 child: TextButton(
-                  onPressed: action == null ? null : () => Navigator.pop(context, action),
+                  onPressed: () => Navigator.pop(context, action),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [

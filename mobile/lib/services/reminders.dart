@@ -1,11 +1,13 @@
 /// Local notifications, scheduled on the phone: the daily reading reminder,
-/// the dhikr that pops up now and then, and the adhan at each prayer time.
+/// the dhikr that comes now and then, and the adhan at each prayer time.
 /// Nothing leaves the phone.
 library;
 
+import 'dart:io' show Platform;
 import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart' show immutable;
+import 'package:flutter/services.dart' show MethodChannel;
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/timezone.dart' as tz;
 
@@ -104,10 +106,12 @@ bool sameReminders(List<Reminder> a, List<Reminder> b) {
 /// silence one in Android's settings and keep the others) and its own ids,
 /// so replacing one never touches the others.
 enum ReminderKind {
-  /// The daily reading reminder: an ordinary notification.
+  /// The daily reading reminder: a notification at the top of the screen.
   reading,
 
-  /// A dhikr: pops up at the top of the screen, silent, and goes by itself.
+  /// A dhikr: a small card at the top right of the screen, silent, until it
+  /// is tapped. Without the "Appear on top" permission, a silent
+  /// notification that waits in the shade.
   dhikr,
 
   /// The adhan: at the prayer's minute where Android allows it, each with
@@ -118,12 +122,11 @@ enum ReminderKind {
 /// What a dhikr notification opens when tapped.
 const dhikrPayload = 'adhkar';
 
-/// How long a dhikr stays on screen (and in the shade) before it goes.
-const dhikrShownFor = Duration(seconds: 8);
-
 /// Dhikr ids: [dhikrIdBase] + the hour's place in a cycle of [dhikrIdCycle]
 /// hours (about three weeks), so each hour of the two weeks scheduled ahead
 /// has its own id, and the same hour keeps it from one scheduling to the next.
+/// On Android these ids only name what flutter_local_notifications scheduled
+/// up to 0.8, cancelled once: the app's own code now shows the dhikr.
 const dhikrIdBase = 1000;
 const dhikrIdCycle = 500;
 
@@ -168,8 +171,14 @@ abstract interface class Reminders {
 
   /// Replaces every scheduled notification of [kind] with [reminders]
   /// (none: cancel them all). [channelName] is the name Android shows in the
-  /// app's notification settings, in the interface language.
-  Future<void> replace(List<Reminder> reminders, {required String channelName, ReminderKind kind});
+  /// app's notification settings, in the interface language. [closeLabel]
+  /// is what a screen reader says closes a dhikr's card.
+  Future<void> replace(
+    List<Reminder> reminders, {
+    required String channelName,
+    ReminderKind kind,
+    String closeLabel,
+  });
 
   /// Calls [handler] with the payload of a notification the user taps,
   /// including one that launched the app.
@@ -189,6 +198,17 @@ abstract interface class Reminders {
 
   /// Shows [reminder] now, whatever its time: the adhan's test.
   Future<void> show(Reminder reminder);
+
+  /// Whether a dhikr can be shown in its card on the screen, over other
+  /// apps: Android's "Appear on top" permission. False elsewhere.
+  Future<bool> canShowOnScreen();
+
+  /// Opens the phone's "Appear on top" setting for the app, and says whether
+  /// it is allowed once the user comes back.
+  Future<bool> requestShowOnScreen();
+
+  /// Shows a dhikr now, the way the scheduled ones come.
+  Future<void> showDhikr(Reminder reminder, {required String channelName, required String closeLabel});
 }
 
 /// [Reminders] through flutter_local_notifications.
@@ -200,8 +220,26 @@ class LocalReminders implements Reminders {
   void Function(String payload)? _onOpen;
   bool _launchHandled = false;
 
-  static const _readingChannel = 'daily_reading';
+  /// A channel of high importance, so the reminder shows at the top of the
+  /// screen. Android fixes a channel's importance once created, so the
+  /// first one (`daily_reading`, of default importance: the shade only) is
+  /// deleted and this one takes its place.
+  static const _readingChannel = 'reading_reminder';
+  static const _oldReadingChannel = 'daily_reading';
+  static const _readingGroup = 'reading';
   static const _dhikrChannel = 'adhkar';
+
+  /// The app's own Android code: the dhikr's alarms, its card on the screen,
+  /// and the "Appear on top" permission (android/.../Dhikr.kt).
+  static const _native = MethodChannel('app.rafiq.rafiq/dhikr');
+
+  /// The dhikr is the app's own on Android; elsewhere the plugin notifies.
+  static bool get _nativeDhikr => Platform.isAndroid;
+
+  /// What 0.8 and earlier left: the plugin's dhikr notifications and the
+  /// default-importance reading channel, cleared by the first scheduling of
+  /// each process.
+  bool _oldCleared = false;
 
   /// The first adhans of a new process are scheduled this many at once; the
   /// rest follow one at a time, [_breath] apart (see [_replaceAdhan]).
@@ -256,11 +294,21 @@ class LocalReminders implements Reminders {
   Future<void> onOpen(void Function(String payload) handler) async {
     _onOpen = handler;
     await _init();
+    if (_nativeDhikr) {
+      // A dhikr's notification (no "Appear on top") opens the app itself.
+      _native.setMethodCallHandler((call) async {
+        if (call.method == 'open') _onOpen?.call(dhikrPayload);
+      });
+    }
     if (_launchHandled) return;
     _launchHandled = true;
     final launch = await _plugin.getNotificationAppLaunchDetails();
     final payload = launch?.notificationResponse?.payload;
-    if ((launch?.didNotificationLaunchApp ?? false) && payload != null) handler(payload);
+    if ((launch?.didNotificationLaunchApp ?? false) && payload != null) {
+      handler(payload);
+    } else if (_nativeDhikr && await _native.invokeMethod<String>('takeLaunchOpen') != null) {
+      handler(dhikrPayload);
+    }
   }
 
   @override
@@ -268,16 +316,70 @@ class LocalReminders implements Reminders {
     List<Reminder> reminders, {
     required String channelName,
     ReminderKind kind = ReminderKind.reading,
+    String closeLabel = '',
   }) async {
     await _init();
+    await _clearOld();
     switch (kind) {
       case ReminderKind.reading:
         await _replaceReading(reminders, channelName);
       case ReminderKind.dhikr:
-        await _replaceDhikr(reminders, channelName);
+        if (_nativeDhikr) {
+          await _native.invokeMethod<void>('schedule', {
+            'items': [for (final r in reminders) _dhikrMap(r)],
+            'channelName': channelName,
+            'closeLabel': closeLabel,
+          });
+        } else {
+          await _replaceDhikr(reminders, channelName);
+        }
       case ReminderKind.adhan:
         await _replaceAdhan(reminders);
     }
+  }
+
+  static Map<String, Object?> _dhikrMap(Reminder r) => {
+        'at': r.at.millisecondsSinceEpoch,
+        'title': r.title,
+        'body': r.body,
+        'expanded': r.expanded,
+      };
+
+  Future<void> _clearOld() async {
+    if (_oldCleared || !Platform.isAndroid) return;
+    _oldCleared = true;
+    await _android?.deleteNotificationChannel(channelId: _oldReadingChannel);
+    for (final p in await _plugin.pendingNotificationRequests()) {
+      if (p.id >= dhikrIdBase && p.id < dhikrIdBase + dhikrIdCycle) await _plugin.cancel(id: p.id);
+    }
+  }
+
+  @override
+  Future<bool> canShowOnScreen() async =>
+      _nativeDhikr && (await _native.invokeMethod<bool>('canShowOnScreen') ?? false);
+
+  @override
+  Future<bool> requestShowOnScreen() async =>
+      _nativeDhikr && (await _native.invokeMethod<bool>('requestShowOnScreen') ?? false);
+
+  @override
+  Future<void> showDhikr(Reminder reminder, {required String channelName, required String closeLabel}) async {
+    if (_nativeDhikr) {
+      await _native.invokeMethod<void>('show', {
+        'item': _dhikrMap(reminder),
+        'channelName': channelName,
+        'closeLabel': closeLabel,
+      });
+      return;
+    }
+    await _init();
+    await _plugin.show(
+      id: dhikrIdBase + dhikrIdCycle - 1,
+      title: reminder.title,
+      body: reminder.body,
+      notificationDetails: _dhikrDetails(reminder, channelName),
+      payload: dhikrPayload,
+    );
   }
 
   @override
@@ -324,17 +426,29 @@ class LocalReminders implements Reminders {
         _readingChannel,
         channelName,
         icon: _icon,
+        // At the top of the screen, with the phone's notification sound.
+        importance: Importance.high,
+        priority: Priority.high,
         category: AndroidNotificationCategory.reminder,
+        visibility: NotificationVisibility.public,
+        // Its own group: Android 16 marks an ungrouped notification silent
+        // when another of the app's is already in the shade (see the adhan's).
+        groupKey: _readingGroup,
       ),
       iOS: const DarwinNotificationDetails(),
     );
+    // On the minute when Android allows it (the adhan asks), else within
+    // Android's window (up to an hour).
+    final mode =
+        await canScheduleExact() ? AndroidScheduleMode.exactAllowWhileIdle : AndroidScheduleMode.inexactAllowWhileIdle;
     for (final (i, r) in reminders.take(_readingIds).indexed) {
-      await _schedule(i, r, details);
+      await _schedule(i, r, details, mode: mode);
     }
   }
 
-  /// Two weeks of dhikr is a hundred or so notifications: only what changed
-  /// is cancelled or scheduled (each call writes the plugin's whole list).
+  /// Not Android: through the plugin. Two weeks of dhikr is a hundred or so
+  /// notifications: only what changed is cancelled or scheduled (each call
+  /// writes the plugin's whole list).
   Future<void> _replaceDhikr(List<Reminder> reminders, String channelName) async {
     bool ours(int id) => id >= dhikrIdBase && id < dhikrIdBase + dhikrIdCycle;
     final pending = {
@@ -435,9 +549,7 @@ class LocalReminders implements Reminders {
     );
   }
 
-  /// High importance is what makes Android show it at the top of the screen
-  /// (a heads-up notification); no sound and no vibration, so it never
-  /// disturbs; it removes itself after [dhikrShownFor].
+  /// Not Android: a notification, silent, that waits until it is seen.
   NotificationDetails _dhikrDetails(Reminder r, String channelName) => NotificationDetails(
         android: AndroidNotificationDetails(
           _dhikrChannel,
@@ -447,7 +559,6 @@ class LocalReminders implements Reminders {
           priority: Priority.high,
           playSound: false,
           enableVibration: false,
-          timeoutAfter: dhikrShownFor.inMilliseconds,
           category: AndroidNotificationCategory.reminder,
           visibility: NotificationVisibility.public,
           // The whole dhikr and its meaning when expanded.

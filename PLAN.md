@@ -897,3 +897,41 @@ Before the cap on previews, the same run: 100%, 91%, 81% and 67% right; 0.4 s de
 3. A 90-minute session: battery and heat.
 4. If it is too slow: a smaller or distilled Quran model behind the same loader (§16's decision rule).
 5. Release: the release APK for arm64 phones is 91 MB (the model is 55 MB of it). Play Asset Delivery can move the model to an install-time pack.
+
+## 28. Build 0.9: reminders that are seen, and no audio (2026-11-11)
+
+The owner, testing 0.8: the adhkar "disappear quickly" and "appear only in the notification bar"; they should show "in the screen (top right) as a small readable indication" and stay until tapped. The other notifications "are missed most of the times". And the recitation audio is dropped: the app is already over 50 MB.
+
+**Why they were missed** (found in the code, then seen on the emulator):
+- **The dhikr removed itself after 8 seconds** (`timeoutAfter`, §25). With the phone in a pocket it was gone before anyone looked.
+- **The reading reminder had default importance:** a sound and an icon, never at the top of the screen.
+- **Android 16's grouping trap (§26, open item 2):** the reading reminder and the dhikr had no group, so one arriving while another of the app's was in the shade was marked silent.
+- **Inexact alarms:** the reading reminder could come up to an hour late.
+- **After a force-stop** the dhikr alarms were gone, and the plugin's own record still listed them, so rescheduling changed nothing (the adhan already set everything again per process; the dhikr did not).
+
+**The dhikr card** (`android/.../Dhikr.kt`, the app's own Kotlin; reverses §25's "an app cannot choose the top-right corner"):
+- **A small card at the top right of the screen, over any app,** until it is tapped: "Remember Allah" in rubric red, the dhikr in Amiri, its meaning (two lines at most; none in Arabic), a ✕. Rubric's colours, light or dark with the phone. Touches elsewhere go to the app underneath. One at a time: a new dhikr replaces the words.
+- **Needs "Appear on top"** (`SYSTEM_ALERT_WINDOW`, "Display over other apps" on a Pixel). Turning dhikr reminders on explains it and opens the setting. Android 11 and later open the list of apps, not Rafiq's page, so the text says to find Rafiq in it. "Use notifications instead" skips it.
+- **Without it,** a dhikr is a silent, high-importance notification in a group of its own that stays in the shade until tapped (it opens the Adhkar) or swiped away. Taking the card back later asks for permission to notify, which choosing the card skipped.
+- **One alarm at a time:** Dart sends the two weeks of adhkar; Kotlin keeps them and sets only the next alarm, and each one that fires sets the one after it. On the minute when exact alarms are allowed (the adhan asks), else within Android's window. A restart of the phone or an update sets the next again and shows a card that was still waiting. Every process sends the list once, so a force-stop is mended the next time the app opens.
+- **Settings** (Adhkar screen and Settings): *On the screen* (allowed or not; opens the setting either way) and *Show one now*.
+- What flutter_local_notifications scheduled for the dhikr before (ids 1000–1499) is cancelled once. iOS keeps the plugin path, without the 8 seconds.
+
+**The reading reminder:** a new channel, `reading_reminder`, of high importance (at the top of the screen, with the phone's sound), since Android fixes a channel's importance once created; the old `daily_reading` is deleted. Its own group. On the minute when exact alarms are allowed.
+
+**The audio is gone:** the *Coming soon* group on More (its only row was recitation audio), and the greyed *Listen* button and its line in the ayah sheet. Translation and Tafsir now share the row. 6 strings removed.
+
+**Emulator** (Pixel XL, Android 16, debug build over 0.8):
+- *Show one now*: the card at the top right, over the app and over the home screen. A tap closed it (its window gone).
+- **The real thing:** the app's process killed, the clock moved to 13:59:45. At 14:00 Android started the app's receiver and the card came up; the 16:00 alarm was set (exact, `window=0`).
+- **It stays:** screen off for 40 s, on, unlocked: the card was still there. The process holding it is "important foreground", so Android does not reclaim it.
+- **Force-stop:** the alarm survived it on Android 16; opening the app set it again in any case.
+- **Without "Appear on top":** at 16:00 nothing showed, because the app was not allowed to notify either (the gap fixed above). Allowed, at 18:00: a notification of importance 4 in group `dhikr`, which stayed; a tap opened the Adhkar.
+- **The reading reminder** at 18:10, with that dhikr already in the shade: sound and vibration (`notification_alert` buzz=1 beep=1), importance 4, group `reading`. Before, this is the case Android 16 silenced.
+
+**Tests:** 499 (494 before): turning on with the card, allowed already, notifications instead, the setting refused, neither allowed, the card taken back later, show one now, the close label, and More without the audio. Goldens re-rendered: More and the ayah sheet. Strings: 8 new, 1 reworded, 6 removed, in three languages.
+
+**Open:**
+1. **The Galaxy A16:** the card with One UI ("Appear on top"), and whether Samsung's battery saver lets the alarms through with the app closed for a day. If it does not, Settings → Apps → Rafiq → Battery → Unrestricted, and perhaps a hint in the app.
+2. **Play:** `SYSTEM_ALERT_WINDOW` is a special permission the user grants; confirm in the Play Console that it needs no declaration, alongside `SCHEDULE_EXACT_ALARM` (§26).
+3. Native review of the new French and Arabic strings.

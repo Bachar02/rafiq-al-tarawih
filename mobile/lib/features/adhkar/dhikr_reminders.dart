@@ -5,6 +5,7 @@ import '../../app/components/settings_group.dart';
 import '../../app/components/sheet.dart';
 import '../../app/providers.dart';
 import '../../app/theme.dart';
+import '../../data/adhkar.dart' show Dhikr;
 import '../../data/settings.dart';
 import '../../l10n/l10n.dart';
 import '../../services/reminders.dart';
@@ -45,6 +46,30 @@ int dhikrPick(DateTime at, int count) {
   return (x ^ (x >> 16)) % count;
 }
 
+/// Whether a dhikr can come in its card at the top right of the screen
+/// ("Appear on top"); asked again after the user visits the setting.
+final dhikrOnScreenProvider = FutureProvider.autoDispose<bool>((ref) async {
+  try {
+    return await ref.watch(remindersProvider).canShowOnScreen();
+  } catch (_) {
+    return false;
+  }
+});
+
+/// [dhikr] as it comes at [at]. The words alone in the card and in a
+/// collapsed notification: Android puts the lines on one, and Arabic and
+/// English mixed there read in the wrong order. Expanded, their meaning
+/// under them (except in Arabic).
+Reminder dhikrReminder(Dhikr dhikr, DateTime at, AppLocalizations l, String languageCode) {
+  final meaning = dhikr.meaning(languageCode);
+  return Reminder(
+    at: at,
+    title: l.dhikrNotificationTitle,
+    body: dhikr.arabic!,
+    expanded: meaning == null ? null : '${dhikr.arabic}\n$meaning',
+  );
+}
+
 /// Keeps the phone's scheduled dhikr reminders in step with the settings,
 /// the interface language and Taraweeh mode.
 class DhikrSync {
@@ -69,17 +94,7 @@ class DhikrSync {
       var i = dhikrPick(at, pool.length);
       if (i == previous) i = (i + 1) % pool.length; // never the same one twice in a row
       previous = i;
-      final dhikr = pool[i];
-      // Collapsed, the words alone: Android puts the lines on one, and
-      // Arabic and English mixed there read in the wrong order. Expanded,
-      // their meaning under them (except in Arabic).
-      final meaning = dhikr.meaning(locale.languageCode);
-      reminders.add(Reminder(
-        at: at,
-        title: l.dhikrNotificationTitle,
-        body: dhikr.arabic!,
-        expanded: meaning == null ? null : '${dhikr.arabic}\n$meaning',
-      ));
+      reminders.add(dhikrReminder(pool[i], at, l, locale.languageCode));
     }
     return reminders;
   }
@@ -101,7 +116,12 @@ class DhikrSync {
     if (!force && _scheduled != null && sameReminders(_scheduled!, next)) return;
     try {
       final l = lookupAppLocalizations(_ref.read(appLocaleProvider));
-      await _ref.read(remindersProvider).replace(next, channelName: l.dhikrReminders, kind: ReminderKind.dhikr);
+      await _ref.read(remindersProvider).replace(
+            next,
+            channelName: l.dhikrReminders,
+            kind: ReminderKind.dhikr,
+            closeLabel: l.dhikrTapToClose,
+          );
       _scheduled = next;
     } catch (e, stack) {
       FlutterError.reportError(FlutterErrorDetails(exception: e, stack: stack, library: 'dhikr reminders'));
@@ -109,20 +129,35 @@ class DhikrSync {
   }
 }
 
-/// Turn dhikr reminders on, after asking for permission to notify. False,
-/// with a message, if notifications are off.
+/// Turn dhikr reminders on. First the card on the screen: if Android does
+/// not allow it yet, explain and open its "Appear on top" setting. Without
+/// it, a dhikr is a notification, so then ask for permission to notify.
+/// False, with a message, if neither is allowed.
 Future<bool> turnOnDhikrReminders(BuildContext context, WidgetRef ref) async {
   final messenger = ScaffoldMessenger.of(context);
   final l = context.l10n;
-  bool allowed;
+  final reminders = ref.read(remindersProvider);
+  var onScreen = false;
   try {
-    allowed = await ref.read(remindersProvider).requestPermission();
+    onScreen = await reminders.canShowOnScreen();
+    if (!onScreen && context.mounted && await _explainOnScreen(context) == true) {
+      onScreen = await reminders.requestShowOnScreen();
+    }
   } catch (_) {
-    allowed = false;
+    // No such setting on this phone: notifications, then.
   }
-  if (!allowed) {
-    messenger.showSnackBar(SnackBar(content: Text(l.reminderBlocked)));
-    return false;
+  ref.invalidate(dhikrOnScreenProvider);
+  if (!onScreen) {
+    bool allowed;
+    try {
+      allowed = await reminders.requestPermission();
+    } catch (_) {
+      allowed = false;
+    }
+    if (!allowed) {
+      messenger.showSnackBar(SnackBar(content: Text(l.reminderBlocked)));
+      return false;
+    }
   }
   await ref.read(settingsProvider.notifier).update((s) => s.copyWith(dhikrRemindersOn: true));
   await ref.read(dhikrSyncProvider).sync(force: true);
@@ -133,6 +168,60 @@ Future<bool> turnOnDhikrReminders(BuildContext context, WidgetRef ref) async {
 Future<void> turnOffDhikrReminders(WidgetRef ref) async {
   await ref.read(settingsProvider.notifier).update((s) => s.copyWith(dhikrRemindersOn: false));
   await ref.read(dhikrSyncProvider).sync(force: true);
+}
+
+/// Why Android's next screen is coming. True: go on to it; false: use
+/// notifications instead.
+Future<bool?> _explainOnScreen(BuildContext context) {
+  final l = context.l10n;
+  return showRubricSheet<bool>(
+    context,
+    builder: (context) => SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(RubricSpace.s6, 0, RubricSpace.s6, RubricSpace.s6),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          SheetHeader(title: l.dhikrReminders, explanation: l.dhikrOnScreenAsk),
+          const SizedBox(height: RubricSpace.s4),
+          FilledButton(onPressed: () => Navigator.pop(context, true), child: Text(l.continueAction)),
+          const SizedBox(height: RubricSpace.s2),
+          TextButton(onPressed: () => Navigator.pop(context, false), child: Text(l.dhikrUseNotifications)),
+        ],
+      ),
+    ),
+  );
+}
+
+/// Open Android's "Appear on top" setting (to allow the card, or to take it
+/// back), then read it again. Without the card a dhikr is a notification:
+/// then ask for permission to notify, which turning on the card skipped.
+Future<void> chooseDhikrOnScreen(WidgetRef ref) async {
+  final reminders = ref.read(remindersProvider);
+  try {
+    if (!await reminders.requestShowOnScreen()) await reminders.requestPermission();
+  } catch (_) {
+    // No such setting on this phone.
+  }
+  ref.invalidate(dhikrOnScreenProvider);
+}
+
+/// A dhikr now, the way they come: the one this hour would bring.
+Future<void> showDhikrNow(WidgetRef ref) async {
+  final pool = ref.read(adhkarProvider).forNotifications;
+  if (pool.isEmpty) return;
+  final locale = ref.read(appLocaleProvider);
+  final l = lookupAppLocalizations(locale);
+  final now = ref.read(clockProvider)();
+  try {
+    await ref.read(remindersProvider).showDhikr(
+          dhikrReminder(pool[dhikrPick(now, pool.length)], now, l, locale.languageCode),
+          channelName: l.dhikrReminders,
+          closeLabel: l.dhikrTapToClose,
+        );
+  } catch (e, stack) {
+    FlutterError.reportError(FlutterErrorDetails(exception: e, stack: stack, library: 'dhikr reminders'));
+  }
 }
 
 String _hour(BuildContext context, int hour) => formatMinutes(context, hour * 60);
@@ -182,6 +271,7 @@ class DhikrReminderSettings extends ConsumerWidget {
     final l = context.l10n;
     final on = ref.watch(settingsProvider.select((s) => s.dhikrRemindersOn));
     final every = ref.watch(settingsProvider.select((s) => s.dhikrEveryHours));
+    final onScreen = on ? ref.watch(dhikrOnScreenProvider).value : null;
     Future<void> toggle(bool value) => value ? turnOnDhikrReminders(context, ref) : turnOffDhikrReminders(ref);
     return RubricGroup(
       label: l.dhikrReminders,
@@ -194,12 +284,22 @@ class DhikrReminderSettings extends ConsumerWidget {
           onTap: () => toggle(!on),
           trailing: Switch(value: on, onChanged: toggle),
         ),
-        if (on)
+        if (on) ...[
           RubricRow(
             label: l.dhikrHowOften,
             value: l.dhikrEvery(every),
             onTap: () => _chooseInterval(context, ref, every),
           ),
+          // Known once Android has answered.
+          if (onScreen != null)
+            RubricRow(
+              label: l.dhikrOnScreen,
+              detail: onScreen ? l.dhikrOnScreenOn : l.dhikrOnScreenOff,
+              onTap: () => chooseDhikrOnScreen(ref),
+              trailing: Switch(value: onScreen, onChanged: (_) => chooseDhikrOnScreen(ref)),
+            ),
+          RubricRow(label: l.dhikrShowNow, onTap: () => showDhikrNow(ref)),
+        ],
       ],
     );
   }

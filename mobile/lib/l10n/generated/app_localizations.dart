@@ -1329,36 +1329,6 @@ abstract class AppLocalizations {
   /// **'Surahs, juz and pages'**
   String get tooltipOpenSurahs;
 
-  /// No description provided for @comingSoon.
-  ///
-  /// In en, this message translates to:
-  /// **'Coming soon'**
-  String get comingSoon;
-
-  /// No description provided for @soon.
-  ///
-  /// In en, this message translates to:
-  /// **'Soon'**
-  String get soon;
-
-  /// No description provided for @soonRecitation.
-  ///
-  /// In en, this message translates to:
-  /// **'Recitation audio'**
-  String get soonRecitation;
-
-  /// No description provided for @soonRecitationDetail.
-  ///
-  /// In en, this message translates to:
-  /// **'Listen to an ayah, a page or a surah'**
-  String get soonRecitationDetail;
-
-  /// No description provided for @listen.
-  ///
-  /// In en, this message translates to:
-  /// **'Listen'**
-  String get listen;
-
   /// No description provided for @translation.
   ///
   /// In en, this message translates to:
@@ -1839,12 +1809,6 @@ abstract class AppLocalizations {
   /// **'This text could not be opened. Reinstalling Rafiq should fix it.'**
   String get textLoadFailed;
 
-  /// No description provided for @listenComingSoon.
-  ///
-  /// In en, this message translates to:
-  /// **'Listening to the recitation is coming soon.'**
-  String get listenComingSoon;
-
   /// No description provided for @yourReading.
   ///
   /// In en, this message translates to:
@@ -2235,12 +2199,6 @@ abstract class AppLocalizations {
   /// **'How often'**
   String get dhikrHowOften;
 
-  /// No description provided for @dhikrHowOftenExplanation.
-  ///
-  /// In en, this message translates to:
-  /// **'A short dhikr appears at the top of the screen, without sound, for 8 seconds, between {from} and {to}. Tap it to open the adhkar, or swipe it away. Android may shift it a little to save battery.'**
-  String dhikrHowOftenExplanation(String from, String to);
-
   /// No description provided for @dhikrRemindersSet.
   ///
   /// In en, this message translates to:
@@ -2252,6 +2210,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Remember Allah'**
   String get dhikrNotificationTitle;
+
+  /// No description provided for @dhikrHowOftenExplanation.
+  ///
+  /// In en, this message translates to:
+  /// **'A short dhikr between {from} and {to}, in a small card at the top right of the screen. It stays until you tap it. Android may move it a little to save battery.'**
+  String dhikrHowOftenExplanation(String from, String to);
+
+  /// No description provided for @dhikrOnScreen.
+  ///
+  /// In en, this message translates to:
+  /// **'On the screen'**
+  String get dhikrOnScreen;
+
+  /// No description provided for @dhikrOnScreenOn.
+  ///
+  /// In en, this message translates to:
+  /// **'A small card at the top right, until you tap it'**
+  String get dhikrOnScreenOn;
+
+  /// No description provided for @dhikrOnScreenOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Not allowed: each dhikr waits in the notifications'**
+  String get dhikrOnScreenOff;
+
+  /// No description provided for @dhikrOnScreenAsk.
+  ///
+  /// In en, this message translates to:
+  /// **'Rafiq shows each dhikr in a small card at the top right of the screen, over other apps, until you tap it. On the next screen, find Rafiq in the list and allow it to appear on top.'**
+  String get dhikrOnScreenAsk;
+
+  /// No description provided for @dhikrUseNotifications.
+  ///
+  /// In en, this message translates to:
+  /// **'Use notifications instead'**
+  String get dhikrUseNotifications;
+
+  /// No description provided for @dhikrShowNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Show one now'**
+  String get dhikrShowNow;
+
+  /// No description provided for @dhikrTapToClose.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap to close'**
+  String get dhikrTapToClose;
 
   /// No description provided for @prayerTimes.
   ///
