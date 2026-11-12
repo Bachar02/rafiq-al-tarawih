@@ -752,21 +752,6 @@ class AppLocalizationsAr extends AppLocalizations {
   String get tooltipOpenSurahs => 'السور والأجزاء والصفحات';
 
   @override
-  String get comingSoon => 'قريبًا';
-
-  @override
-  String get soon => 'قريبًا';
-
-  @override
-  String get soonRecitation => 'التلاوة الصوتية';
-
-  @override
-  String get soonRecitationDetail => 'الاستماع إلى آية أو صفحة أو سورة';
-
-  @override
-  String get listen => 'استماع';
-
-  @override
   String get translation => 'ترجمة';
 
   @override
@@ -1133,9 +1118,6 @@ class AppLocalizationsAr extends AppLocalizations {
   String get textLoadFailed => 'تعذّر فتح هذا النص. إعادة تثبيت رفيق تصلح ذلك عادةً.';
 
   @override
-  String get listenComingSoon => 'الاستماع إلى التلاوة قريبًا.';
-
-  @override
   String get yourReading => 'قراءتك';
 
   @override
@@ -1416,15 +1398,37 @@ class AppLocalizationsAr extends AppLocalizations {
   String get dhikrHowOften => 'كم مرة';
 
   @override
-  String dhikrHowOftenExplanation(String from, String to) {
-    return 'يظهر ذكر قصير أعلى الشاشة، بلا صوت، لمدة 8 ثوانٍ، بين $from و$to. المسه لفتح الأذكار، أو اسحبه لإخفائه. قد يؤخره أندرويد قليلًا لتوفير البطارية.';
-  }
-
-  @override
   String get dhikrRemindersSet => 'تم تفعيل التذكير بالذكر';
 
   @override
   String get dhikrNotificationTitle => 'اذكر الله';
+
+  @override
+  String dhikrHowOftenExplanation(String from, String to) {
+    return 'ذكر قصير بين $from و$to، في بطاقة صغيرة أعلى يمين الشاشة. تبقى حتى تلمسها. قد يؤخرها أندرويد قليلًا لتوفير البطارية.';
+  }
+
+  @override
+  String get dhikrOnScreen => 'على الشاشة';
+
+  @override
+  String get dhikrOnScreenOn => 'بطاقة صغيرة أعلى يمين الشاشة حتى تلمسها';
+
+  @override
+  String get dhikrOnScreenOff => 'غير مسموح: ينتظر كل ذكر في الإشعارات';
+
+  @override
+  String get dhikrOnScreenAsk =>
+      'يعرض رفيق كل ذكر في بطاقة صغيرة أعلى يمين الشاشة، فوق التطبيقات الأخرى، حتى تلمسها. في الشاشة التالية، ابحث عن رفيق في القائمة واسمح له بالظهور في الأعلى.';
+
+  @override
+  String get dhikrUseNotifications => 'استخدام الإشعارات بدلًا من ذلك';
+
+  @override
+  String get dhikrShowNow => 'اعرض ذكرًا الآن';
+
+  @override
+  String get dhikrTapToClose => 'المس للإغلاق';
 
   @override
   String get prayerTimes => 'مواقيت الصلاة';

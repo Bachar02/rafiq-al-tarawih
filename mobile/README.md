@@ -90,7 +90,7 @@ Fonts (all SIL OFL 1.1, licence beside each in `assets/fonts/`): Amiri Quran (`O
 Amiri (`OFL-Amiri.txt`), Newsreader (`OFL-Newsreader.txt`), IBM Plex Sans (`OFL-IBMPlexSans.txt`),
 IBM Plex Sans Arabic (`OFL-IBMPlexSansArabic.txt`).
 Towns and countries: GeoNames, CC BY 4.0 (`assets/places/NOTICE.txt`; rebuild with `py data/build_places.py fetch` then `py data/build_places.py`).
-Adhan recording: "Beautiful adhan" by Adam-synagda, Wikimedia Commons, CC0 1.0 (`assets/adhan/NOTICE.txt`).
+Adhan recording: chosen by the owner, made into the app's two sounds by `py data/build_adhan.py`; its source and licence are to be recorded in `assets/adhan/NOTICE.txt` before release.
 Prayer times: `adhan_dart`, MIT.
 Speech model: Tarteel `whisper-base-ar-quran`, Apache 2.0, run with sherpa-onnx (Apache 2.0).
 Brand assets (wordmark, app icon) and the surah display-name table: Rubric Phase 3 handoff.

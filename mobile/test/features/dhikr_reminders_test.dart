@@ -100,13 +100,22 @@ void main() {
       expect(find.text('How often'), findsNothing);
     });
 
-    testWidgets('turned on: permission, two weeks of adhkar, each with its meaning', (tester) async {
+    testWidgets('turned on: on the screen, two weeks of adhkar, each with its meaning', (tester) async {
       await launch(tester); // Wednesday 4 November, 20:00
       await openAdhkar(tester);
       await tester.tap(find.text('Dhikr reminders').last);
       await settle(tester);
-      expect(h.reminders.asked, 1);
+      // Android's "Appear on top" first, explained.
+      expect(find.textContaining('small card at the top right of the screen, over other apps'), findsOneWidget);
+      await tester.tap(find.text('Continue'));
+      await settle(tester);
+      expect(h.reminders.onScreenAsked, 1);
+      expect(h.reminders.asked, 0, reason: 'the card needs no notification permission');
       expect(h.prefs.getBool('dhikr_reminders_on'), isTrue);
+      await tester.ensureVisible(find.text('On the screen'));
+      await settle(tester);
+      expect(find.text('A small card at the top right, until you tap it'), findsOneWidget);
+      expect(h.reminders.closeLabel, 'Tap to close');
       expect(find.text('Dhikr reminders on'), findsOneWidget);
       expect(find.text('Every 2 hours, from 8:00 AM to 10:00 PM'), findsOneWidget);
       final dhikr = h.reminders.dhikr;
@@ -145,15 +154,91 @@ void main() {
       expect(h.reminders.dhikr, hasLength(2 + 13 * 15), reason: '21:00 and 22:00 today, then 15 a day');
     });
 
-    testWidgets('refused permission: stays off, says where to turn notifications on', (tester) async {
+    testWidgets('allowed on the screen already: nothing asked, on at once', (tester) async {
       await launch(tester);
-      h.reminders.allow = false;
+      h.reminders.onScreen = true;
       await openAdhkar(tester);
       await tester.tap(find.text('Dhikr reminders').last);
+      await settle(tester);
+      expect(find.text('Continue'), findsNothing);
+      expect(h.reminders.onScreenAsked, 0);
+      expect(h.reminders.asked, 0);
+      expect(h.prefs.getBool('dhikr_reminders_on'), isTrue);
+      expect(h.reminders.dhikr, isNotEmpty);
+    });
+
+    testWidgets('notifications instead: permission to notify, then on; the card can be allowed later', (tester) async {
+      await launch(tester);
+      await openAdhkar(tester);
+      await tester.tap(find.text('Dhikr reminders').last);
+      await settle(tester);
+      await tester.tap(find.text('Use notifications instead'));
+      await settle(tester);
+      expect(h.reminders.onScreenAsked, 0);
+      expect(h.reminders.asked, 1);
+      expect(h.prefs.getBool('dhikr_reminders_on'), isTrue);
+      await tester.ensureVisible(find.text('On the screen'));
+      await settle(tester);
+      expect(find.text('Not allowed: each dhikr waits in the notifications'), findsOneWidget);
+      await tester.tap(find.text('On the screen'));
+      await settle(tester);
+      expect(h.reminders.onScreenAsked, 1);
+      expect(find.text('A small card at the top right, until you tap it'), findsOneWidget);
+    });
+
+    testWidgets('the card taken back later: permission to notify asked then', (tester) async {
+      await launch(tester, {'dhikr_reminders_on': true});
+      h.reminders.onScreen = true;
+      h.reminders.grantOnScreen = false;
+      await openAdhkar(tester);
+      await tester.ensureVisible(find.text('On the screen'));
+      await settle(tester);
+      expect(find.text('A small card at the top right, until you tap it'), findsOneWidget);
+      await tester.tap(find.text('On the screen'));
+      await settle(tester);
+      expect(h.reminders.onScreenAsked, 1);
+      expect(h.reminders.asked, 1, reason: 'each dhikr is a notification now');
+      expect(find.text('Not allowed: each dhikr waits in the notifications'), findsOneWidget);
+    });
+
+    testWidgets('the setting refused on the phone: notifications, then', (tester) async {
+      await launch(tester);
+      h.reminders.grantOnScreen = false;
+      await openAdhkar(tester);
+      await tester.tap(find.text('Dhikr reminders').last);
+      await settle(tester);
+      await tester.tap(find.text('Continue'));
+      await settle(tester);
+      expect(h.reminders.onScreenAsked, 1);
+      expect(h.reminders.asked, 1);
+      expect(h.prefs.getBool('dhikr_reminders_on'), isTrue);
+    });
+
+    testWidgets('neither allowed: stays off, says where to turn notifications on', (tester) async {
+      await launch(tester);
+      h.reminders.allow = false;
+      h.reminders.grantOnScreen = false;
+      await openAdhkar(tester);
+      await tester.tap(find.text('Dhikr reminders').last);
+      await settle(tester);
+      await tester.tap(find.text('Continue'));
       await settle(tester);
       expect(h.prefs.getBool('dhikr_reminders_on') ?? false, isFalse);
       expect(h.reminders.dhikr, isEmpty);
       expect(find.textContaining('Notifications are off for Rafiq'), findsOneWidget);
+    });
+
+    testWidgets('show one now: the dhikr this hour brings, the way they come', (tester) async {
+      await launch(tester, {'dhikr_reminders_on': true});
+      await openAdhkar(tester);
+      await tester.ensureVisible(find.text('Show one now'));
+      await settle(tester);
+      await tester.tap(find.text('Show one now'));
+      await settle(tester);
+      final shown = h.reminders.dhikrShown.single;
+      final pool = loadAdhkar().forNotifications;
+      expect(shown.body, pool[dhikrPick(h.now, pool.length)].arabic);
+      expect(shown.title, 'Remember Allah');
     });
 
     testWidgets('turned off: every one cancelled, the reading reminder kept', (tester) async {

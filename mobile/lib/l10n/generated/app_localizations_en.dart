@@ -748,21 +748,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tooltipOpenSurahs => 'Surahs, juz and pages';
 
   @override
-  String get comingSoon => 'Coming soon';
-
-  @override
-  String get soon => 'Soon';
-
-  @override
-  String get soonRecitation => 'Recitation audio';
-
-  @override
-  String get soonRecitationDetail => 'Listen to an ayah, a page or a surah';
-
-  @override
-  String get listen => 'Listen';
-
-  @override
   String get translation => 'Translation';
 
   @override
@@ -1104,9 +1089,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get textLoadFailed => 'This text could not be opened. Reinstalling Rafiq should fix it.';
 
   @override
-  String get listenComingSoon => 'Listening to the recitation is coming soon.';
-
-  @override
   String get yourReading => 'Your reading';
 
   @override
@@ -1373,15 +1355,37 @@ class AppLocalizationsEn extends AppLocalizations {
   String get dhikrHowOften => 'How often';
 
   @override
-  String dhikrHowOftenExplanation(String from, String to) {
-    return 'A short dhikr appears at the top of the screen, without sound, for 8 seconds, between $from and $to. Tap it to open the adhkar, or swipe it away. Android may shift it a little to save battery.';
-  }
-
-  @override
   String get dhikrRemindersSet => 'Dhikr reminders on';
 
   @override
   String get dhikrNotificationTitle => 'Remember Allah';
+
+  @override
+  String dhikrHowOftenExplanation(String from, String to) {
+    return 'A short dhikr between $from and $to, in a small card at the top right of the screen. It stays until you tap it. Android may move it a little to save battery.';
+  }
+
+  @override
+  String get dhikrOnScreen => 'On the screen';
+
+  @override
+  String get dhikrOnScreenOn => 'A small card at the top right, until you tap it';
+
+  @override
+  String get dhikrOnScreenOff => 'Not allowed: each dhikr waits in the notifications';
+
+  @override
+  String get dhikrOnScreenAsk =>
+      'Rafiq shows each dhikr in a small card at the top right of the screen, over other apps, until you tap it. On the next screen, find Rafiq in the list and allow it to appear on top.';
+
+  @override
+  String get dhikrUseNotifications => 'Use notifications instead';
+
+  @override
+  String get dhikrShowNow => 'Show one now';
+
+  @override
+  String get dhikrTapToClose => 'Tap to close';
 
   @override
   String get prayerTimes => 'Prayer times';

@@ -11,9 +11,7 @@ import '../prayer/prayer_controller.dart';
 import '../prayer/prayer_screen.dart' show clockLabel;
 
 /// Everything that is not the text itself: prayer times and the adhan, the
-/// adhkar, translation and tafsir, the khatm planner, settings, and the
-/// features still to come, shown where they will live, visibly not yet
-/// working.
+/// adhkar, translation and tafsir, the khatm planner and settings.
 class MoreScreen extends ConsumerWidget {
   const MoreScreen({super.key});
 
@@ -66,12 +64,6 @@ class MoreScreen extends ConsumerWidget {
                 trailing: Icon(Icons.chevron_right, color: c.inkSecondary),
                 onTap: () => AppRoutes.settings(context),
               ),
-            ],
-          ),
-          RubricGroup(
-            label: l.comingSoon,
-            children: [
-              RubricRow(label: l.soonRecitation, detail: l.soonRecitationDetail, value: l.soon, enabled: false),
             ],
           ),
         ],

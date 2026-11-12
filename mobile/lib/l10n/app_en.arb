@@ -550,11 +550,6 @@
   "noBookmarksHint": "No bookmarks yet. While reading, press and hold an ayah to bookmark it.",
   "scrubberLabel": "Go through the Quran",
   "tooltipOpenSurahs": "Surahs, juz and pages",
-  "comingSoon": "Coming soon",
-  "soon": "Soon",
-  "soonRecitation": "Recitation audio",
-  "soonRecitationDetail": "Listen to an ayah, a page or a surah",
-  "listen": "Listen",
   "translation": "Translation",
   "tafsir": "Tafsir",
   "khatmPlanner": "Khatm planner",
@@ -809,7 +804,6 @@
   "previousAyah": "Previous ayah",
   "nextAyah": "Next ayah",
   "textLoadFailed": "This text could not be opened. Reinstalling Rafiq should fix it.",
-  "listenComingSoon": "Listening to the recitation is coming soon.",
   "yourReading": "Your reading",
   "readingRun": "{count, plural, =1{1 day in a row} other{{count} days in a row}}",
   "@readingRun": {
@@ -1038,7 +1032,9 @@
     }
   },
   "dhikrHowOften": "How often",
-  "dhikrHowOftenExplanation": "A short dhikr appears at the top of the screen, without sound, for 8 seconds, between {from} and {to}. Tap it to open the adhkar, or swipe it away. Android may shift it a little to save battery.",
+  "dhikrRemindersSet": "Dhikr reminders on",
+  "dhikrNotificationTitle": "Remember Allah",
+  "dhikrHowOftenExplanation": "A short dhikr between {from} and {to}, in a small card at the top right of the screen. It stays until you tap it. Android may move it a little to save battery.",
   "@dhikrHowOftenExplanation": {
     "placeholders": {
       "from": {
@@ -1049,8 +1045,13 @@
       }
     }
   },
-  "dhikrRemindersSet": "Dhikr reminders on",
-  "dhikrNotificationTitle": "Remember Allah",
+  "dhikrOnScreen": "On the screen",
+  "dhikrOnScreenOn": "A small card at the top right, until you tap it",
+  "dhikrOnScreenOff": "Not allowed: each dhikr waits in the notifications",
+  "dhikrOnScreenAsk": "Rafiq shows each dhikr in a small card at the top right of the screen, over other apps, until you tap it. On the next screen, find Rafiq in the list and allow it to appear on top.",
+  "dhikrUseNotifications": "Use notifications instead",
+  "dhikrShowNow": "Show one now",
+  "dhikrTapToClose": "Tap to close",
   "prayerTimes": "Prayer times",
   "prayerTimesDetail": "For where you are, with the adhan",
   "prayerNext": "Next: {prayer}, {time}",

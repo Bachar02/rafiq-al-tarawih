@@ -897,3 +897,85 @@ Before the cap on previews, the same run: 100%, 91%, 81% and 67% right; 0.4 s de
 3. A 90-minute session: battery and heat.
 4. If it is too slow: a smaller or distilled Quran model behind the same loader (§16's decision rule).
 5. Release: the release APK for arm64 phones is 91 MB (the model is 55 MB of it). Play Asset Delivery can move the model to an install-time pack.
+
+## 28. Build 0.9: reminders that are seen, and no audio (2026-11-11)
+
+The owner, testing 0.8: the adhkar "disappear quickly" and "appear only in the notification bar"; they should show "in the screen (top right) as a small readable indication" and stay until tapped. The other notifications "are missed most of the times". And the recitation audio is dropped: the app is already over 50 MB.
+
+**Why they were missed** (found in the code, then seen on the emulator):
+- **The dhikr removed itself after 8 seconds** (`timeoutAfter`, §25). With the phone in a pocket it was gone before anyone looked.
+- **The reading reminder had default importance:** a sound and an icon, never at the top of the screen.
+- **Android 16's grouping trap (§26, open item 2):** the reading reminder and the dhikr had no group, so one arriving while another of the app's was in the shade was marked silent.
+- **Inexact alarms:** the reading reminder could come up to an hour late.
+- **After a force-stop** the dhikr alarms were gone, and the plugin's own record still listed them, so rescheduling changed nothing (the adhan already set everything again per process; the dhikr did not).
+
+**The dhikr card** (`android/.../Dhikr.kt`, the app's own Kotlin; reverses §25's "an app cannot choose the top-right corner"):
+- **A small card at the top right of the screen, over any app,** until it is tapped: "Remember Allah" in rubric red, the dhikr in Amiri, its meaning (two lines at most; none in Arabic), a ✕. Rubric's colours, light or dark with the phone. Touches elsewhere go to the app underneath. One at a time: a new dhikr replaces the words.
+- **Needs "Appear on top"** (`SYSTEM_ALERT_WINDOW`, "Display over other apps" on a Pixel). Turning dhikr reminders on explains it and opens the setting. Android 11 and later open the list of apps, not Rafiq's page, so the text says to find Rafiq in it. "Use notifications instead" skips it.
+- **Without it,** a dhikr is a silent, high-importance notification in a group of its own that stays in the shade until tapped (it opens the Adhkar) or swiped away. Taking the card back later asks for permission to notify, which choosing the card skipped.
+- **One alarm at a time:** Dart sends the two weeks of adhkar; Kotlin keeps them and sets only the next alarm, and each one that fires sets the one after it. On the minute when exact alarms are allowed (the adhan asks), else within Android's window. A restart of the phone or an update sets the next again and shows a card that was still waiting. Every process sends the list once, so a force-stop is mended the next time the app opens.
+- **Settings** (Adhkar screen and Settings): *On the screen* (allowed or not; opens the setting either way) and *Show one now*.
+- What flutter_local_notifications scheduled for the dhikr before (ids 1000–1499) is cancelled once. iOS keeps the plugin path, without the 8 seconds.
+
+**The reading reminder:** a new channel, `reading_reminder`, of high importance (at the top of the screen, with the phone's sound), since Android fixes a channel's importance once created; the old `daily_reading` is deleted. Its own group. On the minute when exact alarms are allowed.
+
+**The audio is gone:** the *Coming soon* group on More (its only row was recitation audio), and the greyed *Listen* button and its line in the ayah sheet. Translation and Tafsir now share the row. 6 strings removed.
+
+**Emulator** (Pixel XL, Android 16, debug build over 0.8):
+- *Show one now*: the card at the top right, over the app and over the home screen. A tap closed it (its window gone).
+- **The real thing:** the app's process killed, the clock moved to 13:59:45. At 14:00 Android started the app's receiver and the card came up; the 16:00 alarm was set (exact, `window=0`).
+- **It stays:** screen off for 40 s, on, unlocked: the card was still there. The process holding it is "important foreground", so Android does not reclaim it.
+- **Force-stop:** the alarm survived it on Android 16; opening the app set it again in any case.
+- **Without "Appear on top":** at 16:00 nothing showed, because the app was not allowed to notify either (the gap fixed above). Allowed, at 18:00: a notification of importance 4 in group `dhikr`, which stayed; a tap opened the Adhkar.
+- **The reading reminder** at 18:10, with that dhikr already in the shade: sound and vibration (`notification_alert` buzz=1 beep=1), importance 4, group `reading`. Before, this is the case Android 16 silenced.
+
+**Tests:** 499 (494 before): turning on with the card, allowed already, notifications instead, the setting refused, neither allowed, the card taken back later, show one now, the close label, and More without the audio. Goldens re-rendered: More and the ayah sheet. Strings: 8 new, 1 reworded, 6 removed, in three languages.
+
+**Open:**
+1. **The Galaxy A16:** the card with One UI ("Appear on top"), and whether Samsung's battery saver lets the alarms through with the app closed for a day. If it does not, Settings → Apps → Rafiq → Battery → Unrestricted, and perhaps a hint in the app.
+2. **Play:** `SYSTEM_ALERT_WINDOW` is a special permission the user grants; confirm in the Play Console that it needs no declaration, alongside `SCHEDULE_EXACT_ALARM` (§26).
+3. Native review of the new French and Arabic strings.
+
+**The adhan recording** (same day, the owner's choice, for every prayer):
+- `data/adhan/adhan.mp3` (MP3, 16 kHz mono, 2 min 32 s, twelve phrases), SHA-1 pinned in `data/build_adhan.py`, which now makes both sounds from it: `adhan_full.mp3` (the whole adhan) and `adhan_takbir.mp3` (the four opening takbirs, cut at 26.0 s in the silence after them, with a 0.3 s fade).
+- **Louder:** the recording peaked at -9.9 dBFS; both files are raised to -1 dBFS (+8.9 dB). A notification plays at the notification volume, so a quiet file is a quiet adhan.
+- **Same names** (`adhan_full`, `adhan_takbir`): Android finds a channel's sound by name, so phones with the app already installed play the new one after the update, with no new channel. The `.ogg` files are gone (two raw resources of one name do not build); the check in CI says so if one comes back.
+- **Its source and licence are not recorded yet.** The CC0 credit for the earlier recording left Settings → About and the README. Before release, write in `assets/adhan/NOTICE.txt` who recited it and what allows Rafiq to ship it, and add a credit if the licence asks for one.
+
+## 29. Word tracking, phase 1: the WordTracker before any model (2026-11-12)
+
+**The decision behind it** (research, 2026-11-11/12): keep the Quran Whisper for finding the ayah and recovering, and add word-by-word tracking from a small **streaming CTC model** whose letters are *aligned* against the known text, not recognised. Aligning is almost free; Whisper's per-chunk decoder (≈1.9 s fixed on the Galaxy A32, §16) is what is expensive.
+- **The model:** our own Zipformer2 CTC (icefall, causal, ~20–25M parameters, letter units), aiming at 22–30 MB int8. It loads through the sherpa-onnx we already ship (`OnlineZipformer2CtcModelConfig` is in 1.13.4; results carry `tokens` and `timestamps`, not probabilities).
+- **Not Muno459/zipformer_p-arabic-v2** (the best ready model, 73 MB): its licence forbids paid or ad-supported apps, and the owner wants the core free of that. **NVIDIA's Arabic FastConformer** (CC BY 4.0, EveryAyah in training, ~115M parameters, not streaming) serves as an offline labeller and baseline, not on the phone.
+- **Data:** EveryAyah (about 390 h; its card: "Licensing of the individual recordings is not documented") plus CC BY word timings (cpfair/quran-align, QuranLab). Tadabur is non-commercial: excluded. No corpus documents the rights to the recordings themselves, the Whisper model we ship included: get advice before monetising.
+- **The benchmark reciters** (`eval/audio_bench.py`, `eval/phone_streams.py`) must be held out of training.
+
+**Phase 1, done:** the word tracker, built and measured on simulated letter streams, independent of any model.
+- **`rafiq.words.WordTracker`** (Python reference) and `mobile/lib/core/engine/word_tracker.dart` (port). Anchored by the ayah tracker at a word; then fed letters, one row of an edit-distance alignment per letter against a window of the text (20 words behind, 30 ahead, sliding with the imam). About 100–170 µs a letter in Python; a CTC model emits about 12 a second.
+- **What it handles:** silent letters cheap to drop (long vowels, hamzat al-wasl, the lam of al- before a sun letter) and similar sounds cheap to confuse; madd and pauses cost nothing; going back to any earlier word start at a fixed cost (repeats); the basmala as an optional segment; any position in the window found again within a few words.
+- **Failing safe:** it stops highlighting when the recent error rate climbs, at once after a burst of bad letters, and once past the end of its window. Anchored in al-Fatiha, the window ends with 1:7 ("amin" is close to 2:1 "الم"). `pause()` after a long silence (rukuʿ, sujud) makes it re-confirm with fresh letters, because bism and al- fit almost anywhere. Lost after 30 unsure letters, for the ayah tracker to anchor it again.
+- **Model-independent:** any tokens that normalize to Arabic letters (letters, subwords, words, with diacritics) and no use of time. Confidence is sums and ratios, so Dart reproduces Python exactly.
+- **`rafiq.word_sim`:** letter streams with timing and the truth per letter: misheard, dropped (silent ones three times as often) and invented letters, garbled words, repeats of 2–6 words, a whole ayah again, fillers ("amin", takbir, coughs), the basmala aloud half the time, al-Fatiha every few ayahs after 15–40 s of silence. `run` plays the ayah tracker: anchors 4 s late at the word heard 2 s before, at the start, after each far jump, and when lost.
+
+**`eval/word_benchmark.py`** (30 passages; CI runs `--quick --check`, 4 s). Over the letters after the first anchor:
+
+| Scenario | Shown | Exact | Within one word | Wrong (> 2 words off) |
+|---|---|---|---|---|
+| clean | 97.8% | 98.6% | 99.9% | 0.06% |
+| light | 88.5% | 95.5% | 99.5% | 0.37% |
+| light + al-Fatiha | 78.8% | 95.6% | 99.4% | 0.39% |
+| heavy | 62.9% | 90.8% | 99.0% | 0.49% |
+| heavy + al-Fatiha | 55.8% | 91.3% | 98.9% | 0.49% |
+| broken (a model that hears little) | 9.1% | 82.2% | 97.0% | 0.63% |
+
+The wrong highlights left are blips of 1–4 letters (0.1–0.4 s) when the imam goes back: his first letters also fit what he would have said next. Tuning chose fewer wrong words over more time shown (`burst_cost` 2.0 over 2.5). Simulated letters are kinder and more regular than a real model's, so these are regression floors, not promises.
+
+**Tests:** 11 Python (`engine/tests/test_words.py`: clean, a late anchor, a repeat, the basmala aloud and not, leaving the text, al-Fatiha's window, a pause, subword tokens, simulated and broken streams). Dart: `test/core/word_tracker_golden_test.dart` replays `test/golden/word_tracker.json` (6 scenarios, about 3,200 calls: idle, tracking, uncertain, lost, the basmala, pauses, re-anchors, window slides), every state exact. 501 Flutter tests (499 before), 119 engine tests (108 before).
+
+**Not yet:** nothing in the app uses it. No model, no UI, no change to `RecognitionEngine` or `TrackState`.
+
+**Next:**
+1. **Real streams without our model:** NVIDIA's CTC (offline, laptop) and faster-whisper's word timestamps over `eval/phone_streams.py`, scored against CC BY word timings (quran-align covers Alafasy and Husary). Needs those downloads: ask first.
+2. **Training data pipeline and a first Zipformer2-small CTC run** (cloud GPU), with a provenance file for every source.
+3. **Go/no-go:** letter error on held-out reciters with mosque augmentation, real-time factor on the A32 and A16 (bench screen), and the word tracker within one word on real streams.
+4. **Integration** behind a flag after the Ramadan release candidate: the engine anchors the word tracker from the ayah tracker, calls `pause()` on long silences, and adds the word to what the screen shows.

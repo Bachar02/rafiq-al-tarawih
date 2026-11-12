@@ -218,7 +218,7 @@ void main() {
       await expectGolden(tester, 'surahs');
     });
 
-    testWidgets('More: settings and what is coming, light', (tester) async {
+    testWidgets('More: everything that is not the text, light', (tester) async {
       await launch(tester, prefs: {'theme_mode': 'light'}, taraweeh: false);
       await tapNav(tester, 'More');
       await expectGolden(tester, 'more');

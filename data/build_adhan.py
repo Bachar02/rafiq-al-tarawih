@@ -1,26 +1,25 @@
 """The adhan recordings the Android app plays at prayer time.
 
-One recording, dedicated to the public domain by its author:
+The source is data/adhan/adhan.mp3, the recording the app's owner chose for
+every prayer (SHA-1 pinned below; its origin is in
+mobile/assets/adhan/NOTICE.txt): MP3, 16 kHz mono, 2 min 32 s, twelve
+phrases.
 
-    "Beautiful adhan.ogg", by Adam-synagda, 29 April 2022
-    https://commons.wikimedia.org/wiki/File:Beautiful_adhan.ogg
-    Creative Commons CC0 1.0 Universal (Public Domain Dedication)
-    Ogg Vorbis, 44.1 kHz stereo, 2 min 34 s: the whole adhan, twelve phrases.
+Two files are made from it, in mobile/android/app/src/main/res/raw/ (Android
+plays a notification's sound from there, by name, so these names stay):
 
-Two files come from it, in mobile/android/app/src/main/res/raw/ (Android
-plays a notification's sound from there):
-
-    adhan_full.ogg    the recording itself, byte for byte (SHA-1 pinned below)
-    adhan_takbir.ogg  its first two phrases, the four opening takbirs: the
-                      same Vorbis packets up to the silence that follows them,
-                      copied without decoding, so nothing is re-encoded
+    adhan_full.mp3    the whole adhan, raised to a peak of -1 dBFS: the
+                      recording peaks at -18 dBFS, too quiet for a phone
+                      (a notification plays at the notification volume)
+    adhan_takbir.mp3  its first two phrases, the four opening takbirs, cut
+                      in the silence that follows them, with a short fade
 
 Usage:
-    py data/build_adhan.py fetch   # download the recording again and check it
-    py data/build_adhan.py         # cut adhan_takbir.ogg from adhan_full.ogg
-    py data/build_adhan.py --check # CI: the recording is the pinned one
+    py data/build_adhan.py          # make both files from the source
+    py data/build_adhan.py --check  # CI: the source is the pinned one, both files exist
 
-The cut needs PyAV (`pip install av`); the check needs nothing.
+Making them needs PyAV and numpy (`pip install av numpy`); the check needs
+nothing.
 """
 
 from __future__ import annotations
@@ -28,21 +27,21 @@ from __future__ import annotations
 import argparse
 import hashlib
 import sys
-import urllib.request
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
+SOURCE = ROOT / "data" / "adhan" / "adhan.mp3"
+SHA1 = "db4e5f8390785e544bcdd2a317f68c1709de092e"
 RAW_DIR = ROOT / "mobile" / "android" / "app" / "src" / "main" / "res" / "raw"
-FULL = RAW_DIR / "adhan_full.ogg"
-TAKBIR = RAW_DIR / "adhan_takbir.ogg"
+FULL = RAW_DIR / "adhan_full.mp3"
+TAKBIR = RAW_DIR / "adhan_takbir.mp3"
 
-SOURCE = "https://upload.wikimedia.org/wikipedia/commons/b/b0/Beautiful_adhan.ogg"
-SHA1 = "a1fa4fd942401922c5c3301816384aae86956522"
-USER_AGENT = "rafiq-build (Quran reader; bundles a public-domain adhan recording)"
-
-# The second phrase ends at 30.7 s and the third begins at 31.7 s: the cut
+# The second phrase ends at 24.5 s and the third begins at 27.4 s: the cut
 # falls in the silence between them.
-TAKBIR_SECONDS = 31.2
+TAKBIR_SECONDS = 26.0
+FADE_SECONDS = 0.3
+PEAK_DBFS = -1.0
+BITRATE = 32_000
 
 
 class BuildError(Exception):
@@ -54,66 +53,76 @@ def sha1(path: Path) -> str:
 
 
 def check() -> None:
-    if not FULL.exists():
-        raise BuildError(f"{FULL} is missing: run `py data/build_adhan.py fetch`")
-    if sha1(FULL) != SHA1:
-        raise BuildError(f"{FULL.name} is not the pinned recording (SHA-1 {sha1(FULL)})")
-    if not TAKBIR.exists():
-        raise BuildError(f"{TAKBIR} is missing: run `py data/build_adhan.py`")
-
-
-def fetch() -> None:
-    RAW_DIR.mkdir(parents=True, exist_ok=True)
-    request = urllib.request.Request(SOURCE, headers={"User-Agent": USER_AGENT})
-    with urllib.request.urlopen(request) as response:
-        data = response.read()
-    digest = hashlib.sha1(data).hexdigest()
-    if digest != SHA1:
-        raise BuildError(f"the recording at {SOURCE} changed (SHA-1 {digest}): review it before pinning it")
-    FULL.write_bytes(data)
-    print(f"{FULL.name}: {len(data):,} bytes")
+    if not SOURCE.exists():
+        raise BuildError(f"{SOURCE} is missing")
+    if sha1(SOURCE) != SHA1:
+        raise BuildError(f"{SOURCE.name} is not the pinned recording (SHA-1 {sha1(SOURCE)})")
+    for path in (FULL, TAKBIR):
+        if not path.exists():
+            raise BuildError(f"{path} is missing: run `py data/build_adhan.py`")
+    # Android refuses two raw resources of the same name.
+    names = [p.stem for p in RAW_DIR.iterdir() if p.suffix != ".xml"]
+    if len(names) != len(set(names)):
+        raise BuildError(f"two raw resources share a name in {RAW_DIR}: {sorted(names)}")
 
 
 def build() -> None:
-    if not FULL.exists() or sha1(FULL) != SHA1:
-        raise BuildError(f"{FULL.name} is missing or is not the pinned recording: run `fetch` first")
+    if not SOURCE.exists() or sha1(SOURCE) != SHA1:
+        raise BuildError(f"{SOURCE} is missing or is not the pinned recording")
     try:
         import av
+        import numpy as np
     except ImportError as e:
-        raise BuildError("cutting the takbir needs PyAV: pip install av") from e
+        raise BuildError("making the files needs PyAV and numpy: pip install av numpy") from e
 
-    with av.open(str(FULL)) as source, av.open(str(TAKBIR), "w", format="ogg") as target:
+    with av.open(str(SOURCE)) as source:
         stream = source.streams.audio[0]
-        if stream.codec_context.name != "vorbis":
-            raise BuildError(f"expected Vorbis audio, found {stream.codec_context.name}")
-        out = target.add_stream_from_template(stream)
-        for packet in source.demux(stream):
-            if packet.dts is None:  # the flush packet at the end
-                continue
-            if packet.pts * stream.time_base >= TAKBIR_SECONDS:
-                break
-            packet.stream = out
-            target.mux(packet)
+        rate = stream.rate
+        resampler = av.AudioResampler(format="flt", layout="mono", rate=rate)
+        chunks = [
+            resampled.to_ndarray().reshape(-1)
+            for frame in source.decode(stream)
+            for resampled in resampler.resample(frame)
+        ]
+    samples = np.concatenate(chunks).astype(np.float32)
+    peak = float(np.abs(samples).max())
+    if peak <= 0:
+        raise BuildError(f"{SOURCE.name} is silent")
+    samples *= 10 ** (PEAK_DBFS / 20) / peak
 
-    with av.open(str(TAKBIR)) as result:
-        seconds = float(result.duration) / 1_000_000
-    if abs(seconds - TAKBIR_SECONDS) > 0.5:
-        raise BuildError(f"{TAKBIR.name} lasts {seconds:.1f} s, not about {TAKBIR_SECONDS} s")
-    print(f"{TAKBIR.name}: {TAKBIR.stat().st_size:,} bytes, {seconds:.1f} s")
+    def write(path: Path, x: np.ndarray) -> None:
+        with av.open(str(path), "w", format="mp3") as target:
+            out = target.add_stream("libmp3lame", rate=rate)
+            out.layout = "mono"
+            out.bit_rate = BITRATE
+            frame = av.AudioFrame.from_ndarray(x.reshape(1, -1), format="flt", layout="mono")
+            frame.sample_rate = rate
+            for packet in out.encode(frame):
+                target.mux(packet)
+            for packet in out.encode(None):
+                target.mux(packet)
+        print(f"{path.name}: {path.stat().st_size:,} bytes, {len(x) / rate:.1f} s")
+
+    write(FULL, samples)
+    takbir = samples[: int(TAKBIR_SECONDS * rate)].copy()
+    fade = int(FADE_SECONDS * rate)
+    takbir[-fade:] *= np.linspace(1, 0, fade, dtype=np.float32)
+    write(TAKBIR, takbir)
+    for old in (RAW_DIR / "adhan_full.ogg", RAW_DIR / "adhan_takbir.ogg"):
+        old.unlink(missing_ok=True)
+    print(f"gain {PEAK_DBFS - 20 * np.log10(peak):+.1f} dB")
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("command", nargs="?", choices=["build", "fetch"], default="build")
-    parser.add_argument("--check", action="store_true", help="only verify the bundled recording")
+    parser.add_argument("--check", action="store_true", help="only verify the source and the files")
     args = parser.parse_args()
     try:
         if args.check:
             check()
-        elif args.command == "fetch":
-            fetch()
         else:
             build()
+            check()
     except BuildError as e:
         print(f"error: {e}", file=sys.stderr)
         return 1

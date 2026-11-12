@@ -750,21 +750,6 @@ class AppLocalizationsFr extends AppLocalizations {
   String get tooltipOpenSurahs => 'Sourates, juz et pages';
 
   @override
-  String get comingSoon => 'Bientôt';
-
-  @override
-  String get soon => 'Bientôt';
-
-  @override
-  String get soonRecitation => 'Récitation audio';
-
-  @override
-  String get soonRecitationDetail => 'Écouter un verset, une page ou une sourate';
-
-  @override
-  String get listen => 'Écouter';
-
-  @override
   String get translation => 'Traduction';
 
   @override
@@ -1107,9 +1092,6 @@ class AppLocalizationsFr extends AppLocalizations {
   String get textLoadFailed => 'Ce texte n’a pas pu être ouvert. Réinstaller Rafiq devrait régler le problème.';
 
   @override
-  String get listenComingSoon => 'L’écoute de la récitation arrive bientôt.';
-
-  @override
   String get yourReading => 'Votre lecture';
 
   @override
@@ -1378,15 +1360,37 @@ class AppLocalizationsFr extends AppLocalizations {
   String get dhikrHowOften => 'Fréquence';
 
   @override
-  String dhikrHowOftenExplanation(String from, String to) {
-    return 'Un court dhikr s’affiche en haut de l’écran, sans son, pendant 8 secondes, entre $from et $to. Touchez-le pour ouvrir les adhkar, ou balayez-le. Android peut le décaler un peu pour économiser la batterie.';
-  }
-
-  @override
   String get dhikrRemindersSet => 'Rappels de dhikr activés';
 
   @override
   String get dhikrNotificationTitle => 'Souvenez-vous d’Allah';
+
+  @override
+  String dhikrHowOftenExplanation(String from, String to) {
+    return 'Un court dhikr entre $from et $to, dans une petite carte en haut à droite de l’écran. Elle reste jusqu’à ce que vous la touchiez. Android peut la décaler un peu pour économiser la batterie.';
+  }
+
+  @override
+  String get dhikrOnScreen => 'À l’écran';
+
+  @override
+  String get dhikrOnScreenOn => 'Une petite carte en haut à droite, jusqu’à ce que vous la touchiez';
+
+  @override
+  String get dhikrOnScreenOff => 'Non autorisé : chaque dhikr attend dans les notifications';
+
+  @override
+  String get dhikrOnScreenAsk =>
+      'Rafiq affiche chaque dhikr dans une petite carte en haut à droite de l’écran, par-dessus les autres applis, jusqu’à ce que vous la touchiez. Sur l’écran suivant, trouvez Rafiq dans la liste et autorisez-le à s’afficher par-dessus.';
+
+  @override
+  String get dhikrUseNotifications => 'Utiliser les notifications';
+
+  @override
+  String get dhikrShowNow => 'En afficher un maintenant';
+
+  @override
+  String get dhikrTapToClose => 'Touchez pour fermer';
 
   @override
   String get prayerTimes => 'Heures de prière';
