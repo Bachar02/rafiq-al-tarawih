@@ -1031,3 +1031,55 @@ By room (partials + finals): useful 62% clean, 55% mosque, 41% far; never a wron
 1. **The phone run** on the A16 (a spare phone, or after a backup): sherpa int8's own text and timing, and whether partials stay on.
 2. **Exact word truth:** the CC BY quran-align timings (small, Alafasy and Husary among them) would replace the interpolation for those reciters.
 3. **A streaming CTC model** (§29) is what removes Whisper's 0.35–0.85 s result age and 0.5 s cadence, and what a phone without partials needs.
+
+## 31. Word tracking, phase 3: exact word timings for the evaluation (2026-11-12)
+
+**Why:** §30's word-level numbers rested on word times shared out by letter count. This replaces them with measured times where they exist, to make the evaluation trustworthy before deciding whether a new speech model is needed.
+
+**The data** (the owner approved this one download):
+- **quran-align**, Collin Fair, `release-2016-11-24`, https://github.com/cpfair/quran-align. Data **CC BY 4.0**, code MIT.
+- One archive, 5,807,871 bytes, SHA-256 `5eeb045d8a7895208c94d2d7ec243567f8f550728835411527c4ffa1e789c9b7`. GitHub publishes no digest for assets that old: the size matched the release API and the hash is pinned in `eval/fetch_quran_align.py`. Each kept file is also checked against the SHA-1 the archive's own README lists.
+- **Kept, unchanged, outside git** (`eval/data/`, ignored): the 6 recitations our recordings use, the README, the licence, and `SOURCE.txt` with the attribution. The archive and the other 6 recitations were discarded.
+- **Two flaws in the published data:** the Sudais file carries the aligner's crash log on a line before its JSON (only the JSON is read), and Shuraym's 12:76 has no timing (33 deletions).
+
+**Checks, before anything was scored** (`eval/verify_quran_align.py`):
+1. **The words they number:** Tanzil Uthmani split on spaces, without its 4,578 pause marks and without the basmala. This fits 99.82–99.92% of ayahs' highest word index in all six files; with the marks counted, 55%. That is `Verse.text_uthmani` without the marks.
+2. **Mapping onto our words** (Simple Clean, normalized; monotone, by letters): **6,236 of 6,236 ayahs (100%)** with every group at least half alike (99.60% at least 70%). 76,901 groups, 366 not one-to-one, almost all the vocative: Uthmani يٰٓأَيُّهَا is our يا ايها. The 99% threshold was met.
+3. **Against our audio**, the very EveryAyah files the recordings were built from (the local cache, nothing downloaded): the last word ends inside the file, and the first word's start and the last word's end are within 0.25 s and 0.6 s of where speech starts and ends.
+
+| Our files | Timed on | Pass | First word vs speech start (median) | Verdict |
+|---|---|---|---|---|
+| Alafasy 128 | same | 57/60 | −0.035 s | trusted, 3 ayahs excluded |
+| Sudais 192 | same | 6/6 | −0.050 s | trusted |
+| Minshawy Murattal 128 | same | 4/4 | +0.035 s | trusted |
+| Shuraym 128 | same | 4/4 | +0.010 s | trusted |
+| **Husary 128** | **Husary 64** | 10/10 | +0.010 s | **trusted:** the other bitrate is cut the same |
+| **Abdul Basit Murattal 192** | **Abdul Basit Murattal 64** | 4/4 | −0.065 s | **trusted** |
+
+The three Alafasy failures are real timing errors in the data: in 55:11 and 55:24 the last word ends 1.7–2 s before its held madd does, and in 78:12 the first word starts 0.6 s early, in silence. **An ayah that fails is excluded from exact scoring.** The check covers each ayah's first and last word only; inside an ayah, word boundaries rest on the author's stated accuracy (mean under 73 ms against another tool).
+
+**Exact against interpolated, on the same recordings, ayahs and moments** (`eval/word_replay.py --truth quran-align`; 22 of the 40 laptop recordings, 32 minutes; laptop faster-whisper int8; `eval/results/word_replay/laptop_int8_exact.json`):
+
+| | P+F exact | P+F interpolated | Finals exact | Finals interpolated |
+|---|---|---|---|---|
+| Wrong ayah (exact, timeline) | 0.00% | 0.00% | 0.00% | 0.00% |
+| Within one word, when highlighted | **85.5%** | 82.4% | **23.0%** | 32.7% |
+| More than two words off | **2.2%** | 4.3% | **57.5%** | 48.0% |
+| Useful: highlighted and within one word | **54.2%** | 52.2% | **14.4%** | 20.4% |
+| Aligned: within one word of the audio covered | **98.8%** | 86.3% | **99.2%** | 83.4% |
+| Word start → highlighted (median / p90) | **1.17 / 1.77 s** | 0.84 / 2.26 s | **4.75 / 6.78 s** | 3.88 / 6.93 s |
+| Recovery (median / p90) | 0.52 / 1.35 s | 0.62 / 1.85 s | 5.60 / 8.60 s | 5.25 / 9.70 s |
+
+Same files (15 runs) and other bitrate (7 runs) agree: useful 53.9% and 54.5% with partials.
+
+**What the exact truth changed:**
+- **The word tracker is more accurate than §30 said.** Against the word at the end of the audio each result covered, it is right 73% of the time, one word behind 24%, ahead 2%; within one word 98.8%. Interpolation had made it look ahead (+1: 26%) and 12 points worse. Its errors are timing, not tracking.
+- **Whisper's delay is longer than §30 said:** a word is highlighted 1.17 s after it starts (median), not 0.84 s.
+- **Finals only is worse than §30 said:** 14% useful, not 20–22%, and 57% of the highlighted time more than two words off.
+- **Unchanged:** never a wrong ayah; partials double what finals alone give.
+
+**Limits:** 32 of 60 minutes have exact word truth (6 of 12 reciters); the rest stay interpolated (§30). Still studio audio with simulated rooms, no imam repeats, and a Whisper trained on EveryAyah. Laptop recordings only: the phone (sherpa int8) is postponed with the A16.
+
+**Tests:** 6 new (`engine/tests/test_word_truth.py`: the words quran-align numbers, the whole mapping and the vocative, a refused mapping, timings shared out and missing, the crash log, both truths scored at the same moments), using only data in the repository. 129 engine tests.
+
+**Not changed:** the app, the recognition pipeline, the ayah tracker.

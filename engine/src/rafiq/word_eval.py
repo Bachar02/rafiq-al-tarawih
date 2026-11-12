@@ -125,6 +125,46 @@ def word_truth(index: QuranIndex, timeline: Sequence[Sequence]) -> list[TruthRow
     return rows
 
 
+def exact_truth(
+    index: QuranIndex,
+    timeline: Sequence[Sequence],
+    segments: dict[tuple[int, int], list[list[int]]],
+    maps: dict,
+    exclude: frozenset[str] = frozenset(),
+) -> list[TruthRow]:
+    """The timeline with quran-align's word times (`rafiq.word_truth`), where they can be trusted.
+
+    An ayah in `exclude` (it failed the audio check), one the aligner could not
+    time, and a basmala row get no words, so they are not scored word by word.
+    """
+    from rafiq.word_truth import word_times
+
+    quran = index.quran
+    rows = []
+    for i, (start, end, verse) in enumerate(timeline):
+        nxt = timeline[i + 1][2] if i + 1 < len(timeline) else None
+        v = quran.by_id(verse)
+        if (verse == 1 and nxt != 2) or v.ref in exclude:
+            rows.append(TruthRow(start, end, verse, ()))
+            continue
+        times = word_times(segments.get((v.surah, v.ayah), []), maps[verse], index)
+        rows.append(TruthRow(start, end, verse, tuple((start + a, start + b, p) for a, b, p in times)))
+    return rows
+
+
+def truth_points(rows: Sequence[TruthRow], recording: dict, step: float = 0.1) -> frozenset[int]:
+    """Grid steps (k: at k * step seconds of listening) where `rows` say which word is being recited."""
+    join, out = recording["join"], set()
+    for k in range(int(recording["seconds"] / step)):
+        ts = k * step + join
+        for r in rows:
+            if r.start <= ts < r.end:
+                if any(a <= ts < b for a, b, _ in r.words):
+                    out.add(k)
+                break
+    return frozenset(out)
+
+
 @dataclass(frozen=True, slots=True)
 class RealWordReport:
     recited_s: float  # seconds of recitation scored (inside ayahs, after listening began)
@@ -170,10 +210,17 @@ def score_words(
     index: QuranIndex,
     finals_only: bool = False,
     step: float = 0.1,
+    rows: Sequence[TruthRow] | None = None,
+    points: frozenset[int] | None = None,
 ) -> RealWordReport:
-    """Score what the screen showed, on a `step`-second grid, against the timeline."""
+    """Score what the screen showed, on a `step`-second grid, against the timeline.
+
+    `rows` is the word truth (default: interpolated by letter count). With
+    `points`, only those grid steps are scored, so two kinds of truth can be
+    compared at the very same moments.
+    """
     join, seconds = recording["join"], recording["seconds"]
-    rows = word_truth(index, recording["timeline"])
+    rows = list(rows) if rows is not None else word_truth(index, recording["timeline"])
 
     def row_at(ts: float) -> int | None:
         for i, r in enumerate(rows):
@@ -185,6 +232,8 @@ def score_words(
     grid: list[tuple[float, int, int | None]] = []
     n = int(seconds / step)
     for k in range(n):
+        if points is not None and k not in points:
+            continue
         t = k * step
         i = row_at(t + join)
         if i is None:
@@ -263,6 +312,8 @@ def score_words(
     aligned = with_word = 0
     for s in shown:
         if s.word is None or s.end is None:
+            continue
+        if points is not None and int(s.end / step) not in points:
             continue
         i = row_at(s.end + join)
         if i is None or not rows[i].words:

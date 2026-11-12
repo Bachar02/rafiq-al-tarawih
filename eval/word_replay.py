@@ -111,7 +111,7 @@ ROWS = [
     ("  word in a wrong ayah (not that one, nor the one before)", "ayah_wrong", ".2%"),
     ("  wrong-ayah stretches per hour", "ayah_wrong_per_hour", ".1f"),
     ("  ayah tracker's ayah right (all recited time)", "ayah_shown_same", ".1%"),
-    ("APPROXIMATE, word times by letter count", None, None),
+    ("WORD", None, None),
     ("  within one word (over highlighted time)", "word_near", ".1%"),
     ("  more than two words off (over highlighted time)", "word_wrong", ".2%"),
     ("  useful: highlighted and within one word (all time)", "useful", ".1%"),
@@ -130,13 +130,17 @@ ROWS = [
 ]
 
 
-def print_block(title: str, columns: dict[str, dict]) -> None:
+WORD_APPROX = "APPROXIMATE, word times by letter count"
+WORD_BOTH = "WORD LEVEL: EXACT columns = quran-align word times; interp. columns = by letter count"
+
+
+def print_block(title: str, columns: dict[str, dict], word: str = WORD_APPROX) -> None:
     width = max(14, *(len(c) for c in columns))
     print(f"\n{title}")
     print(f"  {'':<58}" + "".join(f"{c:>{width + 2}}" for c in columns))
     for label, key, spec in ROWS:
         if key is None:
-            print(f"  {label}")
+            print(f"  {word if label == 'WORD' else label}")
             continue
         print(f"  {label:<58}" + "".join(f"{_f(s[key], spec):>{width + 2}}" for s in columns.values()))
 
@@ -148,14 +152,90 @@ NOTES = """
 """
 
 
+QURAN_ALIGN = Path(__file__).resolve().parent / "data" / "quran-align"
+
+
+def exact_comparison(
+    description: str, recordings: list[dict], matcher: Matcher, json_out: Path | None
+) -> int:
+    """Exact (quran-align) and interpolated word truth, on the same recordings and the same moments."""
+    from rafiq.word_eval import TruthRow, exact_truth, truth_points, word_truth
+    from rafiq.word_truth import load_segments, map_words
+    from verify_quran_align import RECITATIONS
+
+    check = QURAN_ALIGN / "verification.json"
+    if not check.exists():
+        raise SystemExit("run eval/fetch_quran_align.py, then eval/verify_quran_align.py, first")
+    verified = json.loads(check.read_text(encoding="utf-8"))
+    if verified["mapping"]["rate"] < 0.99:
+        raise SystemExit("the word mapping failed verification: nothing is scored")
+    trusted = {k: v for k, v in verified.get("recitations", {}).items() if v["trusted"]}
+    index = matcher.index
+    maps = map_words(index)
+    segments = {k: load_segments(QURAN_ALIGN / f"{v['timed_on']}.json") for k, v in trusted.items()}
+    used = [rec for rec in recordings if rec.get("reciter") in trusted]
+    skipped = sorted({rec.get("reciter", "?") for rec in recordings} - set(trusted))
+
+    groups = {"same files": [], "other bitrate": []}
+    for rec in used:
+        reciter = rec["reciter"]
+        exact = exact_truth(
+            index, rec["timeline"], segments[reciter], maps, frozenset(trusted[reciter]["failing"])
+        )
+        interp = [
+            TruthRow(r.start, r.end, r.verse, r.words if e.words else ())
+            for r, e in zip(word_truth(index, rec["timeline"]), exact, strict=True)
+        ]  # the same ayahs as the exact truth
+        points = truth_points(exact, rec)
+        group = "same files" if RECITATIONS[reciter] == reciter else "other bitrate"
+        scored = {}
+        for mode, finals_only in MODES.items():
+            shown = replay_words(rec, matcher, finals_only=finals_only)
+            for truth, rows in (("EXACT", exact), ("interp.", interp)):
+                scored[f"{mode} {truth}"] = score_words(
+                    shown, rec, index, finals_only=finals_only, rows=rows, points=points
+                )
+        groups[group].append(scored)
+
+    print(f"REAL recorded speech-model output, replayed (no model run): {description}")
+    print(
+        "Word truth: EXACT = quran-align (Collin Fair, CC BY 4.0, release-2016-11-24), verified "
+        "(eval/verify_quran_align.py); interp. = shared out by letter count. Both on the same "
+        "recordings, the same ayahs and the same moments."
+    )
+    print(
+        f"{len(used)} of {len(recordings)} runs have trusted exact timings; not covered: {', '.join(skipped)}"
+    )
+    out = {}
+    for name, runs in [("All covered runs", groups["same files"] + groups["other bitrate"]), *groups.items()]:
+        if not runs:
+            continue
+        columns = {key: summarize([r[key] for r in runs]) for key in runs[0]}
+        out[name] = columns
+        print_block(f"{name} ({len(runs)} runs)", columns, WORD_BOTH)
+    print(NOTES)
+    if json_out:
+        payload = {"source": description, "truth": "quran-align vs interpolated", "groups": out}
+        json_out.write_bytes((json.dumps(payload, indent=1) + "\n").encode("utf-8"))
+    return 0
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("source", type=Path, help="a directory of recordings, or a phone results.json")
     ap.add_argument("--by-room", action="store_true", help="also break down by room")
     ap.add_argument("--json", type=Path, default=None, help="save the summaries here")
+    ap.add_argument(
+        "--truth",
+        choices=["interpolated", "quran-align"],
+        default="interpolated",
+        help="quran-align: exact word times where verified, compared with interpolated at the same moments",
+    )
     args = ap.parse_args()
 
     description, recordings = load(args.source)
+    if args.truth == "quran-align":
+        return exact_comparison(description, recordings, Matcher(get_index()), args.json)
     matcher = Matcher(get_index())
     index = matcher.index
     t0 = time.perf_counter()

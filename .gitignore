@@ -25,6 +25,8 @@ venv/
 # Audio: never commit recitation recordings, they are large and often rights-encumbered.
 # Keep eval manifests (*.jsonl) which reference audio by path/checksum.
 /eval/audio/
+# Downloaded evaluation data (eval/fetch_quran_align.py): CC BY 4.0, not redistributed.
+/eval/data/
 
 # Models
 *.onnx
