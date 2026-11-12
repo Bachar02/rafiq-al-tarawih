@@ -6,6 +6,10 @@
 //   # once it says it is waiting (the install empties the app's folder):
 //   adb push eval/results/phone_streams/. /sdcard/Android/data/app.rafiq.rafiq/files/streams/
 //   adb pull /sdcard/Android/data/app.rafiq.rafiq/files/streams/results.json
+//   py eval/word_replay.py results.json     # word tracking on the phone's own output
+//
+// The test reinstalls the app, which wipes its data on the device (bookmarks,
+// khatm, notes): use a test phone or a backup.
 //
 // Each stream starts a little late and the engine is told nothing, as in a
 // mosque. The scores follow eval/audio_bench.py: a final is acceptable when
@@ -141,8 +145,25 @@ void main() {
         'never_shown': lags.where((l) => l == null).length,
         'asr_median_ms': asr.isEmpty ? null : asr[asr.length ~/ 2],
         'asr_load': double.parse((asr.fold<int>(0, (a, b) => a + b) / 1000 / seconds).toStringAsFixed(2)),
+        // A recording, as eval/audio_bench.py --record writes them: what the
+        // model produced and when, for eval/word_replay.py and tracker_replay.
+        'reciter': s['reciter'],
+        'room': s['room'],
+        'join': join,
+        'timeline': s['timeline'],
+        'events': [
+          for (final e in events)
+            {
+              'text': e.heard.text,
+              'start': e.heard.start,
+              'end': e.heard.end,
+              'asr_ms': e.heard.asrMs,
+              'final': e.heard.isFinal,
+              'ready': e.at,
+            }
+        ],
       });
-      debugPrint('ONDEVICE ${jsonEncode(results.last)}');
+      debugPrint('ONDEVICE ${jsonEncode(_summary(results.last))}');
     }
 
     final report = {
@@ -152,9 +173,15 @@ void main() {
       'streams': results,
     };
     File('${dir.path}/results.json').writeAsStringSync(const JsonEncoder.withIndent(' ').convert(report));
-    debugPrint('ONDEVICE ${jsonEncode(report)}');
+    debugPrint('ONDEVICE ${jsonEncode({...report, 'streams': results.map(_summary).toList()})}');
     for (final r in results) {
       expect(r['detect_s'], isNotNull, reason: '${r['name']}: the imam was never found');
     }
   }, timeout: const Timeout(Duration(minutes: 20)));
 }
+
+/// A stream's numbers without its recording, for the log.
+Map<String, Object?> _summary(Map<String, Object?> stream) => {
+      for (final e in stream.entries)
+        if (e.key != 'events' && e.key != 'timeline') e.key: e.value
+    };

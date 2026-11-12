@@ -979,3 +979,55 @@ The wrong highlights left are blips of 1–4 letters (0.1–0.4 s) when the imam
 2. **Training data pipeline and a first Zipformer2-small CTC run** (cloud GPU), with a provenance file for every source.
 3. **Go/no-go:** letter error on held-out reciters with mosque augmentation, real-time factor on the A32 and A16 (bench screen), and the word tracker within one word on real streams.
 4. **Integration** behind a flag after the Ramadan release candidate: the engine anchors the word tracker from the ayah tracker, calls `pause()` on long silences, and adds the word to what the screen shows.
+
+## 30. Word tracking, phase 2: the word tracker on real Whisper output (2026-11-12)
+
+**What was measured:** the word tracker (§29) fed with what Rafiq's Quran Whisper **actually produced**, not simulated letters. No model was run and nothing was downloaded: `eval/word_replay.py` replays the 40 recordings already in `eval/results/transcripts` (12 reciters × clean, mosque and far rooms, 60 minutes of recitation, 6,040 partials and 701 finals) through the **existing ayah tracker, unchanged**, and the word tracker anchored from it (`rafiq.word_eval`).
+- **Whisper is not a letter stream:** each partial re-transcribes the breath so far and revises itself. The word tracker is snapshotted at each breath's start, every result restores the snapshot and feeds its whole text, and a final commits. `pause()` after a 2.5 s gap between breaths.
+- **Anchoring:** after a final, at the ayah tracker's word, when the word tracker is idle or lost or the two disagree by more than one ayah.
+- **Two modes:** *partials + finals* (a phone fast enough for previews) and *finals only* (a slow phone, §27). Finals-only reuses the result times recorded with partials running: slightly pessimistic.
+- **Truth:** ayah level is **exact** (each stream's timeline). Word level is **approximate**: the recordings have no word timings, so each ayah's time is shared out among its words by letter count.
+- **The model:** these recordings are the laptop's **faster-whisper int8** (CTranslate2) build of the same Tarteel model, not FP32 and not the phone's sherpa-onnx int8 export. The device was not recorded; ~0.34 s a call, the same for 1 or 6 s of audio (Whisper's fixed 30 s window), matches the CPU.
+
+**Laptop, faster-whisper int8, 40 runs** (`eval/results/word_replay/laptop_int8.json`):
+
+| | Partials + finals | Finals only |
+|---|---|---|
+| **Exact, ayah level** | | |
+| Highlighted word in the ayah being recited | 96.4% | 76.1% |
+| Highlighted word in a wrong ayah (neither that one nor the one before) | **0.00%** | **0.00%** |
+| Wrong-ayah stretches per hour | 0 | 0 |
+| Ayah tracker's ayah right (for comparison, all recited time) | 79.2% | 81.1% |
+| **Approximate, word level** | | |
+| Word highlighted (share of recited time) | 64.7% | 65.3% |
+| Within one word, when highlighted | 81.9% | 33.6% |
+| More than two words off, when highlighted | 4.2% | 48.9% |
+| **Useful: highlighted and within one word (all recited time)** | **53.0%** | **21.9%** |
+| Aligned: within one word of the audio the result covered | 84.4% | 83.8% |
+| Word starts → highlighted (median / p90) | 0.76 / 1.94 s | 3.72 / 6.93 s |
+| Recovery to a right highlight (median / p90) | 0.60 / 1.80 s | 4.85 / 7.95 s |
+| First right-ayah highlight (median) | 11.0 s | 17.2 s |
+| **Speech model, as recorded** | | |
+| Transcription per result (median / p90) | 338 / 423 ms | 395 / 464 ms |
+| Audio end → result ready (median / p90) | 0.35 / 0.51 s | 0.63 / 0.83 s |
+
+By room (partials + finals): useful 62% clean, 55% mosque, 41% far; never a wrong ayah in any room.
+
+**What it says:**
+- **The tracking is right; Whisper's timing is the limit.** Against the audio each result covered, the highlight is within one word 84% of the time in both modes. On screen, the offsets centre half a word *behind*, and the "more than two words off" cases are mostly 3+ words behind: a result is ready 0.35 s after its audio, and partials come every 0.5 s at best. The other ~16% is in part the letter-count interpolation (long madd, silence inside a recording).
+- **Never a wrong ayah:** anchored by the ayah tracker, the word tracker did not once highlight a word outside the ayah being recited or the one before it, in any room.
+- **Finals only is not usable for word highlighting:** the highlight sits on the last word of the previous breath while the imam recites the next one, for 3.7 s on average. Coverage looks the same, but only 22% of the time is it the right word. On a phone that cannot run partials (the A32, §16), Whisper alone cannot drive word highlighting; at most it can be hidden between pauses.
+- **Coverage is capped by detection:** 11 s to the first right ayah (median), out of ~90 s runs, and longer in the far room.
+
+**Phone, sherpa-onnx int8:** **not measured yet**, as no phone was connected. `integration_test/ondevice_test.dart` now also writes each stream's events and timeline into `results.json` (test code only), and `eval/word_replay.py results.json` scores it the same way, reported apart from the laptop. The run reinstalls the app, which wipes its data on the device.
+
+**Limits:** studio EveryAyah audio with simulated rooms, no imam repeats or rakʿah pauses, and the Tarteel Whisper was trained on EveryAyah: optimistic. Word-level numbers rest on interpolated times. The simulated benchmark (§29) is a different measurement and is not mixed in.
+
+**Not changed:** the app, the recognition pipeline, the ayah tracker. Nothing highlights words for users.
+
+**Tests:** 4 new (`engine/tests/test_word_eval.py`: interpolation and the basmala, partials that revise themselves, finals only, the scores on hand-made screens). 123 engine tests.
+
+**Next (each needs the owner's go-ahead):**
+1. **The phone run** on the A16 (a spare phone, or after a backup): sherpa int8's own text and timing, and whether partials stay on.
+2. **Exact word truth:** the CC BY quran-align timings (small, Alafasy and Husary among them) would replace the interpolation for those reciters.
+3. **A streaming CTC model** (§29) is what removes Whisper's 0.35–0.85 s result age and 0.5 s cadence, and what a phone without partials needs.
