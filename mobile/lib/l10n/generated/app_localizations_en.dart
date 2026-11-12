@@ -1783,4 +1783,18 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get useServerDetail => 'For development: the recognition server on the same Wi-Fi, instead of this phone';
+
+  @override
+  String get wordHighlight => 'Highlight the word (experimental)';
+
+  @override
+  String get wordHighlightDetail => 'In Taraweeh mode, the word being recited is marked while the phone is sure of it';
+
+  @override
+  String get wordStale => 'Hide the word after';
+
+  @override
+  String wordStaleSeconds(String seconds) {
+    return '$seconds s without new recognition';
+  }
 }

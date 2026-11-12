@@ -1083,3 +1083,50 @@ Same files (15 runs) and other bitrate (7 runs) agree: useful 53.9% and 54.5% wi
 **Tests:** 6 new (`engine/tests/test_word_truth.py`: the words quran-align numbers, the whole mapping and the vocative, a refused mapping, timings shared out and missing, the crash log, both truths scored at the same moments), using only data in the repository. 129 engine tests.
 
 **Not changed:** the app, the recognition pipeline, the ayah tracker.
+
+## 32. Word tracking, phase 4: smarter highlighting from the same results (2026-11-12, not committed)
+
+**Question:** can the display hide stale words, or move ahead between Whisper results, to make word highlighting better without a new model? Evaluation only (`rafiq.word_display`, `eval/word_display_bench.py`): the recorded laptop Whisper output (faster-whisper int8) replayed through the unchanged ayah and word trackers. Every moment is **confirmed** (a result supports it), **predicted** (estimated between results) or **hidden**. A policy sees only the results that have arrived by then. The baseline policy reproduces §31 exactly.
+- **Suppression:** hide a confirmed word once its audio is older than 0.5, 0.75, 1, 1.5 or 2 s.
+- **Prediction:** pace in letters per second of speech, measured on each finished breath. The highlight walks on from where the imam was when the last result's audio ended, by at most 1–2 words, never into the next ayah, not after a pause (unless the usual pause length is modelled), only after 2–4 breaths of plausible pace, not for 2 results after he goes back, and not past a horizon. 32 variants.
+- **Fairness:** chosen on 15 exact-truth runs (Alafasy, Sudais, Minshawy, Shuraym) by useful − 2 × wrong, then reported on held-out reciters: Husary and Abdul Basit (exact, 7 runs) and 18 more runs (interpolated truth, reported apart).
+
+**Partials + finals** (wrong = more than two words off; shares of recited time):
+
+| | Tuning, 15 runs | | | Held-out exact, 7 runs | | |
+|---|---|---|---|---|---|---|
+| | useful | wrong | latency | useful | wrong | latency |
+| Baseline | 53.9% | 2.05% | 1.15 s | 54.5% | 0.36% | 1.34 s |
+| Hide > 1 s | 50.1% | 0.70% | 1.12 s | 47.9% | 0.00% | 1.34 s |
+| Hide > 1.5 s | 52.4% | 1.06% | 1.15 s | 50.9% | 0.04% | 1.34 s |
+| Hide > 2 s | 53.5% | 1.54% | 1.15 s | 52.6% | 0.24% | 1.34 s |
+| Predict (1 ahead, pause modelled) | 59.9% | 1.40% | 0.75 s | 55.7% | 0.36% | 1.06 s |
+| Predict + hide > 1.5 s | 59.1% | 0.64% | 0.75 s | 52.7% | 0.05% | 1.06 s |
+
+- **Suppression** trades useful time for fewer wrong words, smoothly, with no sharp optimum. At 1.5 s: wrong time −48% (tuning) and −89% (held-out) for 1.5 and 3.6 points of useful time. Wrong stretches per hour 150 → 103 and 37 → 9.
+- **Prediction** helps most where Whisper lags most, the fast imams (Shuraym: useful 48.6% → 58.5%, wrong 6.5% → 2.1%, combined), and little or not at all for slow ones with long madd (Husary −4 points combined). Its tuning gain (+6.0 points) shrinks to +1.2 on held-out reciters. The highlight moves back twice as often (1.0 → 2.2 a minute), and a third of the time what is shown is a guess. On the interpolated held-out set it looks worse (useful −2.6), but that truth runs late (§31), which penalises any highlight that moves ahead: inconclusive there.
+- **Never a wrong ayah** with any policy.
+
+**Finals only:** the baseline shows a word more than two off 43% of the time. Suppression is essential (at 2 s: 1.5%) but leaves 84–90% of the time hidden and 10% useful; prediction adds 1–2 points. Neither makes word highlighting viable without live previews.
+
+**Verdict:** suppression is one comparison, cuts wrong highlights on every held-out set, and is required if word highlighting is ever shown (1–1.5 s, the exact value depending on how a wrong word is weighed against none). Prediction's out-of-sample gain is small, it doubles backward corrections, and its handling of repeats, rakʿah pauses and al-Fatiha is untested on real audio (these recordings have none). It does not justify its complexity now.
+
+**Limits:** 22 exact runs, 6 reciters, 3–6 runs per reciter (by-reciter and by-room numbers include the tuning runs); studio audio with simulated rooms; laptop model only; finals-only reuses timings recorded with partials running. Results: `eval/results/word_display/laptop_int8.json`. Tests: 5 new (`engine/tests/test_word_display.py`), 134 engine tests.
+
+## 33. Word highlighting in Taraweeh mode, behind a developer flag (2026-11-12, not committed)
+
+**The feature:** Settings → Developer → *Highlight the word (experimental)*, **off by default**. On, Taraweeh mode colours the word being recited in `rubric` (the cinnabar of the margin rule and the end marker), on the scrolling reader. No prediction: the word is the one the speech model last confirmed. The Whisper model, the ayah tracker and every existing behaviour are unchanged.
+
+**How it works:**
+- **In the recognition isolate** (`ondevice_engine.dart`): a `WordFollower` (`lib/core/engine/word_follower.dart`) next to the ayah tracker, created **only when the flag is on**. Partials are fed to a copy of the word tracker taken at the breath's start (`WordTracker.copy()`), so a revision replaces rather than adds; finals commit. After a final it anchors from the ayah tracker when idle or lost or more than an ayah apart, `pause()` after a 2.5 s gap, `pause()` when audio is dropped, and it anchors on "the imam is here". If it ever throws, it is switched off for the session and the ayahs carry on. The result travels as `Heard.word` (verse, Simple Clean word index); the server engine sends none.
+- **The same as evaluated:** on 5 recordings of real Whisper output (1,000 events), the Dart follower reproduces Python's `replay_words` (§30–31) event for event (golden `word_follow.json`).
+- **Uthmani words** (`lib/core/text/word_map.dart`): the reader shows Uthmani, the engine counts Simple Clean words. Port of `map_verse` (§31), equal to Python on **all 6,236 ayahs** (golden `word_map.json`, the 805 not one-to-one), all trusted. Each Uthmani word is one displayed piece (the text cut at its spaces, pause marks kept with their word), checked on every ayah. An untrusted mapping highlights nothing.
+- **What is shown** (`lib/features/listen/word_highlight.dart`): a word only if the flag is on, the session is listening, the latest result named a word (one without hides it at once), the ayah engine is sure, the word is in the ayah the screen marks (so nothing during al-Fatiha's excursion or the basmala), the mapping is trusted, and its audio is at most **1.5 s** old (arrival minus transcription time; *Hide the word after* offers 0.75–3 s). A timer hides a stale word even if no result comes again; stopping, pausing or failing clears it.
+- **The text does not change:** `AyahBlock` cuts the current ayah into one span per piece, each space kept with its piece, so the characters, font, shaping and line breaks are those of the plain text; only one word's colour differs. Without a word it is built exactly as before.
+
+**Tests:** 29 new, 530 Flutter tests in all (49 screenshot goldens skipped off Linux); 129 engine tests; analyzer, format, golden check, data checks and the text, detection and word gates pass.
+
+**Not verified:**
+- On a phone: speed (a copy and a partial's letters per transcript, expected well under 1 ms), whether partials stay on, the highlight in a dim hall, TalkBack, battery. The 1.5 s rests on laptop recordings (§32).
+- The screenshot goldens (Docker was not running). The new Developer rows are last in their group; run `mobile/tool/goldens.sh check`.
+- The mushaf pages layout has no word highlight (Taraweeh mode uses the scrolling reader).

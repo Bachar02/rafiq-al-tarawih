@@ -2948,6 +2948,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'For development: the recognition server on the same Wi-Fi, instead of this phone'**
   String get useServerDetail;
+
+  /// No description provided for @wordHighlight.
+  ///
+  /// In en, this message translates to:
+  /// **'Highlight the word (experimental)'**
+  String get wordHighlight;
+
+  /// No description provided for @wordHighlightDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'In Taraweeh mode, the word being recited is marked while the phone is sure of it'**
+  String get wordHighlightDetail;
+
+  /// No description provided for @wordStale.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide the word after'**
+  String get wordStale;
+
+  /// No description provided for @wordStaleSeconds.
+  ///
+  /// In en, this message translates to:
+  /// **'{seconds} s without new recognition'**
+  String wordStaleSeconds(String seconds);
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

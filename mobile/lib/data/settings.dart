@@ -41,6 +41,8 @@ class AppSettings {
     this.dhikrRemindersOn = false,
     this.dhikrEveryHours = defaultDhikrEveryHours,
     this.useServer = false,
+    this.wordHighlight = false,
+    this.wordStaleSeconds = defaultWordStaleSeconds,
   });
 
   /// The daily reading goals offered, in pages; 0 is off. 20 pages is a juz
@@ -56,6 +58,17 @@ class AppSettings {
   /// Recognise on the development server at [serverAddress] instead of on
   /// the phone (Settings → Developer). Off: Taraweeh mode is fully offline.
   final bool useServer;
+
+  /// Highlight the word being recited in Taraweeh mode (Settings → Developer,
+  /// experimental, off by default; PLAN.md §33). Hidden whenever the engine
+  /// is not sure, and once the evidence for it is older than
+  /// [wordStaleSeconds].
+  final bool wordHighlight;
+  final double wordStaleSeconds;
+
+  /// The thresholds offered for developer testing, in seconds.
+  static const wordStaleChoices = [0.75, 1.0, 1.5, 2.0, 3.0];
+  static const defaultWordStaleSeconds = 1.5;
 
   final bool keepScreenOn;
 
@@ -136,6 +149,8 @@ class AppSettings {
     bool? dhikrRemindersOn,
     int? dhikrEveryHours,
     bool? useServer,
+    bool? wordHighlight,
+    double? wordStaleSeconds,
   }) =>
       AppSettings(
         serverAddress: serverAddress ?? this.serverAddress,
@@ -157,6 +172,8 @@ class AppSettings {
         dhikrRemindersOn: dhikrRemindersOn ?? this.dhikrRemindersOn,
         dhikrEveryHours: dhikrEveryHours ?? this.dhikrEveryHours,
         useServer: useServer ?? this.useServer,
+        wordHighlight: wordHighlight ?? this.wordHighlight,
+        wordStaleSeconds: wordStaleSeconds ?? this.wordStaleSeconds,
       );
 }
 
@@ -185,6 +202,8 @@ class SettingsStore {
   static const _dhikr = 'dhikr_reminders_on';
   static const _dhikrEvery = 'dhikr_every_hours';
   static const _useServer = 'recognition_server';
+  static const _wordHighlight = 'word_highlight';
+  static const _wordStale = 'word_stale_seconds';
 
   AppSettings load() {
     const d = AppSettings();
@@ -211,6 +230,8 @@ class SettingsStore {
       dhikrRemindersOn: _prefs.getBool(_dhikr) ?? d.dhikrRemindersOn,
       dhikrEveryHours: _knownInterval(_prefs.getInt(_dhikrEvery)) ?? d.dhikrEveryHours,
       useServer: _prefs.getBool(_useServer) ?? d.useServer,
+      wordHighlight: _prefs.getBool(_wordHighlight) ?? d.wordHighlight,
+      wordStaleSeconds: _knownStale(_prefs.getDouble(_wordStale)) ?? d.wordStaleSeconds,
     );
   }
 
@@ -234,11 +255,15 @@ class SettingsStore {
     await _prefs.setBool(_dhikr, s.dhikrRemindersOn);
     await _prefs.setInt(_dhikrEvery, s.dhikrEveryHours);
     await _prefs.setBool(_useServer, s.useServer);
+    await _prefs.setBool(_wordHighlight, s.wordHighlight);
+    await _prefs.setDouble(_wordStale, s.wordStaleSeconds);
   }
 
   static int? _validMinutes(int? m) => m != null && m >= 0 && m < 24 * 60 ? m : null;
 
   static int? _knownInterval(int? hours) => AppSettings.dhikrIntervals.contains(hours) ? hours : null;
+
+  static double? _knownStale(double? s) => AppSettings.wordStaleChoices.contains(s) ? s : null;
 
   static int? _knownGoal(int? pages) => AppSettings.dailyGoals.contains(pages) ? pages : null;
 }

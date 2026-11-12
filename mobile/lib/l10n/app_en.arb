@@ -1297,5 +1297,16 @@
   },
   "introOffline": "Everything happens on this phone, without internet. The recitation is never recorded or sent.",
   "useServer": "Recognise on a computer",
-  "useServerDetail": "For development: the recognition server on the same Wi-Fi, instead of this phone"
+  "useServerDetail": "For development: the recognition server on the same Wi-Fi, instead of this phone",
+  "wordHighlight": "Highlight the word (experimental)",
+  "wordHighlightDetail": "In Taraweeh mode, the word being recited is marked while the phone is sure of it",
+  "wordStale": "Hide the word after",
+  "wordStaleSeconds": "{seconds} s without new recognition",
+  "@wordStaleSeconds": {
+    "placeholders": {
+      "seconds": {
+        "type": "String"
+      }
+    }
+  }
 }

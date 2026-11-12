@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart' show NumberFormat;
 
+import '../../app/components/choice_sheet.dart';
 import '../../app/components/quran_text.dart';
 import '../../app/components/settings_group.dart';
 import '../../app/components/sheet.dart';
@@ -148,6 +150,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     if (language != null) await ref.read(settingsProvider.notifier).update((s) => s.copyWith(language: language));
   }
 
+  /// 1.5 -> "1.5" (or "1,5"), 2.0 -> "2", in the interface language.
+  String _seconds(double s) => NumberFormat('0.##', Localizations.localeOf(context).toLanguageTag()).format(s);
+
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
@@ -274,6 +279,33 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 trailing: Icon(Icons.chevron_right, color: c.inkSecondary),
                 onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const AsrBenchScreen())),
               ),
+              // Experimental, off by default (PLAN.md §33): last, so the rows
+              // above keep their place.
+              RubricRow(
+                label: l.wordHighlight,
+                detail: l.wordHighlightDetail,
+                onTap: () => update((s) => s.copyWith(wordHighlight: !s.wordHighlight)),
+                trailing: Switch(
+                  value: settings.wordHighlight,
+                  onChanged: (v) => update((s) => s.copyWith(wordHighlight: v)),
+                ),
+              ),
+              if (settings.wordHighlight)
+                RubricRow(
+                  label: l.wordStale,
+                  detail: l.wordStaleSeconds(_seconds(settings.wordStaleSeconds)),
+                  trailing: Icon(Icons.chevron_right, color: c.inkSecondary),
+                  onTap: () async {
+                    final chosen = await showChoiceSheet<double>(
+                      context,
+                      title: l.wordStale,
+                      options: AppSettings.wordStaleChoices,
+                      current: settings.wordStaleSeconds,
+                      label: (s) => l.wordStaleSeconds(_seconds(s)),
+                    );
+                    if (chosen != null) await update((s) => s.copyWith(wordStaleSeconds: chosen));
+                  },
+                ),
             ],
           ),
           // Development only: Taraweeh mode recognises on a computer.

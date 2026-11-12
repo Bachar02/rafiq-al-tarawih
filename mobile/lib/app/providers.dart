@@ -214,9 +214,11 @@ final audioSourceProvider = Provider<AudioSource>((ref) {
 final engineFactoryProvider = Provider<RecognitionEngineFactory>((ref) {
   if (ref.watch(settingsProvider.select((s) => s.useServer))) return (address) => ServerRecognitionEngine(address);
   final quran = ref.watch(quranProvider);
+  final words = ref.watch(settingsProvider.select((s) => s.wordHighlight));
   return (_) => OnDeviceRecognitionEngine(
         quran: quran,
         prepare: () async => whisperLoader(await ModelStore.prepare()),
+        wordTracking: words,
       );
 });
 
