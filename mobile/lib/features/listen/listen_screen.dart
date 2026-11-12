@@ -11,6 +11,7 @@ import '../../app/theme.dart';
 import '../../core/recognition/models.dart';
 import '../../data/quran.dart';
 import '../../data/surah_names.dart';
+import '../../core/text/word_map.dart';
 import 'display_status.dart';
 import 'listen_state.dart';
 import 'widgets/ayah_actions.dart';
@@ -22,6 +23,7 @@ import 'widgets/position_header.dart';
 import 'widgets/return_to_imam.dart';
 import 'widgets/status_line.dart';
 import 'widgets/taraweeh_intro.dart';
+import 'word_highlight.dart';
 import '../../l10n/l10n.dart';
 
 /// Taraweeh mode: follow the imam, live, in the same Quran text as the reader.
@@ -52,6 +54,9 @@ class _ListenScreenState extends ConsumerState<ListenScreen> with WidgetsBinding
 
   /// The user scrolled the current ayah out of view.
   bool _away = false;
+
+  /// Word highlighting's Uthmani word lookup, built per ayah as needed.
+  final _words = DisplayWordMap();
 
   /// Re-evaluates the time-based states (Little sound, No new match yet)
   /// while a session runs, even when no event arrives.
@@ -207,6 +212,14 @@ class _ListenScreenState extends ConsumerState<ListenScreen> with WidgetsBinding
     final reader = state.readerSurah;
     final controller = ref.read(listenControllerProvider.notifier);
     final sure = status.marker(held: displayed != null) == MarkerFill.filled;
+    final currentWord = highlightedPiece(
+      state,
+      enabled: settings.wordHighlight,
+      quran: quran,
+      words: _words,
+      now: now,
+      staleAfter: Duration(milliseconds: (settings.wordStaleSeconds * 1000).round()),
+    );
     final showReturn = status.active && displayed != null && (state.browsing || _away);
     // Follow the imam in the surah the reader shows: an unsure guess or a
     // lock elsewhere never pulls the text away (the controller decides
@@ -304,6 +317,7 @@ class _ListenScreenState extends ConsumerState<ListenScreen> with WidgetsBinding
                                           textScale: settings.textScale,
                                           horizontalPadding: 0,
                                           bottomPadding: showReturn ? 72 : 0,
+                                          currentWord: currentWord,
                                           onAyahTap: (verse) => _onAyahTap(verse, state),
                                           onAwayChanged: (away) => setState(() => _away = away),
                                         ),

@@ -9,6 +9,7 @@ import '../../core/engine/matcher.dart';
 import '../../core/engine/quran_index.dart';
 import '../../core/engine/segmenter.dart';
 import '../../core/engine/tracker.dart';
+import '../../core/engine/word_follower.dart';
 import '../../core/recognition/models.dart';
 import '../../core/recognition/recognition_engine.dart';
 import '../../data/quran.dart';
@@ -41,9 +42,14 @@ class OnDeviceRecognitionEngine implements RecognitionEngine {
     this.readyTimeout = const Duration(seconds: 90),
     this.finishTimeout = const Duration(seconds: 20),
     this.maxBufferedSeconds = 2,
+    this.wordTracking = false,
   });
 
   final Quran quran;
+
+  /// Also follow the imam word by word (developer setting, off by default).
+  /// Off, the worker creates no word tracker at all.
+  final bool wordTracking;
 
   /// Makes the model ready (copies it out of the bundle the first time) and
   /// returns its loader. Throws if there is no model to load.
@@ -101,6 +107,12 @@ class OnDeviceRecognitionEngine implements RecognitionEngine {
           load: loader,
           config: listenerConfig,
           maxBacklogSamples: maxBacklog.inMilliseconds * sampleRate ~/ 1000,
+          basmalaVerses: wordTracking
+              ? [
+                  for (final s in quran.surahs)
+                    if (s.hasBasmala) s.firstVerseId
+                ]
+              : null,
         ),
         debugName: 'recognition',
       );
@@ -201,6 +213,7 @@ class OnDeviceRecognitionEngine implements RecognitionEngine {
           asrMs: heard.asrMs,
           state: _state(heard),
           isFinal: heard.isFinal,
+          word: heard.wordVerse == null ? null : HeardWord(verseId: heard.wordVerse!, index: heard.wordIndex!),
         ));
       case _Skipped(:final seconds):
         _emit(EngineWarning.fellBehind(seconds));
@@ -248,6 +261,7 @@ class _WorkerSetup {
     required this.load,
     required this.config,
     required this.maxBacklogSamples,
+    this.basmalaVerses,
   });
 
   final SendPort reply;
@@ -257,6 +271,9 @@ class _WorkerSetup {
   final TranscriberLoader load;
   final ListenerConfig config;
   final int maxBacklogSamples;
+
+  /// Set only when word tracking is on: the ayahs a basmala is recited before.
+  final List<int>? basmalaVerses;
 }
 
 class _Control {
@@ -298,9 +315,13 @@ class _Heard {
     required this.pending,
     required this.alternatives,
     required this.upcoming,
+    this.wordVerse,
+    this.wordIndex,
   });
 
-  factory _Heard.of(HeardChunk h) => _Heard(
+  factory _Heard.of(HeardChunk h, [FollowedWord? word]) => _Heard(
+        wordVerse: word?.verseId,
+        wordIndex: word?.index,
         text: h.text,
         start: h.start,
         end: h.end,
@@ -325,6 +346,8 @@ class _Heard {
   final int? pending;
   final List<int> alternatives;
   final int? upcoming;
+  final int? wordVerse;
+  final int? wordIndex;
 }
 
 class _Skipped {
@@ -365,10 +388,26 @@ Future<void> _workerMain(_WorkerSetup setup) async {
     inbox.close();
     return;
   }
-  final tracker = Tracker(QuranMatcher(QuranIndex(setup.verses)));
+  final index = QuranIndex(setup.verses);
+  final tracker = Tracker(QuranMatcher(index));
   if (setup.hint case final (int, int) h) tracker.hint(h.$1, h.$2);
   if (setup.lock case final (int, int) l) tracker.lock(l.$1, l.$2);
   final listener = Listener(Segmenter(EnergyVad()), model.transcribe, tracker, config: setup.config);
+  // Word tracking (developer setting): next to the ayah tracker, never in its
+  // way. It costs well under a millisecond a transcript; if it ever fails,
+  // it is switched off for the session and the ayahs carry on alone.
+  var words = setup.basmalaVerses == null ? null : WordFollower(index, basmalaVerses: setup.basmalaVerses!);
+  FollowedWord? follow(HeardChunk h) {
+    final w = words;
+    if (w == null) return null;
+    try {
+      return w.onChunk(text: h.text, isFinal: h.isFinal, start: h.start, end: h.end, ayah: h.state);
+    } catch (_) {
+      words = null;
+      return null;
+    }
+  }
+
   reply.send(_Ready(model.device));
 
   try {
@@ -399,19 +438,25 @@ Future<void> _workerMain(_WorkerSetup setup) async {
             final dropped = merged.length - setup.maxBacklogSamples;
             merged = Float32List.sublistView(merged, dropped);
             listener.skip(dropped);
+            words?.skipped();
             reply.send(_Skipped(dropped / engineSampleRate));
           }
           for (final h in listener.feed(merged)) {
-            reply.send(_Heard.of(h));
+            reply.send(_Heard.of(h, follow(h)));
           }
         case _Control(kind: 'lock', :final range):
           tracker.lock(range?.$1, range?.$2);
         case _Control(kind: 'position', :final verseId):
           final state = tracker.setPosition(verseId!);
+          try {
+            words?.setPosition(verseId);
+          } catch (_) {
+            words = null;
+          }
           reply.send(_Heard.of(HeardChunk(text: '', start: 0, end: 0, asrMs: 0, state: state, isFinal: true)));
         case _Control(kind: 'end'):
           for (final h in listener.flush()) {
-            reply.send(_Heard.of(h));
+            reply.send(_Heard.of(h, follow(h)));
           }
           reply.send(const _Done());
         case _Control(kind: 'stop'):

@@ -1823,4 +1823,18 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get useServerDetail => 'للتطوير: خادم التعرّف على شبكة Wi-Fi نفسها بدل هذا الهاتف';
+
+  @override
+  String get wordHighlight => 'تمييز الكلمة (تجريبي)';
+
+  @override
+  String get wordHighlightDetail => 'في وضع التراويح تُميَّز الكلمة المتلوّة ما دام الهاتف متأكدًا منها';
+
+  @override
+  String get wordStale => 'إخفاء الكلمة بعد';
+
+  @override
+  String wordStaleSeconds(String seconds) {
+    return '$seconds ث دون تعرّف جديد';
+  }
 }

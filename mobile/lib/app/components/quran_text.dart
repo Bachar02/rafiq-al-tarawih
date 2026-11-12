@@ -51,10 +51,17 @@ class AyahBlock extends StatelessWidget {
     this.noted = false,
     this.onTap,
     this.onLongPress,
+    this.currentWord,
   });
 
   final Verse verse;
   final AyahTone tone;
+
+  /// Word highlighting (a developer setting): the displayed word being
+  /// recited, as a piece of the text cut at its spaces (`displayPieces`).
+  /// Only for [AyahTone.current] when sure. The word changes colour to
+  /// `rubric`; the text, its font and its line breaks do not change.
+  final int? currentWord;
 
   /// Only meaningful for [AyahTone.current]: the engine is unsure.
   final bool unsure;
@@ -92,12 +99,18 @@ class AyahBlock extends StatelessWidget {
       AyahTone.upcoming => c.inkUpcoming,
     };
     final markerColor = current ? c.rubric : textColor;
+    final word = current && !unsure ? currentWord : null;
 
     Widget text(Color text, Color marker) => Text.rich(
-          TextSpan(
-            text: displayAyahText(verse.uthmani),
-            children: [TextSpan(text: ayahEndMarker(verse.ayah), style: TextStyle(color: marker))],
-          ),
+          word == null
+              ? TextSpan(
+                  text: displayAyahText(verse.uthmani),
+                  children: [TextSpan(text: ayahEndMarker(verse.ayah), style: TextStyle(color: marker))],
+                )
+              : TextSpan(children: [
+                  ...wordSpans(verse.uthmani, word, c.rubric),
+                  TextSpan(text: ayahEndMarker(verse.ayah), style: TextStyle(color: marker)),
+                ]),
           textAlign: justify ? TextAlign.justify : TextAlign.start,
           // The app's own text-size setting (0.85–1.6, validated with
           // this font) sizes the Quran, not the system font scale.
@@ -185,6 +198,21 @@ class AyahBlock extends StatelessWidget {
       ),
     );
   }
+}
+
+/// The ayah's displayed text as one span per piece (cut at its spaces, each
+/// space kept with the piece before it), with piece [word] in [color]. Joined,
+/// the spans are exactly `displayAyahText`: same characters, so the same
+/// shaping and line breaks; only one word's colour differs.
+List<TextSpan> wordSpans(String uthmani, int word, Color color) {
+  final pieces = displayAyahText(uthmani).split(' ');
+  return [
+    for (var i = 0; i < pieces.length; i++)
+      TextSpan(
+        text: i < pieces.length - 1 ? '${pieces[i]} ' : pieces[i],
+        style: i == word ? TextStyle(color: color) : null,
+      ),
+  ];
 }
 
 class _RulePainter extends CustomPainter {

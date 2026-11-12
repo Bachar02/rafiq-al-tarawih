@@ -979,3 +979,154 @@ The wrong highlights left are blips of 1–4 letters (0.1–0.4 s) when the imam
 2. **Training data pipeline and a first Zipformer2-small CTC run** (cloud GPU), with a provenance file for every source.
 3. **Go/no-go:** letter error on held-out reciters with mosque augmentation, real-time factor on the A32 and A16 (bench screen), and the word tracker within one word on real streams.
 4. **Integration** behind a flag after the Ramadan release candidate: the engine anchors the word tracker from the ayah tracker, calls `pause()` on long silences, and adds the word to what the screen shows.
+
+## 30. Word tracking, phase 2: the word tracker on real Whisper output (2026-11-12)
+
+**What was measured:** the word tracker (§29) fed with what Rafiq's Quran Whisper **actually produced**, not simulated letters. No model was run and nothing was downloaded: `eval/word_replay.py` replays the 40 recordings already in `eval/results/transcripts` (12 reciters × clean, mosque and far rooms, 60 minutes of recitation, 6,040 partials and 701 finals) through the **existing ayah tracker, unchanged**, and the word tracker anchored from it (`rafiq.word_eval`).
+- **Whisper is not a letter stream:** each partial re-transcribes the breath so far and revises itself. The word tracker is snapshotted at each breath's start, every result restores the snapshot and feeds its whole text, and a final commits. `pause()` after a 2.5 s gap between breaths.
+- **Anchoring:** after a final, at the ayah tracker's word, when the word tracker is idle or lost or the two disagree by more than one ayah.
+- **Two modes:** *partials + finals* (a phone fast enough for previews) and *finals only* (a slow phone, §27). Finals-only reuses the result times recorded with partials running: slightly pessimistic.
+- **Truth:** ayah level is **exact** (each stream's timeline). Word level is **approximate**: the recordings have no word timings, so each ayah's time is shared out among its words by letter count.
+- **The model:** these recordings are the laptop's **faster-whisper int8** (CTranslate2) build of the same Tarteel model, not FP32 and not the phone's sherpa-onnx int8 export. The device was not recorded; ~0.34 s a call, the same for 1 or 6 s of audio (Whisper's fixed 30 s window), matches the CPU.
+
+**Laptop, faster-whisper int8, 40 runs** (`eval/results/word_replay/laptop_int8.json`):
+
+| | Partials + finals | Finals only |
+|---|---|---|
+| **Exact, ayah level** | | |
+| Highlighted word in the ayah being recited | 96.4% | 76.1% |
+| Highlighted word in a wrong ayah (neither that one nor the one before) | **0.00%** | **0.00%** |
+| Wrong-ayah stretches per hour | 0 | 0 |
+| Ayah tracker's ayah right (for comparison, all recited time) | 79.2% | 81.1% |
+| **Approximate, word level** | | |
+| Word highlighted (share of recited time) | 64.7% | 65.3% |
+| Within one word, when highlighted | 81.9% | 33.6% |
+| More than two words off, when highlighted | 4.2% | 48.9% |
+| **Useful: highlighted and within one word (all recited time)** | **53.0%** | **21.9%** |
+| Aligned: within one word of the audio the result covered | 84.4% | 83.8% |
+| Word starts → highlighted (median / p90) | 0.76 / 1.94 s | 3.72 / 6.93 s |
+| Recovery to a right highlight (median / p90) | 0.60 / 1.80 s | 4.85 / 7.95 s |
+| First right-ayah highlight (median) | 11.0 s | 17.2 s |
+| **Speech model, as recorded** | | |
+| Transcription per result (median / p90) | 338 / 423 ms | 395 / 464 ms |
+| Audio end → result ready (median / p90) | 0.35 / 0.51 s | 0.63 / 0.83 s |
+
+By room (partials + finals): useful 62% clean, 55% mosque, 41% far; never a wrong ayah in any room.
+
+**What it says:**
+- **The tracking is right; Whisper's timing is the limit.** Against the audio each result covered, the highlight is within one word 84% of the time in both modes. On screen, the offsets centre half a word *behind*, and the "more than two words off" cases are mostly 3+ words behind: a result is ready 0.35 s after its audio, and partials come every 0.5 s at best. The other ~16% is in part the letter-count interpolation (long madd, silence inside a recording).
+- **Never a wrong ayah:** anchored by the ayah tracker, the word tracker did not once highlight a word outside the ayah being recited or the one before it, in any room.
+- **Finals only is not usable for word highlighting:** the highlight sits on the last word of the previous breath while the imam recites the next one, for 3.7 s on average. Coverage looks the same, but only 22% of the time is it the right word. On a phone that cannot run partials (the A32, §16), Whisper alone cannot drive word highlighting; at most it can be hidden between pauses.
+- **Coverage is capped by detection:** 11 s to the first right ayah (median), out of ~90 s runs, and longer in the far room.
+
+**Phone, sherpa-onnx int8:** **not measured yet**, as no phone was connected. `integration_test/ondevice_test.dart` now also writes each stream's events and timeline into `results.json` (test code only), and `eval/word_replay.py results.json` scores it the same way, reported apart from the laptop. The run reinstalls the app, which wipes its data on the device.
+
+**Limits:** studio EveryAyah audio with simulated rooms, no imam repeats or rakʿah pauses, and the Tarteel Whisper was trained on EveryAyah: optimistic. Word-level numbers rest on interpolated times. The simulated benchmark (§29) is a different measurement and is not mixed in.
+
+**Not changed:** the app, the recognition pipeline, the ayah tracker. Nothing highlights words for users.
+
+**Tests:** 4 new (`engine/tests/test_word_eval.py`: interpolation and the basmala, partials that revise themselves, finals only, the scores on hand-made screens). 123 engine tests.
+
+**Next (each needs the owner's go-ahead):**
+1. **The phone run** on the A16 (a spare phone, or after a backup): sherpa int8's own text and timing, and whether partials stay on.
+2. **Exact word truth:** the CC BY quran-align timings (small, Alafasy and Husary among them) would replace the interpolation for those reciters.
+3. **A streaming CTC model** (§29) is what removes Whisper's 0.35–0.85 s result age and 0.5 s cadence, and what a phone without partials needs.
+
+## 31. Word tracking, phase 3: exact word timings for the evaluation (2026-11-12)
+
+**Why:** §30's word-level numbers rested on word times shared out by letter count. This replaces them with measured times where they exist, to make the evaluation trustworthy before deciding whether a new speech model is needed.
+
+**The data** (the owner approved this one download):
+- **quran-align**, Collin Fair, `release-2016-11-24`, https://github.com/cpfair/quran-align. Data **CC BY 4.0**, code MIT.
+- One archive, 5,807,871 bytes, SHA-256 `5eeb045d8a7895208c94d2d7ec243567f8f550728835411527c4ffa1e789c9b7`. GitHub publishes no digest for assets that old: the size matched the release API and the hash is pinned in `eval/fetch_quran_align.py`. Each kept file is also checked against the SHA-1 the archive's own README lists.
+- **Kept, unchanged, outside git** (`eval/data/`, ignored): the 6 recitations our recordings use, the README, the licence, and `SOURCE.txt` with the attribution. The archive and the other 6 recitations were discarded.
+- **Two flaws in the published data:** the Sudais file carries the aligner's crash log on a line before its JSON (only the JSON is read), and Shuraym's 12:76 has no timing (33 deletions).
+
+**Checks, before anything was scored** (`eval/verify_quran_align.py`):
+1. **The words they number:** Tanzil Uthmani split on spaces, without its 4,578 pause marks and without the basmala. This fits 99.82–99.92% of ayahs' highest word index in all six files; with the marks counted, 55%. That is `Verse.text_uthmani` without the marks.
+2. **Mapping onto our words** (Simple Clean, normalized; monotone, by letters): **6,236 of 6,236 ayahs (100%)** with every group at least half alike (99.60% at least 70%). 76,901 groups, 366 not one-to-one, almost all the vocative: Uthmani يٰٓأَيُّهَا is our يا ايها. The 99% threshold was met.
+3. **Against our audio**, the very EveryAyah files the recordings were built from (the local cache, nothing downloaded): the last word ends inside the file, and the first word's start and the last word's end are within 0.25 s and 0.6 s of where speech starts and ends.
+
+| Our files | Timed on | Pass | First word vs speech start (median) | Verdict |
+|---|---|---|---|---|
+| Alafasy 128 | same | 57/60 | −0.035 s | trusted, 3 ayahs excluded |
+| Sudais 192 | same | 6/6 | −0.050 s | trusted |
+| Minshawy Murattal 128 | same | 4/4 | +0.035 s | trusted |
+| Shuraym 128 | same | 4/4 | +0.010 s | trusted |
+| **Husary 128** | **Husary 64** | 10/10 | +0.010 s | **trusted:** the other bitrate is cut the same |
+| **Abdul Basit Murattal 192** | **Abdul Basit Murattal 64** | 4/4 | −0.065 s | **trusted** |
+
+The three Alafasy failures are real timing errors in the data: in 55:11 and 55:24 the last word ends 1.7–2 s before its held madd does, and in 78:12 the first word starts 0.6 s early, in silence. **An ayah that fails is excluded from exact scoring.** The check covers each ayah's first and last word only; inside an ayah, word boundaries rest on the author's stated accuracy (mean under 73 ms against another tool).
+
+**Exact against interpolated, on the same recordings, ayahs and moments** (`eval/word_replay.py --truth quran-align`; 22 of the 40 laptop recordings, 32 minutes; laptop faster-whisper int8; `eval/results/word_replay/laptop_int8_exact.json`):
+
+| | P+F exact | P+F interpolated | Finals exact | Finals interpolated |
+|---|---|---|---|---|
+| Wrong ayah (exact, timeline) | 0.00% | 0.00% | 0.00% | 0.00% |
+| Within one word, when highlighted | **85.5%** | 82.4% | **23.0%** | 32.7% |
+| More than two words off | **2.2%** | 4.3% | **57.5%** | 48.0% |
+| Useful: highlighted and within one word | **54.2%** | 52.2% | **14.4%** | 20.4% |
+| Aligned: within one word of the audio covered | **98.8%** | 86.3% | **99.2%** | 83.4% |
+| Word start → highlighted (median / p90) | **1.17 / 1.77 s** | 0.84 / 2.26 s | **4.75 / 6.78 s** | 3.88 / 6.93 s |
+| Recovery (median / p90) | 0.52 / 1.35 s | 0.62 / 1.85 s | 5.60 / 8.60 s | 5.25 / 9.70 s |
+
+Same files (15 runs) and other bitrate (7 runs) agree: useful 53.9% and 54.5% with partials.
+
+**What the exact truth changed:**
+- **The word tracker is more accurate than §30 said.** Against the word at the end of the audio each result covered, it is right 73% of the time, one word behind 24%, ahead 2%; within one word 98.8%. Interpolation had made it look ahead (+1: 26%) and 12 points worse. Its errors are timing, not tracking.
+- **Whisper's delay is longer than §30 said:** a word is highlighted 1.17 s after it starts (median), not 0.84 s.
+- **Finals only is worse than §30 said:** 14% useful, not 20–22%, and 57% of the highlighted time more than two words off.
+- **Unchanged:** never a wrong ayah; partials double what finals alone give.
+
+**Limits:** 32 of 60 minutes have exact word truth (6 of 12 reciters); the rest stay interpolated (§30). Still studio audio with simulated rooms, no imam repeats, and a Whisper trained on EveryAyah. Laptop recordings only: the phone (sherpa int8) is postponed with the A16.
+
+**Tests:** 6 new (`engine/tests/test_word_truth.py`: the words quran-align numbers, the whole mapping and the vocative, a refused mapping, timings shared out and missing, the crash log, both truths scored at the same moments), using only data in the repository. 129 engine tests.
+
+**Not changed:** the app, the recognition pipeline, the ayah tracker.
+
+## 32. Word tracking, phase 4: smarter highlighting from the same results (2026-11-12, not committed)
+
+**Question:** can the display hide stale words, or move ahead between Whisper results, to make word highlighting better without a new model? Evaluation only (`rafiq.word_display`, `eval/word_display_bench.py`): the recorded laptop Whisper output (faster-whisper int8) replayed through the unchanged ayah and word trackers. Every moment is **confirmed** (a result supports it), **predicted** (estimated between results) or **hidden**. A policy sees only the results that have arrived by then. The baseline policy reproduces §31 exactly.
+- **Suppression:** hide a confirmed word once its audio is older than 0.5, 0.75, 1, 1.5 or 2 s.
+- **Prediction:** pace in letters per second of speech, measured on each finished breath. The highlight walks on from where the imam was when the last result's audio ended, by at most 1–2 words, never into the next ayah, not after a pause (unless the usual pause length is modelled), only after 2–4 breaths of plausible pace, not for 2 results after he goes back, and not past a horizon. 32 variants.
+- **Fairness:** chosen on 15 exact-truth runs (Alafasy, Sudais, Minshawy, Shuraym) by useful − 2 × wrong, then reported on held-out reciters: Husary and Abdul Basit (exact, 7 runs) and 18 more runs (interpolated truth, reported apart).
+
+**Partials + finals** (wrong = more than two words off; shares of recited time):
+
+| | Tuning, 15 runs | | | Held-out exact, 7 runs | | |
+|---|---|---|---|---|---|---|
+| | useful | wrong | latency | useful | wrong | latency |
+| Baseline | 53.9% | 2.05% | 1.15 s | 54.5% | 0.36% | 1.34 s |
+| Hide > 1 s | 50.1% | 0.70% | 1.12 s | 47.9% | 0.00% | 1.34 s |
+| Hide > 1.5 s | 52.4% | 1.06% | 1.15 s | 50.9% | 0.04% | 1.34 s |
+| Hide > 2 s | 53.5% | 1.54% | 1.15 s | 52.6% | 0.24% | 1.34 s |
+| Predict (1 ahead, pause modelled) | 59.9% | 1.40% | 0.75 s | 55.7% | 0.36% | 1.06 s |
+| Predict + hide > 1.5 s | 59.1% | 0.64% | 0.75 s | 52.7% | 0.05% | 1.06 s |
+
+- **Suppression** trades useful time for fewer wrong words, smoothly, with no sharp optimum. At 1.5 s: wrong time −48% (tuning) and −89% (held-out) for 1.5 and 3.6 points of useful time. Wrong stretches per hour 150 → 103 and 37 → 9.
+- **Prediction** helps most where Whisper lags most, the fast imams (Shuraym: useful 48.6% → 58.5%, wrong 6.5% → 2.1%, combined), and little or not at all for slow ones with long madd (Husary −4 points combined). Its tuning gain (+6.0 points) shrinks to +1.2 on held-out reciters. The highlight moves back twice as often (1.0 → 2.2 a minute), and a third of the time what is shown is a guess. On the interpolated held-out set it looks worse (useful −2.6), but that truth runs late (§31), which penalises any highlight that moves ahead: inconclusive there.
+- **Never a wrong ayah** with any policy.
+
+**Finals only:** the baseline shows a word more than two off 43% of the time. Suppression is essential (at 2 s: 1.5%) but leaves 84–90% of the time hidden and 10% useful; prediction adds 1–2 points. Neither makes word highlighting viable without live previews.
+
+**Verdict:** suppression is one comparison, cuts wrong highlights on every held-out set, and is required if word highlighting is ever shown (1–1.5 s, the exact value depending on how a wrong word is weighed against none). Prediction's out-of-sample gain is small, it doubles backward corrections, and its handling of repeats, rakʿah pauses and al-Fatiha is untested on real audio (these recordings have none). It does not justify its complexity now.
+
+**Limits:** 22 exact runs, 6 reciters, 3–6 runs per reciter (by-reciter and by-room numbers include the tuning runs); studio audio with simulated rooms; laptop model only; finals-only reuses timings recorded with partials running. Results: `eval/results/word_display/laptop_int8.json`. Tests: 5 new (`engine/tests/test_word_display.py`), 134 engine tests.
+
+## 33. Word highlighting in Taraweeh mode, behind a developer flag (2026-11-12, not committed)
+
+**The feature:** Settings → Developer → *Highlight the word (experimental)*, **off by default**. On, Taraweeh mode colours the word being recited in `rubric` (the cinnabar of the margin rule and the end marker), on the scrolling reader. No prediction: the word is the one the speech model last confirmed. The Whisper model, the ayah tracker and every existing behaviour are unchanged.
+
+**How it works:**
+- **In the recognition isolate** (`ondevice_engine.dart`): a `WordFollower` (`lib/core/engine/word_follower.dart`) next to the ayah tracker, created **only when the flag is on**. Partials are fed to a copy of the word tracker taken at the breath's start (`WordTracker.copy()`), so a revision replaces rather than adds; finals commit. After a final it anchors from the ayah tracker when idle or lost or more than an ayah apart, `pause()` after a 2.5 s gap, `pause()` when audio is dropped, and it anchors on "the imam is here". If it ever throws, it is switched off for the session and the ayahs carry on. The result travels as `Heard.word` (verse, Simple Clean word index); the server engine sends none.
+- **The same as evaluated:** on 5 recordings of real Whisper output (1,000 events), the Dart follower reproduces Python's `replay_words` (§30–31) event for event (golden `word_follow.json`).
+- **Uthmani words** (`lib/core/text/word_map.dart`): the reader shows Uthmani, the engine counts Simple Clean words. Port of `map_verse` (§31), equal to Python on **all 6,236 ayahs** (golden `word_map.json`, the 805 not one-to-one), all trusted. Each Uthmani word is one displayed piece (the text cut at its spaces, pause marks kept with their word), checked on every ayah. An untrusted mapping highlights nothing.
+- **What is shown** (`lib/features/listen/word_highlight.dart`): a word only if the flag is on, the session is listening, the latest result named a word (one without hides it at once), the ayah engine is sure, the word is in the ayah the screen marks (so nothing during al-Fatiha's excursion or the basmala), the mapping is trusted, and its audio is at most **1.5 s** old (arrival minus transcription time; *Hide the word after* offers 0.75–3 s). A timer hides a stale word even if no result comes again; stopping, pausing or failing clears it.
+- **The text does not change:** `AyahBlock` cuts the current ayah into one span per piece, each space kept with its piece, so the characters, font, shaping and line breaks are those of the plain text; only one word's colour differs. Without a word it is built exactly as before.
+
+**Tests:** 29 new, 530 Flutter tests in all (49 screenshot goldens skipped off Linux); 129 engine tests; analyzer, format, golden check, data checks and the text, detection and word gates pass.
+
+**Not verified:**
+- On a phone: speed (a copy and a partial's letters per transcript, expected well under 1 ms), whether partials stay on, the highlight in a dim hall, TalkBack, battery. The 1.5 s rests on laptop recordings (§32).
+- The screenshot goldens (Docker was not running). The new Developer rows are last in their group; run `mobile/tool/goldens.sh check`.
+- The mushaf pages layout has no word highlight (Taraweeh mode uses the scrolling reader).

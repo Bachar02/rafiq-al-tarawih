@@ -45,6 +45,18 @@ class TranscriptLine {
   final bool isFinal;
 }
 
+/// The word the engine last said is being recited (word highlighting, a
+/// developer setting), and when the audio behind it was heard.
+class LiveWord {
+  const LiveWord(this.word, this.heardAt);
+
+  final HeardWord word;
+
+  /// About when that audio ended: the result's arrival minus its
+  /// transcription time. The highlight goes once this is too old.
+  final DateTime heardAt;
+}
+
 class ListenState {
   const ListenState({
     this.phase = SessionPhase.idle,
@@ -67,6 +79,7 @@ class ListenState {
     this.lastSure,
     this.confirmedAt,
     this.lastSoundAt,
+    this.liveWord,
   });
 
   final SessionPhase phase;
@@ -129,6 +142,10 @@ class ListenState {
   /// When the microphone level was last at or above [quietLevel].
   final DateTime? lastSoundAt;
 
+  /// The word being recited, while the engine is sure of it and the evidence
+  /// is fresh (word highlighting only; otherwise always null).
+  final LiveWord? liveWord;
+
   /// The engine's position when it is sure; otherwise the last sure one.
   Position? get _sure => track.status == TrackStatus.tracking || lastSure == null ? track.showing : lastSure;
 
@@ -169,6 +186,7 @@ class ListenState {
     Object? lastSure = _keep,
     Object? confirmedAt = _keep,
     Object? lastSoundAt = _keep,
+    Object? liveWord = _keep,
   }) =>
       ListenState(
         phase: phase ?? this.phase,
@@ -191,6 +209,7 @@ class ListenState {
         lastSure: identical(lastSure, _keep) ? this.lastSure : lastSure as Position?,
         confirmedAt: identical(confirmedAt, _keep) ? this.confirmedAt : confirmedAt as DateTime?,
         lastSoundAt: identical(lastSoundAt, _keep) ? this.lastSoundAt : lastSoundAt as DateTime?,
+        liveWord: identical(liveWord, _keep) ? this.liveWord : liveWord as LiveWord?,
       );
 }
 

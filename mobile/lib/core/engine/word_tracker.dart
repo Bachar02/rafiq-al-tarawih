@@ -149,6 +149,41 @@ class WordTracker {
     reset();
   }
 
+  WordTracker._copyOf(WordTracker o)
+      : index = o.index,
+        config = o.config,
+        _basmalaAt = o._basmalaAt,
+        _basmalaWords = o._basmalaWords,
+        _excursions = o._excursions {
+    _anchored = o._anchored;
+    _letters = List.of(o._letters);
+    _weakAt = List.of(o._weakAt);
+    _pos = List.of(o._pos);
+    _bas = List.of(o._bas);
+    _keys = List.of(o._keys);
+    _starts = List.of(o._starts);
+    _skips = Map.of(o._skips);
+    _d = List.of(o._d);
+    _w0 = o._w0;
+    _w1 = o._w1;
+    _end = o._end;
+    _total = o._total;
+    _ring = List.of(o._ring);
+    _lettersSeen = o._lettersSeen;
+    _shown = o._shown;
+    _pending = o._pending;
+    _pendingCount = o._pendingCount;
+    _okRun = o._okRun;
+    _unsure = o._unsure;
+    _resume = o._resume;
+    _prevBest = o._prevBest;
+    _state = o._state;
+  }
+
+  /// An independent copy (sharing the index): a snapshot to preview a live
+  /// partial transcript on, so the breath can be fed again from where it began.
+  WordTracker copy() => WordTracker._copyOf(this);
+
   final QuranIndex index;
   final WordTrackerConfig config;
   final Map<int, int> _basmalaAt;

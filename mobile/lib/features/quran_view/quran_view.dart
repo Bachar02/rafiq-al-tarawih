@@ -88,6 +88,7 @@ class QuranView extends StatefulWidget {
     this.onUserScroll,
     this.horizontalPadding = RubricSpace.gutter,
     this.bottomPadding = 0,
+    this.currentWord,
   });
 
   final Quran quran;
@@ -138,6 +139,10 @@ class QuranView extends StatefulWidget {
 
   /// Room at the end for an overlay (a floating button or pill).
   final double bottomPadding;
+
+  /// Word highlighting (a developer setting): the word of [current] being
+  /// recited, as a displayed piece (see [AyahBlock.currentWord]), or null.
+  final int? currentWord;
 
   @override
   State<QuranView> createState() => _QuranViewState();
@@ -208,6 +213,7 @@ class _QuranViewState extends State<QuranView> {
         old.live != widget.live ||
         old.current?.verseId != widget.current?.verseId ||
         old.unsure != widget.unsure ||
+        old.currentWord != widget.currentWord ||
         old.highlightedVerse != widget.highlightedVerse ||
         !setEquals(old.bookmarkedVerses, widget.bookmarkedVerses) ||
         !setEquals(old.notedVerses, widget.notedVerses)) {
@@ -452,6 +458,7 @@ class _QuranViewState extends State<QuranView> {
         // Read at tap time: a parent's new closure must not rebuild the text.
         onTap: () => widget.onAyahTap?.call(verse),
         onLongPress: widget.onAyahLongPress == null ? null : () => widget.onAyahLongPress?.call(verse),
+        currentWord: widget.live && verse.id == widget.current?.verseId ? widget.currentWord : null,
       );
 
   AyahTone _toneOf(Verse verse) {

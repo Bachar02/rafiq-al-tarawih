@@ -29,6 +29,7 @@ class ListenController extends Notifier<ListenState> {
   StreamSubscription<RecognitionEvent>? _events;
   StreamSubscription<Float32List>? _audio;
   Timer? _warningTimer;
+  Timer? _wordTimer;
   int _generation = 0;
   DateTime _lastLevel = DateTime.fromMillisecondsSinceEpoch(0);
 
@@ -104,7 +105,7 @@ class ListenController extends Notifier<ListenState> {
   Future<void> stop() async {
     if (!state.isActive || state.phase == SessionPhase.stopping) return;
     final generation = _generation;
-    state = state.copyWith(phase: SessionPhase.stopping, level: 0, livePartial: null);
+    state = state.copyWith(phase: SessionPhase.stopping, level: 0, livePartial: null, liveWord: null);
     await _stopAudio();
     await _engine?.finish();
     if (generation != _generation) return;
@@ -118,7 +119,7 @@ class ListenController extends Notifier<ListenState> {
     if (!state.isActive) return;
     _generation++;
     await _teardown();
-    state = state.copyWith(phase: SessionPhase.paused, level: 0, livePartial: null);
+    state = state.copyWith(phase: SessionPhase.paused, level: 0, livePartial: null, liveWord: null);
   }
 
   /// Set or clear the hint. The server applies hints when a session starts,
@@ -195,7 +196,7 @@ class ListenController extends Notifier<ListenState> {
       case EngineReady(:final device):
         state = state.copyWith(phase: SessionPhase.listening, device: device, reconnectAttempt: 0);
       case Heard():
-        _onHeard(event);
+        _onHeard(generation, event);
       case EngineWarning(:final message, :final skippedSeconds):
         _warningTimer?.cancel();
         final text = skippedSeconds == null
@@ -222,7 +223,7 @@ class ListenController extends Notifier<ListenState> {
     }
   }
 
-  void _onHeard(Heard heard) {
+  void _onHeard(int generation, Heard heard) {
     final line = TranscriptLine(
       text: heard.text,
       start: heard.start,
@@ -259,7 +260,27 @@ class ListenController extends Notifier<ListenState> {
       transcript: transcript,
       livePartial: heard.isFinal ? null : line,
       detectedAfter: firstDetection ? now.difference(state.startedAt!) : state.detectedAfter,
+      liveWord: _liveWord(generation, heard, now),
     );
+  }
+
+  /// Word highlighting (developer setting): the newest result decides. One
+  /// without a word means the engine is not sure, and the word goes at once;
+  /// a word whose audio is older than the threshold goes on a timer, even if
+  /// no result comes again (the imam stopped, the model fell behind).
+  LiveWord? _liveWord(int generation, Heard heard, DateTime now) {
+    _wordTimer?.cancel();
+    final settings = ref.read(settingsProvider);
+    final word = heard.word;
+    if (!settings.wordHighlight || word == null) return null;
+    final live = LiveWord(word, now.subtract(Duration(milliseconds: heard.asrMs)));
+    final stale = Duration(milliseconds: (settings.wordStaleSeconds * 1000).round());
+    final left = live.heardAt.add(stale).difference(now);
+    if (left <= Duration.zero) return null;
+    _wordTimer = Timer(left, () {
+      if (generation == _generation && identical(state.liveWord, live)) state = state.copyWith(liveWord: null);
+    });
+    return live;
   }
 
   void _fail(int generation, ListenError error, String message) {
@@ -272,6 +293,7 @@ class ListenController extends Notifier<ListenState> {
       errorMessage: message,
       level: 0,
       livePartial: null,
+      liveWord: null,
     );
   }
 
@@ -288,6 +310,7 @@ class ListenController extends Notifier<ListenState> {
 
   Future<void> _teardown() async {
     _warningTimer?.cancel();
+    _wordTimer?.cancel();
     await _stopAudio();
     final engine = _engine, events = _events;
     _engine = null;

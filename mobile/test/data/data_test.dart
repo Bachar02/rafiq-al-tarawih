@@ -134,10 +134,23 @@ void main() {
     });
 
     test('out-of-range or corrupt values fall back safely', () async {
-      SharedPreferences.setMockInitialValues({'text_scale': 9.0, 'theme_mode': 'neon'});
+      SharedPreferences.setMockInitialValues({'text_scale': 9.0, 'theme_mode': 'neon', 'word_stale_seconds': 0.1});
       final s = SettingsStore(await SharedPreferences.getInstance()).load();
       expect(s.textScale, 1.6);
       expect(s.themeMode, ThemeMode.system);
+      expect(s.wordStaleSeconds, AppSettings.defaultWordStaleSeconds, reason: 'not one of the offered thresholds');
+    });
+
+    test('word highlighting: off by default, 1.5 s, and both round-trip', () async {
+      SharedPreferences.setMockInitialValues({});
+      final store = SettingsStore(await SharedPreferences.getInstance());
+      final d = store.load();
+      expect(d.wordHighlight, isFalse);
+      expect(d.wordStaleSeconds, 1.5);
+      await store.save(d.copyWith(wordHighlight: true, wordStaleSeconds: 2.0));
+      final back = store.load();
+      expect(back.wordHighlight, isTrue);
+      expect(back.wordStaleSeconds, 2.0);
     });
   });
 }

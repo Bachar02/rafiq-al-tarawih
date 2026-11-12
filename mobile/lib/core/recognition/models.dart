@@ -77,6 +77,27 @@ class TrackState {
   Position? get showing => upcoming ?? position;
 }
 
+/// The word being recited, when word tracking is on and sure of it
+/// (developer setting; PLAN.md §33).
+class HeardWord {
+  const HeardWord({required this.verseId, required this.index});
+
+  final int verseId;
+
+  /// The word's index in its ayah, counting Simple Clean words (the engine's
+  /// words; the reader maps it onto the displayed Uthmani text).
+  final int index;
+
+  @override
+  bool operator ==(Object other) => other is HeardWord && other.verseId == verseId && other.index == index;
+
+  @override
+  int get hashCode => Object.hash(verseId, index);
+
+  @override
+  String toString() => 'HeardWord($verseId, $index)';
+}
+
 /// Optional user help. Detection works without it.
 sealed class Hint {
   const Hint();
@@ -126,6 +147,7 @@ class Heard extends RecognitionEvent {
     required this.asrMs,
     required this.state,
     required this.isFinal,
+    this.word,
   });
 
   /// What the speech model heard (with diacritics).
@@ -139,6 +161,9 @@ class Heard extends RecognitionEvent {
 
   /// False for a live preview of a chunk the imam is still reciting.
   final bool isFinal;
+
+  /// The word being recited, if word tracking is on and sure (else null).
+  final HeardWord? word;
 }
 
 /// Something was skipped; the session continues.

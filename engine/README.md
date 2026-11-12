@@ -25,6 +25,8 @@ py -m pytest
 | `rafiq.evaluation` | product metrics (accuracy, wrong jumps, recovery) |
 | `rafiq.words` | word-level tracking: aligns a CTC model's letters against the expected text, anchored by the tracker |
 | `rafiq.word_sim` | synthetic CTC letter streams with ground truth, and the word tracker's metrics |
+| `rafiq.word_eval` | the word tracker on recorded real speech-model output, scored against the ayah timeline |
+| `rafiq.word_truth` | exact word timings for evaluation (quran-align, CC BY 4.0) mapped onto the word stream |
 | `rafiq.asr` | live audio → chunks at natural pauses → Whisper → tracker (optional extra: `pip install -e ".[asr]"`) |
 
 Data flows one way: `asr → normalize → matching → tracking`. Each stage has a

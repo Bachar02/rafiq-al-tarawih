@@ -83,6 +83,36 @@ void main() {
         listenerConfig: config ?? const ListenerConfig(partialEvery: 0),
       );
 
+  test('word tracking: off sends no words; on sends them, and the ayahs are exactly the same', () async {
+    final ayahs = [for (var a = 1; a <= 9; a++) quran.verse(quran.verseId(93, a)!).text];
+    final breaths = [
+      for (var i = 0; i < ayahs.length; i++) ...[tone(1.6), silence(0.8)],
+    ];
+    OnDeviceRecognitionEngine make({required bool words}) => OnDeviceRecognitionEngine(
+          quran: quran,
+          prepare: () async => scripted(ayahs),
+          listenerConfig: const ListenerConfig(partialEvery: 0),
+          wordTracking: words,
+        );
+    // Paced, so the 21.6 s never pile up past the 15 s backlog (which would
+    // drop audio depending on timing, not on word tracking).
+    const pace = Duration(milliseconds: 5);
+    final off = (await run(make(words: false), breaths, pace: pace)).whereType<Heard>().toList();
+    final on = (await run(make(words: true), breaths, pace: pace)).whereType<Heard>().toList();
+    expect(off, hasLength(ayahs.length), reason: 'every breath heard');
+    expect(off.every((h) => h.word == null), isTrue, reason: 'off: no word tracker at all');
+    expect([
+      for (final h in on) (h.text, h.state.position, h.state.status, h.state.upcoming)
+    ], [
+      for (final h in off) (h.text, h.state.position, h.state.status, h.state.upcoming)
+    ], reason: 'the ayah results do not depend on word tracking');
+    final words = on.where((h) => h.word != null).toList();
+    expect(words, isNotEmpty, reason: 'on: words once the ayah is found');
+    for (final h in words) {
+      expect(h.word!.verseId, h.state.position!.verseId, reason: 'the word is in the ayah heard');
+    }
+  });
+
   test('follows the recitation in a background isolate: ready, each ayah, done', () async {
     final events = await run(engine(scripted(duha)), duhaBreaths());
     expect(events.first, isA<EngineReady>());

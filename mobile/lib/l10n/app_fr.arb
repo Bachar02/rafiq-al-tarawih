@@ -475,5 +475,9 @@
   "warningFellBehind": "Le téléphone a pris du retard et a sauté {seconds} s pour rattraper l’imam.",
   "introOffline": "Tout se passe sur ce téléphone, sans internet. La récitation n’est jamais enregistrée ni envoyée.",
   "useServer": "Reconnaissance sur un ordinateur",
-  "useServerDetail": "Pour le développement : le serveur de reconnaissance sur le même Wi-Fi, au lieu de ce téléphone"
+  "useServerDetail": "Pour le développement : le serveur de reconnaissance sur le même Wi-Fi, au lieu de ce téléphone",
+  "wordHighlight": "Marquer le mot (expérimental)",
+  "wordHighlightDetail": "En mode Tarawih, le mot récité est marqué quand le téléphone en est sûr",
+  "wordStale": "Masquer le mot après",
+  "wordStaleSeconds": "{seconds} s sans nouvelle reconnaissance"
 }

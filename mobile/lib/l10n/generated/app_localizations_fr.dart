@@ -1794,4 +1794,18 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get useServerDetail =>
       'Pour le développement : le serveur de reconnaissance sur le même Wi-Fi, au lieu de ce téléphone';
+
+  @override
+  String get wordHighlight => 'Marquer le mot (expérimental)';
+
+  @override
+  String get wordHighlightDetail => 'En mode Tarawih, le mot récité est marqué quand le téléphone en est sûr';
+
+  @override
+  String get wordStale => 'Masquer le mot après';
+
+  @override
+  String wordStaleSeconds(String seconds) {
+    return '$seconds s sans nouvelle reconnaissance';
+  }
 }

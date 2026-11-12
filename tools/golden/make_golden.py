@@ -23,7 +23,9 @@ from rafiq.normalize import normalize
 from rafiq.quran import get_quran
 from rafiq.simulate import NoiseConfig, simulate
 from rafiq.tracking import Tracker
+from rafiq.word_eval import replay_words
 from rafiq.word_sim import LetterNoise, run, simulate_letters
+from rafiq.word_truth import map_verse, uthmani_words
 from rafiq.words import WordTracker
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -260,6 +262,43 @@ def word_tracker_cases() -> list[dict]:
     return cases
 
 
+def word_map_cases() -> dict:
+    """Uthmani -> Simple Clean word mapping of every ayah (rafiq.word_truth): the ones not one-to-one."""
+    index = get_index()
+    cases = []
+    ok = 0
+    for v in index.quran:
+        lo, hi = index.verse_span(v.id)
+        m = map_verse(uthmani_words(v.text_uthmani), index.words[lo:hi], 0)
+        ok += m.ok
+        identity = all(us == ps and len(us) == 1 for us, ps in m.groups)
+        if not identity or not m.ok:
+            cases.append([v.id, [[list(us), list(ps)] for us, ps in m.groups], round(m.worst, 9)])
+    return {"ayahs": len(index.quran), "ok": ok, "not_identity": cases}
+
+
+# Recorded real Whisper output replayed by the word follower: what the phone
+# must do event for event (rafiq.word_eval.replay_words, PLAN.md §30).
+WORD_FOLLOW_RECORDINGS = [
+    "Alafasy_128kbps__mosque__p0",
+    "Husary_128kbps__mosque__p0",
+    "Abdurrahmaan_As-Sudais_192kbps__far__p0",
+    "Minshawy_Murattal_128kbps__clean__p0",
+    "Abdul_Basit_Murattal_192kbps__mosque__p0",
+]
+
+
+def word_follow_cases() -> list[dict]:
+    matcher = Matcher(get_index())
+    cases = []
+    for name in WORD_FOLLOW_RECORDINGS:
+        rec = json.loads((TRANSCRIPTS / f"{name}.json").read_text(encoding="utf-8"))
+        shown = replay_words(rec, matcher)
+        events = [[e["text"], e["final"], e["start"], e["end"]] for e in rec["events"]]
+        cases.append({"name": name, "events": events, "words": [s.word for s in shown]})
+    return cases
+
+
 # Synthetic audio for the segmenter, from integers only, so Python and Dart
 # build the very same samples: (seconds, amplitude, period in samples).
 # Recitation-like bursts and pauses over a low hum, then a long run-on.
@@ -313,6 +352,8 @@ def main() -> int:
         "tracker.json": tracker_cases(),
         "segmenter.json": segmenter_cases(),
         "word_tracker.json": word_tracker_cases(),
+        "word_map.json": word_map_cases(),
+        "word_follow.json": word_follow_cases(),
     }
     stale = []
     for name, cases in files.items():
