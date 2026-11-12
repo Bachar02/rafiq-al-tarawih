@@ -48,6 +48,8 @@ class Shown:
     word: int | None  # highlighted word (the word tracker is tracking), else None
     verse: int | None  # the ayah the ayah tracker shows
     end: float | None = None  # end of the audio the result covered (listening seconds)
+    start: float | None = None  # start of that audio: the breath it belongs to
+    final: bool = False  # the transcript at a pause (the imam has stopped), not a live preview
 
 
 def _snapshot(tracker: WordTracker) -> WordTracker:
@@ -90,7 +92,7 @@ def replay_words(
                 if ws.status in (IDLE, LOST) or disagree:
                     word_state = base.anchor(state.word)
         word = word_state.word if word_state.status == TRACKING else None
-        shown.append(Shown(e["ready"], word, state.showing, e["end"]))
+        shown.append(Shown(e["ready"], word, state.showing, e["end"], e["start"], final))
     return shown
 
 
