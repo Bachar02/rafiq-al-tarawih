@@ -537,7 +537,9 @@ void main() {
     final container = await launch(tester);
     final reading = container.read(readingPositionProvider);
     await startListening(tester);
-    h.engine.emit(heard(at(55, 13)));
+    for (final ayah in [13, 14, 15]) {
+      h.engine.emit(heard(at(55, ayah)));
+    }
     await settle(tester);
     h.engine.emit(heard(at(1, 3))); // Al-Fatiha at the next rakʿah is not where Taraweeh got to
     await settle(tester);
@@ -546,13 +548,14 @@ void main() {
     expect(find.byType(ListenScreen), findsNothing);
     expect(container.read(listenControllerProvider).isActive, isFalse);
     expect(h.awake.enabled, isFalse);
-    expect(PrefsReadingStore(h.prefs).taraweehPosition()?.verseId, pos(55, 13).verseId);
+    expect(PrefsReadingStore(h.prefs).taraweehLedger()?.progress(loadQuran())?.verseId, pos(55, 15).verseId);
     expect(container.read(readingPositionProvider), reading);
     expect(PrefsReadingStore(h.prefs).readingPosition(), isNull, reason: 'Taraweeh never writes the reading position');
   });
 
   testWidgets('the next night starts near where the last one ended, visibly and removably', (tester) async {
-    final lastNight = DateTime.now().subtract(const Duration(hours: 22)).toUtc().toIso8601String();
+    // Saved by an earlier version: carried over.
+    final lastNight = Harness.defaultNow.subtract(const Duration(hours: 22)).toUtc().toIso8601String();
     h = await Harness.create(prefs: {
       ...introSeen,
       'taraweeh_position.v1': '{"v":1,"verse":${pos(5, 81).verseId},"at":"$lastNight"}',
@@ -569,7 +572,7 @@ void main() {
   });
 
   testWidgets('a session from long ago suggests nothing', (tester) async {
-    final old = DateTime.now().subtract(const Duration(days: 30)).toUtc().toIso8601String();
+    final old = Harness.defaultNow.subtract(const Duration(days: 30)).toUtc().toIso8601String();
     h = await Harness.create(prefs: {
       ...introSeen,
       'taraweeh_position.v1': '{"v":1,"verse":${pos(5, 81).verseId},"at":"$old"}',

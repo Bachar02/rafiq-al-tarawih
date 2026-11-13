@@ -18,6 +18,7 @@ import '../data/reading_store.dart';
 import '../data/settings.dart';
 import '../data/study_text.dart';
 import '../data/surah_names.dart';
+import '../data/taraweeh_ledger.dart';
 import '../l10n/l10n.dart';
 import '../features/adhkar/adhkar_controller.dart';
 import '../features/adhkar/dhikr_reminders.dart';
@@ -235,6 +236,10 @@ final healthCheckerProvider = Provider<HealthChecker>((ref) => checkServerHealth
 
 final listenControllerProvider = NotifierProvider<ListenController, ListenState>(ListenController.new);
 
-/// Where Taraweeh last got to (independent of the reading position).
+/// Taraweeh night by night (independent of the reading position).
+final taraweehLedgerProvider =
+    NotifierProvider<TaraweehProgressController, TaraweehLedger>(TaraweehProgressController.new);
+
+/// Where Taraweeh stopped, as the ledger infers it (or the user set it).
 final taraweehPositionProvider =
-    NotifierProvider<TaraweehPositionController, SavedPosition?>(TaraweehPositionController.new);
+    Provider<TaraweehProgress?>((ref) => ref.watch(taraweehLedgerProvider).progress(ref.watch(quranProvider)));

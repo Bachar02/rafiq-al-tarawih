@@ -19,6 +19,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'khatm.dart';
 import 'note.dart';
 import 'quran.dart';
+import 'taraweeh_ledger.dart';
 
 /// A saved place in the Quran.
 @immutable
@@ -76,8 +77,13 @@ abstract interface class ReadingStore {
   SavedPosition? readingPosition();
   Future<bool> saveReadingPosition(SavedPosition position);
 
+  /// The single Taraweeh position of earlier versions (read once, to carry
+  /// it over; never written again, never deleted).
   SavedPosition? taraweehPosition();
-  Future<bool> saveTaraweehPosition(SavedPosition position);
+
+  /// Taraweeh night by night ([TaraweehLedger]); null if none was saved yet.
+  TaraweehLedger? taraweehLedger();
+  Future<bool> saveTaraweehLedger(TaraweehLedger ledger);
 
   /// Newest first.
   List<Bookmark> bookmarks();
@@ -192,6 +198,7 @@ class PrefsReadingStore implements ReadingStore {
 
   static const readingKey = 'reading_position.v1';
   static const taraweehKey = 'taraweeh_position.v1';
+  static const taraweehLedgerKey = 'taraweeh_progress.v1';
   static const bookmarksKey = 'bookmarks.v1';
   static const logKey = 'reading_log.v1';
   static const khatmKey = 'khatm.v1';
@@ -215,7 +222,18 @@ class PrefsReadingStore implements ReadingStore {
   SavedPosition? taraweehPosition() => _readPosition(taraweehKey);
 
   @override
-  Future<bool> saveTaraweehPosition(SavedPosition position) => _write(taraweehKey, position.toJson());
+  TaraweehLedger? taraweehLedger() {
+    final json = _readJson(taraweehLedgerKey);
+    if (json == null) return null;
+    var dropped = false;
+    final ledger = TaraweehLedger.fromJson(json, dropped: () => dropped = true);
+    // Unreadable, whole or in part: the original is kept before any write.
+    if (ledger == null || dropped) _setAside(taraweehLedgerKey);
+    return ledger;
+  }
+
+  @override
+  Future<bool> saveTaraweehLedger(TaraweehLedger ledger) => _write(taraweehLedgerKey, ledger.toJson());
 
   @override
   List<Bookmark> bookmarks() {

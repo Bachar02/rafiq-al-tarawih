@@ -82,7 +82,8 @@ class _ListenScreenState extends ConsumerState<ListenScreen> with WidgetsBinding
     final controller = ref.read(listenControllerProvider.notifier);
     if (ref.read(listenControllerProvider).isActive) return;
     if (ref.read(listenControllerProvider).hint == null) {
-      final hint = ref.read(taraweehPositionProvider.notifier).lastNightHint(ref.read(quranProvider), DateTime.now());
+      final hint =
+          ref.read(taraweehLedgerProvider.notifier).lastNightHint(ref.read(quranProvider), ref.read(clockProvider)());
       if (hint != null) {
         await controller.setHint(hint);
         if (mounted) setState(() => _hintFromLastNight = true);
@@ -94,7 +95,7 @@ class _ListenScreenState extends ConsumerState<ListenScreen> with WidgetsBinding
   /// Leaving the mode: stop following and keep where the imam got to.
   void _leave() {
     unawaited(ref.read(listenControllerProvider.notifier).stop());
-    unawaited(ref.read(taraweehPositionProvider.notifier).flush());
+    unawaited(ref.read(taraweehLedgerProvider.notifier).flush());
   }
 
   @override
@@ -110,7 +111,7 @@ class _ListenScreenState extends ConsumerState<ListenScreen> with WidgetsBinding
     // cleanly and say so, instead of silently showing a stale ayah.
     if (lifecycle == AppLifecycleState.paused) {
       ref.read(listenControllerProvider.notifier).pause();
-      unawaited(ref.read(taraweehPositionProvider.notifier).flush());
+      unawaited(ref.read(taraweehLedgerProvider.notifier).flush());
     }
   }
 
@@ -222,11 +223,6 @@ class _ListenScreenState extends ConsumerState<ListenScreen> with WidgetsBinding
   @override
   Widget build(BuildContext context) {
     ref.listen(listenControllerProvider.select((s) => s.isActive), (_, active) => _runClock(active));
-    // The imam's main position (never Al-Fatiha at a rakʿah) is where
-    // Taraweeh got to.
-    ref.listen(listenControllerProvider.select((s) => s.anchor), (_, anchor) {
-      if (anchor != null) ref.read(taraweehPositionProvider.notifier).record(anchor);
-    });
     final state = ref.watch(listenControllerProvider);
     final settings = ref.watch(settingsProvider);
     final quran = ref.watch(quranProvider);

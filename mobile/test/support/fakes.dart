@@ -22,6 +22,7 @@ import 'package:rafiq/data/quran.dart';
 import 'package:rafiq/data/reading_store.dart';
 import 'package:rafiq/data/settings.dart';
 import 'package:rafiq/data/study_text.dart';
+import 'package:rafiq/data/taraweeh_ledger.dart';
 import 'package:rafiq/data/surah_names.dart';
 import 'package:rafiq/services/location.dart';
 import 'package:rafiq/services/reminders.dart';
@@ -279,7 +280,9 @@ class FailingStore implements ReadingStore {
   @override
   SavedPosition? taraweehPosition() => _inner.taraweehPosition();
   @override
-  Future<bool> saveTaraweehPosition(SavedPosition p) async => !failing && await _inner.saveTaraweehPosition(p);
+  TaraweehLedger? taraweehLedger() => _inner.taraweehLedger();
+  @override
+  Future<bool> saveTaraweehLedger(TaraweehLedger l) async => !failing && await _inner.saveTaraweehLedger(l);
   @override
   List<Bookmark> bookmarks() => _inner.bookmarks();
   @override
@@ -362,7 +365,10 @@ class Harness {
   ReadingStore? readingStore;
 
   /// The time the app sees (change it to cross midnight).
-  DateTime now = DateTime(2026, 11, 4, 20);
+  DateTime now = defaultNow;
+
+  /// What [now] starts at: an evening, 20:00.
+  static final defaultNow = DateTime(2026, 11, 4, 20);
 
   FakeEngine get engine => engines.last;
 

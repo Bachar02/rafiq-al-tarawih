@@ -1234,3 +1234,49 @@ Rules: only while listening; never on `tracking` (no tie) or `lost` (old news); 
 **Tests:** 27 for the place (pure, plus the real tracker: the refrain, Al-Kahf, a phrase in three surahs, untrusted, beyond the cap, the basmala, Al-Fatiha's opening, a garbled preview, a far jump with a miss, a lock), 10 in the controller (the reader, a held ayah, a correction, lock and Undo, stale ties, previews), 5 for the status, 11 on the screen (the sheet confirms, dismissing changes nothing, many copies, the lock, a held ayah, across surahs, nothing offered, French, Arabic right to left, 200% text on 320×568), the accessibility guidelines on the choices in both themes, and 3 goldens (`repeated_in_surah`, `repeated_held`, `ar_repeated_across`). 643 Flutter tests.
 
 **Not verified:** real audio. The tie report runs on 95 of 6,741 recorded steps (§37), and how often a worshipper sees the choices, or taps the right one, is unmeasured. French and Arabic strings await native review.
+
+## 39. Where Taraweeh stopped: a night-by-night ledger (2026-11-13, not committed)
+
+**Why:** the saved Taraweeh position (`taraweeh_position.v1`) was the latest confident ayah outside Al-Fatiha, predictions (`upcoming`) and previews included (§34). Anything recited after Taraweeh overwrote it. On a simulated night through the real tracker (below), it ends on 2:202: the ayah *after* the qunut's quotation of 2:201, never recited. The owner's top priority: remember where Taraweeh stopped, with nothing asked during prayer.
+
+**The ledger** (`lib/data/taraweeh_ledger.dart`, pure and immutable; saved as `taraweeh_progress.v1`):
+- **Nights.** A night is the local date 12 hours earlier, so Isha, Taraweeh and qiyam after midnight are one night. 60 kept (two Ramadans).
+- **Runs.** Within a night, the ayahs heard one after another: `first`, `last`, `ayahs` (forward steps), and times. The next ayah (+1) extends a run at once. A repeat changes nothing. A skip of 2–3 ayahs is held as `ahead` until the imam is heard at or after it, and dropped if he is heard behind it. This rule comes from the real recordings (below). Anything further starts a new run. 48 runs per night; single ayahs are forgotten first.
+- **Al-Fatiha** (verses 1–7, the basmala included) never enters.
+- **Where the night stopped** (`judge`):
+  - Runs of 3 or more ayahs are *established*. Shorter ones are quotations (qunut, a khatera) and never count.
+  - Established runs link in time order into *passages* when the next starts within 40 ayahs after the previous one's end, in the same surah or the next. A skipped surah never links: that is Witr.
+  - The passage that **continues the night before** (it starts within 10 before to 40 after that night's end) wins, unless something more than twice its length was heard. Otherwise the longest wins, if it leads every other passage by at least 3 ayahs.
+  - Otherwise the night is *weak* or *contradictory*, and the progress of the nights before is kept.
+- **Progress:** the latest night that says where it stopped. A night set by hand overrides its runs.
+- **Corrections:** "Taraweeh ended here" sets the latest night (or the night it is, with none). The single position of earlier versions is carried over once as a night set by hand (`FixSource.legacy`). The old record is never written or deleted.
+
+**Fed by** the listening session with **committed evidence only:** a final result, `tracking`, with evidence, its `position` (not `upcoming`), and "the imam is here". Previews, doubt, misses and predictions never reach it. It is saved 3 s after a change, at once on leaving the mode or going to the background, and at once for a correction. A failed save is retried at the next flush. An unreadable record is set aside, never overwritten (the store's rule).
+
+**On screen, never during prayer:**
+- Bookmarks shows "Where Taraweeh ended" from the ledger. When nights were heard but none was clear: "Not clear from what was heard. Tap an ayah to set it." That opens the last ayah heard.
+- The reader's ayah sheet offers "Taraweeh ended here" once Taraweeh has been followed (not on the ayah already set), saved at once, with Undo.
+- Tonight's hint is unchanged in kind (the juz after where it stopped, within 36 h), now from the ledger and the app's clock. After nights without Taraweeh there is no hint; the progress stays.
+
+**Validated on real recognition** (`test/features/taraweeh_replay_test.dart`: the 40 laptop-Whisper recordings of §34, every preview and final through the real tracker, listening session and ledger):
+- 39/40 recordings save exactly the passage's last ayah. One (Sudais, far room) heard too little and saves nothing. None saves a wrong ayah.
+- Before the skip rule, Husary's 22:30–33 saved 22:34: a garbled 3-word chunk ("ما من سحيق") was confirmed at 22:34 for one final.
+- Previews alone save nothing, on all 40.
+- Two real passages in one night with no night before: nothing is saved. With the night before set, the continuing one is saved.
+- A session killed mid-night: the restart reads the same progress.
+
+**Simulated, not real audio** (the Quran's text as perfect recognition through the real tracker, or committed ayahs directly):
+- Isha, a khatera quoting 2:183, four rakʿahs of 2:142–176 each with Al-Fatiha, then Witr (87, 109, 112) with qunut quoting 2:201: stopped at 2:176.
+- The next night continues to 2:186, with 112–114 after it.
+- Also covered: several surahs, repeats, skipped short ayahs, recognition losing the imam for 24 ayahs, a 25-minute break, Witr in juz 30 after 84–85, a quotation 10 ayahs after the end, qiyam after midnight, weak and contradictory nights, a short continuation against a long passage elsewhere, nights skipped, corrections and recovery, the old record carried over, caps, unreadable records.
+
+**Tests:** 31 ledger, 13 session, 5 replay (real), 6 on screen, 3 store; 3 existing tests changed (one ayah alone is no longer a stopping point; the hint uses the app's clock).
+
+**Not changed:** recognition, the tracker and its thresholds, the surah lock, the candidate choices, word highlighting, the reading position.
+
+**Limitations:**
+- Witr reciting the surah *right after* the passage (85 then 86) links to it.
+- A night of only 1–2 clear ayahs saves nothing.
+- A skip pending at the very end of a night stops up to 3 ayahs short.
+- The thresholds (3, 40, 10/40) are first values from the rules, not tuned on real nights.
+- Not yet checked on a phone or in a real mosque: a whole night's real recognition, with Isha, Witr and qunut, has never been recorded.

@@ -166,6 +166,8 @@ class ListenController extends Notifier<ListenState> {
     final moved = SurahLock.correct(state.lock, position);
     if (moved != null) _engine?.lock(SurahLock.window(moved));
     _engine?.setPosition(position.verseId);
+    // The user's word is committed evidence for where Taraweeh got to.
+    _progress(position);
     state = state.copyWith(
       lock: moved ?? state.lock,
       track: TrackState(position: position, status: TrackStatus.tracking, confidence: 1),
@@ -267,6 +269,12 @@ class ListenController extends Notifier<ListenState> {
       // gives way to the first position, as an empty reader does.
       if (reader == null || state.displayed == null || (confident && !fatihaExcursion)) reader = shown.surah;
     }
+    // Where Taraweeh got to: committed results only. A preview, a miss, an
+    // unsure result or a prediction (`upcoming`) is not evidence of it.
+    final committed = heard.state.position;
+    if (heard.isFinal && heard.state.evidence && heard.state.status == TrackStatus.tracking && committed != null) {
+      _progress(committed);
+    }
     // A surah lock moves on with the imam into the next surah.
     final followed = SurahLock.follow(state.lock, heard);
     if (followed != null) _engine?.lock(SurahLock.window(followed));
@@ -296,6 +304,11 @@ class ListenController extends Notifier<ListenState> {
         ? next.copyWith(readerSurah: place.surah, readerOnTie: true)
         : next.copyWith(readerOnTie: next.displayed == null && !next.browsing && state.readerOnTie);
   }
+
+  /// Tell the Taraweeh ledger the imam recited [position] (it leaves
+  /// Al-Fatiha out itself).
+  void _progress(Position position) =>
+      ref.read(taraweehLedgerProvider.notifier).observe(position, ref.read(clockProvider)());
 
   /// Word highlighting (developer setting): the newest result decides. One
   /// without a word means the engine is not sure, and the word goes at once;

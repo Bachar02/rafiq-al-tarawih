@@ -199,6 +199,9 @@ class ReaderScreenState extends ConsumerState<ReaderScreen> with WidgetsBindingO
       names: names,
       bookmarked: bookmarks.contains(verse.id),
       noted: ref.read(notesProvider.notifier).noteFor(verse.id) != null,
+      // Taraweeh has been followed, and this is not already where it stopped.
+      offerTaraweehEnd:
+          ref.read(taraweehLedgerProvider).nights.isNotEmpty && ref.read(taraweehPositionProvider)?.verseId != verse.id,
     );
     if (!mounted) return;
     setState(() => _highlighted = null);
@@ -224,6 +227,15 @@ class ReaderScreenState extends ConsumerState<ReaderScreen> with WidgetsBindingO
         await AppRoutes.study(context, verseId: verse.id);
       case ReaderAyahAction.tafsir:
         await AppRoutes.study(context, verseId: verse.id, kind: StudyKind.tafsir);
+      case ReaderAyahAction.taraweehEnded:
+        final progress = ref.read(taraweehLedgerProvider.notifier);
+        final before = progress.correct(verse.id, ref.read(clockProvider)());
+        messenger
+          ..hideCurrentSnackBar()
+          ..showSnackBar(SnackBar(
+            content: Text(l.taraweehEndSet(ref_)),
+            action: SnackBarAction(label: l.undo, onPressed: () => progress.restore(before)),
+          ));
       case null:
         break;
     }

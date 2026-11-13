@@ -478,6 +478,17 @@ class AppLocalizationsEn extends AppLocalizations {
   String get whereTaraweehEnded => 'Where Taraweeh ended';
 
   @override
+  String get taraweehEndedHere => 'Taraweeh ended here';
+
+  @override
+  String get taraweehEndUnknown => 'Not clear from what was heard. Tap an ayah to set it.';
+
+  @override
+  String taraweehEndSet(String place) {
+    return 'Taraweeh ended at $place';
+  }
+
+  @override
   String get today => 'today';
 
   @override

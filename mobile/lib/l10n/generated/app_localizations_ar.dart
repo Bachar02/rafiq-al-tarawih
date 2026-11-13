@@ -478,6 +478,17 @@ class AppLocalizationsAr extends AppLocalizations {
   String get whereTaraweehEnded => 'حيث انتهت التراويح';
 
   @override
+  String get taraweehEndedHere => 'انتهت التراويح هنا';
+
+  @override
+  String get taraweehEndUnknown => 'غير واضح مما سُمع. اضغط على آية لتحديده.';
+
+  @override
+  String taraweehEndSet(String place) {
+    return 'انتهت التراويح عند $place';
+  }
+
+  @override
   String get today => 'اليوم';
 
   @override

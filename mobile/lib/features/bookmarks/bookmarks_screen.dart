@@ -96,6 +96,10 @@ class _BookmarksList extends ConsumerWidget {
     final names = ref.watch(surahNamesProvider);
     final reading = ref.watch(readingPositionProvider);
     final taraweeh = ref.watch(taraweehPositionProvider);
+    // Nights were heard, but none said clearly where Taraweeh stopped: the
+    // last ayah heard opens, to set it from there (the reader's ayah sheet).
+    final lastHeard = ref.watch(taraweehLedgerProvider
+        .select((l) => l.nights.isEmpty || l.nights.last.runs.isEmpty ? null : l.nights.last.runs.last.last));
     final quranOrder = ref.watch(settingsProvider.select((s) => s.bookmarksInQuranOrder));
     final bookmarks = [...ref.watch(bookmarksProvider)];
     if (quranOrder) bookmarks.sort((a, b) => a.verseId.compareTo(b.verseId));
@@ -155,9 +159,15 @@ class _BookmarksList extends ConsumerWidget {
           PlaceTile(
             leading: Icon(Icons.mic_none, color: c.inkSecondary),
             title: l.whereTaraweehEnded,
-            subtitle:
-                '${verseReference(quran.verse(taraweeh.verseId), names)} · ${relativeDay(l, taraweeh.savedAt, now)}',
+            subtitle: '${verseReference(quran.verse(taraweeh.verseId), names)} · ${relativeDay(l, taraweeh.at, now)}',
             onTap: () => open(taraweeh.verseId),
+          )
+        else if (lastHeard != null)
+          PlaceTile(
+            leading: Icon(Icons.mic_none, color: c.inkSecondary),
+            title: l.whereTaraweehEnded,
+            subtitle: l.taraweehEndUnknown,
+            onTap: () => open(lastHeard, mark: false),
           ),
         _Section(l.bookmarksCount(bookmarks.length)),
         if (bookmarks.isEmpty)
