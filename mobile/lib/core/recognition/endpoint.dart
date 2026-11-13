@@ -20,7 +20,7 @@ String? validateServerAddress(String address) {
 Uri listenUri(String address, {Hint? hint}) {
   final base = Uri.parse(_withScheme(address.trim(), 'ws'));
   final query = switch (hint) {
-    SurahHint(:final surah) => {'surah': '$surah'},
+    SurahHint(:final surah) || SurahRange(first: final surah) => {'surah': '$surah'},
     JuzHint(:final juz) => {'juz': '$juz'},
     null => null,
   };

@@ -48,7 +48,7 @@ class _HintSheet extends StatefulWidget {
 
 class _HintSheetState extends State<_HintSheet> {
   late _Mode _mode = switch (widget.current) {
-    SurahHint() => _Mode.surah,
+    SurahHint() || SurahRange() => _Mode.surah,
     JuzHint() => _Mode.juz,
     null => _Mode.none,
   };
@@ -145,6 +145,6 @@ class _HintSheetState extends State<_HintSheet> {
 
 /// Short label for the hint chip.
 String hintLabel(AppLocalizations l, Hint hint, SurahNames names) => switch (hint) {
-      SurahHint(:final surah) => l.hintTonightSurah(names.of(surah)),
+      SurahHint(:final surah) || SurahRange(first: final surah) => l.hintTonightSurah(names.of(surah)),
       JuzHint(:final juz) => l.hintTonightJuz(juz),
     };

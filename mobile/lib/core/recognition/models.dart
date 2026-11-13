@@ -121,6 +121,24 @@ class SurahHint extends Hint {
   int get hashCode => surah.hashCode;
 }
 
+/// Surahs [first] to [last]: what a surah lock covers, the surah and the one
+/// after it, so following the imam over the boundary never gets stuck
+/// (`SurahLock`). The app sends it to engines; it is never a user's hint.
+class SurahRange extends Hint {
+  const SurahRange(this.first, this.last);
+  final int first;
+  final int last;
+
+  @override
+  bool operator ==(Object other) => other is SurahRange && other.first == first && other.last == last;
+
+  @override
+  int get hashCode => Object.hash(first, last);
+
+  @override
+  String toString() => 'SurahRange($first, $last)';
+}
+
 class JuzHint extends Hint {
   const JuzHint(this.juz);
   final int juz;

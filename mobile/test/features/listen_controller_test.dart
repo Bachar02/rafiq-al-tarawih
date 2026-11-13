@@ -167,13 +167,84 @@ void main() {
     test('a lock is sent with every session and kept across restarts', () async {
       controller().lockTo(const SurahHint(55));
       await controller().start();
-      expect(h.engine.locks, [const SurahHint(55)]);
+      expect(h.engine.locks, [const SurahRange(55, 56)], reason: 'the surah and the one after it');
+      expect(state().lock, const SurahHint(55));
       await controller().stop();
       await controller().start();
-      expect(h.engine.locks, [const SurahHint(55)]); // the new engine got it too
+      expect(h.engine.locks, [const SurahRange(55, 56)]); // the new engine got it too
       controller().unlock();
       expect(h.engine.locks.last, isNull);
       expect(state().lock, isNull);
+    });
+
+    group('a surah lock follows the imam into the next surah', () {
+      setUp(() async {
+        await controller().start();
+        h.engine.emit(const EngineReady());
+        controller().lockTo(const SurahHint(2));
+      });
+
+      test('Al-Baqarah, then Aal-Imran: the window moves on with the imam', () {
+        expect(h.engine.locks.last, const SurahRange(2, 3));
+        h.engine.emit(heard(at(2, 286)));
+        expect(state().lock, const SurahHint(2));
+        h.engine.emit(heard(at(3, 2)));
+        expect(state().lock, const SurahHint(3));
+        expect(h.engine.locks.last, const SurahRange(3, 4));
+        expect(state().readerSurah, 3);
+      });
+
+      test('only committed, confident evidence of the recited ayah moves it', () {
+        h.engine.emit(heard(at(3, 2), isFinal: false)); // a preview
+        h.engine.emit(heard(at(3, 2, status: TrackStatus.uncertain))); // unsure
+        h.engine.emit(heard(TrackState(status: TrackStatus.uncertain, position: pos(2, 280), pending: pos(3, 2))));
+        h.engine.emit(heard(at(3, 2, status: TrackStatus.uncertain, confidence: 0, evidence: false))); // a miss
+        h.engine.emit(heard(at(2, 286, upcoming: pos(3, 1)))); // the next ayah predicted, not heard
+        expect(state().lock, const SurahHint(2));
+        expect(h.engine.locks, [const SurahRange(2, 3)]);
+      });
+
+      test('it never moves back, nor further than the next surah', () {
+        h.engine.emit(heard(at(3, 2)));
+        h.engine.emit(heard(at(2, 286))); // back over the boundary: the lock stays on
+        expect(state().lock, const SurahHint(3));
+        h.engine.emit(heard(at(5, 3))); // far ahead (outside the window)
+        expect(state().lock, const SurahHint(3));
+        expect(h.engine.locks, [const SurahRange(2, 3), const SurahRange(3, 4)]);
+      });
+
+      test('"the imam is here" in another surah moves the lock there', () {
+        controller().setPosition(pos(4, 10));
+        expect(state().lock, const SurahHint(4));
+        expect(h.engine.locks.last, const SurahRange(4, 5));
+        expect(h.engine.positions.last, pos(4, 10).verseId);
+        controller().setPosition(pos(1, 4)); // Al-Fatiha: allowed anyway, the lock stays
+        controller().setPosition(pos(4, 12)); // the locked surah: stays
+        expect(state().lock, const SurahHint(4));
+        expect(h.engine.locks.length, 2);
+      });
+
+      test('Undo restores the lock before; unlock searches everywhere', () {
+        final previous = controller().lockTo(const SurahHint(18));
+        expect(previous, const SurahHint(2));
+        controller().restoreLock(previous);
+        expect(state().lock, const SurahHint(2));
+        expect(h.engine.locks.last, const SurahRange(2, 3));
+        controller().restoreLock(null);
+        expect(state().lock, isNull);
+        expect(h.engine.locks.last, isNull);
+        h.engine.emit(heard(at(3, 2)));
+        expect(state().lock, isNull, reason: 'no lock: nothing to follow');
+      });
+    });
+
+    test('a juz lock is sent as it is and does not follow', () async {
+      await controller().start();
+      h.engine.emit(const EngineReady());
+      controller().lockTo(const JuzHint(30));
+      expect(h.engine.locks.last, const JuzHint(30));
+      h.engine.emit(heard(at(3, 2)));
+      expect(state().lock, const JuzHint(30));
     });
 
     test('"the imam is here" shows at once and reaches the engine', () async {

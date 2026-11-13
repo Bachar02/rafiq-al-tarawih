@@ -1170,3 +1170,18 @@ One final is shown as sure and wrong, before and after alike (Husary, on evidenc
 **Tests:** Python 10 new (an exact tie close by, a misheard word between two copies, a near tie, the refrain, joining on a later copy, every repeated verse, unique ayahs unchanged, a far jump into a refrain, after lost and al-Fatiha, a far jump on distinct words); Dart the same 10; 5 new golden scenarios (32 steps), Python and Dart equal on all 2,228 states. 189 Python and 557 Flutter tests; every gate and check passes.
 
 **For Phase 2:** a tie that stays in one surah means "this surah, ayah undecided": show the surah and wait, never a chip per copy. The state carries a pending verse and at most 3 alternatives; telling "one surah" apart for sure needs the full tied set, a field Phase 2 should add rather than infer from 3.
+
+## 36. A surah lock that follows the imam (2026-11-13, not committed)
+
+**The fault:** *Stay on this surah* locked recognition to that surah alone (`Tracker.lock`, a hard range), and nothing ever moved it. When the imam recited on into the next surah, which a juz-a-night Taraweeh does most nights, every candidate was outside the range: the chunks became misses and the tracker got lost on the last ayah of the locked surah.
+
+**The lock now** (`lib/features/listen/surah_lock.dart`, all in the app; the tracker is unchanged):
+- **Covers the surah and the one after it.** The app sends engines a `SurahRange` (114 alone for An-Nas); `ListenState.lock` stays the chosen surah, so the labels and the ayah sheet are as before. A juz lock is sent as it is and does not follow.
+- **Moves on** one surah when a committed result (a final, `tracking`, with evidence) places the recited ayah in the next surah. Never on a preview, a miss, an unsure result, a pending far jump or `upcoming` (a prediction), and never back.
+- **"The imam is here"** in another surah moves the lock there first (al-Fatiha excepted, as it is always allowed).
+- **Undo:** locking shows "Staying on {surah}, then the next surah" with Undo, back to the lock before (or none). The header's lock button still unlocks in one tap.
+- **The development server** accepts `{"type": "lock", "surah": 2, "through": 3}`.
+
+**Tests:** 9 against the real tracker (`test/features/surah_lock_tracker_test.dart`): Al-Baqarah into Aal-Imran (the same trajectory as with no lock at all; the old lock stays stuck in Al-Baqarah), three boundaries in a row (112 to 114), al-Fatiha at the boundary, 3:2 against 2:255 (the same opening words, both in the window) on either side of the boundary, a far jump into the next surah, outside the window, "the imam is here" elsewhere and unlocking, and tracking with no lock. 6 in the controller (what moves the window and what does not, never back, correction, Undo, a juz lock), the protocol, the server, and the screen's lock, Undo and unlock. 572 Flutter and 190 Python tests; every gate and check passes. Two strings in three languages (one reworded).
+
+**Not changed:** the recognition engine, the Taraweeh position, the candidate UI.

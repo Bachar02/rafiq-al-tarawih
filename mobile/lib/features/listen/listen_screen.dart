@@ -162,7 +162,22 @@ class _ListenScreenState extends ConsumerState<ListenScreen> with WidgetsBinding
     final surah = state.displayed?.surah ?? state.readerSurah;
     if (surah == null) return;
     final lock = await showLockSheet(context, surahName: ref.read(surahNamesProvider).of(surah));
-    if (lock == true) controller.lockTo(SurahHint(surah));
+    if (lock == true) _locked(surah);
+  }
+
+  /// Lock to [surah] (and the surah after it, following the imam), and say
+  /// so with Undo: back to the lock before, or none.
+  void _locked(int surah) {
+    final controller = ref.read(listenControllerProvider.notifier);
+    final previous = controller.lockTo(SurahHint(surah));
+    if (!mounted) return;
+    final l = context.l10n;
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(
+        content: Text(l.lockedSnack(ref.read(surahNamesProvider).of(surah))),
+        action: SnackBarAction(label: l.undo, onPressed: () => controller.restoreLock(previous)),
+      ));
   }
 
   /// Tapping an ayah: "the imam is here", or lock/unlock the surah.
@@ -180,7 +195,7 @@ class _ListenScreenState extends ConsumerState<ListenScreen> with WidgetsBinding
       case AyahAction.imamIsHere:
         controller.setPosition(Position(verseId: verse.id, surah: verse.surah, ayah: verse.ayah));
       case AyahAction.lockSurah:
-        controller.lockTo(SurahHint(verse.surah));
+        _locked(verse.surah);
       case AyahAction.unlock:
         controller.unlock();
       case null:
@@ -428,7 +443,7 @@ class _TopBar extends StatelessWidget {
     final lock = state.lock;
     final showLock = lock != null || (status.active && state.displayed != null);
     final lockLabel = switch (lock) {
-      SurahHint(:final surah) => names.of(surah),
+      SurahHint(:final surah) || SurahRange(first: final surah) => names.of(surah),
       JuzHint(:final juz) => l.juzNumber(juz),
       null => null,
     };

@@ -88,6 +88,7 @@ void main() {
 
   test('control messages', () {
     expect(lockMessage(const SurahHint(55)), '{"type":"lock","surah":55}');
+    expect(lockMessage(const SurahRange(2, 3)), '{"type":"lock","surah":2,"through":3}');
     expect(lockMessage(const JuzHint(30)), '{"type":"lock","juz":30}');
     expect(lockMessage(null), '{"type":"unlock"}');
     expect(positionMessage(4927), '{"type":"position","verse_id":4927}');

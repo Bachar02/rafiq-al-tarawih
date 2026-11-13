@@ -323,7 +323,12 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get lockExplanation =>
-      'Rafiq ne cherchera pas dans d’autres sourates tant que vous ne libérez pas. Al-Fatiha reste reconnue à chaque rakʿa.';
+      'Rafiq ne cherche que dans cette sourate et la suivante, et avance avec l’imam. Al-Fatiha reste reconnue à chaque rakʿa.';
+
+  @override
+  String lockedSnack(String surah) {
+    return 'Reste sur $surah, puis la sourate suivante';
+  }
 
   @override
   String get hintSheetTitle => 'Point de départ de ce soir';

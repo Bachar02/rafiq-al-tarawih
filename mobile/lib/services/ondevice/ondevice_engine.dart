@@ -124,6 +124,7 @@ class OnDeviceRecognitionEngine implements RecognitionEngine {
   /// A hint's verse range (first, last).
   (int, int)? _range(Hint? scope) => switch (scope) {
         SurahHint(:final surah) => (quran.surah(surah).firstVerseId, quran.surah(surah).lastVerseId),
+        SurahRange(:final first, :final last) => (quran.surah(first).firstVerseId, quran.surah(last).lastVerseId),
         JuzHint(:final juz) => (quran.juzs.start(juz), quran.juzs.end(juz)),
         null => null,
       };

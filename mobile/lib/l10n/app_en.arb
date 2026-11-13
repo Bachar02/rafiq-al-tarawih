@@ -261,7 +261,15 @@
     }
   },
   "stayOnThisSurah": "Stay on this surah",
-  "lockExplanation": "Rafiq will not look in other surahs until you unlock. Al-Fatiha is still recognised at each rakʿah.",
+  "lockExplanation": "Rafiq looks only in this surah and the one after it, and moves on with the imam. Al-Fatiha is still recognised at each rakʿah.",
+  "lockedSnack": "Staying on {surah}, then the next surah",
+  "@lockedSnack": {
+    "placeholders": {
+      "surah": {
+        "type": "String"
+      }
+    }
+  },
   "hintSheetTitle": "Tonight's starting point",
   "hintSheetExplanation": "Optional. Rafiq finds the imam without it; a hint only makes the first ayah appear sooner.",
   "hintSheetRestarts": "Changing it restarts listening.",

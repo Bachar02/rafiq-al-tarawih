@@ -78,8 +78,12 @@ def parse_control(message: dict, quran) -> Control:
     if kind == "lock":
         surah, juz = message.get("surah"), message.get("juz")
         if isinstance(surah, int) and 1 <= surah <= 114:
-            s = quran.surah(surah)
-            return Control("lock", s.first_verse_id, s.last_verse_id)
+            # "through": the last surah of the range (the app locks a surah and
+            # the one after it, so following the imam never stops at the end).
+            through = message.get("through", surah)
+            if not isinstance(through, int) or not surah <= through <= 114:
+                raise ValueError("lock through needs a surah from the first one to 114")
+            return Control("lock", quran.surah(surah).first_verse_id, quran.surah(through).last_verse_id)
         if isinstance(juz, int) and 1 <= juz <= 30:
             first, last = quran.juz_span(juz)
             return Control("lock", first, last)

@@ -322,7 +322,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get lockExplanation =>
-      'Rafiq will not look in other surahs until you unlock. Al-Fatiha is still recognised at each rakʿah.';
+      'Rafiq looks only in this surah and the one after it, and moves on with the imam. Al-Fatiha is still recognised at each rakʿah.';
+
+  @override
+  String lockedSnack(String surah) {
+    return 'Staying on $surah, then the next surah';
+  }
 
   @override
   String get hintSheetTitle => 'Tonight\'s starting point';
