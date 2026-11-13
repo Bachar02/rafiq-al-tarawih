@@ -238,6 +238,7 @@ class OnDeviceRecognitionEngine implements RecognitionEngine {
         pending: _position(h.pending),
         alternatives: [for (final a in h.alternatives) _position(a)!],
         upcoming: _position(h.upcoming),
+        evidence: h.evidence,
       );
 
   void _fail(String message, FailureKind kind) {
@@ -315,6 +316,7 @@ class _Heard {
     required this.pending,
     required this.alternatives,
     required this.upcoming,
+    required this.evidence,
     this.wordVerse,
     this.wordIndex,
   });
@@ -333,6 +335,7 @@ class _Heard {
         pending: h.state.pendingVerse,
         alternatives: h.state.alternatives,
         upcoming: h.state.upcomingVerse,
+        evidence: h.state.evidence,
       );
 
   final String text;
@@ -346,6 +349,7 @@ class _Heard {
   final int? pending;
   final List<int> alternatives;
   final int? upcoming;
+  final bool evidence;
   final int? wordVerse;
   final int? wordIndex;
 }

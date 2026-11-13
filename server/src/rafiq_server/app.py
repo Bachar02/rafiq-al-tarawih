@@ -92,6 +92,7 @@ class Engine:
             pending=self.position(s.pending_verse),
             alternatives=[self.position(v) for v in s.alternatives],
             upcoming=self.position(s.upcoming_verse),
+            evidence=s.evidence,
             candidates=[self.candidate(c) for c in s.candidates[:top]],
         )
 

@@ -59,6 +59,7 @@ class ListenController extends Notifier<ListenState> {
       readerSurah: state.readerSurah,
       browsing: state.browsing,
       track: state.track,
+      evidenceStatus: state.evidenceStatus,
       anchor: state.anchor,
       lastSure: state.lastSure,
       startedAt: DateTime.now(),
@@ -155,6 +156,7 @@ class ListenController extends Notifier<ListenState> {
     _engine?.setPosition(position.verseId);
     state = state.copyWith(
       track: TrackState(position: position, status: TrackStatus.tracking, confidence: 1),
+      evidenceStatus: TrackStatus.tracking,
       readerSurah: position.surah,
       browsing: false,
       // The user said where the imam is, Al-Fatiha included: show exactly that.
@@ -257,6 +259,8 @@ class ListenController extends Notifier<ListenState> {
       readerSurah: reader,
       phase: state.phase == SessionPhase.stopping ? null : SessionPhase.listening,
       track: heard.state,
+      // A miss keeps the last verdict with evidence (ListenState.trackStatus).
+      evidenceStatus: heard.state.evidence ? heard.state.status : state.evidenceStatus,
       transcript: transcript,
       livePartial: heard.isFinal ? null : line,
       detectedAfter: firstDetection ? now.difference(state.startedAt!) : state.detectedAfter,

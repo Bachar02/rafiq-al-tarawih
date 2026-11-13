@@ -1130,3 +1130,43 @@ Same files (15 runs) and other bitrate (7 runs) agree: useful 53.9% and 54.5% wi
 - On a phone: speed (a copy and a partial's letters per transcript, expected well under 1 ms), whether partials stay on, the highlight in a dim hall, TalkBack, battery. The 1.5 s rests on laptop recordings (§32).
 - The screenshot goldens (Docker was not running). The new Developer rows are last in their group; run `mobile/tool/goldens.sh check`.
 - The mushaf pages layout has no word highlight (Taraweeh mode uses the scrolling reader).
+
+## 34. A miss is not doubt: the recognition evidence signal (2026-11-13, not committed)
+
+**Why:** after testing on a phone, the owner saw the app hesitate. Replaying the 40 recorded laptop Whisper runs (`eval/results/transcripts`) through the tracker showed why: a chunk that matches no Quran (a breath's first word, "āmīn", a takbīr) returned `uncertain` with confidence 0, and the screen took it as doubt ("Not sure", LAST SURE, the numeral dimmed). Of the uncertain finals that had a position, 147 of 158 were such misses, and 157 of 158 showed the right ayah. Confidence 0 cannot be the signal: an exact tie between rivals (the refrain of Ash-Shuʿarāʾ) also has confidence 0.
+
+**What changed:**
+- **The engine says it** (`rafiq.tracking.TrackState.evidence`, the Dart `TrackerState.evidence`): false for a miss, true for every result that matched (and for "the imam is here"). Nothing else in the tracker changed: the 2,196 golden states are identical in every earlier field, and the text, detection and word gates give the same numbers.
+- **The wire and the isolate carry it:** `StateOut.evidence` (the server), `TrackState.evidence` (the app; a server that does not send it counts as evidence), and the on-device engine's messages.
+- **The screen reads it** (`ListenState.trackStatus`): after a miss, the last verdict with evidence stands. Doubt on evidence (rivals, an unconfirmed far jump, a tie) still shows "Not sure"; four misses in a row are still `lost`; misses confirm nothing, so "No new match yet" still comes after 10 s. `track` keeps the engine's own verdict. Word highlighting (developer setting) still follows the engine's status, as evaluated in §32.
+
+**Effect on the same recordings** (laptop model, studio audio with simulated rooms, after the first detection; the ayah shown is unchanged):
+
+| | "Not sure" on screen | Sure ↔ unsure flips |
+|---|---|---|
+| Partials + finals, before → after | 42.4% → 6.0% | 21.0 → 3.0 a minute |
+| Finals only, before → after | 25.7% → 2.9% | 4.0 → 0.3 a minute |
+
+One final is shown as sure and wrong, before and after alike (Husary, on evidence): a tracker error, not a held miss.
+
+**Tests:** Python 8 new (a miss, silence and one word that fits anywhere; misses until lost; a previewed miss; idle; an exact tie; a far rival; the user's position; the server field). Dart 13 new (the same engine cases, the golden field, the protocol, the on-device engine, the screen's rule, the controller). 547 Flutter tests, 179 Python (data, engine, server); ruff, format, analyze, the three gates, every `--check` and the Android debug build pass. **Not run:** the screenshot goldens (Docker was not running); no widget changed, and the one golden built on `uncertain` uses an evidence-bearing state.
+
+**Not changed:** the candidates, the lock, the Taraweeh position (§35 onward, as agreed).
+
+## 35. Repeated text: an unconfirmed position is decided by its own text (2026-11-13, not committed)
+
+**The fault:** a lone Ar-Rahman refrain at cold start showed 55:13 at confidence 0.865, though the refrain is 31 ayahs. The tracker asks the matcher for 8 candidates; ties go to the earliest copies (55:13…55:30), and those 8 lie within the 80 words the rival test calls "near" (a plausible repeat). No rival, so the margin was the best score itself. Across the Quran, 436 of 9,860 repeated 4–7-word phrases were shown at cold start, every one repeated within a single surah (109:3/109:5, 84:2/84:5, 18:89/18:92, …). Joining on each copy of each of them, the first ayah shown was wrong 31% of the time. The surah was always right; the ayah was not. IDF cannot tell these phrases from unique ones (the distributions overlap); a second ayah scoring as well tells them apart perfectly.
+
+**The rule** (`TrackerConfig.tie_margin` = 0.05, Python and Dart alike): while a position is unconfirmed (cold start, or a far jump awaiting confirmation), another ayah scoring within 0.05 of the best is a rival however close, and confirming needs real confidence (the cold-start rule, now for far jumps too). Nothing changes where the screen already is. No surah is special-cased.
+
+**Results:**
+- **Repeated text:** on the 937 joins, no first ayah shown (pending, with the other copies as alternatives) instead of 286 wrong; right by the second chunk 93% (74% before). No repeated verse or phrase is shown at cold start.
+- **Unique text:** cold start on 10,190 unique ayahs and windows: 9,233 shown, all right (before: 9,244 shown, 5 wrong; the other 6 no longer shown fit two places exactly, such as 102:3 inside 102:4).
+- **Text benchmark:** wrong jumps per 100 steps 0.03 → 0.00 (clean), 0.06 → 0.03 (light, heavy), 0.03 → 0.00 (with rakʿahs); exact 0.945 → 0.944 with rakʿahs, light.
+- **Detection benchmark** (300 joins a row): unchanged, 0% first-shown-wrong.
+- **The 40 recordings:** every final, accuracy and wrong jump unchanged; per-room medians unchanged. **4 runs detect later** (+0.5, +1.0, +1.0, +3.7 s): their passages start at the earlier of two nearby copies (22:30 and 22:32 open "ذلك ومن يعظم", 7:29 and 7:31 share "عند كل مسجد"), and the old tracker flashed the earliest copy on a preview before the words differed. In the +3.7 s run that guess vanished again at the next final; both trackers confirm 22:30 at the same moment.
+- **Remaining:** 8 wrong displays over the 937 joins, all near-duplicates in Ar-Rahman (55:58 like 55:22), not ties.
+
+**Tests:** Python 10 new (an exact tie close by, a misheard word between two copies, a near tie, the refrain, joining on a later copy, every repeated verse, unique ayahs unchanged, a far jump into a refrain, after lost and al-Fatiha, a far jump on distinct words); Dart the same 10; 5 new golden scenarios (32 steps), Python and Dart equal on all 2,228 states. 189 Python and 557 Flutter tests; every gate and check passes.
+
+**For Phase 2:** a tie that stays in one surah means "this surah, ayah undecided": show the surah and wait, never a chip per copy. The state carries a pending verse and at most 3 alternatives; telling "one surah" apart for sure needs the full tied set, a field Phase 2 should add rather than infer from 3.

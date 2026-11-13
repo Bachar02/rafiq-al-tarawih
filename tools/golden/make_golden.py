@@ -96,6 +96,7 @@ def state_json(st) -> list:
         list(st.alternatives),
         st.upcoming_verse,
         [[c.start, c.end, c.score] for c in st.candidates[:3]],
+        st.evidence,
     ]
 
 
@@ -164,6 +165,34 @@ def tracker_cases() -> list[dict]:
             + [{"text": st.text, "final": True} for st in bayyinah[6:]],
         )
     )
+    # Repeated text (PLAN.md §35): an unconfirmed position is decided by its own text.
+    refrain = "فبأي آلاء ربكما تكذبان"
+    duha = ["والضحى والليل إذا سجى", "ما ودعك ربك وما قلى"]
+    after_refrain = ["يسأله من في السماوات والأرض كل يوم هو في شأن", "سنفرغ لكم أيها الثقلان"]  # 55:29, 55:31
+
+    def finals(*texts: str) -> list[dict]:
+        return [{"text": t, "final": True} for t in texts]
+
+    scenarios += [
+        (
+            "repeated: a refrain at cold start",
+            [{"text": refrain, "final": False}]
+            + finals(refrain, refrain, after_refrain[0], refrain, after_refrain[1]),
+        ),
+        ("repeated: a far jump into a refrain", finals(*duha, refrain, refrain, *after_refrain)),
+        ("repeated: a near tie", finals(refrain, "فيهما عينان تجريان فبأي آلاء", "فيهما من كل فاكهة زوجان")),
+        (
+            "repeated: exact ties close by",
+            finals("ثم أتبع سببا", "حتى إذا بلغ بين السدين وجد من دونهما قوما")
+            + [{"reset": True}]
+            + finals("ولا أنتم عابدون ما أعبد", "لكم دينكم ولي دين", "وإن مع العسر يسرا"),
+        ),
+        (
+            "repeated: lost, al-Fatiha, then a refrain",
+            finals(*duha, *["zzz"] * 4, "الحمد لله رب العالمين", "الرحمن الرحيم مالك يوم الدين")
+            + finals(refrain, refrain, *after_refrain),
+        ),
+    ]
     cases = []
     for name, steps in scenarios:
         tracker = Tracker(matcher)

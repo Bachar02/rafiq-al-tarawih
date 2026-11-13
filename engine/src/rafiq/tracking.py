@@ -45,6 +45,13 @@ class TrackerConfig:
     confirm: int = 2  # consecutive wins a far jump needs before it is displayed
     cold_start_confidence: float = 0.3  # confidence needed to show the very first position
     alternative_margin: float = 0.5  # rivals scoring within this of the best are reported as alternatives
+    # An unconfirmed position (cold start, far jump) must be decided by its own
+    # text: another ayah scoring within this of the best is a rival even when
+    # close by. Repeated text clusters within a surah (31 copies of one ayah in
+    # Ar-Rahman, 109:3 and 109:5), and closeness alone made the earliest copy
+    # look unopposed. 0.05 was chosen on the text, detection and recorded
+    # benchmarks (PLAN.md §35): 0.10 begins to cost the far room.
+    tie_margin: float = 0.05
     # How much the newest chunk's own match quality scales confidence (1 = fully,
     # 0 = confidence comes from the margin over rivals alone). Below 1, a strong
     # history is not wiped out by one short chunk ("واقيموا"). 0.5 was chosen on
@@ -108,6 +115,12 @@ class TrackState:
     # Lets the screen move on the moment he pauses instead of waiting for the
     # first words of the next ayah to be recognised.
     upcoming_verse: int | None = None
+    # This chunk matched the Quran and moved the hypotheses. False for a miss
+    # (silence, noise, a word or two that fits anywhere): the state is the
+    # previous one, held, and says nothing new about the position. A miss is
+    # not doubt; confidence 0 cannot tell them apart, as an exact tie between
+    # rivals also has confidence 0.
+    evidence: bool = True
 
     @property
     def showing(self) -> int | None:
@@ -142,7 +155,7 @@ class Tracker:
         self._pending: int | None = None
         self._pending_count = 0
         self._misses = 0
-        self._state = TrackState(None, None, IDLE, 0.0)
+        self._state = TrackState(None, None, IDLE, 0.0, evidence=False)
 
     def hint(self, first_verse: int | None, last_verse: int | None = None) -> None:
         """Optional user hint: "tonight the imam is in this surah / juz".
@@ -249,7 +262,9 @@ class Tracker:
                 status = LOST
             else:
                 status = UNCERTAIN
-            self._state = replace(self._state, status=status, candidates=candidates, confidence=0.0)
+            self._state = replace(
+                self._state, status=status, candidates=candidates, confidence=0.0, evidence=False
+            )
             return self._state
 
         self._misses = 0
@@ -367,34 +382,46 @@ class Tracker:
     def _display(self, candidates: list[Match]) -> TrackState:
         cfg = self.config
         best = self._hyps[0]
-        rivals = [h for h in self._hyps[1:] if not self._is_near(best.end, h.end)
-                  and not self._is_near(h.end, best.end)]  # fmt: skip
+        # Where the screen already is: onward or a repeat from it, al-Fatiha,
+        # or back from al-Fatiha. Anywhere else (cold start, a far jump) is
+        # unconfirmed, and must be decided by this text alone.
+        settled = self._shown is not None and (
+            self._is_near(self._shown, best.end)
+            or self._in_excursion(best.end - 1)
+            or (self._shown_anchor is not None and self._is_near(self._shown_anchor, best.end))
+        )
+        best_verse = self.index.verse_at(best.end - 1)
+
+        def rival(h: Hypothesis) -> bool:
+            if not self._is_near(best.end, h.end) and not self._is_near(h.end, best.end):
+                return True
+            # Unconfirmed: another ayah that fits as well is a rival, however
+            # close (a phrase repeated a few ayahs on is not the same place).
+            return (
+                not settled
+                and self.index.verse_at(h.end - 1) != best_verse
+                and best.score - h.score <= cfg.tie_margin
+            )
+
+        rivals = [h for h in self._hyps[1:] if rival(h)]
         margin = best.score - rivals[0].score if rivals else best.score
         quality = 1.0 - cfg.emission_weight * (1.0 - min(best.emission, 1.0))
         confidence = quality * (1.0 - math.exp(-2.0 * max(margin, 0.0)))
 
-        if self._shown is None:
-            # Cold start: show nothing rather than a guess. A short first chunk
-            # ("الحمد لله رب العالمين") is ambiguous, so it needs either high
-            # confidence or the next chunk to agree.
-            accept = confidence >= cfg.cold_start_confidence
-        else:
-            accept = (
-                self._is_near(self._shown, best.end)
-                or self._in_excursion(best.end - 1)
-                or (self._shown_anchor is not None and self._is_near(self._shown_anchor, best.end))
-            )
+        # Cold start: show nothing rather than a guess. A short first chunk
+        # ("الحمد لله رب العالمين") is ambiguous, so it needs either high
+        # confidence or the next chunk to agree.
+        accept = confidence >= cfg.cold_start_confidence if self._shown is None else settled
         if not accept:
             if self._pending is not None and self._is_near(self._pending, best.end):
                 self._pending_count += 1
             else:
                 self._pending_count = 1
             self._pending = best.end
-            accept = self._pending_count >= cfg.confirm
-            if self._shown is None:
-                # Agreement only counts if it says something: two equally
-                # ambiguous chunks (a repeated refrain) confirm nothing.
-                accept = accept and confidence >= cfg.cold_start_confidence / 3
+            # Agreement only counts if it says something: two equally ambiguous
+            # chunks (copies of a repeated phrase) confirm nothing, at cold
+            # start or for a far jump.
+            accept = self._pending_count >= cfg.confirm and confidence >= cfg.cold_start_confidence / 3
 
         if accept:
             if self._in_excursion(best.end - 1):

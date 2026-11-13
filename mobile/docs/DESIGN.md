@@ -209,11 +209,17 @@ sound → Al-Fatiha → Following. Every state differs in marker shape *and* wor
 | ayah 1:x inside another surah | Al-Fatiha | filled | imam's surah and last ayah kept |
 | app-inferred: sound, no confirmed update ≥ 10 s | No new match yet | hollow | stays `ink` |
 | app-inferred: mic below the quiet level ≥ 10 s | Little sound | hollow | stays `ink` |
-| `uncertain` | Not sure | hollow | LAST SURE, dimmed, number held |
+| `uncertain` on evidence (rivals, an unconfirmed far jump, a tie) | Not sure | hollow | LAST SURE, dimmed, number held |
+| a miss (`evidence: false`: audio that matched no Quran) | the last state with evidence stands | | |
 | `lost` | Not matching the Quran | hollow | LAST SURE, dimmed, number held |
 | reconnecting (server build) | Reconnecting… | hollow | kept |
 | paused / error | (the Notice speaks) | — | kept |
 | `pending` | nothing: unconfirmed guesses are never shown | | |
+
+A miss is no news, not doubt: a breath's first word, "āmīn" or a takbīr matches nothing,
+and the engine says so (`TrackState.evidence`), so the screen keeps its last verdict
+(`ListenState.trackStatus`). Misses confirm nothing either: after 10 s of them, No new match
+yet. Four in a row are `lost`.
 
 The 10-second windows and the quiet level (`quietLevel`, `inferredStateAfter` in
 `listen_state.dart`) are uncalibrated starting values.

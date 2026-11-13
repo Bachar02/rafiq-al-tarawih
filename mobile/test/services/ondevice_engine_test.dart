@@ -127,6 +127,20 @@ void main() {
     expect(events.last, isA<EngineDone>());
   });
 
+  test('a breath that matched no Quran arrives as a miss: the position held, no evidence', () async {
+    // 93:2 and 93:3, then a breath of "āmīn", then 93:4. (93:1 is one word: itself a miss.)
+    final texts = [duha[1], duha[2], 'آمين', duha[3]];
+    final heard = (await run(engine(scripted(texts)), [
+      for (var i = 0; i < texts.length; i++) ...[tone(1.6), silence(0.8)],
+    ]))
+        .whereType<Heard>()
+        .toList();
+    expect([for (final h in heard) h.state.evidence], [true, true, false, true]);
+    expect(heard[2].state.position, heard[1].state.position);
+    expect(heard[2].state.status, TrackStatus.uncertain);
+    expect(heard[3].state.status, TrackStatus.tracking);
+  });
+
   test('partials preview the breath under way; only finals commit', () async {
     final texts = <String>[];
     for (final t in duha) {

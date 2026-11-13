@@ -44,7 +44,8 @@ enum DisplayStatus {
   /// App-inferred: the microphone has picked up very little for a while.
   littleSound,
 
-  /// Engine `uncertain`.
+  /// Engine `uncertain` on evidence (rivals, an unconfirmed far jump). A miss
+  /// is not doubt: [ListenState.trackStatus].
   notSure,
 
   /// Engine `lost`: several chunks in a row matched no Quran.
@@ -81,7 +82,7 @@ enum DisplayStatus {
         break;
     }
     if (!held) return listening;
-    switch (s.track.status) {
+    switch (s.trackStatus) {
       case TrackStatus.lost:
         return notMatching;
       case TrackStatus.uncertain:
@@ -97,7 +98,7 @@ enum DisplayStatus {
     if (quiet) return littleSound;
     // A position carried over from before this session is held, not
     // confirmed: it waits for the engine like any other.
-    if (s.confirmedAt == null || s.track.status != TrackStatus.tracking) return listening;
+    if (s.confirmedAt == null || s.trackStatus != TrackStatus.tracking) return listening;
     if (s.inFatihaExcursion) return fatiha;
     return following;
   }
