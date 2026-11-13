@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:rafiq/app/providers.dart';
 import 'package:rafiq/core/recognition/models.dart';
+import 'package:rafiq/features/listen/display_status.dart';
 import 'package:rafiq/features/listen/listen_controller.dart';
 import 'package:rafiq/features/listen/listen_state.dart';
 
@@ -273,6 +274,41 @@ void main() {
       h.audio.push(Float32List.fromList(List.filled(1600, 0.4)));
       await pumpEventQueue();
       expect(state().lastSoundAt, isNotNull);
+    });
+
+    test('a miss (no evidence) keeps Following; genuine doubt still shows', () async {
+      await controller().start();
+      h.engine.emit(const EngineReady());
+      h.engine.emit(heard(at(93, 3)));
+      final confirmedAt = state().confirmedAt;
+      DisplayStatus now() => DisplayStatus.of(state(), DateTime.now());
+      expect(now(), DisplayStatus.following);
+
+      // A breath's first word, previewed, then a final that matched nothing.
+      final miss = at(93, 3, status: TrackStatus.uncertain, confidence: 0, evidence: false);
+      h.engine.emit(heard(miss, isFinal: false, text: 'الم'));
+      expect(now(), DisplayStatus.following);
+      h.engine.emit(heard(miss, text: 'آمين'));
+      expect(now(), DisplayStatus.following);
+      expect(state().track.status, TrackStatus.uncertain, reason: 'the engine verdict is kept as it came');
+      expect(state().confirmedAt, confirmedAt, reason: 'a miss confirms nothing');
+      expect(state().displayed, pos(93, 3));
+
+      // Evidence for a far rival: doubt, and a following miss keeps it.
+      h.engine.emit(heard(TrackState(
+        status: TrackStatus.uncertain,
+        position: pos(93, 3),
+        confidence: 0.2,
+        pending: pos(2, 255),
+      )));
+      expect(now(), DisplayStatus.notSure);
+      h.engine.emit(heard(miss));
+      expect(now(), DisplayStatus.notSure);
+
+      // "The imam is here" is evidence too.
+      controller().setPosition(pos(93, 4));
+      h.engine.emit(heard(at(93, 4, status: TrackStatus.uncertain, confidence: 0, evidence: false)));
+      expect(now(), DisplayStatus.following);
     });
 
     test('a new session keeps the held position but not its freshness', () async {

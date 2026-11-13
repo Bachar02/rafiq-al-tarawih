@@ -21,6 +21,7 @@ void main() {
     int? sound = 0,
     Position? anchor,
     Position? lastSure,
+    TrackStatus? evidenceStatus,
   }) =>
       ListenState(
         phase: SessionPhase.listening,
@@ -30,6 +31,7 @@ void main() {
         lastSoundAt: sound == null ? null : after(sound),
         anchor: anchor,
         lastSure: lastSure,
+        evidenceStatus: evidenceStatus,
       );
 
   group('DisplayStatus.of', () {
@@ -105,6 +107,59 @@ void main() {
       expect(DisplayStatus.of(const ListenState(), t0), DisplayStatus.ready);
       expect(DisplayStatus.of(ListenState(track: at(93, 3)), t0), DisplayStatus.stopped);
       expect(DisplayStatus.stopped.marker(held: true), MarkerFill.hollow);
+    });
+  });
+
+  group('a miss is not doubt', () {
+    // The engine holding 93:3 after audio that matched no Quran.
+    final miss = at(93, 3, status: TrackStatus.uncertain, confidence: 0, evidence: false);
+
+    test('after following: still Following, numeral in ink, filled marker', () {
+      final state = listening(track: miss, evidenceStatus: TrackStatus.tracking, lastSure: pos(93, 3));
+      final s = DisplayStatus.of(state, after(2));
+      expect(s, DisplayStatus.following);
+      expect(s.engineUnsure, isFalse);
+      expect(s.marker(held: true), MarkerFill.filled);
+      expect(state.displayed, pos(93, 3));
+    });
+
+    test('after genuine doubt: the doubt stands', () {
+      final state = listening(track: miss, evidenceStatus: TrackStatus.uncertain);
+      expect(DisplayStatus.of(state, after(2)), DisplayStatus.notSure);
+    });
+
+    test('an exact tie is doubt, though its confidence is 0 like a miss', () {
+      final tie = at(93, 3, status: TrackStatus.uncertain, confidence: 0);
+      final state = listening(track: tie, evidenceStatus: TrackStatus.uncertain);
+      expect(DisplayStatus.of(state, after(2)), DisplayStatus.notSure);
+    });
+
+    test('competing evidence after following is doubt', () {
+      final rival = TrackState(
+        status: TrackStatus.uncertain,
+        position: pos(93, 3),
+        confidence: 0.2,
+        pending: pos(2, 255),
+        alternatives: [pos(2, 255)],
+      );
+      final state = listening(track: rival, evidenceStatus: TrackStatus.uncertain);
+      expect(DisplayStatus.of(state, after(2)), DisplayStatus.notSure);
+    });
+
+    test('misses in a row until lost: Not matching', () {
+      final lost = at(93, 3, status: TrackStatus.lost, confidence: 0, evidence: false);
+      final s = DisplayStatus.of(listening(track: lost, evidenceStatus: TrackStatus.tracking), after(2));
+      expect(s, DisplayStatus.notMatching);
+      expect(s.engineUnsure, isTrue);
+    });
+
+    test('misses confirm nothing: No new match yet after the window', () {
+      final state = listening(track: miss, evidenceStatus: TrackStatus.tracking, confirmed: 0, sound: 11);
+      expect(DisplayStatus.of(state, after(11)), DisplayStatus.noNewMatch);
+    });
+
+    test('a miss with no earlier verdict says what the engine said', () {
+      expect(DisplayStatus.of(listening(track: miss), after(2)), DisplayStatus.notSure);
     });
   });
 

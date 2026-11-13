@@ -104,6 +104,7 @@ void main() {
           for (final m in got.candidates.take(3)) [m.start, m.end]
         ];
         expect(candidates, [for (final m in want[7] as List) (m as List).sublist(0, 2)], reason: '$where: candidates');
+        expect(got.evidence, want[8], reason: '$where: evidence');
       }
     }
     expect(steps, greaterThan(1500), reason: 'the scenarios are substantial');

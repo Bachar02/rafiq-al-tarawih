@@ -44,6 +44,13 @@ def test_track_replays_chunks(client):
     assert states[-1]["status"] == "tracking"
 
 
+def test_track_says_when_a_chunk_is_no_evidence(client):
+    chunks = ["والضحى والليل إذا سجى", "zzz", "ما ودعك ربك وما قلى"]
+    states = client.post("/api/track", json={"chunks": chunks}).json()["states"]
+    assert [s["evidence"] for s in states] == [True, False, True]
+    assert states[1]["position"] == states[0]["position"]  # a miss holds the position
+
+
 def test_track_with_hint(client):
     chunks = ["فبأي آلاء ربكما تكذبان", "فبأي آلاء ربكما تكذبان"]
     states = client.post("/api/track", json={"chunks": chunks, "hint": {"surah": 55}}).json()["states"]

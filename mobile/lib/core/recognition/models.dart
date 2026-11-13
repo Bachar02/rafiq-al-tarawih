@@ -53,9 +53,10 @@ class TrackState {
     this.pending,
     this.alternatives = const [],
     this.upcoming,
+    this.evidence = true,
   });
 
-  static const empty = TrackState(status: TrackStatus.idle);
+  static const empty = TrackState(status: TrackStatus.idle, evidence: false);
 
   /// The ayah being recited (null until detected).
   final Position? position;
@@ -72,6 +73,12 @@ class TrackState {
 
   /// Set when [position] was recited to its end: the ayah the imam goes to next.
   final Position? upcoming;
+
+  /// The audio matched the Quran. False for a miss (silence, noise, a word or
+  /// two that fits anywhere): the engine holds its previous verdict, and this
+  /// result says nothing new about the position. Not doubt: see
+  /// [ListenState.status]. An engine that does not say is taken as evidence.
+  final bool evidence;
 
   /// The ayah a follow-along screen should highlight now.
   Position? get showing => upcoming ?? position;

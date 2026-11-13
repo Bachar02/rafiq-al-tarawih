@@ -4,7 +4,7 @@ import pytest
 
 from rafiq import evaluation
 from rafiq.simulate import NoiseConfig, Step, simulate
-from rafiq.tracking import IDLE, LOST, TRACKING, DefaultTransition, Tracker
+from rafiq.tracking import IDLE, LOST, TRACKING, UNCERTAIN, DefaultTransition, Tracker, TrackerConfig
 
 
 @pytest.fixture
@@ -110,6 +110,68 @@ def test_status_lifecycle(tracker):
     assert tracker.state.status == IDLE and tracker.state.verse_id is None
 
 
+# -- evidence: a miss is not doubt -----------------------------------------
+
+
+def test_a_miss_carries_no_evidence_and_holds_the_position(tracker, vid):
+    following = feed(tracker, "والضحى والليل إذا سجى", "ما ودعك ربك وما قلى")[-1]
+    assert following.status == TRACKING and following.evidence
+    for chunk in ("zzz", "", "الم"):  # noise, silence, a word that fits anywhere
+        miss = tracker.update(chunk)
+        assert not miss.evidence, chunk
+        assert miss.status == UNCERTAIN and miss.confidence == 0.0
+        assert (miss.verse_id, miss.word, miss.upcoming_verse) == (
+            following.verse_id,
+            following.word,
+            following.upcoming_verse,
+        )
+        assert miss.alternatives == following.alternatives and miss.pending_verse == following.pending_verse
+        tracker.update("وللآخرة خير لك من الأولى")  # evidence again before the next miss
+        assert tracker.state.evidence
+        following = tracker.state
+
+
+def test_misses_in_a_row_are_lost_without_evidence(tracker):
+    feed(tracker, "والضحى والليل إذا سجى", "ما ودعك ربك وما قلى")
+    states = feed(tracker, *["zzz"] * tracker.config.lost_after)
+    assert [s.status for s in states] == [UNCERTAIN] * (tracker.config.lost_after - 1) + [LOST]
+    assert not any(s.evidence for s in states)
+
+
+def test_a_previewed_miss_says_so_and_changes_nothing(tracker):
+    feed(tracker, "والضحى والليل إذا سجى")
+    before = tracker.state
+    preview = tracker.preview("zzz")
+    assert not preview.evidence and preview.status == UNCERTAIN
+    assert tracker.state is before
+    assert tracker.preview("ما ودعك ربك وما قلى").evidence
+
+
+def test_idle_and_cold_start_misses_have_no_evidence(tracker):
+    assert not tracker.state.evidence
+    assert not tracker.update("zzz").evidence and tracker.state.status == IDLE
+
+
+def test_an_exact_tie_is_evidence_with_zero_confidence(tracker):
+    """The same words five times in Ash-Shu'ara: confidence 0, like a miss, but
+    the chunk did match. Only `evidence` tells genuine doubt from no news."""
+    state = tracker.update("فاتقوا الله وأطيعون وما أسألكم عليه من أجر")
+    assert state.evidence and state.confidence == 0.0 and state.status == UNCERTAIN
+    assert len(state.alternatives) >= 2
+
+
+def test_competing_hypotheses_are_evidence_of_doubt(tracker, vid):
+    feed(tracker, "والضحى والليل إذا سجى", "ما ودعك ربك وما قلى")
+    far = tracker.update("الله لا إله إلا هو الحي القيوم")  # Ayat al-Kursi, unconfirmed
+    assert far.evidence and far.status == UNCERTAIN and far.pending_verse == vid(2, 255)
+    held = tracker.update("zzz")  # no news: the doubt is still the last evidence
+    assert not held.evidence and held.pending_verse == vid(2, 255)
+
+
+def test_the_users_position_is_evidence(tracker, vid):
+    assert tracker.set_position(vid(36, 1)).evidence
+
+
 # -- simulator and metrics -------------------------------------------------
 
 
@@ -209,3 +271,106 @@ def test_set_position_beats_an_ambiguous_refrain(tracker, vid):
     tracker.set_position(vid(55, 40))
     state = tracker.update("فبأي آلاء ربكما تكذبان")  # 55:40 is itself a refrain ayah
     assert vid(55, 40) <= state.verse_id <= vid(55, 42)
+
+
+# -- repeated text: an unconfirmed position must be decided by its own text --
+
+REFRAIN = "فبأي آلاء ربكما تكذبان"  # 31 times in Ar-Rahman, 55:13 to 55:77
+DUHA = ("والضحى والليل إذا سجى", "ما ودعك ربك وما قلى")
+
+
+def test_an_exact_tie_nearby_is_not_shown_at_cold_start(tracker, vid):
+    """18:89 and 18:92 are the same words, a few ayahs apart: not one place."""
+    state = tracker.update("ثم أتبع سببا")
+    assert state.verse_id is None and state.confidence == 0.0
+    assert state.pending_verse == vid(18, 89) and vid(18, 92) in state.alternatives
+    state = tracker.update("حتى إذا بلغ بين السدين وجد من دونهما قوما")  # the words after 18:92
+    assert state.verse_id == vid(18, 93)
+
+
+def test_a_misheard_word_between_two_copies_is_a_tie(tracker, vid):
+    state = tracker.update("وإن مع العسر يسرا")  # 94:5 begins فإن, 94:6 إن
+    assert state.verse_id is None and {state.pending_verse, *state.alternatives} >= {vid(94, 5), vid(94, 6)}
+
+
+def test_a_near_tie_is_a_tie(matcher, vid):
+    """The refrain, then the next breath with the start of the following one:
+    the earliest copies score 0.99 and 0.96. Exact ties alone would show the
+    first copy while the imam is at 55:50."""
+    chunks = (REFRAIN, "فيهما عينان تجريان فبأي آلاء")  # 55:49, then 55:50 and the start of 55:51
+    exact_only = Tracker(matcher, TrackerConfig(tie_margin=0.0))
+    assert [exact_only.update(c).verse_id for c in chunks][-1] == vid(55, 18)
+    tracker = Tracker(matcher)
+    states = [tracker.update(c) for c in chunks]
+    top, second = tracker._hyps[0], tracker._hyps[1]
+    assert 0 < top.score - second.score <= tracker.config.tie_margin
+    assert all(s.verse_id is None for s in states)
+    state = tracker.update("فيهما من كل فاكهة زوجان")  # 55:52: distinct words decide
+    assert state.verse_id == vid(55, 52)
+
+
+def test_the_ar_rahman_refrain_names_the_surah_and_waits(tracker, q, vid):
+    """The surah is known (every copy is in it), the ayah is not."""
+    for _ in range(2):  # two copies confirm nothing
+        state = tracker.update(REFRAIN)
+        assert state.verse_id is None and state.confidence == 0.0
+        assert {q.by_id(v).surah for v in (state.pending_verse, *state.alternatives)} == {55}
+    assert tracker.update("يسأله من في السماوات والأرض كل يوم هو في شأن").verse_id == vid(55, 29)
+
+
+def test_joining_on_a_later_copy_shows_the_right_place_once_it_is_distinct(tracker, vid):
+    """Join at the refrain of 55:45 (one of 31), then 55:46."""
+    assert tracker.update(REFRAIN).verse_id is None
+    assert tracker.update("ولمن خاف مقام ربه جنتان").verse_id == vid(55, 46)
+
+
+def test_repeated_verses_are_never_shown_at_cold_start(matcher, index, q):
+    """Every ayah whose words are another ayah's too (at least 3 words)."""
+    by_text: dict[tuple[str, ...], list[int]] = {}
+    for v in range(1, len(q) + 1):
+        a, b = index.verse_span(v)
+        by_text.setdefault(tuple(index.words[a:b]), []).append(v)
+    repeated = [t for t, vs in by_text.items() if len(vs) >= 2 and len(t) >= 3]
+    assert len(repeated) > 80
+    shown = [" ".join(t) for t in repeated if Tracker(matcher).update(" ".join(t)).verse_id is not None]
+    assert shown == []
+
+
+def test_unique_text_is_unchanged_at_cold_start(matcher, index, q):
+    """The rule only adds ties: for every 10th ayah whose words fit exactly
+    nowhere else (102:3 does not: it is the end of 102:4 too), cold start shows
+    exactly what it did without the rule."""
+    off = TrackerConfig(tie_margin=-1.0)
+    checked = 0
+    for v in range(1, len(q) + 1, 10):
+        a, b = index.verse_span(v)
+        words = index.words[a:b]
+        if sum(m.score >= 0.999 for m in matcher.match_tokens(words, k=3)) > 1:
+            continue
+        new, old = Tracker(matcher).update(" ".join(words)), Tracker(matcher, off).update(" ".join(words))
+        assert (new.verse_id, new.status, new.confidence) == (old.verse_id, old.status, old.confidence), v
+        checked += 1
+    assert checked > 550
+
+
+def test_a_far_jump_into_repeated_text_waits_for_distinct_words(tracker, vid):
+    feed(tracker, *DUHA)
+    held = feed(tracker, REFRAIN, REFRAIN)
+    # Never a copy of the refrain: the screen holds 93:3, unsure.
+    assert all(s.verse_id == vid(93, 3) and s.status == UNCERTAIN for s in held)
+    states = feed(tracker, "يسأله من في السماوات والأرض كل يوم هو في شأن", "سنفرغ لكم أيها الثقلان")
+    assert states[-1].verse_id == vid(55, 31)
+
+
+def test_after_lost_and_al_fatiha_repeated_text_still_waits(tracker, q):
+    feed(tracker, *DUHA, *["zzz"] * tracker.config.lost_after)
+    feed(tracker, "الحمد لله رب العالمين", "الرحمن الرحيم مالك يوم الدين")
+    held = feed(tracker, REFRAIN, REFRAIN)
+    assert all(s.verse_id is None or q.by_id(s.verse_id).surah != 55 for s in held)
+
+
+def test_a_far_jump_on_distinct_words_still_confirms_in_two(tracker, vid):
+    feed(tracker, *DUHA)
+    first = tracker.update("الله لا إله إلا هو الحي القيوم")
+    assert first.verse_id == vid(93, 3) and first.pending_verse == vid(2, 255)
+    assert tracker.update("لا تأخذه سنة ولا نوم").verse_id == vid(2, 255)

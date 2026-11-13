@@ -84,6 +84,8 @@ TrackState decodeTrackState(Map<String, dynamic> json) => TrackState(
       pending: _position(json['pending']),
       alternatives: ((json['alternatives'] as List?) ?? const []).map(_position).whereType<Position>().toList(),
       upcoming: _position(json['upcoming']),
+      // A server from before the field: every result counted as evidence.
+      evidence: json['evidence'] is bool ? json['evidence'] as bool : true,
     );
 
 Position? _position(Object? json) {

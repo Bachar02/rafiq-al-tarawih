@@ -58,6 +58,8 @@ class StateOut(BaseModel):
     pending: Position | None  # a first guess or far jump awaiting confirmation
     alternatives: list[Position]  # other plausible positions when the text is ambiguous
     upcoming: Position | None = None  # the ayah just ended: highlight this one next
+    # False when the chunk matched no Quran (a miss): the state is held, not doubted.
+    evidence: bool = True
     candidates: list[Candidate]
 
 

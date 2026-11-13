@@ -38,6 +38,7 @@ class TrackerConfig {
     this.confirm = 2,
     this.coldStartConfidence = 0.3,
     this.alternativeMargin = 0.5,
+    this.tieMargin = 0.05,
     this.emissionWeight = 0.5,
     this.fullEvidenceWords = 3,
     this.unknownExitCost = 0.3,
@@ -76,6 +77,11 @@ class TrackerConfig {
 
   /// Rivals within this of the best are reported as alternatives.
   final double alternativeMargin;
+
+  /// An unconfirmed position (cold start, far jump) must be decided by its own
+  /// text: another ayah scoring within this of the best is a rival even when
+  /// close by (repeated text clusters within a surah).
+  final double tieMargin;
 
   /// How much the newest chunk's own match quality scales confidence.
   final double emissionWeight;
@@ -149,9 +155,11 @@ class TrackerState {
     this.pendingVerse,
     this.alternatives = const [],
     this.upcomingVerse,
+    this.evidence = true,
   });
 
-  static const idle = TrackerState(verseId: null, word: null, status: TrackerStatus.idle, confidence: 0);
+  static const idle =
+      TrackerState(verseId: null, word: null, status: TrackerStatus.idle, confidence: 0, evidence: false);
 
   /// The displayed verse, and stream position (the last recited word).
   final int? verseId;
@@ -173,8 +181,16 @@ class TrackerState {
   /// The displayed ayah was recited to its end: where the imam goes next.
   final int? upcomingVerse;
 
+  /// This chunk matched the Quran and moved the hypotheses. False for a miss
+  /// (silence, noise, a word or two that fits anywhere): the state is the
+  /// previous one, held, and says nothing new about the position. A miss is
+  /// not doubt; confidence 0 cannot tell them apart, as an exact tie between
+  /// rivals also has confidence 0.
+  final bool evidence;
+
   int? get showing => upcomingVerse ?? verseId;
 
+  /// The previous state held after a miss: no evidence, no confidence.
   TrackerState withStatus(TrackerStatus status, List<QuranMatch> candidates) => TrackerState(
         verseId: verseId,
         word: word,
@@ -184,6 +200,7 @@ class TrackerState {
         pendingVerse: pendingVerse,
         alternatives: alternatives,
         upcomingVerse: upcomingVerse,
+        evidence: false,
       );
 }
 
@@ -409,22 +426,30 @@ class Tracker {
   TrackerState _display(List<QuranMatch> candidates) {
     final cfg = config;
     final best = _hyps.first;
+    // Where the screen already is: onward or a repeat from it, al-Fatiha, or
+    // back from al-Fatiha. Anywhere else (cold start, a far jump) is
+    // unconfirmed, and must be decided by this text alone.
+    final settled = _shown != null &&
+        (_isNear(_shown!, best.end) ||
+            _inExcursion(best.end - 1) ||
+            (_shownAnchor != null && _isNear(_shownAnchor!, best.end)));
+    final bestVerse = index.verseAt(best.end - 1);
+    bool rival(Hypothesis h) {
+      if (!_isNear(best.end, h.end) && !_isNear(h.end, best.end)) return true;
+      // Unconfirmed: another ayah that fits as well is a rival, however close
+      // (a phrase repeated a few ayahs on is not the same place).
+      return !settled && index.verseAt(h.end - 1) != bestVerse && best.score - h.score <= cfg.tieMargin;
+    }
+
     final rivals = [
       for (final h in _hyps.skip(1))
-        if (!_isNear(best.end, h.end) && !_isNear(h.end, best.end)) h
+        if (rival(h)) h
     ];
     final margin = rivals.isNotEmpty ? best.score - rivals.first.score : best.score;
     final quality = 1.0 - cfg.emissionWeight * (1.0 - math.min(best.emission, 1.0));
     final confidence = quality * (1.0 - math.exp(-2.0 * math.max(margin, 0.0)));
 
-    bool accept;
-    if (_shown == null) {
-      accept = confidence >= cfg.coldStartConfidence;
-    } else {
-      accept = _isNear(_shown!, best.end) ||
-          _inExcursion(best.end - 1) ||
-          (_shownAnchor != null && _isNear(_shownAnchor!, best.end));
-    }
+    var accept = _shown == null ? confidence >= cfg.coldStartConfidence : settled;
     if (!accept) {
       if (_pending != null && _isNear(_pending!, best.end)) {
         _pendingCount += 1;
@@ -432,8 +457,10 @@ class Tracker {
         _pendingCount = 1;
       }
       _pending = best.end;
-      accept = _pendingCount >= cfg.confirm;
-      if (_shown == null) accept = accept && confidence >= cfg.coldStartConfidence / 3;
+      // Agreement only counts if it says something: two equally ambiguous
+      // chunks (copies of a repeated phrase) confirm nothing, at cold start or
+      // for a far jump.
+      accept = _pendingCount >= cfg.confirm && confidence >= cfg.coldStartConfidence / 3;
     }
 
     if (accept) {

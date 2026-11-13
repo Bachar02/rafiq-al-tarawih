@@ -30,6 +30,17 @@ void main() {
       expect(heard.state.showing!.ref, '93:3'); // upcoming wins for the screen
     });
 
+    test('evidence: a miss says so; a server that does not say counts as evidence', () {
+      TrackState state(String extra) => (decodeServerMessage(
+                  '{"type":"heard","text":"x","start":0,"end":1,"asr_ms":1,"state":{"status":"uncertain"$extra}}')!
+              as Heard)
+          .state;
+      expect(state(',"evidence":false').evidence, isFalse);
+      expect(state(',"evidence":true').evidence, isTrue);
+      expect(state('').evidence, isTrue);
+      expect(state(',"evidence":"no"').evidence, isTrue);
+    });
+
     test('partial is a non-final heard', () {
       const raw =
           '{"type":"partial","text":"x","start":0,"end":1,"asr_ms":1,"state":{"position":null,"status":"idle"}}';

@@ -80,6 +80,7 @@ class ListenState {
     this.confirmedAt,
     this.lastSoundAt,
     this.liveWord,
+    this.evidenceStatus,
   });
 
   final SessionPhase phase;
@@ -146,8 +147,20 @@ class ListenState {
   /// is fresh (word highlighting only; otherwise always null).
   final LiveWord? liveWord;
 
+  /// The engine's status on its latest result with evidence (this session,
+  /// or a user correction).
+  final TrackStatus? evidenceStatus;
+
+  /// The engine's verdict, as the screen should take it. A miss (audio that
+  /// matched no Quran: a breath's first word, "āmīn", silence) is no news, not
+  /// doubt: the last verdict with evidence stands. Genuine doubt (rivals, an
+  /// unconfirmed far jump, an exact tie) is evidence, so it still shows. So
+  /// is `lost`: several misses in a row are something to say.
+  TrackStatus get trackStatus =>
+      !track.evidence && track.status == TrackStatus.uncertain ? evidenceStatus ?? track.status : track.status;
+
   /// The engine's position when it is sure; otherwise the last sure one.
-  Position? get _sure => track.status == TrackStatus.tracking || lastSure == null ? track.showing : lastSure;
+  Position? get _sure => trackStatus == TrackStatus.tracking || lastSure == null ? track.showing : lastSure;
 
   /// Al-Fatiha is being recited inside another surah's session.
   bool get inFatihaExcursion {
@@ -187,6 +200,7 @@ class ListenState {
     Object? confirmedAt = _keep,
     Object? lastSoundAt = _keep,
     Object? liveWord = _keep,
+    Object? evidenceStatus = _keep,
   }) =>
       ListenState(
         phase: phase ?? this.phase,
@@ -210,6 +224,7 @@ class ListenState {
         confirmedAt: identical(confirmedAt, _keep) ? this.confirmedAt : confirmedAt as DateTime?,
         lastSoundAt: identical(lastSoundAt, _keep) ? this.lastSoundAt : lastSoundAt as DateTime?,
         liveWord: identical(liveWord, _keep) ? this.liveWord : liveWord as LiveWord?,
+        evidenceStatus: identical(evidenceStatus, _keep) ? this.evidenceStatus : evidenceStatus as TrackStatus?,
       );
 }
 
