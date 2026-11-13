@@ -1,6 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:rafiq/core/engine/matcher.dart';
-import 'package:rafiq/core/engine/quran_index.dart';
 import 'package:rafiq/core/engine/tracker.dart';
 
 import '../support/fakes.dart';
@@ -14,7 +13,7 @@ void main() {
   int vid(int surah, int ayah) => loadQuran().surah(surah).firstVerseId + ayah - 1;
   List<TrackerState> feed(List<String> chunks) => [for (final c in chunks) tracker.update(c)];
 
-  setUpAll(() => matcher = QuranMatcher(QuranIndex([for (final v in loadQuran().verses) v.text])));
+  setUpAll(() => matcher = QuranMatcher(indexOf(loadQuran())));
   setUp(() => tracker = Tracker(matcher));
 
   test('a miss carries no evidence and holds the position', () {

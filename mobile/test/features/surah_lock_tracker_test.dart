@@ -1,6 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:rafiq/core/engine/matcher.dart';
-import 'package:rafiq/core/engine/quran_index.dart';
 import 'package:rafiq/core/engine/tracker.dart';
 import 'package:rafiq/core/recognition/models.dart';
 import 'package:rafiq/data/quran.dart';
@@ -16,7 +15,7 @@ void main() {
 
   setUpAll(() {
     quran = loadQuran();
-    matcher = QuranMatcher(QuranIndex([for (final v in quran.verses) v.text]));
+    matcher = QuranMatcher(indexOf(quran));
   });
 
   int vid(int surah, int ayah) => quran.verseId(surah, ayah)!;

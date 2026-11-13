@@ -97,11 +97,14 @@ def state_json(st) -> list:
         st.upcoming_verse,
         [[c.start, c.end, c.score] for c in st.candidates[:3]],
         st.evidence,
+        list(st.tied),
+        st.tie_trusted,
     ]
 
 
 def match_cases() -> list[dict]:
-    """Queries -> the matcher's top 5, over real ASR text and simulated noise."""
+    """Queries -> the matcher's top 5, over real ASR text and simulated noise,
+    and its whole shortlist with the retrieval votes (the tie report)."""
     index = get_index()
     matcher = Matcher(index)
     queries: list[tuple[str, int, int | None]] = []
@@ -116,18 +119,33 @@ def match_cases() -> list[dict]:
     al_rahman = index.verse_span(4901)[0], index.verse_span(4978)[1]
     for text in ["فبأي آلاء ربكما تكذبان", "الرحمن علم القرآن", "الحمد لله رب العالمين"]:
         queries.append((text, *al_rahman))
+    # Repeated text: 31 copies, 89 copies (beyond the cap), across surahs, garbled.
+    for text in [
+        "فبأي آلاء ربكما تكذبان",
+        "يا أيها الذين آمنوا",
+        "فاتقوا الله وأطيعون",
+        "بلى مربي للقسط",
+        "ثم أتبع سببا",
+    ]:
+        queries.append((text, 0, None))
     cases, seen = [], set()
     for text, lo, hi in queries:
         if (text, lo, hi) in seen:
             continue
         seen.add((text, lo, hi))
         found = matcher.match(text, k=5, lo=lo, hi=hi)
+        shortlist = matcher.match_all(index.tokenizer(text), lo=lo, hi=hi)
         cases.append(
             {
                 "text": text,
                 "lo": lo,
                 "hi": hi,
                 "matches": [[m.start, m.end, m.score, m.first_verse, m.last_verse] for m in found],
+                "all": [
+                    [m.start, m.end, m.score, v]
+                    for m, v in zip(shortlist.matches, shortlist.votes, strict=True)
+                ],
+                "cut": shortlist.cut,
             }
         )
     return cases
@@ -191,6 +209,39 @@ def tracker_cases() -> list[dict]:
             "repeated: lost, al-Fatiha, then a refrain",
             finals(*duha, *["zzz"] * 4, "الحمد لله رب العالمين", "الرحمن الرحيم مالك يوم الدين")
             + finals(refrain, refrain, *after_refrain),
+        ),
+    ]
+
+    # The tie report (PLAN.md §37): phrases at cold start, each after a reset.
+    def each_alone(*texts: str) -> list[dict]:
+        steps: list[dict] = []
+        for t in texts:
+            steps += [{"reset": True}, {"text": t, "final": True}]
+        return steps
+
+    shuara = quran.surah(26)
+    scenarios += [
+        (
+            "ties: trusted, untrusted, incomplete, garbled, short",
+            each_alone(
+                "فاتقوا الله وأطيعون",  # three surahs, trusted
+                "كذلك نجزي المحسنين",  # two surahs, not confident enough
+                "ويل يومئذ للمكذبين",
+                "إن الله غفور رحيم",  # eight surahs
+                "يا أيها الذين آمنوا",  # 89 copies: beyond retrieval's cap
+                "بلى مربي للقسط",  # a misheard preview of 7:29
+                "ذلك وما",  # two words
+                "الم",  # one word: a miss
+                "واذنت لربها وحقت",
+            ),
+        ),
+        (
+            "ties: held through a miss, cleared by the user, inside a lock",
+            finals(refrain, "zzz")
+            + [{"position": quran.verse(55, 47).id}]
+            + finals("ولمن خاف مقام ربه جنتان")
+            + [{"lock": [shuara.first_verse_id, shuara.last_verse_id]}, {"reset": True}]
+            + finals("فاتقوا الله وأطيعون", "zzz", "وما أسألكم عليه من أجر إن أجري إلا على رب العالمين"),
         ),
     ]
     cases = []

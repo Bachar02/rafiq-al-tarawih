@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:rafiq/core/engine/quran_index.dart';
 import 'package:rafiq/core/engine/word_tracker.dart';
 
 import '../support/fakes.dart';
@@ -13,7 +12,7 @@ import '../support/fakes.dart';
 /// al-Fatiha, the basmala, pauses and re-anchoring, plus a scenario by hand.
 void main() {
   final quran = loadQuran();
-  final index = QuranIndex([for (final v in quran.verses) v.text]);
+  final index = indexOf(quran);
   final basmalaVerses = [
     for (final s in quran.surahs)
       if (s.hasBasmala) s.firstVerseId

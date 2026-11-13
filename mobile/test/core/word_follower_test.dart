@@ -3,7 +3,6 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:rafiq/core/engine/matcher.dart';
-import 'package:rafiq/core/engine/quran_index.dart';
 import 'package:rafiq/core/engine/tracker.dart';
 import 'package:rafiq/core/engine/word_follower.dart';
 
@@ -13,7 +12,7 @@ import '../support/fakes.dart';
 /// and final transcripts, anchored by the (unchanged) ayah tracker.
 void main() {
   final quran = loadQuran();
-  final index = QuranIndex([for (final v in quran.verses) v.text]);
+  final index = indexOf(quran);
   final matcher = QuranMatcher(index);
   final basmala = [
     for (final s in quran.surahs)

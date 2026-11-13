@@ -206,6 +206,25 @@ class QuranMatch {
   int get verseId => lastVerse;
 }
 
+/// Every position retrieval kept for a query, rescored: what
+/// [QuranMatcher.matchTokens] takes its top k from. The votes say whether
+/// retrieval's cap may have left out a copy of a repeated phrase (the
+/// tracker's tie report).
+class Shortlist {
+  const Shortlist(this.matches, this.votes, this.cut);
+
+  static const empty = Shortlist([], [], null);
+
+  /// Best first; overlaps and matches under `minScore` dropped.
+  final List<QuranMatch> matches;
+
+  /// Each match's retrieval votes (pooled), in the same order.
+  final List<double> votes;
+
+  /// Votes of the best position the `retrieve` cap left out; null if none was.
+  final double? cut;
+}
+
 /// [items] sorted by [key], highest first, equal keys in their original
 /// order (Python's `sorted(..., reverse=True)` is stable).
 List<T> sortedDesc<T>(Iterable<T> items, double Function(T) key) {
@@ -227,12 +246,21 @@ class QuranMatcher {
   final _neighbourCache = <String, List<(String, double)>>{};
 
   /// Top [k] non-overlapping matches for [tokens], best first, searching the
-  /// stream range `[lo, hi)`.
+  /// stream range `[lo, hi)`: the first [k] of [matchAll].
   List<QuranMatch> matchTokens(List<String> tokens, {int k = 5, int lo = 0, int? hi}) {
-    if (tokens.isEmpty) return const [];
-    final offsets = _retrieve(tokens, lo, hi ?? index.length);
-    final matches = [for (final off in offsets) scoreWindow(tokens, off, off + tokens.length)];
-    return _select(matches, k);
+    final matches = matchAll(tokens, lo: lo, hi: hi).matches;
+    return matches.length <= k ? matches : matches.sublist(0, k);
+  }
+
+  /// Every match retrieval shortlisted, rescored, best first, with its votes.
+  /// Selection is greedy in score order, so the first k are exactly what a
+  /// top-k search returns; every shortlisted position is rescored either way.
+  Shortlist matchAll(List<String> tokens, {int lo = 0, int? hi}) {
+    if (tokens.isEmpty) return Shortlist.empty;
+    final (offsets, pooled, cut) = _retrieve(tokens, lo, hi ?? index.length);
+    final scored = [for (final off in offsets) (scoreWindow(tokens, off, off + tokens.length), pooled[off]!)];
+    final kept = _select(scored);
+    return Shortlist([for (final (m, _) in kept) m], [for (final (_, v) in kept) v], cut);
   }
 
   /// Align [tokens] against the stream around `[start, end)`, padded so a few
@@ -270,7 +298,9 @@ class QuranMatcher {
         return [for (final (i, s) in scored.take(cfg.fuzzyLimit)) (index.vocab[i], cfg.fuzzyWeight * s / 100.0)];
       });
 
-  List<int> _retrieve(List<String> tokens, int lo, int hi) {
+  /// The best `retrieve` offsets, best first; every offset's pooled votes;
+  /// and the votes of the best offset the cap left out (null if none was).
+  (List<int>, Map<int, double>, double?) _retrieve(List<String> tokens, int lo, int hi) {
     final votes = <int, double>{};
     for (var qi = 0; qi < tokens.length; qi++) {
       final token = tokens[qi];
@@ -282,7 +312,7 @@ class QuranMatcher {
         }
       }
     }
-    if (votes.isEmpty) return const [];
+    if (votes.isEmpty) return (const [], const {}, null);
     // Pool nearby offsets: an inserted or dropped word shifts the diagonal.
     final spread = config.voteSpread;
     final pooled = <int, double>{};
@@ -294,23 +324,26 @@ class QuranMatcher {
       pooled[off] = sum;
     }
     final chosen = <int>[];
+    double? cut;
     for (final off in sortedDesc(pooled.keys, (o) => pooled[o]!)) {
       if (chosen.every((c) => (off - c).abs() > spread)) {
+        if (chosen.length >= config.retrieve) {
+          cut = pooled[off]; // the best one the cap leaves out
+          break;
+        }
         chosen.add(off);
-        if (chosen.length >= config.retrieve) break;
       }
     }
-    return chosen;
+    return (chosen, pooled, cut);
   }
 
-  /// Best first, dropping matches that overlap a better one.
-  List<QuranMatch> _select(List<QuranMatch> matches, int k) {
-    final out = <QuranMatch>[];
-    for (final m in sortedDesc(matches, (m) => m.score)) {
+  /// Best first, dropping matches that overlap a better one (votes ride along).
+  List<(QuranMatch, double)> _select(List<(QuranMatch, double)> scored) {
+    final out = <(QuranMatch, double)>[];
+    for (final (m, v) in sortedDesc(scored, (mv) => mv.$1.score)) {
       if (m.score < config.minScore) break;
-      if (out.any((o) => m.start < o.end && o.start < m.end)) continue;
-      out.add(m);
-      if (out.length >= k) break;
+      if (out.any((o) => m.start < o.$1.end && o.$1.start < m.end)) continue;
+      out.add((m, v));
     }
     return out;
   }

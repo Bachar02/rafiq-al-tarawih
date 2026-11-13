@@ -28,6 +28,7 @@ from dataclasses import dataclass, field, replace
 from typing import Protocol
 
 from rafiq.matching import Match, Matcher
+from rafiq.matching.matcher import Shortlist
 
 # Status values exposed to clients.
 IDLE, TRACKING, UNCERTAIN, LOST = "idle", "tracking", "uncertain", "lost"
@@ -121,6 +122,15 @@ class TrackState:
     # not doubt; confidence 0 cannot tell them apart, as an exact tie between
     # rivals also has confidence 0.
     evidence: bool = True
+    # Repeated text. While the position is unconfirmed (cold start, a far jump),
+    # every ayah these words fit as well as the best (within tie_margin), in
+    # Quran order; empty otherwise. Held through a miss, cleared once a
+    # position is accepted or set by the user.
+    tied: list[int] = field(default_factory=list)
+    # The tied set can be relied on: retrieval's cap left out no copy, and its
+    # surahs taken as one place would have been shown (the cold-start
+    # confidence, against the best rival outside them).
+    tie_trusted: bool = False
 
     @property
     def showing(self) -> int | None:
@@ -269,20 +279,25 @@ class Tracker:
 
         self._misses = 0
         self._hyps = self._advance(candidates, evidence, hint)
-        self._state = self._display(candidates)
+        self._state = self._display(candidates, evidence)
         return self._state
 
     # -- search ----------------------------------------------------------
 
     def _candidates(self, tokens: list[str], hint: tuple[int, int] | None) -> list[Match]:
+        self._shortlist: Shortlist | None = None
         if not tokens:
             return []
         cfg = self.config
+        # The whole shortlist is kept for the tie report; the beam gets its
+        # first `candidates`, exactly what a top-k search returns.
         if self._lock is None:
-            found = self.matcher.match_tokens(tokens, k=cfg.candidates)
+            self._shortlist = self.matcher.match_all(tokens)
+            found = self._shortlist.matches[: cfg.candidates]
         else:
             # Search only where the user said the imam is, plus al-Fatiha.
-            found = self.matcher.match_tokens(tokens, k=cfg.candidates, lo=self._lock[0], hi=self._lock[1])
+            self._shortlist = self.matcher.match_all(tokens, lo=self._lock[0], hi=self._lock[1])
+            found = self._shortlist.matches[: cfg.candidates]
             for lo, hi in self._excursion_spans:
                 found += self.matcher.match_tokens(tokens, k=cfg.candidates, lo=lo, hi=hi)
         if hint:
@@ -379,7 +394,40 @@ class Tracker:
         t = self.transition(a, b)
         return t > -getattr(self.transition, "far_cost", 1.0)
 
-    def _display(self, candidates: list[Match]) -> TrackState:
+    def _ties(self, best: Hypothesis, weight: float) -> tuple[list[int], bool]:
+        """Repeated text: every ayah these words fit as well as the best, and
+        whether that set can be trusted. `weight` discounts a short chunk."""
+        cfg, idx = self.config, self.index
+        tied = {idx.verse_at(h.end - 1) for h in self._hyps if best.score - h.score <= cfg.tie_margin}
+        if len(tied) < 2:
+            return [], False
+        # The beam holds 8 places; the shortlist holds every copy retrieval kept.
+        shortlist = self._shortlist
+        matches = shortlist.matches if shortlist else []
+        votes = shortlist.votes if shortlist else []
+        top = matches[0].score if matches else 0.0
+        copies = [v for m, v in zip(matches, votes, strict=True) if top - m.score <= cfg.tie_margin]
+        tied |= {idx.verse_at(m.end - 1) for m in matches if top - m.score <= cfg.tie_margin}
+        # Complete unless retrieval's cap left out a position voted as high as
+        # a copy it kept (a phrase repeated more often than the cap).
+        cut = shortlist.cut if shortlist else None
+        complete = shortlist is not None and (cut is None or (bool(copies) and cut < min(copies) - 1e-9))
+
+        def surah(verse_id: int) -> int:
+            return idx.quran.by_id(verse_id).surah
+
+        surahs = {surah(v) for v in tied}
+        # Its surahs as one place: would the tracker have shown it?
+        rival = max(
+            [weight * m.score for m in matches if surah(idx.verse_at(m.end - 1)) not in surahs]
+            + [h.score for h in self._hyps if surah(idx.verse_at(h.end - 1)) not in surahs],
+            default=0.0,
+        )
+        quality = 1.0 - cfg.emission_weight * (1.0 - min(best.emission, 1.0))
+        confidence = quality * (1.0 - math.exp(-2.0 * max(best.score - rival, 0.0)))
+        return sorted(tied), complete and confidence >= cfg.cold_start_confidence
+
+    def _display(self, candidates: list[Match], weight: float) -> TrackState:
         cfg = self.config
         best = self._hyps[0]
         # Where the screen already is: onward or a repeat from it, al-Fatiha,
@@ -432,6 +480,8 @@ class Tracker:
             self._shown = best.end
             self._pending, self._pending_count = None, 0
 
+        # Repeated text, reported only while the position is unconfirmed.
+        tied, tie_trusted = ([], False) if settled or accept else self._ties(best, weight)
         pending_verse = self.index.verse_at(self._pending - 1) if self._pending is not None else None
         alternatives: list[int] = []
         for h in rivals:
@@ -442,7 +492,15 @@ class Tracker:
                 alternatives.append(v)
         if self._shown is None:
             return TrackState(
-                None, None, UNCERTAIN, round(confidence, 3), candidates, pending_verse, alternatives
+                None,
+                None,
+                UNCERTAIN,
+                round(confidence, 3),
+                candidates,
+                pending_verse,
+                alternatives,
+                tied=tied,
+                tie_trusted=tie_trusted,
             )
         word = self._shown - 1
         status = TRACKING if confidence >= 0.5 and self._pending is None else UNCERTAIN
@@ -456,4 +514,6 @@ class Tracker:
             candidates=candidates,
             pending_verse=pending_verse,
             alternatives=alternatives,
+            tied=tied,
+            tie_trusted=tie_trusted,
         )

@@ -3,6 +3,7 @@ from __future__ import annotations
 import pytest
 
 from rafiq import evaluation
+from rafiq.normalize import tokenize
 from rafiq.simulate import NoiseConfig, Step, simulate
 from rafiq.tracking import IDLE, LOST, TRACKING, UNCERTAIN, DefaultTransition, Tracker, TrackerConfig
 
@@ -374,3 +375,116 @@ def test_a_far_jump_on_distinct_words_still_confirms_in_two(tracker, vid):
     first = tracker.update("الله لا إله إلا هو الحي القيوم")
     assert first.verse_id == vid(93, 3) and first.pending_verse == vid(2, 255)
     assert tracker.update("لا تأخذه سنة ولا نوم").verse_id == vid(2, 255)
+
+
+# -- the tie report: repeated text, the full set and whether it is trusted ---
+
+
+def tie(matcher, text: str):
+    return Tracker(matcher).update(text)
+
+
+def surahs_of(q, verses) -> set[int]:
+    return {q.by_id(v).surah for v in verses}
+
+
+def test_the_refrain_reports_all_31_copies_in_one_surah(matcher, q):
+    state = tie(matcher, REFRAIN)
+    copies = [v.id for v in q if v.surah == 55 and tokenize(v.text) == tokenize(REFRAIN)]
+    assert state.verse_id is None
+    assert state.tied == copies and len(copies) == 31
+    assert state.tie_trusted
+    assert len(state.alternatives) == 3  # the display list is unchanged
+
+
+@pytest.mark.parametrize(
+    ("text", "ayahs"),
+    [
+        ("ثم أتبع سببا", [(18, 89), (18, 92)]),
+        ("ولا أنتم عابدون ما أعبد", [(109, 3), (109, 5)]),
+        ("وأذنت لربها وحقت", [(84, 2), (84, 5)]),
+        ("وإن مع العسر يسرا", [(94, 5), (94, 6)]),  # a misheard word between two copies
+    ],
+)
+def test_repeated_ayahs_close_by_are_one_trusted_surah(matcher, vid, text, ayahs):
+    state = tie(matcher, text)
+    assert state.verse_id is None
+    assert state.tied == [vid(s, a) for s, a in ayahs]
+    assert state.tie_trusted
+
+
+def test_a_phrase_in_three_surahs_is_a_trusted_tie_across_them(matcher, q):
+    state = tie(matcher, "فاتقوا الله وأطيعون")
+    assert surahs_of(q, state.tied) == {3, 26, 43}
+    assert state.tie_trusted
+
+
+@pytest.mark.parametrize("text", ["كذلك نجزي المحسنين", "ويل يومئذ للمكذبين", "إن الله غفور رحيم"])
+def test_ties_that_would_not_have_been_shown_are_not_trusted(matcher, text):
+    """Their surahs taken as one place still fall short of the cold-start
+    confidence against the best rival outside them."""
+    state = tie(matcher, text)
+    assert len(state.tied) >= 2 and not state.tie_trusted
+
+
+def test_a_phrase_repeated_beyond_retrievals_cap_is_never_trusted(matcher, q):
+    """يا أيها الذين آمنوا: 89 copies, 40 shortlisted. As one place it would be
+    shown (confidence 0.865), but the set is incomplete: not trusted."""
+    state = tie(matcher, "يا أيها الذين آمنوا")
+    assert len(state.tied) < 89 and not state.tie_trusted
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "بلى مربي للقسط",  # a misheard preview of 7:29 (recorded)
+        "بما ما ربي",  # recorded, far room
+        "ذلك وما",  # two words: weak evidence
+    ],
+)
+def test_garbled_and_short_chunks_are_not_trusted(matcher, text):
+    state = tie(matcher, text)
+    assert not state.tie_trusted
+
+
+def test_a_one_word_chunk_is_a_miss_and_reports_no_tie(matcher):
+    state = tie(matcher, "الم")
+    assert not state.evidence and state.tied == [] and not state.tie_trusted
+
+
+def test_unique_text_reports_no_tie(matcher):
+    state = tie(matcher, "والضحى والليل إذا سجى")
+    assert state.verse_id is not None and state.tied == [] and not state.tie_trusted
+
+
+def test_the_tie_is_held_through_a_miss_and_cleared_on_acceptance(tracker, vid):
+    first = tracker.update(REFRAIN)
+    held = tracker.update("zzz")
+    assert not held.evidence and held.tied == first.tied and held.tie_trusted
+    accepted = tracker.update("يسأله من في السماوات والأرض كل يوم هو في شأن")
+    assert accepted.verse_id == vid(55, 29) and accepted.tied == [] and not accepted.tie_trusted
+
+
+def test_the_users_position_clears_the_tie(tracker, vid):
+    assert tracker.update(REFRAIN).tied
+    state = tracker.set_position(vid(55, 47))
+    assert state.tied == [] and not state.tie_trusted
+
+
+def test_a_far_jump_into_repeated_text_reports_the_tie_while_holding(tracker, q, vid):
+    feed(tracker, *DUHA)
+    state = tracker.update(REFRAIN)
+    assert state.verse_id == vid(93, 3)  # the held position stays
+    assert surahs_of(q, state.tied) == {55} and state.tie_trusted
+
+
+def test_no_tie_is_reported_where_the_screen_already_is(tracker, vid):
+    """The refrain right after 55:12: context decides, nothing is unconfirmed."""
+    tracker.set_position(vid(55, 12))
+    state = tracker.update(REFRAIN)
+    assert state.verse_id == vid(55, 13) and state.tied == []
+
+
+def test_previews_report_ties_and_change_nothing(tracker):
+    preview = tracker.preview(REFRAIN)
+    assert len(preview.tied) == 31 and tracker.state.tied == []

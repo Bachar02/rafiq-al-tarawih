@@ -9,6 +9,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:rafiq/app/providers.dart';
 import 'package:rafiq/core/audio/audio_source.dart';
+import 'package:rafiq/core/engine/quran_index.dart';
 import 'package:rafiq/core/recognition/models.dart';
 import 'package:rafiq/core/recognition/recognition_engine.dart';
 import 'package:rafiq/data/adhkar.dart';
@@ -302,6 +303,10 @@ class FailingStore implements ReadingStore {
 
 Quran? _quran;
 Quran loadQuran() => _quran ??= Quran.fromJson(File('assets/quran/quran.json').readAsStringSync());
+
+/// The recognition engine's index of [quran] (its words, and its surahs).
+QuranIndex indexOf(Quran quran) =>
+    QuranIndex([for (final v in quran.verses) v.text], surahStarts: [for (final s in quran.surahs) s.firstVerseId]);
 
 SurahNames? _names;
 SurahNames loadSurahNames() =>

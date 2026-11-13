@@ -87,7 +87,12 @@ TrackState decodeTrackState(Map<String, dynamic> json) => TrackState(
       upcoming: _position(json['upcoming']),
       // A server from before the field: every result counted as evidence.
       evidence: json['evidence'] is bool ? json['evidence'] as bool : true,
+      // A server from before the tie report: no tie.
+      tied: _positions(json['tied']),
+      tieTrusted: json['tie_trusted'] == true && _positions(json['tied']).isNotEmpty,
     );
+
+List<Position> _positions(Object? json) => json is List ? json.map(_position).whereType<Position>().toList() : const [];
 
 Position? _position(Object? json) {
   if (json is! Map<String, dynamic>) return null;

@@ -7,7 +7,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:rafiq/app/providers.dart';
 import 'package:rafiq/core/engine/listener.dart';
 import 'package:rafiq/core/engine/matcher.dart';
-import 'package:rafiq/core/engine/quran_index.dart';
 import 'package:rafiq/core/engine/segmenter.dart';
 import 'package:rafiq/core/engine/tracker.dart';
 import 'package:rafiq/core/recognition/models.dart';
@@ -127,6 +126,24 @@ void main() {
     expect(events.last, isA<EngineDone>());
   });
 
+  test('repeated text crosses the isolate as a tie: all the copies, trusted, held through a miss', () async {
+    const refrain = 'فبأي آلاء ربكما تكذبان';
+    final texts = [refrain, 'آمين', 'يسأله من في السماوات والأرض كل يوم هو في شأن'];
+    final heard = (await run(engine(scripted(texts)), [
+      for (var i = 0; i < texts.length; i++) ...[tone(1.6), silence(0.8)],
+    ]))
+        .whereType<Heard>()
+        .toList();
+    expect(heard[0].state.position, isNull);
+    expect(heard[0].state.tied.length, 31);
+    expect(heard[0].state.tied.every((p) => p.surah == 55), isTrue);
+    expect(heard[0].state.tieTrusted, isTrue);
+    expect(heard[1].state.evidence, isFalse);
+    expect(heard[1].state.tied, heard[0].state.tied, reason: 'held through the miss');
+    expect(heard[2].state.position, pos(55, 29));
+    expect(heard[2].state.tied, isEmpty, reason: 'cleared once accepted');
+  });
+
   test('a breath that matched no Quran arrives as a miss: the position held, no evidence', () async {
     // 93:2 and 93:3, then a breath of "āmīn", then 93:4. (93:1 is one word: itself a miss.)
     final texts = [duha[1], duha[2], 'آمين', duha[3]];
@@ -232,7 +249,7 @@ void main() {
   });
 
   group('the listener on a phone', () {
-    final index = QuranIndex([for (final v in quran.verses) v.text]);
+    final index = indexOf(quran);
 
     test('partials stop while transcription is slow, and come back when it is not', () {
       var clock = 0;
