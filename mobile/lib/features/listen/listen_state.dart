@@ -1,4 +1,7 @@
 import '../../core/recognition/models.dart';
+import 'place.dart';
+
+export 'place.dart';
 
 /// Where the listening session is in its lifecycle.
 enum SessionPhase {
@@ -75,6 +78,7 @@ class ListenState {
     this.lock,
     this.readerSurah,
     this.browsing = false,
+    this.readerOnTie = false,
     this.anchor,
     this.lastSure,
     this.confirmedAt,
@@ -126,6 +130,11 @@ class ListenState {
   /// they choose "Follow the imam".
   final bool browsing;
 
+  /// [readerSurah] was opened by repeated words in a trusted surah, before any
+  /// position: another trusted surah may replace it, and the first position
+  /// does. False once a position, the user or a lock opened it.
+  final bool readerOnTie;
+
   /// The imam's main position: the last confirmed one outside Al-Fatiha.
   /// Kept while Al-Fatiha is recited at each rakʿah, so the screen stays on
   /// the imam's surah.
@@ -173,6 +182,17 @@ class ListenState {
   /// ayah stay.
   Position? get displayed => inFatihaExcursion ? anchor : _sure;
 
+  /// Where the imam is, as far as the screen can honestly say: one ayah, a
+  /// trusted surah whose ayah repeats, two or three surahs, or nowhere yet
+  /// ([Place]). The position on screen is always kept as held.
+  Place get place => Place.resolve(
+        track: track,
+        status: trackStatus,
+        held: displayed,
+        lock: lock,
+        live: phase == SessionPhase.listening,
+      );
+
   bool get isActive => switch (phase) {
         SessionPhase.connecting || SessionPhase.listening || SessionPhase.reconnecting || SessionPhase.stopping => true,
         _ => false,
@@ -195,6 +215,7 @@ class ListenState {
     Object? lock = _keep,
     Object? readerSurah = _keep,
     bool? browsing,
+    bool? readerOnTie,
     Object? anchor = _keep,
     Object? lastSure = _keep,
     Object? confirmedAt = _keep,
@@ -219,6 +240,7 @@ class ListenState {
         lock: identical(lock, _keep) ? this.lock : lock as Hint?,
         readerSurah: identical(readerSurah, _keep) ? this.readerSurah : readerSurah as int?,
         browsing: browsing ?? this.browsing,
+        readerOnTie: readerOnTie ?? this.readerOnTie,
         anchor: identical(anchor, _keep) ? this.anchor : anchor as Position?,
         lastSure: identical(lastSure, _keep) ? this.lastSure : lastSure as Position?,
         confirmedAt: identical(confirmedAt, _keep) ? this.confirmedAt : confirmedAt as DateTime?,

@@ -267,11 +267,35 @@ abstract class AppLocalizations {
   /// **'The microphone keeps listening meanwhile.'**
   String get captionReconnecting;
 
-  /// No description provided for @repeatedText.
+  /// No description provided for @statusRepeated.
   ///
   /// In en, this message translates to:
-  /// **'Repeated text — could also be {refs}'**
-  String repeatedText(String refs);
+  /// **'Repeated words'**
+  String get statusRepeated;
+
+  /// No description provided for @captionRepeatedInSurah.
+  ///
+  /// In en, this message translates to:
+  /// **'These words repeat in {surah}. Waiting for more words to tell which ayah.'**
+  String captionRepeatedInSurah(String surah);
+
+  /// No description provided for @captionRepeatedAcross.
+  ///
+  /// In en, this message translates to:
+  /// **'These words are in more than one surah. Waiting for more words, or choose below.'**
+  String get captionRepeatedAcross;
+
+  /// No description provided for @chooseAyahInText.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose the ayah in the text'**
+  String get chooseAyahInText;
+
+  /// No description provided for @semSurahAyahUnknown.
+  ///
+  /// In en, this message translates to:
+  /// **'Surah {surah}, ayah not yet known'**
+  String semSurahAyahUnknown(String surah);
 
   /// No description provided for @overlineAyah.
   ///

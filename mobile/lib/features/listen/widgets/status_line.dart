@@ -19,7 +19,7 @@ class StatusLine extends StatelessWidget {
     required this.held,
     this.ayah,
     this.reconnectAttempt = 0,
-    this.note,
+    this.surah,
   });
 
   final DisplayStatus status;
@@ -31,11 +31,14 @@ class StatusLine extends StatelessWidget {
   final int? ayah;
   final int reconnectAttempt;
 
-  /// An extra line under the caption (e.g. repeated-text alternatives).
-  final String? note;
+  /// The trusted surah's name while its words repeat ([DisplayStatus.repeated]
+  /// within one surah); null otherwise.
+  final String? surah;
 
   static const _markerSize = 14.0;
-  static const _indent = _markerSize + RubricSpace.s2;
+
+  /// Where the words start: after the marker slot. Lines under them align here.
+  static const indent = _markerSize + RubricSpace.s2;
 
   @override
   Widget build(BuildContext context) {
@@ -44,7 +47,7 @@ class StatusLine extends StatelessWidget {
     final l = context.l10n;
     var label = status.label(l);
     if (status == DisplayStatus.reconnecting && reconnectAttempt > 1) label = '$label ($reconnectAttempt)';
-    final caption = status.caption(l, ayah);
+    final caption = status.caption(l, ayah, surah: surah);
     final captionStyle = RubricText.caption.copyWith(color: c.inkSecondary);
 
     return AnimatedSize(
@@ -87,13 +90,8 @@ class StatusLine extends StatelessWidget {
           ),
           if (caption != null)
             Padding(
-              padding: const EdgeInsetsDirectional.only(start: _indent, top: 2),
+              padding: const EdgeInsetsDirectional.only(start: indent, top: 2),
               child: Text(caption, style: captionStyle),
-            ),
-          if (note != null)
-            Padding(
-              padding: const EdgeInsetsDirectional.only(start: _indent, top: 2),
-              child: Text(note!, style: captionStyle),
             ),
         ],
       ),

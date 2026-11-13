@@ -22,6 +22,9 @@ any of them is missing.
 | `following_light.png` | Following 93:3, light theme |
 | `not_sure.png` | Engine unsure on 2:255: the last sure ayah is held, dashed rule |
 | `fatiha_excursion.png` | Al-Fatiha (1:3) inside Ar-Rahman: 55:13 stays on screen |
+| `repeated_in_surah.png` | Repeated words at the start: Al-Kahf named, no ayah marked, its two ayahs and "Stay on" to choose |
+| `repeated_held.png` | Repeated words after 93:3, light: 93:3 held as the last sure ayah, Ar-Rahman only a possibility, chosen in the text |
+| `ar_repeated_across.png` | Arabic interface, right to left: words in three surahs, one choice each |
 | `small_phone_2_282.png` | 320×568, Quran text 1.3 and system text 1.3, on 2:282 (the longest ayah) |
 | `error_notice.png` | The Notice when the server cannot be reached |
 | `settings.png` | Settings, top of the screen |

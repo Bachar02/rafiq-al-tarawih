@@ -18,6 +18,7 @@ import 'widgets/ayah_actions.dart';
 import 'widgets/diagnostics_panel.dart';
 import 'widgets/hint_sheet.dart';
 import 'widgets/listen_control.dart';
+import 'widgets/place_choices.dart';
 import '../quran_view/quran_view.dart';
 import 'widgets/position_header.dart';
 import 'widgets/return_to_imam.dart';
@@ -203,6 +204,15 @@ class _ListenScreenState extends ConsumerState<ListenScreen> with WidgetsBinding
     }
   }
 
+  /// Repeated words, more copies than buttons: open the surah's text at its
+  /// first copy, to tap the imam's ayah there (following pauses, as when
+  /// browsing; "Back to the imam" returns).
+  void _findInText(int surah, List<Position> copies) {
+    ref.read(listenControllerProvider.notifier).browse(surah);
+    // After the frame: the view mounts when the first surah is chosen.
+    WidgetsBinding.instance.addPostFrameCallback((_) => _view.jumpToVerse(copies.first.verseId));
+  }
+
   void _returnToImam(ListenState state) {
     if (state.browsing) ref.read(listenControllerProvider.notifier).followImam();
     unawaited(_view.returnToFollow());
@@ -227,6 +237,9 @@ class _ListenScreenState extends ConsumerState<ListenScreen> with WidgetsBinding
     final reader = state.readerSurah;
     final controller = ref.read(listenControllerProvider.notifier);
     final sure = status.marker(held: displayed != null) == MarkerFill.filled;
+    final place = state.place;
+    // Repeated words within one trusted surah: named, its ayah not yet known.
+    final tieSurah = place is InSurah ? place.surah : null;
     final currentWord = highlightedPiece(
       state,
       enabled: settings.wordHighlight,
@@ -284,6 +297,8 @@ class _ListenScreenState extends ConsumerState<ListenScreen> with WidgetsBinding
                             names: names,
                             unsure: status.engineUnsure,
                             onOpenSurahs: () => _openIndex(state),
+                            // A held position stays; the surah is only a possibility.
+                            surah: displayed == null ? tieSurah : null,
                           ),
                         ),
                         const SizedBox(height: RubricSpace.s4),
@@ -294,9 +309,23 @@ class _ListenScreenState extends ConsumerState<ListenScreen> with WidgetsBinding
                             held: displayed != null,
                             ayah: displayed?.ayah,
                             reconnectAttempt: state.reconnectAttempt,
-                            note: state.track.alternatives.isNotEmpty && state.isActive
-                                ? context.l10n.repeatedText(state.track.alternatives.map((p) => p.ref).join(' · '))
-                                : null,
+                            surah: tieSurah == null ? null : names.of(tieSurah),
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: RubricSpace.gutter),
+                          child: AnimatedSize(
+                            duration: RubricMotion.quick,
+                            curve: RubricMotion.standard,
+                            alignment: AlignmentDirectional.topStart,
+                            child: PlaceChoices(
+                              place: place,
+                              names: names,
+                              lock: state.lock,
+                              onAyah: (p) => _onAyahTap(quran.verse(p.verseId), state),
+                              onStay: _locked,
+                              onFindInText: _findInText,
+                            ),
                           ),
                         ),
                       ],

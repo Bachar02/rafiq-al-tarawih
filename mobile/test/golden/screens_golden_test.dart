@@ -651,6 +651,32 @@ void main() {
       await expectGolden(tester, 'not_sure');
     });
 
+    testWidgets('repeated words in one surah: Al-Kahf named, two ayahs to choose', (tester) async {
+      await launch(tester);
+      await startListening(tester);
+      await hear(tester, tie([(18, 89), (18, 92)]));
+      await expectGolden(tester, 'repeated_in_surah');
+    });
+
+    testWidgets('repeated words after 93:3: held, Ar-Rahman a possibility, chosen in the text', (tester) async {
+      await launch(tester, prefs: {'theme_mode': 'light', 'dark_during_taraweeh': false});
+      await startListening(tester);
+      await hear(tester, at(93, 3));
+      await hear(
+          tester,
+          tie([
+            for (final a in [13, 16, 18, 21, 23]) (55, a)
+          ], position: pos(93, 3)));
+      await expectGolden(tester, 'repeated_held');
+    });
+
+    testWidgets('Arabic interface: repeated words in three surahs', (tester) async {
+      await launch(tester, prefs: {'language': 'ar'});
+      await startListening(tester);
+      await hear(tester, tie([(3, 50), (26, 108), (26, 110), (43, 63)]));
+      await expectGolden(tester, 'ar_repeated_across');
+    });
+
     testWidgets('Al-Fatiha excursion: 55:13 stays while 1:3 is recited', (tester) async {
       await launch(tester);
       await startListening(tester);

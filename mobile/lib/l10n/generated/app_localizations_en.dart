@@ -101,8 +101,23 @@ class AppLocalizationsEn extends AppLocalizations {
   String get captionReconnecting => 'The microphone keeps listening meanwhile.';
 
   @override
-  String repeatedText(String refs) {
-    return 'Repeated text — could also be $refs';
+  String get statusRepeated => 'Repeated words';
+
+  @override
+  String captionRepeatedInSurah(String surah) {
+    return 'These words repeat in $surah. Waiting for more words to tell which ayah.';
+  }
+
+  @override
+  String get captionRepeatedAcross =>
+      'These words are in more than one surah. Waiting for more words, or choose below.';
+
+  @override
+  String get chooseAyahInText => 'Choose the ayah in the text';
+
+  @override
+  String semSurahAyahUnknown(String surah) {
+    return 'Surah $surah, ayah not yet known';
   }
 
   @override

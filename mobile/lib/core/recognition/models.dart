@@ -92,6 +92,20 @@ class TrackState {
 
   /// The ayah a follow-along screen should highlight now.
   Position? get showing => upcoming ?? position;
+
+  /// This verdict without its tie report: what a new session carries over
+  /// (a tie is news about the audio just heard, never about the next session).
+  TrackState get withoutTie => tied.isEmpty && !tieTrusted
+      ? this
+      : TrackState(
+          status: status,
+          position: position,
+          confidence: confidence,
+          pending: pending,
+          alternatives: alternatives,
+          upcoming: upcoming,
+          evidence: evidence,
+        );
 }
 
 /// The word being recited, when word tracking is on and sure of it

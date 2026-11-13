@@ -10,6 +10,7 @@ import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:rafiq/app/providers.dart';
 import 'package:rafiq/core/audio/audio_source.dart';
 import 'package:rafiq/core/engine/quran_index.dart';
+import 'package:rafiq/core/engine/tracker.dart' show TrackerState;
 import 'package:rafiq/core/recognition/models.dart';
 import 'package:rafiq/core/recognition/recognition_engine.dart';
 import 'package:rafiq/data/adhkar.dart';
@@ -418,3 +419,45 @@ Position pos(int surah, int ayah) => at(surah, ayah).position!;
 
 Heard heard(TrackState state, {bool isFinal = true, String text = 'نص'}) =>
     Heard(text: text, start: 0, end: 1, asrMs: 100, state: state, isFinal: isFinal);
+
+/// A tie report as an engine sends it: repeated words fitting every
+/// `(surah, ayah)` in [refs] as well (Quran order), at cold start unless
+/// [position] holds an earlier one. `trusted: false` is a tie the engine
+/// would not rely on; `evidence: false` the same report held through a miss.
+TrackState tie(
+  List<(int, int)> refs, {
+  bool trusted = true,
+  Position? position,
+  bool evidence = true,
+  TrackStatus status = TrackStatus.uncertain,
+}) =>
+    TrackState(
+      status: status,
+      position: position,
+      evidence: evidence,
+      tied: [for (final (s, a) in refs) pos(s, a)],
+      tieTrusted: trusted,
+    );
+
+/// The app's view of the real tracker's [state], as the on-device engine
+/// converts it.
+TrackState fromEngine(TrackerState state) {
+  final quran = loadQuran();
+  Position? p(int? id) {
+    if (id == null) return null;
+    final v = quran.verse(id);
+    return Position(verseId: id, surah: v.surah, ayah: v.ayah);
+  }
+
+  return TrackState(
+    status: TrackStatus.parse(state.status.name),
+    position: p(state.verseId),
+    confidence: state.confidence,
+    pending: p(state.pendingVerse),
+    alternatives: [for (final a in state.alternatives) p(a)!],
+    upcoming: p(state.upcomingVerse),
+    evidence: state.evidence,
+    tied: [for (final v in state.tied) p(v)!],
+    tieTrusted: state.tieTrusted,
+  );
+}

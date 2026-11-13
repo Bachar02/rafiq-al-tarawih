@@ -171,4 +171,53 @@ void main() {
       expect(words, isNot(contains('waiting for the imam')));
     }
   });
+
+  group('repeated words', () {
+    final fr = lookupAppLocalizations(const Locale('fr'));
+    final ar = lookupAppLocalizations(const Locale('ar'));
+
+    test('a trusted surah, nothing held: Repeated words, no marker, the surah named', () {
+      final state = listening(track: tie([(18, 89), (18, 92)]), confirmed: null);
+      final s = DisplayStatus.of(state, after(3));
+      expect(s, DisplayStatus.repeated);
+      expect(s.marker(held: false), MarkerFill.none);
+      expect(s.active, isTrue);
+      expect(s.label(en), 'Repeated words');
+      expect(s.caption(en, null, surah: 'Al-Kahf'),
+          'These words repeat in Al-Kahf. Waiting for more words to tell which ayah.');
+    });
+
+    test('a held ayah stays the last sure one: hollow marker, dimmed, said so', () {
+      final state = listening(track: tie([(55, 13), (55, 16)], position: pos(93, 3)), lastSure: pos(93, 3));
+      final s = DisplayStatus.of(state, after(3));
+      expect(s, DisplayStatus.repeated);
+      expect(s.marker(held: true), MarkerFill.hollow);
+      expect(s.engineUnsure, isTrue);
+      expect(s.caption(en, 3, surah: 'Ar-Rahman'), endsWith('Holding the last sure ayah.'));
+    });
+
+    test('across surahs: invites a choice, never cites references', () {
+      final state = listening(track: tie([(3, 50), (43, 63)]), confirmed: null);
+      final s = DisplayStatus.of(state, after(3));
+      expect(s, DisplayStatus.repeated);
+      final caption = s.caption(en, null)!;
+      expect(caption, 'These words are in more than one surah. Waiting for more words, or choose below.');
+      expect(caption, isNot(contains(':')));
+    });
+
+    test('an untrusted tie keeps the old states (listening, or not sure)', () {
+      expect(DisplayStatus.of(listening(track: tie([(77, 15), (83, 10)], trusted: false), confirmed: null), after(3)),
+          DisplayStatus.listening);
+      final held =
+          listening(track: tie([(77, 15), (83, 10)], trusted: false, position: pos(93, 3)), lastSure: pos(93, 3));
+      expect(DisplayStatus.of(held, after(3)), DisplayStatus.notSure);
+    });
+
+    test('French and Arabic', () {
+      expect(DisplayStatus.repeated.label(fr), 'Mots répétés');
+      expect(DisplayStatus.repeated.caption(fr, null, surah: 'Al-Kahf'), contains('la sourate Al-Kahf'));
+      expect(DisplayStatus.repeated.label(ar), 'كلمات متكررة');
+      expect(DisplayStatus.repeated.caption(ar, null, surah: 'الكهف'), contains('سورة الكهف'));
+    });
+  });
 }

@@ -59,7 +59,8 @@ class ListenController extends Notifier<ListenState> {
       lock: state.lock,
       readerSurah: state.readerSurah,
       browsing: state.browsing,
-      track: state.track,
+      // A tie from the last session is not news about this one.
+      track: state.track.withoutTie,
       evidenceStatus: state.evidenceStatus,
       anchor: state.anchor,
       lastSure: state.lastSure,
@@ -146,6 +147,7 @@ class ListenController extends Notifier<ListenState> {
       lock: scope,
       readerSurah: scope is SurahHint ? scope.surah : state.readerSurah,
       browsing: false,
+      readerOnTie: false,
     );
     return previous;
   }
@@ -170,6 +172,7 @@ class ListenController extends Notifier<ListenState> {
       evidenceStatus: TrackStatus.tracking,
       readerSurah: position.surah,
       browsing: false,
+      readerOnTie: false,
       // The user said where the imam is, Al-Fatiha included: show exactly that.
       anchor: position.surah == 1 ? null : position,
       lastSure: position,
@@ -178,7 +181,7 @@ class ListenController extends Notifier<ListenState> {
   }
 
   /// Open a surah by hand (index, next/previous). Following pauses.
-  void browse(int surah) => state = state.copyWith(readerSurah: surah, browsing: true);
+  void browse(int surah) => state = state.copyWith(readerSurah: surah, browsing: true, readerOnTie: false);
 
   /// Back to following the imam.
   void followImam() =>
@@ -260,13 +263,15 @@ class ListenController extends Notifier<ListenState> {
     final confident = heard.state.status == TrackStatus.tracking && shown != null;
     if (!state.browsing && shown != null) {
       final fatihaExcursion = shown.surah == 1 && reader != null && reader != 1;
-      if (reader == null || (confident && !fatihaExcursion)) reader = shown.surah;
+      // Before the first position, an open surah (a trusted tie opened it)
+      // gives way to the first position, as an empty reader does.
+      if (reader == null || state.displayed == null || (confident && !fatihaExcursion)) reader = shown.surah;
     }
     // A surah lock moves on with the imam into the next surah.
     final followed = SurahLock.follow(state.lock, heard);
     if (followed != null) _engine?.lock(SurahLock.window(followed));
     final now = DateTime.now();
-    state = state.copyWith(
+    final next = state.copyWith(
       lock: followed ?? state.lock,
       anchor: confident && shown.surah != 1 ? shown : state.anchor,
       lastSure: confident ? shown : state.lastSure,
@@ -281,6 +286,15 @@ class ListenController extends Notifier<ListenState> {
       detectedAfter: firstDetection ? now.difference(state.startedAt!) : state.detectedAfter,
       liveWord: _liveWord(generation, heard, now),
     );
+    // Before any position, a trusted surah opens in the reader, with no ayah
+    // marked, so the imam's ayah can be tapped there; another trusted surah
+    // replaces it. A surah opened otherwise (a position, the user, a lock)
+    // never moves for it, and a weaker result never closes it.
+    final place = next.place;
+    final onTie = next.displayed == null && !next.browsing && (next.readerSurah == null || state.readerOnTie);
+    state = onTie && place is InSurah
+        ? next.copyWith(readerSurah: place.surah, readerOnTie: true)
+        : next.copyWith(readerOnTie: next.displayed == null && !next.browsing && state.readerOnTie);
   }
 
   /// Word highlighting (developer setting): the newest result decides. One
