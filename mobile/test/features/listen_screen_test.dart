@@ -391,8 +391,21 @@ void main() {
     expect(find.textContaining('Al-Fatiha is still recognised'), findsOneWidget);
     await tester.tap(find.text('Stay on this surah'));
     await settle(tester);
-    expect(h.engine.locks, [const SurahHint(55)]);
+    expect(h.engine.locks, [const SurahRange(55, 56)]);
+    expect(find.text('Staying on Ar-Rahman, then the next surah'), findsOneWidget);
 
+    // Undo: back to no lock.
+    await tester.tap(find.text('Undo'));
+    await settle(tester);
+    expect(h.engine.locks.last, isNull);
+    expect(find.byTooltip('Stay on this surah'), findsOneWidget);
+
+    // Lock again, then unlock from the header.
+    await tester.tap(find.byTooltip('Stay on this surah'));
+    await settle(tester);
+    await tester.tap(find.text('Stay on this surah'));
+    await settle(tester);
+    expect(h.engine.locks.last, const SurahRange(55, 56));
     await tester.tap(find.byTooltip('Locked to Ar-Rahman. Tap to unlock.'));
     await settle(tester);
     expect(h.engine.locks.last, isNull);

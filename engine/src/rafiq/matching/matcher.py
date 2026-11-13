@@ -49,6 +49,17 @@ class Match:
         return self.last_verse
 
 
+@dataclass(frozen=True, slots=True)
+class Shortlist:
+    """Every position retrieval kept for a query, rescored: what `match_tokens`
+    takes its top k from. The votes say whether retrieval's cap may have left
+    out a copy of a repeated phrase (the tracker's tie report)."""
+
+    matches: list[Match]  # best first; overlaps and matches under min_score dropped
+    votes: list[float]  # each match's retrieval votes (pooled), in the same order
+    cut: float | None  # votes of the best position the `retrieve` cap left out; None if none was
+
+
 class Matcher:
     def __init__(self, index: QuranIndex, config: MatchConfig = MatchConfig()) -> None:
         self.index = index
@@ -67,12 +78,23 @@ class Matcher:
         return self.match_tokens(tokens, k=k, lo=lo, hi=hi)
 
     def match_tokens(self, tokens: list[str], k: int = 5, lo: int = 0, hi: int | None = None) -> list[Match]:
+        """Top-`k` non-overlapping matches, best first: the first `k` of `match_all`."""
+        return self.match_all(tokens, lo=lo, hi=hi).matches[:k]
+
+    def match_all(self, tokens: list[str], lo: int = 0, hi: int | None = None) -> Shortlist:
+        """Every match retrieval shortlisted, rescored, best first, with its votes.
+
+        Selection is greedy in score order, so the first `k` are exactly what
+        a top-`k` search returns: asking for all of them costs no extra work
+        (every shortlisted position is rescored either way).
+        """
         if not tokens:
-            return []
+            return Shortlist([], [], None)
         hi = len(self.index) if hi is None else hi
-        offsets = self._retrieve(tokens, lo, hi)
-        matches = [self.score_window(tokens, off, off + len(tokens)) for off in offsets]
-        return self._select(matches, k)
+        offsets, pooled, cut = self._retrieve(tokens, lo, hi)
+        scored = [(self.score_window(tokens, off, off + len(tokens)), pooled[off]) for off in offsets]
+        kept = self._select(scored)
+        return Shortlist([m for m, _ in kept], [v for _, v in kept], cut)
 
     def score_window(self, tokens: list[str], start: int, end: int) -> Match:
         """Align `tokens` against the stream around `[start, end)`.
@@ -116,7 +138,11 @@ class Matcher:
             self._neighbour_cache[word] = cached
         return cached
 
-    def _retrieve(self, tokens: list[str], lo: int, hi: int) -> list[int]:
+    def _retrieve(
+        self, tokens: list[str], lo: int, hi: int
+    ) -> tuple[list[int], dict[int, float], float | None]:
+        """The best `retrieve` offsets, best first; every offset's pooled votes;
+        and the votes of the best offset the cap left out (None if none was)."""
         index, cfg = self.index, self.config
         votes: dict[int, float] = defaultdict(float)
         for qi, token in enumerate(tokens):
@@ -127,31 +153,39 @@ class Matcher:
                     if lo <= pos < hi:
                         votes[pos - qi] += w
         if not votes:
-            return []
+            return [], {}, None
 
         # Pool nearby offsets: an inserted or dropped word shifts the diagonal
         # by one, which would otherwise split the votes for the true position.
         spread = cfg.vote_spread
-        pooled = {off: sum(votes.get(off + d, 0.0) for d in range(-spread, spread + 1)) for off in votes}
+        # Added left to right, not with sum(): since Python 3.12 sum() compensates
+        # rounding, so ties at the shortlist's cut would order differently by
+        # version (CI runs 3.11) and from the Dart port.
+        pooled: dict[int, float] = {}
+        for off in votes:
+            total = 0.0
+            for d in range(-spread, spread + 1):
+                total += votes.get(off + d, 0.0)
+            pooled[off] = total
         ranked = sorted(pooled, key=pooled.__getitem__, reverse=True)
 
         chosen: list[int] = []
+        cut = None
         for off in ranked:
             if all(abs(off - c) > spread for c in chosen):
-                chosen.append(off)
                 if len(chosen) >= cfg.retrieve:
+                    cut = pooled[off]  # the best one the cap leaves out
                     break
-        return chosen
+                chosen.append(off)
+        return chosen, pooled, cut
 
-    def _select(self, matches: list[Match], k: int) -> list[Match]:
-        """Best-first, dropping matches that overlap a better one."""
-        out: list[Match] = []
-        for m in sorted(matches, key=lambda m: m.score, reverse=True):
+    def _select(self, scored: list[tuple[Match, float]]) -> list[tuple[Match, float]]:
+        """Best-first, dropping matches that overlap a better one (votes ride along)."""
+        out: list[tuple[Match, float]] = []
+        for m, v in sorted(scored, key=lambda mv: mv[0].score, reverse=True):
             if m.score < self.config.min_score:
                 break
-            if any(m.start < o.end and o.start < m.end for o in out):
+            if any(m.start < o.end and o.start < m.end for o, _ in out):
                 continue
-            out.append(m)
-            if len(out) >= k:
-                break
+            out.append((m, v))
         return out

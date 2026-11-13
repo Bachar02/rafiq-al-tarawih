@@ -13,11 +13,20 @@ import '../text/normalize.dart';
 
 /// Normalized word stream with postings and IDF weights. Immutable.
 class QuranIndex {
-  QuranIndex._(this.words, this._wordVerse, this._verseStart, this.postings, this.vocab, this.idf, this.verseCount);
+  QuranIndex._(this.words, this._wordVerse, this._verseStart, this.postings, this.vocab, this.idf, this.verseCount,
+      this._surahStarts);
 
   /// [verseTexts] in verse-id order (Simple Clean): verse id `i + 1` is
-  /// `verseTexts[i]`.
-  factory QuranIndex(List<String> verseTexts) {
+  /// `verseTexts[i]`. [surahStarts]: each surah's first verse id, in order
+  /// (the Python index has the whole Quran; the tracker's tie report needs
+  /// the surahs).
+  factory QuranIndex(List<String> verseTexts, {required List<int> surahStarts}) {
+    if (surahStarts.isEmpty || surahStarts.first != 1) throw ArgumentError('surahStarts must begin with verse 1');
+    for (var i = 1; i < surahStarts.length; i++) {
+      if (surahStarts[i] <= surahStarts[i - 1] || surahStarts[i] > verseTexts.length) {
+        throw ArgumentError('surahStarts must rise within the verses');
+      }
+    }
     final words = <String>[];
     final wordVerse = <int>[];
     final verseStart = Int32List(verseTexts.length + 2); // [count + 1] is a sentinel
@@ -51,6 +60,7 @@ class QuranIndex {
       List.unmodifiable(vocab),
       Map.unmodifiable(idf),
       n,
+      Int32List.fromList(surahStarts),
     );
   }
 
@@ -63,8 +73,23 @@ class QuranIndex {
   final List<String> vocab;
   final Map<String, double> idf;
   final int verseCount;
+  final Int32List _surahStarts;
 
   int get length => words.length;
+
+  /// The surah (1-based) of verse [verseId].
+  int surahOf(int verseId) {
+    var lo = 0, hi = _surahStarts.length; // the last start <= verseId
+    while (hi - lo > 1) {
+      final mid = (lo + hi) ~/ 2;
+      if (_surahStarts[mid] <= verseId) {
+        lo = mid;
+      } else {
+        hi = mid;
+      }
+    }
+    return lo + 1;
+  }
 
   /// Stream range `[start, end)` covered by one verse.
   (int, int) verseSpan(int verseId) => (_verseStart[verseId], _verseStart[verseId + 1]);

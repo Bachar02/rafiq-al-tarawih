@@ -1170,3 +1170,40 @@ One final is shown as sure and wrong, before and after alike (Husary, on evidenc
 **Tests:** Python 10 new (an exact tie close by, a misheard word between two copies, a near tie, the refrain, joining on a later copy, every repeated verse, unique ayahs unchanged, a far jump into a refrain, after lost and al-Fatiha, a far jump on distinct words); Dart the same 10; 5 new golden scenarios (32 steps), Python and Dart equal on all 2,228 states. 189 Python and 557 Flutter tests; every gate and check passes.
 
 **For Phase 2:** a tie that stays in one surah means "this surah, ayah undecided": show the surah and wait, never a chip per copy. The state carries a pending verse and at most 3 alternatives; telling "one surah" apart for sure needs the full tied set, a field Phase 2 should add rather than infer from 3.
+
+## 36. A surah lock that follows the imam (2026-11-13, not committed)
+
+**The fault:** *Stay on this surah* locked recognition to that surah alone (`Tracker.lock`, a hard range), and nothing ever moved it. When the imam recited on into the next surah, which a juz-a-night Taraweeh does most nights, every candidate was outside the range: the chunks became misses and the tracker got lost on the last ayah of the locked surah.
+
+**The lock now** (`lib/features/listen/surah_lock.dart`, all in the app; the tracker is unchanged):
+- **Covers the surah and the one after it.** The app sends engines a `SurahRange` (114 alone for An-Nas); `ListenState.lock` stays the chosen surah, so the labels and the ayah sheet are as before. A juz lock is sent as it is and does not follow.
+- **Moves on** one surah when a committed result (a final, `tracking`, with evidence) places the recited ayah in the next surah. Never on a preview, a miss, an unsure result, a pending far jump or `upcoming` (a prediction), and never back.
+- **"The imam is here"** in another surah moves the lock there first (al-Fatiha excepted, as it is always allowed).
+- **Undo:** locking shows "Staying on {surah}, then the next surah" with Undo, back to the lock before (or none). The header's lock button still unlocks in one tap.
+- **The development server** accepts `{"type": "lock", "surah": 2, "through": 3}`.
+
+**Tests:** 9 against the real tracker (`test/features/surah_lock_tracker_test.dart`): Al-Baqarah into Aal-Imran (the same trajectory as with no lock at all; the old lock stays stuck in Al-Baqarah), three boundaries in a row (112 to 114), al-Fatiha at the boundary, 3:2 against 2:255 (the same opening words, both in the window) on either side of the boundary, a far jump into the next surah, outside the window, "the imam is here" elsewhere and unlocking, and tracking with no lock. 6 in the controller (what moves the window and what does not, never back, correction, Undo, a juz lock), the protocol, the server, and the screen's lock, Undo and unlock. 572 Flutter and 190 Python tests; every gate and check passes. Two strings in three languages (one reworded).
+
+**Not changed:** the recognition engine, the Taraweeh position, the candidate UI.
+
+## 37. The tie report: repeated text, the whole set, and whether to trust it (2026-11-13, not committed)
+
+**Why:** §35 stops the tracker showing one copy of repeated text, but the app needs to know what it is waiting on: "this surah, ayah undecided" (the 31 copies of the Ar-Rahman refrain) is not "nothing reliable". The tracker sees only 8 places (beam and candidates), so the whole set has to come from the matcher, which already rescores up to 40 positions per chunk and kept 8.
+
+**Matcher** (Python and Dart): `match_all` returns every shortlisted match, best first, with its retrieval votes and the votes of the best position the 40-position cap left out (`cut`). `match_tokens(k)` is its first k: on 8,741 queries and 74,330 (query, k) checks, identical to the matcher before. No extra work: every shortlisted position was rescored anyway.
+
+**Tracker** (`TrackState.tied`, `tie_trusted`): while the position is unconfirmed (cold start, far jump) and the best ayah ties another within `tie_margin`, `tied` is every ayah the words fit as well as the best (beam and shortlist), in Quran order. `tie_trusted` needs two things:
+- **Complete:** the cap left out no position voted as high as a copy it kept. Counting returned candidates is not enough: يا أيها الذين آمنوا has 89 copies, 39 survive the cap and one non-copy, yet it is cut off.
+- **Confident:** its surahs taken as one place pass the cold-start confidence (0.3) against the best rival outside them, with the short-chunk discount. Without this, garbled previews (بلى مربي للقسط for 7:29) offered surahs the imam was not in.
+
+Held through a miss; cleared when a position is accepted or set by the user; never computed where the screen already is. No new threshold. Recognition is unchanged: every benchmark and all 2,228 earlier golden states are identical.
+
+**On the wire:** `StateOut.tied` / `tie_trusted`, the app's `TrackState.tied` / `tieTrusted` (missing or malformed: no tie; never trusted without one), the on-device isolate's messages. The Dart index now takes each surah's first verse (`QuranIndex(..., surahStarts:)`).
+
+**A finding on the way:** Python 3.12 made `sum()` of floats compensated. The matcher pooled retrieval votes with `sum()`, so positions whose votes differ only in the last bit ordered differently at the cap on this machine (3.13) than on CI (3.11) and in Dart. The pooling now adds left to right; the top-k and every golden decision are unchanged, and Python and Dart now agree on the whole shortlist.
+
+**Results:** across all 9,860 repeated 4–7-word phrases, 1,498 single-surah verdicts, none with a copy in another surah; the 937 joins on clustered repeats all get the right surah (902 with 3 copies or fewer, 35 more); no wrong verdict on noisy random joins or the recordings (6 single-surah there). Cost: none measurable (the report runs on 95 of 6,741 steps of the recordings).
+
+**Parity and tests:** `match.json` now holds each query's whole shortlist (195 queries, 165 with a cut) and `tracker.json` the two new fields on every state (22 scenarios, 2,244 states, two new ones for the report); Dart reproduces both. Python 24 new tests (the matcher, the report, the server's wire), Dart 16 new (the report, the whole shortlist's parity, the protocol, the isolate). 214 Python and 588 Flutter tests; every gate and check passes.
+
+**Not done:** the app's place model and the candidate UI (§2 of the Phase 2 proposal); the Taraweeh position.

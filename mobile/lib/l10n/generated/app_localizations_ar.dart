@@ -324,7 +324,13 @@ class AppLocalizationsAr extends AppLocalizations {
   String get stayOnThisSurah => 'البقاء في هذه السورة';
 
   @override
-  String get lockExplanation => 'لن يبحث رفيق في سور أخرى حتى تلغي التقييد. تبقى الفاتحة معروفة في كل ركعة.';
+  String get lockExplanation =>
+      'يبحث رفيق في هذه السورة والتي تليها فقط، وينتقل مع الإمام. تبقى الفاتحة معروفة في كل ركعة.';
+
+  @override
+  String lockedSnack(String surah) {
+    return 'البقاء في $surah ثم السورة التي تليها';
+  }
 
   @override
   String get hintSheetTitle => 'نقطة بداية الليلة';

@@ -14,9 +14,10 @@ import 'models.dart';
 
 const endOfStreamMessage = '{"type":"end"}';
 
-/// "The imam is in this surah/juz: never look elsewhere" (null: unlock).
+/// "The imam is in these surahs / this juz: never look elsewhere" (null: unlock).
 String lockMessage(Hint? scope) => switch (scope) {
       SurahHint(:final surah) => jsonEncode({'type': 'lock', 'surah': surah}),
+      SurahRange(:final first, :final last) => jsonEncode({'type': 'lock', 'surah': first, 'through': last}),
       JuzHint(:final juz) => jsonEncode({'type': 'lock', 'juz': juz}),
       null => jsonEncode({'type': 'unlock'}),
     };
@@ -26,7 +27,7 @@ String positionMessage(int verseId) => jsonEncode({'type': 'position', 'verse_id
 
 /// Query string for an optional hint, e.g. `?surah=55`.
 String hintQuery(Hint? hint) => switch (hint) {
-      SurahHint(:final surah) => '?surah=$surah',
+      SurahHint(:final surah) || SurahRange(first: final surah) => '?surah=$surah',
       JuzHint(:final juz) => '?juz=$juz',
       null => '',
     };
@@ -86,7 +87,12 @@ TrackState decodeTrackState(Map<String, dynamic> json) => TrackState(
       upcoming: _position(json['upcoming']),
       // A server from before the field: every result counted as evidence.
       evidence: json['evidence'] is bool ? json['evidence'] as bool : true,
+      // A server from before the tie report: no tie.
+      tied: _positions(json['tied']),
+      tieTrusted: json['tie_trusted'] == true && _positions(json['tied']).isNotEmpty,
     );
+
+List<Position> _positions(Object? json) => json is List ? json.map(_position).whereType<Position>().toList() : const [];
 
 Position? _position(Object? json) {
   if (json is! Map<String, dynamic>) return null;

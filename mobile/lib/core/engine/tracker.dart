@@ -156,6 +156,8 @@ class TrackerState {
     this.alternatives = const [],
     this.upcomingVerse,
     this.evidence = true,
+    this.tied = const [],
+    this.tieTrusted = false,
   });
 
   static const idle =
@@ -188,6 +190,17 @@ class TrackerState {
   /// rivals also has confidence 0.
   final bool evidence;
 
+  /// Repeated text. While the position is unconfirmed (cold start, a far
+  /// jump), every ayah these words fit as well as the best (within
+  /// `tieMargin`), in Quran order; empty otherwise. Held through a miss,
+  /// cleared once a position is accepted or set by the user.
+  final List<int> tied;
+
+  /// The tied set can be relied on: retrieval's cap left out no copy, and its
+  /// surahs taken as one place would have been shown (the cold-start
+  /// confidence, against the best rival outside them).
+  final bool tieTrusted;
+
   int? get showing => upcomingVerse ?? verseId;
 
   /// The previous state held after a miss: no evidence, no confidence.
@@ -201,6 +214,8 @@ class TrackerState {
         alternatives: alternatives,
         upcomingVerse: upcomingVerse,
         evidence: false,
+        tied: tied,
+        tieTrusted: tieTrusted,
       );
 }
 
@@ -320,21 +335,30 @@ class Tracker {
     }
     _misses = 0;
     _hyps = _advance(candidates, evidence, hint);
-    _state = _display(candidates);
+    _state = _display(candidates, evidence);
     return _state;
   }
 
   // -- search ---------------------------------------------------------------
 
+  /// This chunk's whole shortlist (global, or the locked range), for the tie
+  /// report; null without words.
+  Shortlist? _shortlist;
+
   List<QuranMatch> _candidates(List<String> tokens, (int, int)? hint) {
+    _shortlist = null;
     if (tokens.isEmpty) return const [];
     final cfg = config;
     final found = <QuranMatch>[];
     final lock = _lock;
+    // The whole shortlist is kept for the tie report; the beam gets its first
+    // `candidates`, exactly what a top-k search returns.
     if (lock == null) {
-      found.addAll(matcher.matchTokens(tokens, k: cfg.candidates));
+      final shortlist = _shortlist = matcher.matchAll(tokens);
+      found.addAll(shortlist.matches.take(cfg.candidates));
     } else {
-      found.addAll(matcher.matchTokens(tokens, k: cfg.candidates, lo: lock.$1, hi: lock.$2));
+      final shortlist = _shortlist = matcher.matchAll(tokens, lo: lock.$1, hi: lock.$2);
+      found.addAll(shortlist.matches.take(cfg.candidates));
       for (final (lo, hi) in _excursionSpans) {
         found.addAll(matcher.matchTokens(tokens, k: cfg.candidates, lo: lo, hi: hi));
       }
@@ -423,7 +447,46 @@ class Tracker {
 
   bool _isNear(int a, int b) => transition.call(a, b) > -transition.farCost;
 
-  TrackerState _display(List<QuranMatch> candidates) {
+  /// Repeated text: every ayah these words fit as well as the best, and
+  /// whether that set can be trusted. [weight] discounts a short chunk.
+  (List<int>, bool) _ties(Hypothesis best, double weight) {
+    final cfg = config;
+    final tied = <int>{
+      for (final h in _hyps)
+        if (best.score - h.score <= cfg.tieMargin) index.verseAt(h.end - 1)
+    };
+    if (tied.length < 2) return (const [], false);
+    // The beam holds 8 places; the shortlist holds every copy retrieval kept.
+    final shortlist = _shortlist;
+    final matches = shortlist?.matches ?? const <QuranMatch>[];
+    final votes = shortlist?.votes ?? const <double>[];
+    final top = matches.isNotEmpty ? matches.first.score : 0.0;
+    final copies = <double>[];
+    for (var i = 0; i < matches.length; i++) {
+      if (top - matches[i].score <= cfg.tieMargin) {
+        copies.add(votes[i]);
+        tied.add(index.verseAt(matches[i].end - 1));
+      }
+    }
+    // Complete unless retrieval's cap left out a position voted as high as a
+    // copy it kept (a phrase repeated more often than the cap).
+    final cut = shortlist?.cut;
+    final complete = shortlist != null && (cut == null || (copies.isNotEmpty && cut < copies.reduce(math.min) - 1e-9));
+    final surahs = {for (final v in tied) index.surahOf(v)};
+    // Its surahs as one place: would the tracker have shown it?
+    final outside = [
+      for (final m in matches)
+        if (!surahs.contains(index.surahOf(index.verseAt(m.end - 1)))) weight * m.score,
+      for (final h in _hyps)
+        if (!surahs.contains(index.surahOf(index.verseAt(h.end - 1)))) h.score,
+    ];
+    final rival = outside.isEmpty ? 0.0 : outside.reduce(math.max);
+    final quality = 1.0 - cfg.emissionWeight * (1.0 - math.min(best.emission, 1.0));
+    final confidence = quality * (1.0 - math.exp(-2.0 * math.max(best.score - rival, 0.0)));
+    return (tied.toList()..sort(), complete && confidence >= cfg.coldStartConfidence);
+  }
+
+  TrackerState _display(List<QuranMatch> candidates, double weight) {
     final cfg = config;
     final best = _hyps.first;
     // Where the screen already is: onward or a repeat from it, al-Fatiha, or
@@ -474,6 +537,8 @@ class Tracker {
       _pendingCount = 0;
     }
 
+    // Repeated text, reported only while the position is unconfirmed.
+    final (tied, tieTrusted) = settled || accept ? (const <int>[], false) : _ties(best, weight);
     final pendingVerse = _pending != null ? index.verseAt(_pending! - 1) : null;
     final alternatives = <int>[];
     for (final h in rivals) {
@@ -490,6 +555,8 @@ class Tracker {
         candidates: candidates,
         pendingVerse: pendingVerse,
         alternatives: alternatives,
+        tied: tied,
+        tieTrusted: tieTrusted,
       );
     }
     final word = _shown! - 1;
@@ -503,6 +570,8 @@ class Tracker {
       pendingVerse: pendingVerse,
       alternatives: alternatives,
       upcomingVerse: status == TrackerStatus.tracking ? _upcoming(word) : null,
+      tied: tied,
+      tieTrusted: tieTrusted,
     );
   }
 }

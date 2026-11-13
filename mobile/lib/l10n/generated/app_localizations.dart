@@ -612,8 +612,14 @@ abstract class AppLocalizations {
   /// No description provided for @lockExplanation.
   ///
   /// In en, this message translates to:
-  /// **'Rafiq will not look in other surahs until you unlock. Al-Fatiha is still recognised at each rakʿah.'**
+  /// **'Rafiq looks only in this surah and the one after it, and moves on with the imam. Al-Fatiha is still recognised at each rakʿah.'**
   String get lockExplanation;
+
+  /// No description provided for @lockedSnack.
+  ///
+  /// In en, this message translates to:
+  /// **'Staying on {surah}, then the next surah'**
+  String lockedSnack(String surah);
 
   /// No description provided for @hintSheetTitle.
   ///

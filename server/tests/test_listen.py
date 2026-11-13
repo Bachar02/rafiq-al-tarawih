@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 
 import numpy as np
+import pytest
 from fastapi.testclient import TestClient
 from rafiq.asr import ListenerConfig
 from rafiq.matching import get_index
@@ -240,3 +241,16 @@ def test_lock_keeps_the_session_in_the_surah():
             msgs.append(m)
     shown = [m["state"]["position"] for m in msgs if m["type"] == "heard" and m["state"]["position"]]
     assert shown and all(p["surah"] == 93 for p in shown)
+
+
+def test_a_lock_can_cover_a_surah_and_the_next():
+    from rafiq_server.listen import parse_control
+
+    quran = get_index().quran
+    one = parse_control({"type": "lock", "surah": 2}, quran)
+    two = parse_control({"type": "lock", "surah": 2, "through": 3}, quran)
+    assert (one.first, one.last) == (quran.verse(2, 1).id, quran.verse(2, 286).id)
+    assert (two.first, two.last) == (quran.verse(2, 1).id, quran.verse(3, 200).id)
+    for bad in ({"type": "lock", "surah": 3, "through": 2}, {"type": "lock", "surah": 2, "through": 115}):
+        with pytest.raises(ValueError):
+            parse_control(bad, quran)

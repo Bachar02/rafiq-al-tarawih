@@ -102,6 +102,7 @@ class OnDeviceRecognitionEngine implements RecognitionEngine {
         _WorkerSetup(
           reply: inbox.sendPort,
           verses: [for (final v in quran.verses) v.text],
+          surahStarts: [for (final s in quran.surahs) s.firstVerseId],
           hint: _range(hint),
           lock: _range(_lock),
           load: loader,
@@ -124,6 +125,7 @@ class OnDeviceRecognitionEngine implements RecognitionEngine {
   /// A hint's verse range (first, last).
   (int, int)? _range(Hint? scope) => switch (scope) {
         SurahHint(:final surah) => (quran.surah(surah).firstVerseId, quran.surah(surah).lastVerseId),
+        SurahRange(:final first, :final last) => (quran.surah(first).firstVerseId, quran.surah(last).lastVerseId),
         JuzHint(:final juz) => (quran.juzs.start(juz), quran.juzs.end(juz)),
         null => null,
       };
@@ -239,6 +241,8 @@ class OnDeviceRecognitionEngine implements RecognitionEngine {
         alternatives: [for (final a in h.alternatives) _position(a)!],
         upcoming: _position(h.upcoming),
         evidence: h.evidence,
+        tied: [for (final v in h.tied) _position(v)!],
+        tieTrusted: h.tieTrusted,
       );
 
   void _fail(String message, FailureKind kind) {
@@ -257,6 +261,7 @@ class _WorkerSetup {
   const _WorkerSetup({
     required this.reply,
     required this.verses,
+    required this.surahStarts,
     required this.hint,
     required this.lock,
     required this.load,
@@ -267,6 +272,7 @@ class _WorkerSetup {
 
   final SendPort reply;
   final List<String> verses;
+  final List<int> surahStarts;
   final (int, int)? hint;
   final (int, int)? lock;
   final TranscriberLoader load;
@@ -317,6 +323,8 @@ class _Heard {
     required this.alternatives,
     required this.upcoming,
     required this.evidence,
+    required this.tied,
+    required this.tieTrusted,
     this.wordVerse,
     this.wordIndex,
   });
@@ -336,6 +344,8 @@ class _Heard {
         alternatives: h.state.alternatives,
         upcoming: h.state.upcomingVerse,
         evidence: h.state.evidence,
+        tied: h.state.tied,
+        tieTrusted: h.state.tieTrusted,
       );
 
   final String text;
@@ -350,6 +360,8 @@ class _Heard {
   final List<int> alternatives;
   final int? upcoming;
   final bool evidence;
+  final List<int> tied;
+  final bool tieTrusted;
   final int? wordVerse;
   final int? wordIndex;
 }
@@ -392,7 +404,7 @@ Future<void> _workerMain(_WorkerSetup setup) async {
     inbox.close();
     return;
   }
-  final index = QuranIndex(setup.verses);
+  final index = QuranIndex(setup.verses, surahStarts: setup.surahStarts);
   final tracker = Tracker(QuranMatcher(index));
   if (setup.hint case final (int, int) h) tracker.hint(h.$1, h.$2);
   if (setup.lock case final (int, int) l) tracker.lock(l.$1, l.$2);

@@ -11,6 +11,7 @@ import '../../core/recognition/recognition_engine.dart';
 import '../../l10n/l10n.dart';
 import '../../services/screen_awake.dart';
 import 'listen_state.dart';
+import 'surah_lock.dart';
 
 /// The listening session: microphone -> recognition engine -> [ListenState].
 ///
@@ -82,7 +83,7 @@ class ListenController extends Notifier<ListenState> {
     final engine = ref.read(engineFactoryProvider)(settings.serverAddress);
     _engine = engine;
     _events = engine.events.listen((event) => _onEvent(generation, event));
-    if (state.lock != null) engine.lock(state.lock);
+    if (state.lock != null) engine.lock(SurahLock.window(state.lock!));
     unawaited(engine.start(hint: state.hint));
 
     try {
@@ -135,15 +136,18 @@ class ListenController extends Notifier<ListenState> {
     if (wasActive) await start();
   }
 
-  /// "This is the right surah": recognition never looks anywhere else
-  /// (al-Fatiha excepted) until [unlock].
-  void lockTo(Hint scope) {
-    _engine?.lock(scope);
+  /// "This is the right surah": recognition looks only there and in the surah
+  /// after it (al-Fatiha excepted), and follows the imam on ([SurahLock]),
+  /// until [unlock]. Returns the lock this one replaced, for Undo.
+  Hint? lockTo(Hint scope) {
+    final previous = state.lock;
+    _engine?.lock(SurahLock.window(scope));
     state = state.copyWith(
       lock: scope,
       readerSurah: scope is SurahHint ? scope.surah : state.readerSurah,
       browsing: false,
     );
+    return previous;
   }
 
   void unlock() {
@@ -151,10 +155,17 @@ class ListenController extends Notifier<ListenState> {
     state = state.copyWith(lock: null);
   }
 
-  /// "The imam is here." Shown at once; the server continues from there.
+  /// Undo of [lockTo]: back to [lock] (null: unlocked).
+  void restoreLock(Hint? lock) => lock == null ? unlock() : lockTo(lock);
+
+  /// "The imam is here." Shown at once; the server continues from there. A
+  /// lock moves to his surah first, so recognition can follow him there.
   void setPosition(Position position) {
+    final moved = SurahLock.correct(state.lock, position);
+    if (moved != null) _engine?.lock(SurahLock.window(moved));
     _engine?.setPosition(position.verseId);
     state = state.copyWith(
+      lock: moved ?? state.lock,
       track: TrackState(position: position, status: TrackStatus.tracking, confidence: 1),
       evidenceStatus: TrackStatus.tracking,
       readerSurah: position.surah,
@@ -251,8 +262,12 @@ class ListenController extends Notifier<ListenState> {
       final fatihaExcursion = shown.surah == 1 && reader != null && reader != 1;
       if (reader == null || (confident && !fatihaExcursion)) reader = shown.surah;
     }
+    // A surah lock moves on with the imam into the next surah.
+    final followed = SurahLock.follow(state.lock, heard);
+    if (followed != null) _engine?.lock(SurahLock.window(followed));
     final now = DateTime.now();
     state = state.copyWith(
+      lock: followed ?? state.lock,
       anchor: confident && shown.surah != 1 ? shown : state.anchor,
       lastSure: confident ? shown : state.lastSure,
       confirmedAt: confident ? now : state.confirmedAt,

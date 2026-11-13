@@ -54,6 +54,8 @@ class TrackState {
     this.alternatives = const [],
     this.upcoming,
     this.evidence = true,
+    this.tied = const [],
+    this.tieTrusted = false,
   });
 
   static const empty = TrackState(status: TrackStatus.idle, evidence: false);
@@ -79,6 +81,14 @@ class TrackState {
   /// result says nothing new about the position. Not doubt: see
   /// [ListenState.status]. An engine that does not say is taken as evidence.
   final bool evidence;
+
+  /// Repeated text: while the position is unconfirmed, every ayah the words
+  /// fit as well as the best, in Quran order; empty otherwise (no tie).
+  final List<Position> tied;
+
+  /// [tied] can be relied on: complete, and confident as one place. Never
+  /// true without a tie.
+  final bool tieTrusted;
 
   /// The ayah a follow-along screen should highlight now.
   Position? get showing => upcoming ?? position;
@@ -119,6 +129,24 @@ class SurahHint extends Hint {
 
   @override
   int get hashCode => surah.hashCode;
+}
+
+/// Surahs [first] to [last]: what a surah lock covers, the surah and the one
+/// after it, so following the imam over the boundary never gets stuck
+/// (`SurahLock`). The app sends it to engines; it is never a user's hint.
+class SurahRange extends Hint {
+  const SurahRange(this.first, this.last);
+  final int first;
+  final int last;
+
+  @override
+  bool operator ==(Object other) => other is SurahRange && other.first == first && other.last == last;
+
+  @override
+  int get hashCode => Object.hash(first, last);
+
+  @override
+  String toString() => 'SurahRange($first, $last)';
 }
 
 class JuzHint extends Hint {

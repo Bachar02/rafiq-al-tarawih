@@ -105,3 +105,41 @@ def test_random_fragments_are_found(matcher, index):
         best = matcher.match(index.text(start, start + size), k=5)
         hits += any(m.start <= start and start + size <= m.end for m in best)
     assert hits / n >= 0.98
+
+
+# -- the whole shortlist (the tracker's tie report) -------------------------
+
+
+def test_match_all_starts_with_exactly_the_top_k(matcher, index):
+    """`match_tokens(k)` is the first k of `match_all`: the beam is unchanged."""
+    rng = random.Random(9)
+    starts = [rng.randrange(len(index) - 9) for _ in range(300)]
+    queries = [index.words[a : a + rng.randint(1, 9)] for a in starts]
+    queries += [tokenize(t) for t in ("فبأي آلاء ربكما تكذبان", "وإن مع العسر يسرا", "بلى مربي للقسط", "zzz")]
+    for i, tokens in enumerate(queries):
+        lo = 0 if i % 4 else rng.randrange(len(index) // 2)
+        shortlist = matcher.match_all(tokens, lo=lo)
+        assert len(shortlist.votes) == len(shortlist.matches)
+        for k in (1, 3, 5, 8, 40):
+            assert shortlist.matches[:k] == matcher.match_tokens(tokens, k=k, lo=lo)
+
+
+def test_match_all_keeps_every_copy_of_the_refrain(matcher, index, q):
+    refrain = tokenize("فبأي آلاء ربكما تكذبان")
+    copies = {v.id for v in q if tokenize(v.text) == refrain}
+    assert len(copies) == 31
+    shortlist = matcher.match_all(refrain)
+    assert {m.verse_id for m in shortlist.matches if m.score == 1.0} == copies
+    assert shortlist.cut is None or shortlist.cut < min(
+        v for m, v in zip(shortlist.matches, shortlist.votes, strict=True) if m.score == 1.0
+    ), "nothing as strong as a copy was left out"
+
+
+def test_the_cap_reports_what_it_left_out(matcher):
+    """89 copies of يا أيها الذين آمنوا: the shortlist keeps 40 positions and
+    says the best one it left out was voted as high as the copies it kept."""
+    shortlist = matcher.match_all(tokenize("يا أيها الذين آمنوا"))
+    kept = [v for m, v in zip(shortlist.matches, shortlist.votes, strict=True) if m.score == 1.0]
+    assert len(kept) < 89 and shortlist.cut is not None
+    assert shortlist.cut >= min(kept) - 1e-9
+    assert matcher.match_all([]).matches == [] and matcher.match_all(["zzz"]).cut is None

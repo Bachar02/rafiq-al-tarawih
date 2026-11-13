@@ -93,6 +93,8 @@ class Engine:
             alternatives=[self.position(v) for v in s.alternatives],
             upcoming=self.position(s.upcoming_verse),
             evidence=s.evidence,
+            tied=[self.position(v) for v in s.tied],
+            tie_trusted=s.tie_trusted,
             candidates=[self.candidate(c) for c in s.candidates[:top]],
         )
 

@@ -51,6 +51,14 @@ def test_track_says_when_a_chunk_is_no_evidence(client):
     assert states[1]["position"] == states[0]["position"]  # a miss holds the position
 
 
+def test_track_reports_ties_on_the_wire(client):
+    chunks = ["ثم أتبع سببا", "zzz", "حتى إذا بلغ بين السدين وجد من دونهما قوما"]
+    states = client.post("/api/track", json={"chunks": chunks}).json()["states"]
+    assert [p["ref"] for p in states[0]["tied"]] == ["18:89", "18:92"] and states[0]["tie_trusted"]
+    assert states[1]["tied"] == states[0]["tied"]  # held through a miss
+    assert states[2]["tied"] == [] and not states[2]["tie_trusted"]  # cleared once accepted
+
+
 def test_track_with_hint(client):
     chunks = ["فبأي آلاء ربكما تكذبان", "فبأي آلاء ربكما تكذبان"]
     states = client.post("/api/track", json={"chunks": chunks, "hint": {"surah": 55}}).json()["states"]

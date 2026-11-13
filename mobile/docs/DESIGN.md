@@ -263,7 +263,8 @@ address, *Test connection*), About.
 - **No flicker:** the controller changes surah only on a *confident* result, a user correction, or
   browsing, and not for Al-Fatiha at each rakʿah. An unsure guess never replaces the text or the number.
 - **User control:** tap any ayah, then *The imam is here* (the tracker continues from it) or
-  *Stay on this surah* (a hard lock: recognition never searches other surahs, Al-Fatiha excepted).
+  *Stay on this surah* (recognition searches only that surah and the next, Al-Fatiha excepted, and the lock
+  moves on when the imam is confidently heard in the next one; Undo in the snackbar).
 - **Display names:** curated English and French surah names (`assets/data/surah-names.json`, checked row
   by row against `quran.json` at startup); in Arabic, each surah's own name, never shown twice.
 

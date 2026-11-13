@@ -17,7 +17,7 @@ import '../support/fakes.dart';
 Object? golden(String name) => jsonDecode(File('test/golden/$name').readAsStringSync());
 
 QuranIndex? _index;
-QuranIndex loadIndex() => _index ??= QuranIndex([for (final v in loadQuran().verses) v.text]);
+QuranIndex loadIndex() => _index ??= indexOf(loadQuran());
 
 const _statuses = {'idle': TrackerStatus.idle, 'tracking': TrackerStatus.tracking};
 
@@ -62,11 +62,45 @@ void main() {
     expect(mismatches, isEmpty, reason: mismatches.take(3).join('\n'));
   });
 
+  test("the whole shortlist, its votes and the cap's cut are what the Python engine returns", () {
+    final matcher = QuranMatcher(loadIndex());
+    final cases = (golden('match.json')! as List).cast<Map<String, dynamic>>();
+    var cuts = 0;
+    for (final c in cases) {
+      final tokens = _tokens(c['text'] as String);
+      final (lo, hi) = (c['lo'] as int, c['hi'] as int?);
+      final got = matcher.matchAll(tokens, lo: lo, hi: hi);
+      final want = (c['all'] as List).cast<List<dynamic>>();
+      final where = c['text'];
+      expect(got.matches.length, want.length, reason: '$where');
+      for (var i = 0; i < want.length; i++) {
+        expect([got.matches[i].start, got.matches[i].end], [want[i][0], want[i][1]], reason: '$where #$i');
+        expect(got.matches[i].score, closeTo(want[i][2] as num, 1e-9), reason: '$where #$i score');
+        expect(got.votes[i], closeTo(want[i][3] as num, 1e-9), reason: '$where #$i votes');
+      }
+      final cut = c['cut'] as num?;
+      expect(got.cut == null, cut == null, reason: '$where cut');
+      if (cut != null) {
+        cuts++;
+        expect(got.cut, closeTo(cut, 1e-9), reason: '$where cut');
+      }
+      // A top-k search returns the shortlist's first k.
+      for (final k in [1, 5, 8]) {
+        expect([
+          for (final m in matcher.matchTokens(tokens, k: k, lo: lo, hi: hi)) (m.start, m.end, m.score)
+        ], [
+          for (final m in got.matches.take(k)) (m.start, m.end, m.score)
+        ], reason: '$where k=$k');
+      }
+    }
+    expect(cuts, greaterThan(0), reason: 'the cap is exercised');
+  });
+
   test('the tracker follows each scenario exactly as the Python engine does', () {
     final matcher = QuranMatcher(loadIndex());
     final cases = (golden('tracker.json')! as List).cast<Map<String, dynamic>>();
     expect(cases.length, greaterThan(10));
-    var steps = 0;
+    var steps = 0, ties = 0;
     for (final c in cases) {
       final tracker = Tracker(matcher);
       final inputs = (c['steps'] as List).cast<Map<String, dynamic>>();
@@ -105,9 +139,13 @@ void main() {
         ];
         expect(candidates, [for (final m in want[7] as List) (m as List).sublist(0, 2)], reason: '$where: candidates');
         expect(got.evidence, want[8], reason: '$where: evidence');
+        expect(got.tied, want[9], reason: '$where: tied');
+        expect(got.tieTrusted, want[10], reason: '$where: tie trusted');
+        if ((want[9] as List).isNotEmpty) ties++;
       }
     }
     expect(steps, greaterThan(1500), reason: 'the scenarios are substantial');
+    expect(ties, greaterThan(25), reason: 'the tie report is exercised');
   });
 
   test('the segmenter cuts the same chunks as the Python engine', () {

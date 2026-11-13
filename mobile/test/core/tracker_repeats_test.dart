@@ -30,7 +30,7 @@ void main() {
 
   setUpAll(() {
     quran = loadQuran();
-    index = QuranIndex([for (final v in quran.verses) v.text]);
+    index = indexOf(quran);
     matcher = QuranMatcher(index);
   });
   setUp(() => tracker = Tracker(matcher));

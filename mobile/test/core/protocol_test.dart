@@ -41,6 +41,29 @@ void main() {
       expect(state(',"evidence":"no"').evidence, isTrue);
     });
 
+    test('the tie report; missing or broken fields mean no tie', () {
+      TrackState state(String extra) => (decodeServerMessage(
+                  '{"type":"heard","text":"x","start":0,"end":1,"asr_ms":1,"state":{"status":"uncertain"$extra}}')!
+              as Heard)
+          .state;
+      final tie = state(',"tied":[{"verse_id":2124,"surah":18,"ayah":89},{"verse_id":2127,"surah":18,"ayah":92}],'
+          '"tie_trusted":true');
+      expect([for (final p in tie.tied) p.ref], ['18:89', '18:92']);
+      expect(tie.tieTrusted, isTrue);
+      for (final extra in [
+        '',
+        ',"tie_trusted":true',
+        ',"tied":"x","tie_trusted":true',
+        ',"tied":[],"tie_trusted":true'
+      ]) {
+        expect(state(extra).tied, isEmpty, reason: extra);
+        expect(state(extra).tieTrusted, isFalse, reason: 'never trusted without a tie: $extra');
+      }
+      final untrusted = state(',"tied":[{"verse_id":2124,"surah":18,"ayah":89},{"surah":"x"}]');
+      expect([for (final p in untrusted.tied) p.ref], ['18:89'], reason: 'a malformed entry is dropped');
+      expect(untrusted.tieTrusted, isFalse);
+    });
+
     test('partial is a non-final heard', () {
       const raw =
           '{"type":"partial","text":"x","start":0,"end":1,"asr_ms":1,"state":{"position":null,"status":"idle"}}';
@@ -88,6 +111,7 @@ void main() {
 
   test('control messages', () {
     expect(lockMessage(const SurahHint(55)), '{"type":"lock","surah":55}');
+    expect(lockMessage(const SurahRange(2, 3)), '{"type":"lock","surah":2,"through":3}');
     expect(lockMessage(const JuzHint(30)), '{"type":"lock","juz":30}');
     expect(lockMessage(null), '{"type":"unlock"}');
     expect(positionMessage(4927), '{"type":"position","verse_id":4927}');

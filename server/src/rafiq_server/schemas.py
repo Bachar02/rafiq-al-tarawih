@@ -60,6 +60,10 @@ class StateOut(BaseModel):
     upcoming: Position | None = None  # the ayah just ended: highlight this one next
     # False when the chunk matched no Quran (a miss): the state is held, not doubted.
     evidence: bool = True
+    # Repeated text while the position is unconfirmed: every ayah the words fit
+    # as well as the best, and whether that set can be relied on.
+    tied: list[Position] = []
+    tie_trusted: bool = False
     candidates: list[Candidate]
 
 
