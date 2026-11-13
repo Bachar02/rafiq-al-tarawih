@@ -1207,3 +1207,30 @@ Held through a miss; cleared when a position is accepted or set by the user; nev
 **Parity and tests:** `match.json` now holds each query's whole shortlist (195 queries, 165 with a cut) and `tracker.json` the two new fields on every state (22 scenarios, 2,244 states, two new ones for the report); Dart reproduces both. Python 24 new tests (the matcher, the report, the server's wire), Dart 16 new (the report, the whole shortlist's parity, the protocol, the isolate). 214 Python and 588 Flutter tests; every gate and check passes.
 
 **Not done:** the app's place model and the candidate UI (§2 of the Phase 2 proposal); the Taraweeh position.
+
+## 38. Where the imam is: the place model and the candidate choices (2026-11-13, not committed)
+
+**Why:** §37 gives the app the tie report, but the screen still said "Listening for the imam" over 31 copies of the Ar-Rahman refrain, and still showed "could also be 3:12 · 5:4" (right 7 times in 326, §34). The screen should say what it is waiting on, and let the user settle it in one or two taps.
+
+**The place** (`ListenState.place`, `lib/features/listen/place.dart`, pure): one of four.
+- `Placed(position)`: the ayah on screen, confirmed or the last sure one held (the screen as before).
+- `InSurah(surah, copies, held)`: a trusted tie inside one surah.
+- `AcrossSurahs(choices, held)`: a trusted tie across two or three surahs, each with its copies.
+- `Unplaced()`: nothing trustworthy.
+
+Rules: only while listening; never on `tracking` (no tie) or `lost` (old news); a miss (also `idle` before any position) holds it, as the engine does. Untrusted, a single copy, more than three surahs: no choice, the held ayah or nothing. A tie containing 1:1 is a basmala, recited before every surah: no choice (alone it is a *trusted* tie with 27:30). Two copies in Al-Fatiha: no choice (never a surah to stay on); one copy is an ordinary choice. A surah lock narrows the tie at once to what the engine now searches (the surah, the next, Al-Fatiha): a subset of a complete tie is complete there. A juz lock was applied by the engine. `held` is `displayed`: during Al-Fatiha, the imam's surah.
+
+**The screen:**
+- **Status line** (still the only place state is put into words): new `DisplayStatus.repeated`, "Repeated words", after paused and lost, before uncertain. Caption: "These words repeat in Al-Kahf. Waiting for more words to tell which ayah." or "These words are in more than one surah. Waiting for more words, or choose below.", plus "Holding the last sure ayah." when one is held. Marker hollow when held, none otherwise; numeral and current ayah dim.
+- **Header:** at cold start, `InSurah` names the surah over an em dash ("Surah Al-Kahf, ayah not yet known"); no juz, a surah can span two. A held ayah stays as LAST SURE.
+- **Choices** (`widgets/place_choices.dart`), quiet outlined pills under the status line's words, never over the text: `InSurah` up to 3 copies: "Ayah 89" per copy; more: "Choose the ayah in the text" (browses the surah at its first copy, then the usual tap). Plus "Stay on Al-Kahf" unless locked there. `AcrossSurahs`: "Aal-Imran · ayah 50" for a surah with one copy, "Stay on Ash-Shu'ara" for one with several (the lock narrows to it at once; Undo restores the choice).
+- **Every choice is an existing action:** an ayah opens the ayah sheet (its full text, "The imam is here", confirmed there, one haptic tap), which clears the tie and moves a lock (§36); a surah is the surah lock with its Undo snackbar. No ayah correction has an Undo: the engine cannot be told to forget a position (as before).
+- **Reader:** before any position, a trusted surah opens with no ayah marked, so the ayah can be tapped there; another trusted surah replaces it, the first position (even unsure) replaces it, a weaker result never closes it. A surah opened by a position, the user or a lock never moves for a tie. A held ayah is never left.
+- **Removed:** the "could also be …" caption (`repeatedText`). Previews still show ties (the tracker reports them on previews too; §37 made garbled ones untrusted).
+- A new session drops the last session's tie (`TrackState.withoutTie`).
+
+**Not changed:** the engines, every recognition decision, thresholds, word highlighting, the Taraweeh position (`anchor` moves only on a confident position).
+
+**Tests:** 27 for the place (pure, plus the real tracker: the refrain, Al-Kahf, a phrase in three surahs, untrusted, beyond the cap, the basmala, Al-Fatiha's opening, a garbled preview, a far jump with a miss, a lock), 10 in the controller (the reader, a held ayah, a correction, lock and Undo, stale ties, previews), 5 for the status, 11 on the screen (the sheet confirms, dismissing changes nothing, many copies, the lock, a held ayah, across surahs, nothing offered, French, Arabic right to left, 200% text on 320×568), the accessibility guidelines on the choices in both themes, and 3 goldens (`repeated_in_surah`, `repeated_held`, `ar_repeated_across`). 643 Flutter tests.
+
+**Not verified:** real audio. The tie report runs on 95 of 6,741 recorded steps (§37), and how often a worshipper sees the choices, or taps the right one, is unmeasured. French and Arabic strings await native review.

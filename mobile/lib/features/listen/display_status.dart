@@ -48,6 +48,10 @@ enum DisplayStatus {
   /// is not doubt: [ListenState.trackStatus].
   notSure,
 
+  /// Repeated words: a trusted surah whose ayah repeats ([InSurah]), or two or
+  /// three surahs ([AcrossSurahs]). Any position held stays as the last sure.
+  repeated,
+
   /// Engine `lost`: several chunks in a row matched no Quran.
   notMatching,
 
@@ -61,8 +65,9 @@ enum DisplayStatus {
   /// Stopped by an error (see the Notice).
   failed;
 
-  /// Precedence, highest first: error → paused → lost → uncertain → No new
-  /// match yet → Little sound → Al-Fatiha → Following.
+  /// Precedence, highest first: error → paused → lost → repeated words (a
+  /// trusted tie; never when lost) → uncertain → No new match yet → Little
+  /// sound → Al-Fatiha → Following.
   static DisplayStatus of(ListenState s, DateTime now) {
     final held = s.displayed != null;
     switch (s.phase) {
@@ -81,6 +86,7 @@ enum DisplayStatus {
       case SessionPhase.listening:
         break;
     }
+    if (s.place case InSurah() || AcrossSurahs()) return repeated;
     if (!held) return listening;
     switch (s.trackStatus) {
       case TrackStatus.lost:
@@ -115,7 +121,7 @@ enum DisplayStatus {
   /// The engine itself is unsure: the numeral and the current ayah dim. An
   /// app-inferred state never dims them: nothing contradicts the position,
   /// there is only no new evidence.
-  bool get engineUnsure => this == notSure || this == notMatching;
+  bool get engineUnsure => this == notSure || this == notMatching || this == repeated;
 
   /// The listen session is running (the control offers "Stop following").
   bool get active => switch (this) {
@@ -126,6 +132,7 @@ enum DisplayStatus {
         noNewMatch ||
         littleSound ||
         notSure ||
+        repeated ||
         notMatching ||
         reconnecting ||
         stopping =>
@@ -144,14 +151,17 @@ enum DisplayStatus {
         noNewMatch => l.statusNoNewMatch,
         littleSound => l.statusLittleSound,
         notSure => l.statusNotSure,
+        repeated => l.statusRepeated,
         notMatching => l.statusNotMatching,
         reconnecting => l.statusReconnecting,
         stopping => l.statusStopping,
         paused || failed => '',
       };
 
-  /// The evidence behind the words, if any. [ayah] is the ayah on screen.
-  String? caption(AppLocalizations l, int? ayah) => switch (this) {
+  /// The evidence behind the words, if any. [ayah] is the ayah on screen;
+  /// [surah] the trusted surah's name, for [repeated] within one surah (null:
+  /// across surahs).
+  String? caption(AppLocalizations l, int? ayah, {String? surah}) => switch (this) {
         ready => l.captionReady,
         stopped => l.captionStopped,
         connecting => l.captionConnecting,
@@ -160,6 +170,11 @@ enum DisplayStatus {
         littleSound =>
           ayah == null ? l.captionLittleSound : '${l.captionLittleSound} ${l.captionStillShowingConfirmed(ayah)}',
         notSure => l.captionNotSure,
+        // Any ayah on screen stays the last sure one: the tie is a possibility.
+        repeated => [
+            surah == null ? l.captionRepeatedAcross : l.captionRepeatedInSurah(surah),
+            if (ayah != null) l.captionNotSure,
+          ].join(' '),
         notMatching => l.captionNotMatching,
         reconnecting => l.captionReconnecting,
         following || fatiha || stopping || paused || failed => null,

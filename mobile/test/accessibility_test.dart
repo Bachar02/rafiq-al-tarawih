@@ -285,6 +285,20 @@ void main() {
         await settle(tester);
         await meetsGuidelines(tester);
       });
+
+      testWidgets('Taraweeh mode, repeated words: the choices', (tester) async {
+        await launch(tester, {'theme_mode': theme, 'dark_during_taraweeh': theme == 'dark'});
+        await tester.tap(find.byIcon(Icons.mic_none));
+        await settle(tester);
+        h.engine.emit(const EngineReady());
+        h.engine.emit(heard(tie([(3, 50), (26, 108), (26, 110), (43, 63)])));
+        await settle(tester);
+        await meetsGuidelines(tester);
+        h.engine.emit(heard(at(93, 3)));
+        h.engine.emit(heard(tie([(18, 89), (18, 92)], position: pos(93, 3))));
+        await settle(tester);
+        await meetsGuidelines(tester);
+      });
     });
   }
 

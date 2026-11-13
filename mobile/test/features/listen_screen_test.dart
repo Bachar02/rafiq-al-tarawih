@@ -10,6 +10,7 @@ import 'package:rafiq/data/reading_store.dart';
 import 'package:rafiq/features/listen/listen_screen.dart';
 import 'package:rafiq/features/quran_view/quran_view.dart';
 import 'package:rafiq/features/reader/reader_screen.dart';
+import 'package:rafiq/features/listen/widgets/place_choices.dart';
 import 'package:rafiq/features/listen/widgets/status_line.dart';
 import 'package:rafiq/features/settings/settings_screen.dart';
 import 'package:rafiq/services/server_health.dart';
@@ -138,7 +139,7 @@ void main() {
     expect(find.text('Very little sound'), findsOneWidget);
   });
 
-  testWidgets('ambiguous text shows the alternatives; not sure holds the ayah', (tester) async {
+  testWidgets('rivals without a trusted tie: not sure holds the ayah, no references offered', (tester) async {
     await launch(tester);
     await startListening(tester);
     h.engine.emit(heard(TrackState(
@@ -147,7 +148,9 @@ void main() {
       alternatives: [pos(26, 127), pos(26, 145)],
     )));
     await settle(tester);
-    expect(find.textContaining('could also be 26:127 · 26:145'), findsOneWidget);
+    // The old "could also be 26:127 · 26:145" was rarely right (PLAN.md §34).
+    expect(find.textContaining('26:127'), findsNothing);
+    expect(find.descendant(of: find.byType(PlaceChoices), matching: find.byType(OutlinedButton)), findsNothing);
     expect(find.text('Not sure'), findsOneWidget);
     expect(find.text('LAST SURE'), findsOneWidget);
     expect(statusMarker(tester).filled, isFalse);

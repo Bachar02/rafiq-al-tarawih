@@ -12,7 +12,8 @@ import '../../../l10n/l10n.dart';
 /// Shows only confirmed or held positions, never a pending guess. When the
 /// engine is unsure the overline becomes LAST SURE and the numeral and surah
 /// dim; the number itself never changes to an unconfirmed one. With no
-/// position the numeral area shows an em dash. Mirrors in RTL layouts.
+/// position the numeral area shows an em dash, under a trusted [surah] whose
+/// ayah is not known yet (repeated words), if any. Mirrors in RTL layouts.
 const _nbsp = ' ';
 
 class PositionHeader extends StatelessWidget {
@@ -23,9 +24,14 @@ class PositionHeader extends StatelessWidget {
     required this.names,
     this.unsure = false,
     this.onOpenSurahs,
+    this.surah,
   });
 
   final Position? position;
+
+  /// With no [position]: the surah the imam is trusted to be in, its ayah not
+  /// known yet (its words repeat there). The numeral stays an em dash.
+  final int? surah;
   final Quran quran;
   final SurahNames names;
 
@@ -40,7 +46,11 @@ class PositionHeader extends StatelessWidget {
     final c = context.colors;
     final l = context.l10n;
     final p = position;
-    final surah = p == null ? null : quran.surah(p.surah);
+    final surah = p != null
+        ? quran.surah(p.surah)
+        : this.surah != null
+            ? quran.surah(this.surah!)
+            : null;
     // The numeral is capped so the header never wraps; the meta line wraps.
     final numeralScaler = MediaQuery.textScalerOf(context).clamp(maxScaleFactor: 1.3);
 
@@ -50,7 +60,8 @@ class PositionHeader extends StatelessWidget {
       children: [
         ExcludeSemantics(
           child: Text(
-            unsure ? l.overlineLastSure : l.overlineAyah,
+            // "Last sure" only over an ayah that was: never over the em dash.
+            unsure && p != null ? l.overlineLastSure : l.overlineAyah,
             style: RubricText.overlineFor(context).copyWith(color: c.inkSecondary),
           ),
         ),
@@ -89,9 +100,10 @@ class PositionHeader extends StatelessWidget {
                 ),
               ),
               Text(
-                // Breaks only between the parts, never inside "Juz 30".
-                '${names.isArabic ? '' : '${names.of(surah.index)}$_nbsp· '}${surah.index}$_nbsp· '
-                '${l.juzNumber(quran.juzOf(p!.verseId)).replaceAll(' ', _nbsp)}',
+                // Breaks only between the parts, never inside "Juz 30". With
+                // no ayah, no juz: a surah can span two.
+                '${names.isArabic ? '' : '${names.of(surah.index)}$_nbsp· '}${surah.index}'
+                '${p == null ? '' : '$_nbsp· ${l.juzNumber(quran.juzOf(p.verseId)).replaceAll(' ', _nbsp)}'}',
                 textAlign: TextAlign.end,
                 style: RubricText.label.copyWith(color: c.inkSecondary),
               ),
@@ -103,7 +115,9 @@ class PositionHeader extends StatelessWidget {
       container: true,
       button: tappable,
       label: p == null
-          ? l.semNoPosition
+          ? surah == null
+              ? l.semNoPosition
+              : l.semSurahAyahUnknown(names.of(surah.index))
           : unsure
               ? l.semSurahAyahNotSure(names.of(p.surah), p.ayah)
               : l.semSurahAyah(names.of(p.surah), p.ayah),

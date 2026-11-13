@@ -392,4 +392,115 @@ void main() {
       expect(state().confirmedAt, isNull);
     });
   });
+
+  group('repeated words (ListenState.place)', () {
+    Future<void> listening() async {
+      await controller().start();
+      h.engine.emit(const EngineReady());
+    }
+
+    final kahf = tie([(18, 89), (18, 92)]);
+    final threeSurahs = tie([(3, 50), (26, 108), (26, 110), (43, 63)]);
+
+    test('the tie reaches the place; the reader opens on a trusted surah, no ayah marked', () async {
+      await listening();
+      h.engine.emit(heard(kahf));
+      expect(state().place, InSurah(18, [pos(18, 89), pos(18, 92)], null));
+      expect(state().readerSurah, 18);
+      expect(state().displayed, isNull);
+      expect(state().lastSure, isNull);
+      expect(state().anchor, isNull, reason: 'never a Taraweeh position');
+    });
+
+    test('across surahs at cold start: the reader stays closed', () async {
+      await listening();
+      h.engine.emit(heard(threeSurahs));
+      expect(state().place, isA<AcrossSurahs>());
+      expect(state().readerSurah, isNull);
+    });
+
+    test('a held position is never moved: the surah is only a possibility', () async {
+      await listening();
+      h.engine.emit(heard(at(93, 3)));
+      h.engine.emit(heard(tie([(55, 13), (55, 16)], position: pos(93, 3))));
+      expect(state().place, InSurah(55, [pos(55, 13), pos(55, 16)], pos(93, 3)));
+      expect(state().readerSurah, 93);
+      expect(state().displayed, pos(93, 3));
+    });
+
+    test('a tie-opened reader follows another trusted surah, then the first position', () async {
+      await listening();
+      h.engine.emit(heard(kahf));
+      h.engine.emit(heard(threeSurahs)); // weaker: the open surah stays
+      expect(state().readerSurah, 18);
+      h.engine.emit(heard(tie([(55, 13), (55, 16)])));
+      expect(state().readerSurah, 55);
+      // The first position, even unsure, opens its own surah.
+      h.engine.emit(heard(at(93, 3, status: TrackStatus.uncertain, confidence: 0.4)));
+      expect(state().readerSurah, 93);
+      expect(state().readerOnTie, isFalse);
+    });
+
+    test('a surah the user opened is never moved by a tie', () async {
+      await listening();
+      controller().browse(2);
+      h.engine.emit(heard(kahf));
+      expect(state().readerSurah, 2);
+      expect(state().place, isA<InSurah>(), reason: 'the choice is still offered');
+    });
+
+    test('a miss holds the tie; lost lets it go', () async {
+      await listening();
+      h.engine.emit(heard(kahf));
+      h.engine.emit(heard(tie([(18, 89), (18, 92)], evidence: false, status: TrackStatus.idle)));
+      expect(state().place, isA<InSurah>());
+      h.engine.emit(heard(tie([(18, 89), (18, 92)], evidence: false, status: TrackStatus.lost)));
+      expect(state().place, const Unplaced());
+    });
+
+    test('"the imam is here" on a copy: placed there, the tie cleared, the engine told', () async {
+      await listening();
+      h.engine.emit(heard(kahf));
+      controller().setPosition(pos(18, 92));
+      expect(state().place, Placed(pos(18, 92)));
+      expect(state().track.tied, isEmpty);
+      expect(h.engine.positions, [pos(18, 92).verseId]);
+      expect(state().readerSurah, 18);
+      expect(state().readerOnTie, isFalse);
+    });
+
+    test('choosing a surah locks it, narrowing at once; Undo brings the choices back', () async {
+      await listening();
+      h.engine.emit(heard(threeSurahs));
+      final previous = controller().lockTo(const SurahHint(26));
+      expect(h.engine.locks.last, const SurahRange(26, 27));
+      expect(state().place, InSurah(26, [pos(26, 108), pos(26, 110)], null));
+      expect(state().readerSurah, 26);
+      expect(state().displayed, isNull, reason: 'a lock is not a position');
+
+      controller().restoreLock(previous);
+      expect(h.engine.locks.last, isNull);
+      expect(state().place, isA<AcrossSurahs>());
+    });
+
+    test('a tie from the last session is not shown in the next', () async {
+      await listening();
+      h.engine.emit(heard(kahf));
+      await controller().stop();
+      expect(state().place, const Unplaced(), reason: 'not listening');
+      await controller().start();
+      expect(state().track.tied, isEmpty);
+      h.engine.emit(const EngineReady());
+      expect(state().place, const Unplaced());
+    });
+
+    test('a preview never changes the held position, whatever it ties', () async {
+      await listening();
+      h.engine.emit(heard(at(93, 3)));
+      h.engine.emit(heard(tie([(3, 50), (43, 63)], position: pos(93, 3)), isFinal: false));
+      expect(state().displayed, pos(93, 3));
+      expect(state().lastSure, pos(93, 3));
+      expect(state().readerSurah, 93);
+    });
+  });
 }

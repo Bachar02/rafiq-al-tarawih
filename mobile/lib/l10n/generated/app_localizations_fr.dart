@@ -102,8 +102,23 @@ class AppLocalizationsFr extends AppLocalizations {
   String get captionReconnecting => 'Le micro continue d’écouter pendant ce temps.';
 
   @override
-  String repeatedText(String refs) {
-    return 'Texte répété — peut aussi être $refs';
+  String get statusRepeated => 'Mots répétés';
+
+  @override
+  String captionRepeatedInSurah(String surah) {
+    return 'Ces mots reviennent dans la sourate $surah. En attente de la suite pour savoir quel verset.';
+  }
+
+  @override
+  String get captionRepeatedAcross =>
+      'Ces mots figurent dans plusieurs sourates. En attente de la suite, ou choisissez ci-dessous.';
+
+  @override
+  String get chooseAyahInText => 'Choisir le verset dans le texte';
+
+  @override
+  String semSurahAyahUnknown(String surah) {
+    return 'Sourate $surah, verset pas encore connu';
   }
 
   @override

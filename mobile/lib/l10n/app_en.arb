@@ -43,10 +43,21 @@
   "captionNotSure": "Holding the last sure ayah.",
   "captionNotMatching": "Holding the last sure ayah. This happens during duʿāʾ or when the words aren't clear.",
   "captionReconnecting": "The microphone keeps listening meanwhile.",
-  "repeatedText": "Repeated text — could also be {refs}",
-  "@repeatedText": {
+  "statusRepeated": "Repeated words",
+  "captionRepeatedInSurah": "These words repeat in {surah}. Waiting for more words to tell which ayah.",
+  "@captionRepeatedInSurah": {
     "placeholders": {
-      "refs": {
+      "surah": {
+        "type": "String"
+      }
+    }
+  },
+  "captionRepeatedAcross": "These words are in more than one surah. Waiting for more words, or choose below.",
+  "chooseAyahInText": "Choose the ayah in the text",
+  "semSurahAyahUnknown": "Surah {surah}, ayah not yet known",
+  "@semSurahAyahUnknown": {
+    "placeholders": {
+      "surah": {
         "type": "String"
       }
     }
