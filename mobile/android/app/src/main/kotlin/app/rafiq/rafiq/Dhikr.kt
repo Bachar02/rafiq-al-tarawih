@@ -1,6 +1,7 @@
 package app.rafiq.rafiq
 
 import android.app.AlarmManager
+import android.app.KeyguardManager
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -13,6 +14,7 @@ import android.graphics.PixelFormat
 import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
 import android.os.Build
+import android.os.PowerManager
 import android.provider.Settings
 import android.util.Log
 import android.util.TypedValue
@@ -23,40 +25,127 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import org.json.JSONArray
 import org.json.JSONObject
+import java.util.Calendar
+import kotlin.random.Random
 
 /**
  * The dhikr reminders, on the Android side.
  *
- * Dart sends the next two weeks of adhkar ([DhikrSchedule.replace]); only the
- * next one is set as an alarm, and each one that fires sets the one after it,
- * so a hundred alarms never pile up and a restart of the phone sets one again
- * ([DhikrReceiver]).
+ * Dart sends a rule, not a list of times ([DhikrPlan], from
+ * lib/services/reminders.dart): a dhikr every few hours in the day, and the
+ * adhkar to choose from. The phone follows it on its own for as long as it
+ * is on, whether or not Rafiq is opened again: one alarm at a time, each
+ * that fires setting the next ([DhikrSchedule]), set again after a restart
+ * of the phone ([DhikrReceiver]).
  *
- * When one comes, it is shown in a small card at the top right of the screen,
- * over any app, until it is tapped ([DhikrCard]). That needs the user's
- * "Appear on top" permission; without it the dhikr is a notification that
- * waits in the shade until it is tapped or swiped away.
+ * Which dhikr comes is drawn when it comes, from a shuffled bag: every one
+ * of the adhkar before any comes again, never the same twice in a row.
+ *
+ * It is shown in a small card at the top right of the screen, over any app,
+ * until it is tapped ([DhikrCard]); that needs the user's "Appear on top"
+ * permission. Without it, or while the phone is locked (where the card
+ * cannot be), it is also a notification that waits on the lock screen and
+ * in the shade until it is tapped or swiped away ([DhikrNotification]).
  */
-data class Dhikr(val at: Long, val title: String, val body: String, val expanded: String?) {
+data class DhikrText(val id: String, val arabic: String, val said: String?, val meaning: String?) {
+    /** Everything, one per line: the expanded notification. */
+    val expanded: String get() = listOfNotNull(arabic, said, meaning).joinToString("\n")
+
     fun toJson(): JSONObject = JSONObject()
-        .put("at", at)
-        .put("title", title)
-        .put("body", body)
-        .put("expanded", expanded ?: JSONObject.NULL)
+        .put("id", id)
+        .put("arabic", arabic)
+        .put("said", said ?: JSONObject.NULL)
+        .put("meaning", meaning ?: JSONObject.NULL)
 
     companion object {
-        fun fromJson(o: JSONObject) = Dhikr(
-            at = o.getLong("at"),
-            title = o.getString("title"),
-            body = o.getString("body"),
-            expanded = if (o.isNull("expanded")) null else o.getString("expanded"),
+        fun fromJson(o: JSONObject) = DhikrText(
+            id = o.getString("id"),
+            arabic = o.getString("arabic"),
+            said = if (o.isNull("said")) null else o.getString("said"),
+            meaning = if (o.isNull("meaning")) null else o.getString("meaning"),
         )
 
-        fun fromMap(m: Map<*, *>) = Dhikr(
-            at = (m["at"] as Number).toLong(),
+        fun fromMap(m: Map<*, *>) = DhikrText(
+            id = m["id"] as String,
+            arabic = m["arabic"] as String,
+            said = m["said"] as String?,
+            meaning = m["meaning"] as String?,
+        )
+    }
+}
+
+/**
+ * The rule: a dhikr on the hour, every [everyHours] hours from [fromHour] to
+ * [toHour] each day (local time, as the phone's clock reads it then, so a
+ * change of time zone or of clocks follows), none at or before [quietUntil].
+ */
+data class DhikrPlan(
+    val title: String,
+    val everyHours: Int,
+    val fromHour: Int,
+    val toHour: Int,
+    val quietUntil: Long?,
+    val items: List<DhikrText>,
+) {
+    private val stride get() = everyHours.coerceAtLeast(1)
+
+    /** The slots of the day [days] days from [t]'s day, in order. */
+    private fun slotsOfDay(t: Long, days: Int): List<Long> {
+        val day = Calendar.getInstance().apply {
+            timeInMillis = t
+            add(Calendar.DAY_OF_YEAR, days)
+        }
+        return (fromHour..toHour step stride).map { hour ->
+            (day.clone() as Calendar).apply {
+                set(Calendar.HOUR_OF_DAY, hour)
+                set(Calendar.MINUTE, 0)
+                set(Calendar.SECOND, 0)
+                set(Calendar.MILLISECOND, 0)
+            }.timeInMillis
+        }
+    }
+
+    /** The first slot after [t], and after [quietUntil]. */
+    fun next(t: Long): Long? {
+        val after = maxOf(t, quietUntil ?: Long.MIN_VALUE)
+        for (days in 0..2) slotsOfDay(after, days).firstOrNull { it > after }?.let { return it }
+        return null
+    }
+
+    /** The last slot at or before [t]. */
+    fun latest(t: Long): Long? {
+        for (days in 0 downTo -1) slotsOfDay(t, days).lastOrNull { it <= t }?.let { return it }
+        return null
+    }
+
+    fun toJson(): JSONObject = JSONObject()
+        .put("title", title)
+        .put("every", everyHours)
+        .put("from", fromHour)
+        .put("to", toHour)
+        .put("quietUntil", quietUntil ?: JSONObject.NULL)
+        .put("items", JSONArray().apply { items.forEach { put(it.toJson()) } })
+
+    companion object {
+        fun fromJson(o: JSONObject): DhikrPlan {
+            val items = o.getJSONArray("items")
+            return DhikrPlan(
+                title = o.getString("title"),
+                everyHours = o.getInt("every"),
+                fromHour = o.getInt("from"),
+                toHour = o.getInt("to"),
+                quietUntil = if (o.isNull("quietUntil")) null else o.getLong("quietUntil"),
+                items = (0 until items.length()).map { DhikrText.fromJson(items.getJSONObject(it)) },
+            )
+        }
+
+        fun fromMap(m: Map<*, *>) = DhikrPlan(
             title = m["title"] as String,
-            body = m["body"] as String,
-            expanded = m["expanded"] as String?,
+            everyHours = (m["every"] as Number).toInt(),
+            fromHour = (m["from"] as Number).toInt(),
+            toHour = (m["to"] as Number).toInt(),
+            quietUntil = (m["quietUntil"] as Number?)?.toLong(),
+            items = (m["items"] as List<*>).map { DhikrText.fromMap(it as Map<*, *>) },
         )
     }
 }
@@ -64,45 +153,53 @@ data class Dhikr(val at: Long, val title: String, val body: String, val expanded
 object DhikrSchedule {
     private const val TAG = "RafiqDhikr"
     private const val PREFS = "rafiq_dhikr"
-    private const val KEY_SCHEDULE = "schedule"
+    private const val KEY_PLAN = "plan"
+    private const val KEY_BAG = "bag"
+    private const val KEY_LAST_ID = "last_id"
+    private const val KEY_LAST_SLOT = "last_slot"
     private const val KEY_SHOWING = "showing"
     private const val KEY_CHANNEL = "channel"
     private const val KEY_CLOSE = "close"
+
+    /** Up to 0.9: the next two weeks of adhkar, each with its time. */
+    private const val KEY_LEGACY_SCHEDULE = "schedule"
     const val ACTION_FIRE = "app.rafiq.rafiq.DHIKR"
 
-    /** A dhikr this close to its time when the alarm fires is due now. */
+    /** An alarm this close before its slot counts as on time. */
     private const val EARLY_MS = 60_000L
+    private const val HOUR_MS = 3_600_000L
 
     private fun prefs(context: Context) = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
 
-    /** Replaces the whole schedule (none: no more adhkar) and sets the next alarm. */
-    fun replace(context: Context, items: List<Dhikr>, channelName: String, closeLabel: String) {
-        val array = JSONArray()
-        items.sortedBy { it.at }.forEach { array.put(it.toJson()) }
-        prefs(context).edit()
-            .putString(KEY_SCHEDULE, array.toString())
+    /**
+     * Follows [plan] from now on (null: no more adhkar) and sets the next
+     * alarm. Turned on just now: slots already past are not missed ones.
+     */
+    fun replace(context: Context, plan: DhikrPlan?, channelName: String, closeLabel: String) {
+        val prefs = prefs(context)
+        val edit = prefs.edit()
+            .remove(KEY_LEGACY_SCHEDULE)
             .putString(KEY_CHANNEL, channelName)
             .putString(KEY_CLOSE, closeLabel)
-            .apply()
+        if (plan == null) {
+            edit.remove(KEY_PLAN)
+        } else {
+            if (!prefs.contains(KEY_PLAN)) edit.putLong(KEY_LAST_SLOT, System.currentTimeMillis())
+            edit.putString(KEY_PLAN, plan.toJson().toString())
+        }
+        edit.apply()
         arm(context)
     }
 
-    private fun load(context: Context): List<Dhikr> {
-        val raw = prefs(context).getString(KEY_SCHEDULE, null) ?: return emptyList()
+    private fun plan(context: Context): DhikrPlan? {
+        val raw = prefs(context).getString(KEY_PLAN, null) ?: return null
         return try {
-            val array = JSONArray(raw)
-            (0 until array.length()).map { Dhikr.fromJson(array.getJSONObject(it)) }
+            DhikrPlan.fromJson(JSONObject(raw))
         } catch (e: Exception) {
-            // An unreadable schedule: nothing until the app sends a new one.
-            Log.w(TAG, "unreadable schedule", e)
-            emptyList()
+            // Unreadable: nothing until the app sends the plan again.
+            Log.w(TAG, "unreadable plan", e)
+            null
         }
-    }
-
-    private fun save(context: Context, items: List<Dhikr>) {
-        val array = JSONArray()
-        items.forEach { array.put(it.toJson()) }
-        prefs(context).edit().putString(KEY_SCHEDULE, array.toString()).apply()
     }
 
     private fun alarm(context: Context): PendingIntent = PendingIntent.getBroadcast(
@@ -113,71 +210,153 @@ object DhikrSchedule {
     )
 
     /**
-     * Sets the alarm for the next dhikr, on the minute if Android lets the app
+     * Sets the alarm for the next slot, on the minute if Android lets the app
      * set exact alarms (the adhan asks for that), else within Android's window.
      */
     fun arm(context: Context) {
         val manager = context.getSystemService(AlarmManager::class.java) ?: return
         val pending = alarm(context)
         manager.cancel(pending)
-        val now = System.currentTimeMillis()
-        val next = load(context).firstOrNull { it.at > now } ?: return
+        val plan = plan(context) ?: return
+        if (plan.items.isEmpty()) return
+        val after = maxOf(System.currentTimeMillis(), prefs(context).getLong(KEY_LAST_SLOT, 0L))
+        val next = plan.next(after) ?: return
         val exact = Build.VERSION.SDK_INT < Build.VERSION_CODES.S || manager.canScheduleExactAlarms()
         try {
             if (exact) {
-                manager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, next.at, pending)
+                manager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, next, pending)
             } else {
-                manager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, next.at, pending)
+                manager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, next, pending)
             }
         } catch (e: SecurityException) {
             // The permission was taken back between the check and the call.
-            manager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, next.at, pending)
+            manager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, next, pending)
         }
     }
 
-    /** The alarm went off: show the latest dhikr that is due, set the next. */
+    /** The alarm went off: the dhikr that is due, then the next alarm. */
     fun fire(context: Context) {
-        val now = System.currentTimeMillis()
-        val items = load(context)
-        val due = items.lastOrNull { it.at <= now + EARLY_MS }
-        save(context, items.filter { it.at > now + EARLY_MS })
-        if (due != null) show(context, due)
+        catchUp(context)
         arm(context)
     }
 
-    /** The phone restarted (or the app was updated): the card again, if one was waiting, and the next alarm. */
+    /**
+     * Shows one dhikr for the latest slot that has come and was not shown,
+     * while it is still its turn (before the next slot would have come). An
+     * alarm Android held back while the phone slept still brings its dhikr
+     * when the phone wakes; one held back into the night brings none, and a
+     * few missed slots bring one dhikr, not a pile.
+     */
+    private fun catchUp(context: Context) {
+        val plan = plan(context) ?: return
+        if (plan.items.isEmpty()) return
+        val now = System.currentTimeMillis()
+        val slot = plan.latest(now + EARLY_MS) ?: return
+        val prefs = prefs(context)
+        if (slot <= prefs.getLong(KEY_LAST_SLOT, 0L)) return
+        prefs.edit().putLong(KEY_LAST_SLOT, slot).apply()
+        if (plan.quietUntil != null && slot <= plan.quietUntil) return
+        if (now - slot >= plan.everyHours.coerceAtLeast(1) * HOUR_MS) return // past its turn
+        deliver(context, plan.title, draw(context, plan.items))
+    }
+
+    /**
+     * The next dhikr from the bag: all of [items] in a random order, then
+     * shuffled again, the first of a new round never the last of the one
+     * before. Kept across alarms; adhkar no longer offered drop out of it,
+     * new ones join at the next shuffle.
+     */
+    private fun draw(context: Context, items: List<DhikrText>): DhikrText {
+        val prefs = prefs(context)
+        val byId = items.associateBy { it.id }
+        val last = prefs.getString(KEY_LAST_ID, null)
+        val bag = try {
+            val array = JSONArray(prefs.getString(KEY_BAG, "[]"))
+            (0 until array.length()).map { array.getString(it) }.filter { it in byId }.toMutableList()
+        } catch (e: Exception) {
+            mutableListOf()
+        }
+        if (bag.isEmpty()) {
+            bag.addAll(byId.keys.shuffled())
+            if (bag.size > 1 && bag[0] == last) bag.add(bag.removeAt(0))
+        }
+        val id = bag.removeAt(0)
+        prefs.edit()
+            .putString(KEY_BAG, JSONArray(bag).toString())
+            .putString(KEY_LAST_ID, id)
+            .apply()
+        return byId.getValue(id)
+    }
+
+    /** The phone restarted (or the app was updated): the card again, if one was waiting, a missed dhikr, the next alarm. */
     fun restore(context: Context) {
-        val now = System.currentTimeMillis()
-        save(context, load(context).filter { it.at > now })
-        showing(context)?.let { if (Settings.canDrawOverlays(context)) DhikrCard.show(context, it, closeLabel(context)) }
+        showing(context)?.let { (title, text) ->
+            if (Settings.canDrawOverlays(context)) {
+                try {
+                    DhikrCard.show(context, title, text, closeLabel(context))
+                } catch (e: Exception) {
+                    Log.w(TAG, "card refused", e)
+                }
+            }
+        }
+        catchUp(context)
         arm(context)
     }
 
-    /** Shows [dhikr] now: in the corner if allowed, else as a notification. */
-    fun show(context: Context, dhikr: Dhikr, channelName: String? = null, closeLabel: String? = null) {
-        channelName?.let { prefs(context).edit().putString(KEY_CHANNEL, it).apply() }
-        closeLabel?.let { prefs(context).edit().putString(KEY_CLOSE, it).apply() }
+    /** A dhikr now, drawn from [plan]'s adhkar: the "Show one now" button. */
+    fun showNow(context: Context, plan: DhikrPlan, channelName: String?, closeLabel: String?) {
+        val edit = prefs(context).edit()
+        channelName?.let { edit.putString(KEY_CHANNEL, it) }
+        closeLabel?.let { edit.putString(KEY_CLOSE, it) }
+        edit.apply()
+        if (plan.items.isEmpty()) return
+        deliver(context, plan.title, draw(context, plan.items))
+    }
+
+    /**
+     * In the corner if allowed. Also a notification if the card cannot be
+     * shown, or if the phone is locked or asleep: the card waits for the
+     * unlock, but the notification is on the lock screen at once, and stays
+     * in the shade even if Android ends the app before the phone is used.
+     */
+    private fun deliver(context: Context, title: String, text: DhikrText) {
+        val power = context.getSystemService(PowerManager::class.java)
+        val keyguard = context.getSystemService(KeyguardManager::class.java)
+        val away = power?.isInteractive == false || keyguard?.isKeyguardLocked == true
+        var onScreen = false
         if (Settings.canDrawOverlays(context)) {
             try {
-                DhikrCard.show(context, dhikr, closeLabel(context))
-                prefs(context).edit().putString(KEY_SHOWING, dhikr.toJson().toString()).apply()
-                return
+                DhikrCard.show(context, title, text, closeLabel(context))
+                prefs(context).edit()
+                    .putString(KEY_SHOWING, text.toJson().put("title", title).toString())
+                    .apply()
+                onScreen = true
             } catch (e: Exception) {
                 // Android refused the window (a restricted phone): notify instead.
                 Log.w(TAG, "card refused", e)
             }
         }
-        DhikrNotification.post(context, dhikr, prefs(context).getString(KEY_CHANNEL, null) ?: "Dhikr reminders")
+        if (!onScreen || away) {
+            DhikrNotification.post(context, title, text, prefs(context).getString(KEY_CHANNEL, null) ?: "Dhikr reminders")
+        } else {
+            // A newer dhikr in the corner: an older one in the shade goes.
+            DhikrNotification.cancel(context)
+        }
     }
 
-    /** The card was tapped: nothing waits any more. */
+    /** The dhikr was seen (its card or its notification tapped): nothing waits any more. */
     fun dismissed(context: Context) {
         prefs(context).edit().remove(KEY_SHOWING).apply()
     }
 
-    private fun showing(context: Context): Dhikr? {
+    private fun showing(context: Context): Pair<String, DhikrText>? {
         val raw = prefs(context).getString(KEY_SHOWING, null) ?: return null
-        return try { Dhikr.fromJson(JSONObject(raw)) } catch (e: Exception) { null }
+        return try {
+            val o = JSONObject(raw)
+            o.getString("title") to DhikrText.fromJson(o)
+        } catch (e: Exception) {
+            null
+        }
     }
 
     private fun closeLabel(context: Context) = prefs(context).getString(KEY_CLOSE, null) ?: "Close"
@@ -199,14 +378,15 @@ class DhikrReceiver : BroadcastReceiver() {
 
 /**
  * The card at the top right of the screen: the title, the dhikr in Amiri,
- * its meaning if any. One at a time (a new dhikr replaces the words); a tap
- * anywhere on it closes it. The rest of the screen is untouched.
+ * and how to say it in Latin letters if the interface is not Arabic. One at
+ * a time (a new dhikr replaces the words); a tap anywhere on it closes it,
+ * and its notification with it. The rest of the screen is untouched.
  */
 object DhikrCard {
     private var view: View? = null
     private var title: TextView? = null
     private var body: TextView? = null
-    private var meaning: TextView? = null
+    private var said: TextView? = null
 
     private fun dp(context: Context, v: Float) =
         TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, v, context.resources.displayMetrics).toInt()
@@ -218,14 +398,16 @@ object DhikrCard {
         null
     }
 
-    fun show(context: Context, dhikr: Dhikr, closeLabel: String) {
-        val meaningText = dhikr.expanded?.removePrefix(dhikr.body)?.trim()?.ifEmpty { null }
+    private fun describe(titleText: String, text: DhikrText, closeLabel: String) =
+        listOfNotNull(titleText, text.arabic, text.said, closeLabel).joinToString(". ")
+
+    fun show(context: Context, titleText: String, text: DhikrText, closeLabel: String) {
         if (view != null) {
-            title?.text = dhikr.title
-            body?.text = dhikr.body
-            meaning?.text = meaningText
-            meaning?.visibility = if (meaningText == null) View.GONE else View.VISIBLE
-            view?.contentDescription = "${dhikr.title}. ${dhikr.body}. $closeLabel"
+            title?.text = titleText
+            body?.text = text.arabic
+            said?.text = text.said
+            said?.visibility = if (text.said == null) View.GONE else View.VISIBLE
+            view?.contentDescription = describe(titleText, text, closeLabel)
             return
         }
         val dark = context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK ==
@@ -252,22 +434,22 @@ object DhikrCard {
                 setStroke(dp(context, 1f), hairline)
             }
             isClickable = true
-            contentDescription = "${dhikr.title}. ${dhikr.body}. $closeLabel"
+            contentDescription = describe(titleText, text, closeLabel)
         }
         val head = LinearLayout(context).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
         }
         val titleView = TextView(context).apply {
-            text = dhikr.title
+            this.text = titleText
             setTextColor(rubric)
             setTextSize(TypedValue.COMPLEX_UNIT_SP, 12f)
-            typeface = if (dhikr.title.any { it in '؀'..'ۿ' }) uiAr ?: ui else ui
+            typeface = if (titleText.any { it in '؀'..'ۿ' }) uiAr ?: ui else ui
             maxLines = 1
             importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
         }
         val close = TextView(context).apply {
-            text = "✕"
+            this.text = "✕"
             setTextColor(inkSecondary)
             setTextSize(TypedValue.COMPLEX_UNIT_SP, 12f)
             setPadding(dp(context, 12f), 0, 0, 0)
@@ -276,7 +458,7 @@ object DhikrCard {
         head.addView(titleView, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
         head.addView(close)
         val bodyView = TextView(context).apply {
-            text = dhikr.body
+            this.text = text.arabic
             setTextColor(ink)
             setTextSize(TypedValue.COMPLEX_UNIT_SP, 17f)
             typeface = font(context, "Amiri-Regular.ttf")
@@ -286,21 +468,23 @@ object DhikrCard {
             maxWidth = cardWidth - 2 * pad
             importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
         }
-        val meaningView = TextView(context).apply {
-            text = meaningText
+        // How to say it, left to right under the Arabic.
+        val saidView = TextView(context).apply {
+            this.text = text.said
             setTextColor(inkSecondary)
-            setTextSize(TypedValue.COMPLEX_UNIT_SP, 12f)
-            typeface = ui
-            maxLines = 2
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 13f)
+            typeface = Typeface.create(ui, Typeface.ITALIC)
+            textDirection = View.TEXT_DIRECTION_LTR
+            maxLines = 3
             ellipsize = android.text.TextUtils.TruncateAt.END
             maxWidth = cardWidth - 2 * pad
-            visibility = if (meaningText == null) View.GONE else View.VISIBLE
+            visibility = if (text.said == null) View.GONE else View.VISIBLE
             importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
         }
         val fill = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
         card.addView(head, fill)
         card.addView(bodyView, fill)
-        card.addView(meaningView, fill)
+        card.addView(saidView, fill)
 
         val manager = context.getSystemService(WindowManager::class.java)
         val statusBar = context.resources.getIdentifier("status_bar_height", "dimen", "android")
@@ -326,7 +510,10 @@ object DhikrCard {
             setTitle("Rafiq dhikr")
         }
         card.setOnClickListener {
-            card.animate().alpha(0f).setDuration(150).withEndAction { hide(context) }.start()
+            card.animate().alpha(0f).setDuration(150).withEndAction {
+                hide(context)
+                DhikrNotification.cancel(context)
+            }.start()
         }
         card.alpha = 0f
         manager.addView(card, params)
@@ -334,7 +521,7 @@ object DhikrCard {
         view = card
         title = titleView
         body = bodyView
-        meaning = meaningView
+        said = saidView
     }
 
     fun hide(context: Context) {
@@ -348,15 +535,15 @@ object DhikrCard {
         view = null
         title = null
         body = null
-        meaning = null
+        said = null
         DhikrSchedule.dismissed(context)
     }
 }
 
 /**
- * Without "Appear on top": a notification on the Dhikr reminders channel that
- * stays in the shade until it is tapped (it opens the adhkar) or swiped away.
- * One at a time: a new dhikr replaces the last.
+ * The dhikr as a notification on the Dhikr reminders channel: on the lock
+ * screen, then in the shade until it is tapped (it opens the adhkar) or
+ * swiped away. One at a time: a new dhikr replaces the last.
  */
 object DhikrNotification {
     private const val CHANNEL = "adhkar"
@@ -372,13 +559,14 @@ object DhikrNotification {
     private const val GROUP = "dhikr"
     const val EXTRA_OPEN = "rafiq_open"
 
-    fun post(context: Context, dhikr: Dhikr, channelName: String) {
+    fun post(context: Context, title: String, text: DhikrText, channelName: String) {
         val manager = context.getSystemService(NotificationManager::class.java) ?: return
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && manager.getNotificationChannel(CHANNEL) == null) {
             manager.createNotificationChannel(
                 NotificationChannel(CHANNEL, channelName, NotificationManager.IMPORTANCE_HIGH).apply {
                     setSound(null, null)
                     enableVibration(false)
+                    lockscreenVisibility = Notification.VISIBILITY_PUBLIC
                 },
             )
         }
@@ -398,15 +586,24 @@ object DhikrNotification {
         }
         val notification = builder
             .setSmallIcon(R.drawable.ic_stat_rafiq)
-            .setContentTitle(dhikr.title)
-            .setContentText(dhikr.body)
-            .setStyle(Notification.BigTextStyle().bigText(dhikr.expanded ?: dhikr.body))
+            .setContentTitle(title)
+            .setContentText(text.arabic)
+            .setStyle(Notification.BigTextStyle().bigText(text.expanded))
             .setCategory(Notification.CATEGORY_REMINDER)
             .setVisibility(Notification.VISIBILITY_PUBLIC)
             .setGroup(GROUP)
             .setAutoCancel(true)
             .setContentIntent(open)
             .build()
-        manager.notify(ID, notification)
+        try {
+            manager.notify(ID, notification)
+        } catch (e: SecurityException) {
+            // Notifications not allowed (Android 13+): the card alone, then.
+            Log.w("RafiqDhikr", "notification refused", e)
+        }
+    }
+
+    fun cancel(context: Context) {
+        context.getSystemService(NotificationManager::class.java)?.cancel(ID)
     }
 }

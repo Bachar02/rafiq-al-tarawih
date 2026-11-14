@@ -140,6 +140,17 @@ final readingStatsProvider = Provider<ReadingStats>(
   ),
 );
 
+/// Where to continue reading (see [resumeVerse]): what the reading reminder
+/// names and opens, and where the khatm's Continue goes.
+final resumeVerseProvider = Provider<int>(
+  (ref) => resumeVerse(
+    ref.watch(quranProvider),
+    position: ref.watch(readingPositionProvider),
+    khatm: ref.watch(khatmProvider.select((b) => b.active)),
+    uncounted: ref.watch(readingSessionProvider.select((s) => s.pending)).days.values.expand((pages) => pages),
+  ),
+);
+
 /// Keeps the scheduled daily reminders in step with the app.
 final reminderSyncProvider = Provider<ReminderSync>(ReminderSync.new);
 

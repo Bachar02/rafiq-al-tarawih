@@ -7,7 +7,7 @@ import '../features/navigate/navigate_screen.dart';
 import '../features/reader/reader_screen.dart';
 import '../features/reader/reading_review_sheet.dart';
 import '../l10n/l10n.dart';
-import '../services/reminders.dart' show dhikrPayload, isAdhanPayload;
+import '../services/reminders.dart' show dhikrPayload, isAdhanPayload, readingPayload;
 import 'navigation.dart';
 import 'providers.dart';
 import 'routes.dart';
@@ -62,11 +62,20 @@ class _HomeShellState extends ConsumerState<HomeShell> {
     ref.read(prayerSettingsProvider.notifier).followLocation();
   }
 
-  /// A dhikr reminder tapped (or one that launched the app): the adhkar.
+  /// A reading reminder tapped (or one that launched the app): the reader,
+  /// where the user left off ([resumeVerseProvider]: the khatm's place), the
+  /// ayah marked. Screens opened over it close; Taraweeh mode, and a sheet
+  /// such as the reading review, stay.
+  /// A dhikr reminder: the adhkar.
   /// An adhan: the prayer times, once (a second tap finds them open).
   void _opened(String payload) {
     if (!mounted) return;
-    if (payload == dhikrPayload) {
+    if (payload == readingPayload) {
+      Navigator.of(context).popUntil(
+        (route) => route.isFirst || route is PopupRoute || route.settings.name == AppRoutes.taraweehName,
+      );
+      ref.read(readerRequestsProvider.notifier).open(ref.read(resumeVerseProvider), mark: true);
+    } else if (payload == dhikrPayload) {
       AppRoutes.adhkar(context);
     } else if (isAdhanPayload(payload)) {
       Navigator.of(context).popUntil((route) => route.settings.name != AppRoutes.prayerName);

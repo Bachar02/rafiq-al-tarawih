@@ -4,9 +4,10 @@
 library;
 
 import 'dart:io' show Platform;
+import 'dart:math' show Random;
 import 'dart:typed_data';
 
-import 'package:flutter/foundation.dart' show immutable;
+import 'package:flutter/foundation.dart' show immutable, listEquals;
 import 'package:flutter/services.dart' show MethodChannel;
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/timezone.dart' as tz;
@@ -102,33 +103,155 @@ bool sameReminders(List<Reminder> a, List<Reminder> b) {
   return true;
 }
 
-/// The kinds of notification, each with its own channels (the user can
-/// silence one in Android's settings and keep the others) and its own ids,
-/// so replacing one never touches the others.
+/// The kinds of notification [Reminders.replace] schedules, each with its
+/// own channels (the user can silence one in Android's settings and keep the
+/// others) and its own ids, so replacing one never touches the others. The
+/// dhikr is apart: a rule, not a list ([Reminders.scheduleDhikr]).
 enum ReminderKind {
   /// The daily reading reminder: a notification at the top of the screen.
   reading,
-
-  /// A dhikr: a small card at the top right of the screen, silent, until it
-  /// is tapped. Without the "Appear on top" permission, a silent
-  /// notification that waits in the shade.
-  dhikr,
 
   /// The adhan: at the prayer's minute where Android allows it, each with
   /// its own [Reminder.tone].
   adhan,
 }
 
+/// What a reading reminder opens when tapped: the reader, where the user
+/// left off.
+const readingPayload = 'reading';
+
 /// What a dhikr notification opens when tapped.
 const dhikrPayload = 'adhkar';
 
-/// Dhikr ids: [dhikrIdBase] + the hour's place in a cycle of [dhikrIdCycle]
-/// hours (about three weeks), so each hour of the two weeks scheduled ahead
-/// has its own id, and the same hour keeps it from one scheduling to the next.
-/// On Android these ids only name what flutter_local_notifications scheduled
-/// up to 0.8, cancelled once: the app's own code now shows the dhikr.
+/// One dhikr as the reminders show it: the Arabic words, how to say them in
+/// Latin letters ([said]), and what they mean. [said] and [meaning] are for
+/// an interface that is not Arabic.
+@immutable
+class DhikrText {
+  const DhikrText({required this.id, required this.arabic, this.said, this.meaning});
+
+  /// The dhikr's id: the same dhikr in another language keeps it.
+  final String id;
+  final String arabic;
+  final String? said;
+  final String? meaning;
+
+  /// Everything, one per line: the expanded notification.
+  String get expanded => [arabic, if (said != null) said!, if (meaning != null) meaning!].join('\n');
+
+  Map<String, Object?> toMap() => {'id': id, 'arabic': arabic, 'said': said, 'meaning': meaning};
+
+  @override
+  bool operator ==(Object other) =>
+      other is DhikrText && other.id == id && other.arabic == arabic && other.said == said && other.meaning == meaning;
+
+  @override
+  int get hashCode => Object.hash(id, arabic, said, meaning);
+}
+
+/// The dhikr reminders as a rule the phone follows by itself, for as long
+/// as it is on: one on the hour every [everyHours] hours from [fromHour] to
+/// [toHour] each day (local time), none at or before [quietUntil], each
+/// drawn when it comes from [items] (see [DhikrDeck]). No [items]: off.
+///
+/// android/.../Dhikr.kt follows the same rule; [times] is it in Dart.
+@immutable
+class DhikrPlan {
+  const DhikrPlan({
+    required this.title,
+    required this.everyHours,
+    required this.fromHour,
+    required this.toHour,
+    required this.items,
+    this.quietUntil,
+  });
+
+  /// No reminders.
+  static const off = DhikrPlan(title: '', everyHours: 1, fromHour: 0, toHour: 0, items: []);
+
+  /// Above each dhikr: the card's and the notification's title.
+  final String title;
+  final int everyHours;
+  final int fromHour;
+  final int toHour;
+  final DateTime? quietUntil;
+  final List<DhikrText> items;
+
+  bool get isOff => items.isEmpty;
+
+  /// The slots after [now] (and after [quietUntil]) on each of the [days]
+  /// days from [now]'s.
+  List<DateTime> times({required DateTime now, required int days}) {
+    final quiet = quietUntil;
+    final after = quiet != null && quiet.isAfter(now) ? quiet : now;
+    final step = everyHours < 1 ? 1 : everyHours;
+    return [
+      for (var d = 0; d < days; d++)
+        for (var h = fromHour; h <= toHour; h += step)
+          if (DateTime(now.year, now.month, now.day + d, h) case final at when at.isAfter(after)) at,
+    ];
+  }
+
+  Map<String, Object?> toMap() => {
+        'title': title,
+        'every': everyHours,
+        'from': fromHour,
+        'to': toHour,
+        'quietUntil': quietUntil?.millisecondsSinceEpoch,
+        'items': [for (final i in items) i.toMap()],
+      };
+
+  @override
+  bool operator ==(Object other) =>
+      other is DhikrPlan &&
+      other.title == title &&
+      other.everyHours == everyHours &&
+      other.fromHour == fromHour &&
+      other.toHour == toHour &&
+      other.quietUntil == quietUntil &&
+      listEquals(other.items, items);
+
+  @override
+  int get hashCode => Object.hash(title, everyHours, fromHour, toHour, quietUntil, Object.hashAll(items));
+}
+
+/// Which dhikr comes next: a shuffled bag. Every one of the adhkar comes
+/// once, in a random order, before the bag is shuffled again; the first of
+/// a round is never the last of the round before, so the same dhikr never
+/// comes twice in a row. (android/.../Dhikr.kt draws the same way.)
+class DhikrDeck {
+  DhikrDeck([Random? random]) : _random = random ?? Random();
+
+  final Random _random;
+  final _bag = <String>[];
+  String? _last;
+
+  /// The next of [items] (not empty). Adhkar no longer offered drop out of
+  /// the bag; new ones join at the next shuffle.
+  DhikrText draw(List<DhikrText> items) {
+    assert(items.isNotEmpty);
+    final byId = {for (final i in items) i.id: i};
+    _bag.removeWhere((id) => !byId.containsKey(id));
+    if (_bag.isEmpty) {
+      _bag.addAll(byId.keys.toList()..shuffle(_random));
+      if (_bag.length > 1 && _bag.first == _last) _bag.add(_bag.removeAt(0));
+    }
+    final id = _bag.removeAt(0);
+    _last = id;
+    return byId[id]!;
+  }
+}
+
+/// Dhikr ids, where the plugin schedules them (not Android): [dhikrIdBase] +
+/// the hour's place in a cycle of [dhikrIdCycle] hours (about three weeks),
+/// so each hour of the [dhikrDays] scheduled ahead has its own id. On
+/// Android these ids only name what flutter_local_notifications scheduled up
+/// to 0.8, cancelled once: the app's own code now shows the dhikr.
 const dhikrIdBase = 1000;
 const dhikrIdCycle = 500;
+
+/// Where the plugin schedules the dhikr (not Android): this many days ahead.
+const dhikrDays = 14;
 
 int dhikrNotificationId(DateTime at) {
   final day = DateTime.utc(at.year, at.month, at.day).difference(DateTime.utc(2000)).inDays;
@@ -171,14 +294,12 @@ abstract interface class Reminders {
 
   /// Replaces every scheduled notification of [kind] with [reminders]
   /// (none: cancel them all). [channelName] is the name Android shows in the
-  /// app's notification settings, in the interface language. [closeLabel]
-  /// is what a screen reader says closes a dhikr's card.
-  Future<void> replace(
-    List<Reminder> reminders, {
-    required String channelName,
-    ReminderKind kind,
-    String closeLabel,
-  });
+  /// app's notification settings, in the interface language.
+  Future<void> replace(List<Reminder> reminders, {required String channelName, ReminderKind kind});
+
+  /// From now on, the dhikr reminders follow [plan] ([DhikrPlan.off]: none).
+  /// [closeLabel] is what a screen reader says closes a dhikr's card.
+  Future<void> scheduleDhikr(DhikrPlan plan, {required String channelName, required String closeLabel});
 
   /// Calls [handler] with the payload of a notification the user taps,
   /// including one that launched the app.
@@ -207,8 +328,9 @@ abstract interface class Reminders {
   /// it is allowed once the user comes back.
   Future<bool> requestShowOnScreen();
 
-  /// Shows a dhikr now, the way the scheduled ones come.
-  Future<void> showDhikr(Reminder reminder, {required String channelName, required String closeLabel});
+  /// Shows a dhikr now, drawn from [plan]'s adhkar the way the scheduled
+  /// ones are.
+  Future<void> showDhikr(DhikrPlan plan, {required String channelName, required String closeLabel});
 }
 
 /// [Reminders] through flutter_local_notifications.
@@ -316,34 +438,34 @@ class LocalReminders implements Reminders {
     List<Reminder> reminders, {
     required String channelName,
     ReminderKind kind = ReminderKind.reading,
-    String closeLabel = '',
   }) async {
     await _init();
     await _clearOld();
     switch (kind) {
       case ReminderKind.reading:
         await _replaceReading(reminders, channelName);
-      case ReminderKind.dhikr:
-        if (_nativeDhikr) {
-          await _native.invokeMethod<void>('schedule', {
-            'items': [for (final r in reminders) _dhikrMap(r)],
-            'channelName': channelName,
-            'closeLabel': closeLabel,
-          });
-        } else {
-          await _replaceDhikr(reminders, channelName);
-        }
       case ReminderKind.adhan:
         await _replaceAdhan(reminders);
     }
   }
 
-  static Map<String, Object?> _dhikrMap(Reminder r) => {
-        'at': r.at.millisecondsSinceEpoch,
-        'title': r.title,
-        'body': r.body,
-        'expanded': r.expanded,
-      };
+  @override
+  Future<void> scheduleDhikr(DhikrPlan plan, {required String channelName, required String closeLabel}) async {
+    await _init();
+    await _clearOld();
+    if (_nativeDhikr) {
+      await _native.invokeMethod<void>('schedule', {
+        'plan': plan.isOff ? null : plan.toMap(),
+        'channelName': channelName,
+        'closeLabel': closeLabel,
+      });
+    } else {
+      await _replaceDhikr(plan, channelName);
+    }
+  }
+
+  /// Not Android: which dhikr each notification brings.
+  final _deck = DhikrDeck();
 
   Future<void> _clearOld() async {
     if (_oldCleared || !Platform.isAndroid) return;
@@ -363,21 +485,23 @@ class LocalReminders implements Reminders {
       _nativeDhikr && (await _native.invokeMethod<bool>('requestShowOnScreen') ?? false);
 
   @override
-  Future<void> showDhikr(Reminder reminder, {required String channelName, required String closeLabel}) async {
+  Future<void> showDhikr(DhikrPlan plan, {required String channelName, required String closeLabel}) async {
+    if (plan.isOff) return;
     if (_nativeDhikr) {
       await _native.invokeMethod<void>('show', {
-        'item': _dhikrMap(reminder),
+        'plan': plan.toMap(),
         'channelName': channelName,
         'closeLabel': closeLabel,
       });
       return;
     }
     await _init();
+    final text = _deck.draw(plan.items);
     await _plugin.show(
       id: dhikrIdBase + dhikrIdCycle - 1,
-      title: reminder.title,
-      body: reminder.body,
-      notificationDetails: _dhikrDetails(reminder, channelName),
+      title: plan.title,
+      body: text.arabic,
+      notificationDetails: _dhikrDetails(text, channelName),
       payload: dhikrPayload,
     );
   }
@@ -442,29 +566,26 @@ class LocalReminders implements Reminders {
     final mode =
         await canScheduleExact() ? AndroidScheduleMode.exactAllowWhileIdle : AndroidScheduleMode.inexactAllowWhileIdle;
     for (final (i, r) in reminders.take(_readingIds).indexed) {
-      await _schedule(i, r, details, mode: mode);
+      await _schedule(i, r, details, mode: mode, payload: readingPayload);
     }
   }
 
-  /// Not Android: through the plugin. Two weeks of dhikr is a hundred or so
-  /// notifications: only what changed is cancelled or scheduled (each call
-  /// writes the plugin's whole list).
-  Future<void> _replaceDhikr(List<Reminder> reminders, String channelName) async {
-    bool ours(int id) => id >= dhikrIdBase && id < dhikrIdBase + dhikrIdCycle;
-    final pending = {
-      for (final p in await _plugin.pendingNotificationRequests())
-        if (ours(p.id)) p.id: p,
-    };
-    final wanted = {for (final r in reminders) dhikrNotificationId(r.at): r};
-    bool same(PendingNotificationRequest p, Reminder r) => p.title == r.title && p.body == r.body;
-    for (final MapEntry(key: id, value: p) in pending.entries) {
-      final r = wanted[id];
-      if (r == null || !same(p, r)) await _plugin.cancel(id: id);
+  /// Not Android: no code of the app's own runs at a dhikr's time, so the
+  /// plugin schedules the next [dhikrDays] days of them, each dhikr drawn
+  /// now. Moved on whenever the app sends the plan again (daily at most).
+  Future<void> _replaceDhikr(DhikrPlan plan, String channelName) async {
+    for (final p in await _plugin.pendingNotificationRequests()) {
+      if (p.id >= dhikrIdBase && p.id < dhikrIdBase + dhikrIdCycle) await _plugin.cancel(id: p.id);
     }
-    for (final MapEntry(key: id, value: r) in wanted.entries) {
-      final p = pending[id];
-      if (p != null && same(p, r)) continue;
-      await _schedule(id, r, _dhikrDetails(r, channelName), payload: dhikrPayload);
+    if (plan.isOff) return;
+    for (final at in plan.times(now: DateTime.now(), days: dhikrDays)) {
+      final text = _deck.draw(plan.items);
+      await _schedule(
+        dhikrNotificationId(at),
+        Reminder(at: at, title: plan.title, body: text.arabic, expanded: text.expanded),
+        _dhikrDetails(text, channelName),
+        payload: dhikrPayload,
+      );
     }
   }
 
@@ -550,7 +671,7 @@ class LocalReminders implements Reminders {
   }
 
   /// Not Android: a notification, silent, that waits until it is seen.
-  NotificationDetails _dhikrDetails(Reminder r, String channelName) => NotificationDetails(
+  NotificationDetails _dhikrDetails(DhikrText text, String channelName) => NotificationDetails(
         android: AndroidNotificationDetails(
           _dhikrChannel,
           channelName,
@@ -561,8 +682,8 @@ class LocalReminders implements Reminders {
           enableVibration: false,
           category: AndroidNotificationCategory.reminder,
           visibility: NotificationVisibility.public,
-          // The whole dhikr and its meaning when expanded.
-          styleInformation: BigTextStyleInformation(r.expanded ?? r.body),
+          // The whole dhikr, how to say it and its meaning when expanded.
+          styleInformation: BigTextStyleInformation(text.expanded),
         ),
         iOS: const DarwinNotificationDetails(presentSound: false),
       );

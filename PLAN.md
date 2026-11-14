@@ -1280,3 +1280,39 @@ Rules: only while listening; never on `tracking` (no tie) or `lost` (old news); 
 - A skip pending at the very end of a night stops up to 3 ayahs short.
 - The thresholds (3, 40, 10/40) are first values from the rules, not tuned on real nights.
 - Not yet checked on a phone or in a real mosque: a whole night's real recognition, with Isha, Witr and qunut, has never been recorded.
+
+## 40. Reminders: back to the khatm's place, and a dhikr that keeps coming (2026-11-14)
+
+The owner's report after using the reminders:
+1. Tapping the reading reminder opened the app, not the place to continue the khatm.
+2. The dhikr must be in Arabic. In English or French, also show how it is said ("Astaghfirullah").
+3. A dhikr must come even after hours without using the phone, and not the same one each time. With a reminder every 2 hours and the phone unused for 3, unlocking it should show a dhikr.
+
+**Where to continue** (`resumeVerse` in `data/khatm.dart`, `resumeVerseProvider`) is one ayah. The reminder's text names it, the reminder's tap opens it (payload `reading`), and the khatm's Continue goes there:
+- In a khatm, its next page. Pages read but not yet counted count as read.
+- Within that page, the ayah the reader stopped on if it is on that page (the user left mid-page). Otherwise the page's first ayah.
+- Without a khatm, the reader's place.
+- The tap closes screens opened over the reader. It keeps Taraweeh mode and sheets (the reading review) open, and marks the ayah.
+
+**The dhikr's words:** always the Arabic. Outside Arabic, `translit` in `adhkar.json` (en and fr spellings; other languages fall back to en) goes under it in the card, the notification and the Adhkar screen. The meaning is in the expanded notification. All 16 adhkar the reminders draw from have both spellings (a test checks this). The other collections can add `translit` the same way.
+
+**Delivery is a rule, not a list** (`DhikrPlan`):
+- Dart sends every N hours, 8:00 to 22:00, quiet-until (Taraweeh) and the adhkar. Before, it sent two weeks of pre-picked times.
+- Android (`Dhikr.kt`) computes each next slot itself in local time. Dhikr no longer stop 14 days after Rafiq was last opened.
+- The plan is sent again only when it changes, or once a day. Before, it was sent on every show and hide.
+
+**Random:** a shuffled bag, drawn when the dhikr comes. Every dhikr comes once before any comes again, and never twice in a row. The bag is kept across alarms in prefs (`DhikrDeck` in Dart is the same rule, for iOS and tests). Before, the pick was a fixed hash of the hour, so "Show one now" gave the same dhikr for a whole hour.
+
+**Late alarms and a locked phone:**
+- When an alarm fires, the latest slot not yet shown is shown if it is still its turn (before the next slot would have come). An alarm Android held back while the phone slept still brings its dhikr when the phone wakes. One held into the night brings none, and several missed slots bring one dhikr.
+- The phone is locked or asleep: the card, and also a notification on the lock screen. The notification stays in the shade if Android ends the process before the unlock. Tapping either one dismisses both.
+- Turning reminders on now also asks for notification permission, for the lock screen.
+- A restart of the phone shows a missed dhikr the same way, then sets the next alarm.
+
+**Migration:** 0.9's stored list (`schedule`) is dropped. The first time Rafiq opens after the update, it sends the plan.
+
+**Tests:** 712 pass (52 goldens skipped without Docker). New tests: resume (5 unit, 2 in the app), the shuffled bag (3), transliterations (1), sending once a day (1). The dhikr tests were rewritten for the plan. The Kotlin compiles; it has no unit tests.
+
+**Not verified:** on a phone. The owner should check on the Galaxy A16: a dhikr while locked, after 3 h idle, and after a reboot. Samsung may also need Rafiq set to "Unrestricted" battery (Settings → Apps → Rafiq → Battery). Goldens not re-rendered: the screens they cover are unchanged.
+
+**Transliterations** are Rafiq's own drafts, like the meanings: native review wanted.

@@ -50,9 +50,10 @@ class ReminderSync {
     final quran = _ref.read(quranProvider);
     final names = _ref.read(surahNamesProvider);
     final khatm = _ref.read(khatmProvider).active;
-    // A khatm continues at its first unread page; otherwise the reader's place.
-    final page = khatm?.nextPage ?? quran.pageOf(_ref.read(readingPositionProvider));
-    final surah = names.of(quran.verse(quran.pages.start(page)).surah);
+    // Where tapping the reminder opens the reader (see [resumeVerse]).
+    final resume = _ref.read(resumeVerseProvider);
+    final page = quran.pageOf(resume);
+    final surah = names.of(quran.verse(resume).surah);
     return [
       for (final at in reminderTimes(now: now, minutes: settings.reminderMinutes, readToday: stats.readToday))
         Reminder(

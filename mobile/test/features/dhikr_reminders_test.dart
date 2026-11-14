@@ -1,7 +1,10 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:rafiq/app/app.dart';
+import 'package:rafiq/app/providers.dart';
 import 'package:rafiq/features/adhkar/adhkar_screen.dart';
 import 'package:rafiq/features/adhkar/dhikr_reminders.dart';
 import 'package:rafiq/services/reminders.dart';
@@ -55,16 +58,46 @@ void main() {
       expect(ids.every((id) => id >= dhikrIdBase && id < dhikrIdBase + dhikrIdCycle), isTrue);
       expect(dhikrNotificationId(DateTime(2026, 11, 4, 10)), dhikrNotificationId(DateTime(2026, 11, 4, 10, 0)));
     });
+  });
 
-    test('the pick is the same for the same hour, and spread over the adhkar', () {
-      final times = dhikrTimes(now: DateTime(2026, 11, 4, 7), everyHours: 1);
-      expect([for (final t in times) dhikrPick(t, 16)], [for (final t in times) dhikrPick(t, 16)]);
-      expect({for (final t in times) dhikrPick(t, 16)}, hasLength(16), reason: 'all of them come up');
+  group('which dhikr', () {
+    final items = [for (var i = 0; i < 16; i++) DhikrText(id: 'an$i', arabic: 'ذكر $i')];
+
+    test('every one once before any comes again, never twice in a row', () {
+      final deck = DhikrDeck(Random(7));
+      final drawn = [for (var i = 0; i < 16 * 50; i++) deck.draw(items).id];
+      for (var round = 0; round < 50; round++) {
+        expect(drawn.sublist(round * 16, round * 16 + 16).toSet(), hasLength(16), reason: 'round $round');
+      }
+      for (var i = 1; i < drawn.length; i++) {
+        expect(drawn[i], isNot(drawn[i - 1]), reason: 'draw $i');
+      }
+    });
+
+    test('random: not the same order each round, nor on each phone', () {
+      final deck = DhikrDeck(Random(1));
+      final first = [for (var i = 0; i < 16; i++) deck.draw(items).id];
+      final second = [for (var i = 0; i < 16; i++) deck.draw(items).id];
+      expect(second, isNot(first));
+      final other = DhikrDeck(Random(2));
+      expect([for (var i = 0; i < 16; i++) other.draw(items).id], isNot(first));
+    });
+
+    test('adhkar no longer offered drop out; with one, it is that one', () {
+      final deck = DhikrDeck(Random(3));
+      deck.draw(items);
+      final fewer = items.take(4).toList();
+      expect({for (var i = 0; i < 8; i++) deck.draw(fewer).id}, {'an0', 'an1', 'an2', 'an3'});
+      expect(deck.draw(items.sublist(5, 6)).id, 'an5');
+      expect(deck.draw(items.sublist(5, 6)).id, 'an5');
     });
   });
 
   group('the setting', () {
     late Harness h;
+
+    ProviderContainer ref(WidgetTester tester) =>
+        ProviderScope.containerOf(tester.element(find.byType(Scaffold).first));
 
     Future<void> settle(WidgetTester tester) async {
       for (var i = 0; i < 10; i++) {
@@ -100,7 +133,8 @@ void main() {
       expect(find.text('How often'), findsNothing);
     });
 
-    testWidgets('turned on: on the screen, two weeks of adhkar, each with its meaning', (tester) async {
+    testWidgets('turned on: on the screen; a rule the phone follows, each dhikr in Arabic and how to say it',
+        (tester) async {
       await launch(tester); // Wednesday 4 November, 20:00
       await openAdhkar(tester);
       await tester.tap(find.text('Dhikr reminders').last);
@@ -110,7 +144,7 @@ void main() {
       await tester.tap(find.text('Continue'));
       await settle(tester);
       expect(h.reminders.onScreenAsked, 1);
-      expect(h.reminders.asked, 0, reason: 'the card needs no notification permission');
+      expect(h.reminders.asked, 1, reason: 'locked, a dhikr waits on the lock screen as a notification');
       expect(h.prefs.getBool('dhikr_reminders_on'), isTrue);
       await tester.ensureVisible(find.text('On the screen'));
       await settle(tester);
@@ -118,29 +152,35 @@ void main() {
       expect(h.reminders.closeLabel, 'Tap to close');
       expect(find.text('Dhikr reminders on'), findsOneWidget);
       expect(find.text('Every 2 hours, from 8:00 AM to 10:00 PM'), findsOneWidget);
-      final dhikr = h.reminders.dhikr;
-      expect(dhikr.first.at, DateTime(2026, 11, 4, 22), reason: '20:00 is not ahead');
-      expect(dhikr, hasLength(1 + 13 * 8));
+      final plan = h.reminders.dhikr;
+      // No end: the phone keeps to it however long Rafiq stays closed.
+      expect((plan.everyHours, plan.fromHour, plan.toHour, plan.quietUntil), (2, 8, 22, null));
+      expect(plan.times(now: h.now, days: 1), [DateTime(2026, 11, 4, 22)], reason: '20:00 is not ahead');
       expect(h.reminders.dhikrChannel, 'Dhikr reminders');
-      expect(dhikr.first.title, 'Remember Allah');
+      expect(plan.title, 'Remember Allah');
       final pool = loadAdhkar().forNotifications;
-      for (final r in dhikr) {
-        // Collapsed, the Arabic alone (mixed with English on one line it
-        // reads in the wrong order); expanded, its meaning under it.
-        final shown = pool.firstWhere((d) => d.arabic == r.body);
-        expect(r.expanded, '${shown.arabic}\n${shown.meaning('en')}');
+      expect([for (final t in plan.items) t.id], [for (final d in pool) d.id], reason: 'drawn from all of them');
+      for (final (i, t) in plan.items.indexed) {
+        // Always the Arabic words; under them how to say them, then (when
+        // expanded) what they mean.
+        expect(t.arabic, pool[i].arabic, reason: t.id);
+        expect(t.said, isNotNull, reason: t.id);
+        expect(t.said, pool[i].transliteration('en'), reason: t.id);
+        expect(t.meaning, pool[i].meaning('en'), reason: t.id);
+        expect(t.expanded, '${t.arabic}\n${t.said}\n${t.meaning}', reason: t.id);
       }
-      for (var i = 1; i < dhikr.length; i++) {
-        expect(dhikr[i].body, isNot(dhikr[i - 1].body), reason: 'never twice in a row');
-      }
+      expect(plan.items.firstWhere((t) => t.id == 'an08').said, 'Astaghfirullaha wa atubu ilayh');
       expect(h.reminders.scheduled, isEmpty, reason: 'the reading reminder is apart');
     });
 
     testWidgets('every hour instead: rescheduled; in Arabic, the words alone', (tester) async {
       await launch(tester, {'dhikr_reminders_on': true, 'language': 'ar'});
-      expect(h.reminders.dhikr, hasLength(1 + 13 * 8), reason: 'scheduled when the app opens');
-      expect(h.reminders.dhikr.first.title, 'اذكر الله');
-      expect(h.reminders.dhikr.first.expanded, isNull, reason: 'no meaning: the words are Arabic');
+      expect(h.reminders.dhikr.everyHours, 2, reason: 'sent when the app opens');
+      expect(h.reminders.dhikr.title, 'اذكر الله');
+      for (final t in h.reminders.dhikr.items) {
+        expect((t.said, t.meaning), (null, null), reason: 'the words are Arabic');
+        expect(t.expanded, t.arabic);
+      }
       await tapNav(tester, 'المزيد');
       await tester.tap(find.text('الأذكار'));
       await settle(tester);
@@ -151,10 +191,11 @@ void main() {
       await tester.tap(find.text('كل ساعة'));
       await settle(tester);
       expect(h.prefs.getInt('dhikr_every_hours'), 1);
-      expect(h.reminders.dhikr, hasLength(2 + 13 * 15), reason: '21:00 and 22:00 today, then 15 a day');
+      expect(h.reminders.dhikr.everyHours, 1);
+      expect(h.reminders.dhikr.times(now: h.now, days: 2), hasLength(2 + 15), reason: '21:00 and 22:00, then 15');
     });
 
-    testWidgets('allowed on the screen already: nothing asked, on at once', (tester) async {
+    testWidgets('allowed on the screen already: straight on, no detour through the setting', (tester) async {
       await launch(tester);
       h.reminders.onScreen = true;
       await openAdhkar(tester);
@@ -162,9 +203,9 @@ void main() {
       await settle(tester);
       expect(find.text('Continue'), findsNothing);
       expect(h.reminders.onScreenAsked, 0);
-      expect(h.reminders.asked, 0);
+      expect(h.reminders.asked, 1, reason: 'for the lock screen');
       expect(h.prefs.getBool('dhikr_reminders_on'), isTrue);
-      expect(h.reminders.dhikr, isNotEmpty);
+      expect(h.reminders.dhikr.isOff, isFalse);
     });
 
     testWidgets('notifications instead: permission to notify, then on; the card can be allowed later', (tester) async {
@@ -224,11 +265,11 @@ void main() {
       await tester.tap(find.text('Continue'));
       await settle(tester);
       expect(h.prefs.getBool('dhikr_reminders_on') ?? false, isFalse);
-      expect(h.reminders.dhikr, isEmpty);
+      expect(h.reminders.dhikr.isOff, isTrue);
       expect(find.textContaining('Notifications are off for Rafiq'), findsOneWidget);
     });
 
-    testWidgets('show one now: the dhikr this hour brings, the way they come', (tester) async {
+    testWidgets('show one now: drawn from the adhkar the reminders bring', (tester) async {
       await launch(tester, {'dhikr_reminders_on': true});
       await openAdhkar(tester);
       await tester.ensureVisible(find.text('Show one now'));
@@ -236,20 +277,19 @@ void main() {
       await tester.tap(find.text('Show one now'));
       await settle(tester);
       final shown = h.reminders.dhikrShown.single;
-      final pool = loadAdhkar().forNotifications;
-      expect(shown.body, pool[dhikrPick(h.now, pool.length)].arabic);
+      expect(shown, h.reminders.dhikr);
       expect(shown.title, 'Remember Allah');
     });
 
     testWidgets('turned off: every one cancelled, the reading reminder kept', (tester) async {
       await launch(tester, {'dhikr_reminders_on': true, 'reminder_on': true});
-      expect(h.reminders.dhikr, isNotEmpty);
+      expect(h.reminders.dhikr.isOff, isFalse);
       expect(h.reminders.scheduled, hasLength(7));
       await openAdhkar(tester);
       await tester.tap(find.text('Dhikr reminders').last);
       await settle(tester);
       expect(h.prefs.getBool('dhikr_reminders_on'), isFalse);
-      expect(h.reminders.dhikr, isEmpty);
+      expect(h.reminders.dhikr.isOff, isTrue);
       expect(h.reminders.scheduled, hasLength(7));
     });
 
@@ -263,13 +303,26 @@ void main() {
 
     testWidgets('Taraweeh mode keeps them away for 3 hours, then they come back', (tester) async {
       await launch(tester, {'dhikr_reminders_on': true});
-      expect(h.reminders.dhikr.first.at, DateTime(2026, 11, 4, 22));
+      DateTime next() => h.reminders.dhikr.times(now: h.now, days: 2).first;
+      expect(next(), DateTime(2026, 11, 4, 22));
       await tester.tap(taraweehButton);
       await settle(tester);
-      expect(h.reminders.dhikr.first.at, DateTime(2026, 11, 5, 8), reason: 'nothing over the imam at 22:00');
+      expect(h.reminders.dhikr.quietUntil, DateTime(2026, 11, 4, 23));
+      expect(next(), DateTime(2026, 11, 5, 8), reason: 'nothing over the imam at 22:00');
       await tester.tap(find.byTooltip('Back to reading'));
       await settle(tester);
-      expect(h.reminders.dhikr.first.at, DateTime(2026, 11, 4, 22));
+      expect(h.reminders.dhikr.quietUntil, isNull);
+      expect(next(), DateTime(2026, 11, 4, 22));
+    });
+
+    testWidgets('sent again when it changes and once a day, not each time the app shows', (tester) async {
+      await launch(tester, {'dhikr_reminders_on': true});
+      expect(h.reminders.dhikrReplaced, 1);
+      await ref(tester).read(dhikrSyncProvider).sync();
+      expect(h.reminders.dhikrReplaced, 1, reason: 'nothing changed');
+      h.now = DateTime(2026, 11, 5, 9);
+      await ref(tester).read(dhikrSyncProvider).sync();
+      expect(h.reminders.dhikrReplaced, 2, reason: 'a new day');
     });
 
     testWidgets('a tapped dhikr opens the adhkar', (tester) async {

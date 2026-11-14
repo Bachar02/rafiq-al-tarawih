@@ -6,6 +6,7 @@ import '../../app/components/sheet.dart';
 import '../../app/providers.dart';
 import '../../app/theme.dart';
 import '../../data/adhkar.dart' show Dhikr;
+import '../../data/khatm.dart' show dateOnly;
 import '../../data/settings.dart';
 import '../../l10n/l10n.dart';
 import '../../services/reminders.dart';
@@ -16,35 +17,28 @@ import '../progress/reminder.dart' show formatMinutes;
 const dhikrFromHour = 8;
 const dhikrToHour = 22;
 
-/// Scheduled this far ahead; each time the app is shown or hidden the window
-/// moves on. Someone who stops opening Rafiq stops getting them after this.
-const dhikrDays = 14;
-
 /// Taraweeh mode keeps them away this long: a dhikr must not cover the
 /// imam's ayah.
 const dhikrQuietDuringTaraweeh = Duration(hours: 3);
 
-/// When the next dhikr reminders fire: every [everyHours] from
-/// [dhikrFromHour] to [dhikrToHour] on each of the next [dhikrDays] days,
-/// after [now] (and after [quietUntil]).
-List<DateTime> dhikrTimes({required DateTime now, required int everyHours, DateTime? quietUntil}) {
-  final after = quietUntil != null && quietUntil.isAfter(now) ? quietUntil : now;
-  return [
-    for (var d = 0; d < dhikrDays; d++)
-      for (var h = dhikrFromHour; h <= dhikrToHour; h += everyHours)
-        if (DateTime(now.year, now.month, now.day + d, h) case final at when at.isAfter(after)) at,
-  ];
-}
-
-/// Which of [count] adhkar to show at [at]: random-looking, but the same
-/// for the same hour, so scheduling again changes nothing.
-int dhikrPick(DateTime at, int count) {
-  var x = at.year * 1000000 + at.month * 10000 + at.day * 100 + at.hour;
-  for (var i = 0; i < 2; i++) {
-    x = ((x ^ (x >> 16)) * 0x45d9f3b) & 0x7fffffff;
-  }
-  return (x ^ (x >> 16)) % count;
-}
+/// When the next dhikr reminders come, over the next [days] days: every
+/// [everyHours] from [dhikrFromHour] to [dhikrToHour], after [now] (and
+/// after [quietUntil]). The phone follows the same rule by itself, with no
+/// end ([DhikrPlan]).
+List<DateTime> dhikrTimes({
+  required DateTime now,
+  required int everyHours,
+  DateTime? quietUntil,
+  int days = dhikrDays,
+}) =>
+    DhikrPlan(
+      title: '',
+      everyHours: everyHours,
+      fromHour: dhikrFromHour,
+      toHour: dhikrToHour,
+      quietUntil: quietUntil,
+      items: const [],
+    ).times(now: now, days: days);
 
 /// Whether a dhikr can come in its card at the top right of the screen
 /// ("Appear on top"); asked again after the user visits the setting.
@@ -56,47 +50,49 @@ final dhikrOnScreenProvider = FutureProvider.autoDispose<bool>((ref) async {
   }
 });
 
-/// [dhikr] as it comes at [at]. The words alone in the card and in a
-/// collapsed notification: Android puts the lines on one, and Arabic and
-/// English mixed there read in the wrong order. Expanded, their meaning
-/// under them (except in Arabic).
-Reminder dhikrReminder(Dhikr dhikr, DateTime at, AppLocalizations l, String languageCode) {
-  final meaning = dhikr.meaning(languageCode);
-  return Reminder(
-    at: at,
-    title: l.dhikrNotificationTitle,
-    body: dhikr.arabic!,
-    expanded: meaning == null ? null : '${dhikr.arabic}\n$meaning',
-  );
-}
+/// [dhikr] as the reminders show it in [languageCode]: always the Arabic
+/// words; outside Arabic, how to say them in Latin letters (in the card and
+/// the notification) and their meaning (in the expanded notification).
+DhikrText dhikrText(Dhikr dhikr, String languageCode) => DhikrText(
+      id: dhikr.id,
+      arabic: dhikr.arabic!,
+      said: dhikr.transliteration(languageCode),
+      meaning: dhikr.meaning(languageCode),
+    );
 
-/// Keeps the phone's scheduled dhikr reminders in step with the settings,
-/// the interface language and Taraweeh mode.
+/// Keeps the phone's dhikr reminders in step with the settings, the
+/// interface language and Taraweeh mode.
+///
+/// The phone is given a rule ([DhikrPlan]) and follows it by itself, so a
+/// dhikr keeps coming however long Rafiq stays closed. The plan is sent
+/// again only when it changes, and once a day (where the plugin schedules
+/// the next days, not Android, that moves them on).
 class DhikrSync {
   DhikrSync(this._ref);
 
   final Ref _ref;
-  List<Reminder>? _scheduled;
+  DhikrPlan? _sent;
+  DateTime? _sentOn;
   DateTime? _quietUntil;
 
-  /// The reminders that should be scheduled now.
-  List<Reminder> plan() {
+  /// What the phone should follow now ([DhikrPlan.off] when turned off).
+  DhikrPlan plan() {
     final settings = _ref.read(settingsProvider);
-    if (!settings.dhikrRemindersOn) return const [];
+    if (!settings.dhikrRemindersOn) return DhikrPlan.off;
     final pool = _ref.read(adhkarProvider).forNotifications;
-    if (pool.isEmpty) return const [];
+    if (pool.isEmpty) return DhikrPlan.off;
     final locale = _ref.read(appLocaleProvider);
-    final l = lookupAppLocalizations(locale);
     final now = _ref.read(clockProvider)();
-    final reminders = <Reminder>[];
-    var previous = -1;
-    for (final at in dhikrTimes(now: now, everyHours: settings.dhikrEveryHours, quietUntil: _quietUntil)) {
-      var i = dhikrPick(at, pool.length);
-      if (i == previous) i = (i + 1) % pool.length; // never the same one twice in a row
-      previous = i;
-      reminders.add(dhikrReminder(pool[i], at, l, locale.languageCode));
-    }
-    return reminders;
+    final quiet = _quietUntil;
+    return DhikrPlan(
+      title: lookupAppLocalizations(locale).dhikrNotificationTitle,
+      everyHours: settings.dhikrEveryHours,
+      fromHour: dhikrFromHour,
+      toHour: dhikrToHour,
+      // Once over, the quiet is no longer part of the plan.
+      quietUntil: quiet != null && quiet.isAfter(now) ? quiet : null,
+      items: [for (final d in pool) dhikrText(d, locale.languageCode)],
+    );
   }
 
   /// Taraweeh mode began (or ended): no dhikr for the next few hours (or
@@ -106,23 +102,24 @@ class DhikrSync {
     return sync();
   }
 
-  /// Schedules [plan] if it changed. Never throws: a notification that
-  /// cannot be scheduled must not break anything else.
+  /// Sends [plan] if it changed (or a day went by). Never throws: a
+  /// reminder that cannot be scheduled must not break anything else.
   Future<void> sync({bool force = false}) async {
     final next = plan();
+    final today = dateOnly(_ref.read(clockProvider)());
     // Off since the app started: leave the notification system alone
     // (turning off cancels explicitly).
-    if (!force && next.isEmpty && _scheduled == null) return;
-    if (!force && _scheduled != null && sameReminders(_scheduled!, next)) return;
+    if (!force && next.isOff && _sent == null) return;
+    if (!force && _sent == next && (next.isOff || _sentOn == today)) return;
     try {
       final l = lookupAppLocalizations(_ref.read(appLocaleProvider));
-      await _ref.read(remindersProvider).replace(
+      await _ref.read(remindersProvider).scheduleDhikr(
             next,
             channelName: l.dhikrReminders,
-            kind: ReminderKind.dhikr,
             closeLabel: l.dhikrTapToClose,
           );
-      _scheduled = next;
+      _sent = next;
+      _sentOn = today;
     } catch (e, stack) {
       FlutterError.reportError(FlutterErrorDetails(exception: e, stack: stack, library: 'dhikr reminders'));
     }
@@ -130,9 +127,10 @@ class DhikrSync {
 }
 
 /// Turn dhikr reminders on. First the card on the screen: if Android does
-/// not allow it yet, explain and open its "Appear on top" setting. Without
-/// it, a dhikr is a notification, so then ask for permission to notify.
-/// False, with a message, if neither is allowed.
+/// not allow it yet, explain and open its "Appear on top" setting. Then
+/// permission to notify: without the card a dhikr is a notification, and
+/// with it, a dhikr that comes while the phone is locked waits on the lock
+/// screen too. False, with a message, if neither is allowed.
 Future<bool> turnOnDhikrReminders(BuildContext context, WidgetRef ref) async {
   final messenger = ScaffoldMessenger.of(context);
   final l = context.l10n;
@@ -147,17 +145,15 @@ Future<bool> turnOnDhikrReminders(BuildContext context, WidgetRef ref) async {
     // No such setting on this phone: notifications, then.
   }
   ref.invalidate(dhikrOnScreenProvider);
-  if (!onScreen) {
-    bool allowed;
-    try {
-      allowed = await reminders.requestPermission();
-    } catch (_) {
-      allowed = false;
-    }
-    if (!allowed) {
-      messenger.showSnackBar(SnackBar(content: Text(l.reminderBlocked)));
-      return false;
-    }
+  bool notify;
+  try {
+    notify = await reminders.requestPermission();
+  } catch (_) {
+    notify = false;
+  }
+  if (!onScreen && !notify) {
+    messenger.showSnackBar(SnackBar(content: Text(l.reminderBlocked)));
+    return false;
   }
   await ref.read(settingsProvider.notifier).update((s) => s.copyWith(dhikrRemindersOn: true));
   await ref.read(dhikrSyncProvider).sync(force: true);
@@ -206,19 +202,14 @@ Future<void> chooseDhikrOnScreen(WidgetRef ref) async {
   ref.invalidate(dhikrOnScreenProvider);
 }
 
-/// A dhikr now, the way they come: the one this hour would bring.
+/// A dhikr now, drawn the way the scheduled ones are.
 Future<void> showDhikrNow(WidgetRef ref) async {
-  final pool = ref.read(adhkarProvider).forNotifications;
-  if (pool.isEmpty) return;
-  final locale = ref.read(appLocaleProvider);
-  final l = lookupAppLocalizations(locale);
-  final now = ref.read(clockProvider)();
+  final sync = ref.read(dhikrSyncProvider);
+  final plan = sync.plan();
+  if (plan.isOff) return;
+  final l = lookupAppLocalizations(ref.read(appLocaleProvider));
   try {
-    await ref.read(remindersProvider).showDhikr(
-          dhikrReminder(pool[dhikrPick(now, pool.length)], now, l, locale.languageCode),
-          channelName: l.dhikrReminders,
-          closeLabel: l.dhikrTapToClose,
-        );
+    await ref.read(remindersProvider).showDhikr(plan, channelName: l.dhikrReminders, closeLabel: l.dhikrTapToClose);
   } catch (e, stack) {
     FlutterError.reportError(FlutterErrorDetails(exception: e, stack: stack, library: 'dhikr reminders'));
   }

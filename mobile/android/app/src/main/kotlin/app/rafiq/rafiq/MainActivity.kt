@@ -21,25 +21,25 @@ class MainActivity : FlutterActivity() {
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
         launchOpen = intent?.getStringExtra(DhikrNotification.EXTRA_OPEN)
+        // The dhikr's notification tapped: it was seen, its card goes too.
+        if (launchOpen != null) DhikrCard.hide(applicationContext)
         channel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "app.rafiq.rafiq/dhikr").apply {
             setMethodCallHandler { call, result ->
                 when (call.method) {
                     "schedule" -> {
-                        val items = (call.argument<List<Map<*, *>>>("items") ?: emptyList()).map(Dhikr::fromMap)
                         DhikrSchedule.replace(
                             applicationContext,
-                            items,
+                            call.argument<Map<*, *>>("plan")?.let(DhikrPlan::fromMap),
                             call.argument<String>("channelName") ?: "",
                             call.argument<String>("closeLabel") ?: "",
                         )
                         result.success(null)
                     }
                     "show" -> {
-                        val item = call.argument<Map<*, *>>("item")
-                        if (item != null) {
-                            DhikrSchedule.show(
+                        call.argument<Map<*, *>>("plan")?.let {
+                            DhikrSchedule.showNow(
                                 applicationContext,
-                                Dhikr.fromMap(item),
+                                DhikrPlan.fromMap(it),
                                 call.argument<String>("channelName"),
                                 call.argument<String>("closeLabel"),
                             )
@@ -77,6 +77,7 @@ class MainActivity : FlutterActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         val open = intent.getStringExtra(DhikrNotification.EXTRA_OPEN) ?: return
+        DhikrCard.hide(applicationContext)
         channel?.invokeMethod("open", open)
     }
 
