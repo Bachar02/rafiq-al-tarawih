@@ -15,6 +15,7 @@ import '../../l10n/l10n.dart';
 import '../../services/server_health.dart';
 import '../adhkar/dhikr_reminders.dart';
 import '../bench/asr_bench_screen.dart';
+import '../backup/backup_settings.dart';
 import '../progress/progress_screen.dart' show ReminderSettings;
 import '../study/study_source_sheet.dart';
 
@@ -242,6 +243,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               ),
             ],
           ),
+          const BackupSettings(),
           RubricGroup(
             label: l.groupRecitation,
             children: [
@@ -378,6 +380,8 @@ const _attributions = 'Quran text: Tanzil Project (tanzil.net), Uthmani and Simp
     'SIL Open Font License 1.1.\n'
     'Adhkar: chosen and worded after Hisn al-Muslim by Sa’id ibn Ali ibn Wahf al-Qahtani, '
     'with their hadith sources; English and French meanings written for Rafiq.\n'
+    'Duas: the hadith duas after Hisn al-Muslim, with their sources, and duas from the Quran; '
+    'English and French meanings and transliterations written for Rafiq.\n'
     'Prayer times: computed on the phone with adhan_dart (MIT), after Jean Meeus, Astronomical Algorithms.\n'
     'Towns and countries: GeoNames (geonames.org), CC BY 4.0.\n'
     'Speech model: Tarteel whisper-base-ar-quran, Apache 2.0.\n'

@@ -1316,3 +1316,28 @@ The owner's report after using the reminders:
 **Not verified:** on a phone. The owner should check on the Galaxy A16: a dhikr while locked, after 3 h idle, and after a reboot. Samsung may also need Rafiq set to "Unrestricted" battery (Settings → Apps → Rafiq → Battery). Goldens not re-rendered: the screens they cover are unchanged.
 
 **Transliterations** are Rafiq's own drafts, like the meanings: native review wanted.
+
+## 41. Duas by purpose, and a backup the user keeps (2026-11-14)
+
+The owner asked for:
+1. A duas section: duas for different purposes.
+2. A way to save the data to a file and bring it back, so Rafiq can be deleted (or the phone changed) without losing anything.
+
+**Duas** (More → Duas, `assets/duas/duas.json`, `lib/data/duas.dart`, `lib/features/duas/`):
+- 46 duas in 11 purposes: forgiveness and repentance, worry and distress, guidance and the istikhara, knowledge, provision and debt, parents and family, illness and healing, travel, the home, meals and the mosque, loss and grief, and duas from the Quran.
+- The 31 from the hadith follow Hisn al-Muslim, each with its collections, in Arabic, with transliteration (en/fr spellings), meaning (en/fr) and notes on when to say them (3 languages).
+- The 15 from the Quran are references shown from the app's Quran text, with "Translation and tafsir". Their source is "the Quran".
+- Same item format and checks as the adhkar: the parser is now shared (`Dhikr.fromJson`). `DhikrCard` serves both; without `onCount` (a dua) it has no counter and shows "7 times" when a dua is said more than once.
+- A new purpose is a JSON block; the file is checked whole (names in 3 languages, ids unique across the file, real ayahs, known sources) and fails the tests if broken.
+
+**Backup** (Settings → Your data, `lib/data/backup.dart`, `lib/features/backup/`):
+- Everything Rafiq keeps is in SharedPreferences (settings, bookmarks, notes, reading position and log, khatm, adhkar counts, prayer settings, Taraweeh nights). A backup is all of it, value by value with its type: `{"format": "rafiq-backup", "v": 1, "created", "values": {key: {"t", "v"}}}`, named `rafiq-backup-YYYY-MM-DD.json`.
+- Save: what is held in memory is flushed first (reading position, reading session, Taraweeh ledger). On Android the system "Save to" screen lets the user pick Downloads, Drive or a memory card, with no storage permission (`BackupFiles.kt`, Storage Access Framework). Elsewhere, the share sheet.
+- Restore (Android): the system "Open" screen, then the whole file is checked before anything is touched (not a backup, a wrong value type, a newer version: said so, nothing changed). A sheet says the backup's date and that everything on this phone is replaced. Then `AppScope.reopen` closes every provider (their last saves are made first), makes the stored data exactly the backup's, and opens the app again from it. The reminders, dhikr and adhan are scheduled again by force from what was restored.
+- Files over 20 MB are refused.
+
+**Tests:** 740 pass (52 goldens skipped without Docker). New: duas data (12), duas screens (5), backup data (6), save and restore in the app (5). Kotlin compiles.
+
+**Not verified:** on a phone (the Save to and Open screens), goldens: the More screen gained a row (`more.png` needs `mobile/tool/goldens.sh update`), and the Settings screenshots may show the new group.
+
+**For native review:** the duas' meanings, transliterations and notes, like the adhkar's.

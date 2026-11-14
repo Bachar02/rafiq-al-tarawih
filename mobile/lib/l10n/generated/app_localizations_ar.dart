@@ -1868,4 +1868,85 @@ class AppLocalizationsAr extends AppLocalizations {
   String wordStaleSeconds(String seconds) {
     return '$seconds ث دون تعرّف جديد';
   }
+
+  @override
+  String get duas => 'الأدعية';
+
+  @override
+  String get duasDetail => 'للاستغفار والهم والسفر والمرض وغيرها';
+
+  @override
+  String duasCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count دعاءً',
+      few: '$count أدعية',
+      two: 'دعاءان',
+      one: 'دعاء واحد',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get duasNone => 'لا أدعية في هذه النسخة من رفيق.';
+
+  @override
+  String duaTimes(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count مرة',
+      few: '$count مرات',
+      two: 'مرتين',
+      one: 'مرة واحدة',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get groupData => 'بياناتك';
+
+  @override
+  String get backupSave => 'حفظ نسخة احتياطية';
+
+  @override
+  String get backupSaveDetail =>
+      'العلامات والملاحظات والختمة وسجل القراءة والإعدادات في ملف تحتفظ به: قبل حذف رفيق أو لهاتف جديد';
+
+  @override
+  String get backupRestore => 'استعادة نسخة احتياطية';
+
+  @override
+  String get backupRestoreDetail => 'من ملف حفظه رفيق';
+
+  @override
+  String get backupSaved => 'حُفظت النسخة الاحتياطية';
+
+  @override
+  String get backupSaveFailed => 'تعذّر حفظ النسخة الاحتياطية. جرّب مكانًا آخر.';
+
+  @override
+  String get backupOpenFailed => 'تعذّرت قراءة هذا الملف.';
+
+  @override
+  String get backupNotABackup => 'هذا الملف ليس نسخة احتياطية من رفيق.';
+
+  @override
+  String get backupTooNew => 'هذه النسخة من إصدار أحدث من رفيق. حدّث رفيق ثم أعد المحاولة.';
+
+  @override
+  String backupRestoreAsk(String date) {
+    return 'استعادة نسخة $date؟';
+  }
+
+  @override
+  String get backupRestoreWarning =>
+      'يُستبدل بالنسخة كل ما في رفيق على هذا الهاتف: العلامات والملاحظات والختمة وسجل القراءة والإعدادات.';
+
+  @override
+  String get backupRestoreConfirm => 'استعادة';
+
+  @override
+  String get backupRestored => 'تمت استعادة النسخة الاحتياطية';
 }

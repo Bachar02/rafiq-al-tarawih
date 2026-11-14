@@ -15,6 +15,7 @@ import 'package:rafiq/core/recognition/models.dart';
 import 'package:rafiq/core/recognition/recognition_engine.dart';
 import 'package:rafiq/data/adhkar.dart';
 import 'package:rafiq/data/cities.dart';
+import 'package:rafiq/data/duas.dart';
 import 'package:rafiq/data/khatm.dart';
 import 'package:rafiq/data/note.dart';
 import 'package:rafiq/data/prayer_settings.dart';
@@ -24,6 +25,7 @@ import 'package:rafiq/data/settings.dart';
 import 'package:rafiq/data/study_text.dart';
 import 'package:rafiq/data/taraweeh_ledger.dart';
 import 'package:rafiq/data/surah_names.dart';
+import 'package:rafiq/services/backup_files.dart';
 import 'package:rafiq/services/location.dart';
 import 'package:rafiq/services/reminders.dart';
 import 'package:rafiq/services/screen_awake.dart';
@@ -236,6 +238,31 @@ class FakeReminders implements Reminders {
   Future<void> onOpen(void Function(String payload) handler) async => _onOpen = handler;
 }
 
+/// The phone's file picker: what was saved, and what a picked file holds.
+class FakeBackupFiles implements BackupFiles {
+  /// Files saved, by name.
+  final saved = <String, String>{};
+
+  /// What the user picks when asked to open a file (null: they cancel).
+  String? picked;
+
+  /// The user cancels the "Save to" screen.
+  bool cancelSave = false;
+
+  @override
+  bool canOpen = true;
+
+  @override
+  Future<bool> save(String name, String text) async {
+    if (cancelSave) return false;
+    saved[name] = text;
+    return true;
+  }
+
+  @override
+  Future<String?> open() async => picked;
+}
+
 /// The phone's location: what it answers, and what was asked of it.
 class FakeLocation implements LocationSource {
   /// What [locate] answers: Tunis, until a test says otherwise.
@@ -323,6 +350,11 @@ SurahNames loadSurahNames() =>
 Adhkar? _adhkar;
 Adhkar loadAdhkar() => _adhkar ??= Adhkar.fromJson(File('assets/adhkar/adhkar.json').readAsStringSync(), loadQuran());
 
+Duas? _duas;
+
+/// The bundled duas, read from the file (parsed once per test run).
+Duas loadDuas() => _duas ??= Duas.fromJson(File('assets/duas/duas.json').readAsStringSync(), loadQuran());
+
 Cities? _cities;
 
 /// The bundled towns, read from the files (parsed once per test run).
@@ -358,6 +390,7 @@ class Harness {
   final sharer = FakeSharer();
   final reminders = FakeReminders();
   final location = FakeLocation();
+  final backupFiles = FakeBackupFiles();
   final engines = <FakeEngine>[];
   final addresses = <String>[];
   ServerHealth health = const ServerHealth.ok(latency: Duration(milliseconds: 12), asr: true, device: 'cuda');
@@ -385,7 +418,10 @@ class Harness {
         quranProvider.overrideWithValue(loadQuran()),
         surahTableProvider.overrideWithValue(loadSurahNames()),
         studyCatalogProvider.overrideWithValue(loadStudyCatalog()),
+        preferencesProvider.overrideWithValue(prefs),
+        backupFilesProvider.overrideWithValue(backupFiles),
         adhkarProvider.overrideWithValue(loadAdhkar()),
+        duasProvider.overrideWithValue(loadDuas()),
         adhkarStoreProvider.overrideWithValue(AdhkarStore(prefs)),
         prayerStoreProvider.overrideWithValue(PrayerSettingsStore(prefs)),
         citiesLoaderProvider.overrideWithValue(() async => loadCities()),

@@ -161,6 +161,7 @@ class _DhikrListScreenState extends ConsumerState<DhikrListScreen> {
               padding: const EdgeInsets.only(bottom: RubricSpace.s3),
               child: DhikrCard(
                 dhikr: dhikr,
+                sourceNames: ref.watch(adhkarProvider).sourcesOf(dhikr, l.localeName),
                 said: day.countOf(_collection, dhikr),
                 onCount: () => _count(items, i),
               ),
@@ -180,25 +181,32 @@ class _DhikrListScreenState extends ConsumerState<DhikrListScreen> {
   }
 }
 
-/// One dhikr: its words (and the Quran it recites), how they are said in
-/// Latin letters (outside Arabic), how or when to say it, its meaning in the
-/// interface language, who reports it, and its counter.
-/// The whole card counts; once said enough it rests in `ink-secondary`.
+/// One dhikr or dua: its words (and the Quran it recites), how they are said
+/// in Latin letters (outside Arabic), how or when to say it, its meaning in
+/// the interface language, who reports it, and its counter.
+/// With [onCount] the whole card counts; once said enough it rests in
+/// `ink-secondary`. Without (a dua), it is read: no counter, and how many
+/// times it is said, if more than once.
 class DhikrCard extends ConsumerWidget {
-  const DhikrCard({super.key, required this.dhikr, required this.said, required this.onCount});
+  const DhikrCard({super.key, required this.dhikr, required this.sourceNames, this.said = 0, this.onCount});
 
   final Dhikr dhikr;
 
+  /// Who reports it, by name in the interface language.
+  final List<String> sourceNames;
+
   /// Times said today.
   final int said;
-  final VoidCallback onCount;
+  final VoidCallback? onCount;
+
+  bool get _counts => onCount != null;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l = context.l10n;
     final c = context.colors;
     final language = l.localeName;
-    final done = said >= dhikr.count;
+    final done = _counts && said >= dhikr.count;
     // The Quran text-size setting sizes the Arabic, as in the reader.
     final scale = ref.watch(settingsProvider.select((s) => s.textScale));
     final fontSize = RubricText.dhikr.fontSize! * scale;
@@ -207,9 +215,9 @@ class DhikrCard extends ConsumerWidget {
     final note = dhikr.note(language);
     final meaning = dhikr.meaning(language);
     final latin = dhikr.transliteration(language);
-    final sources = sourcesLabel(l, ref.watch(adhkarProvider).sourcesOf(dhikr, language));
+    final sources = sourcesLabel(l, sourceNames);
     return Semantics(
-      onTapHint: done ? null : l.hintDhikrCount,
+      onTapHint: done || !_counts ? null : l.hintDhikrCount,
       child: Material(
         color: c.surface,
         borderRadius: BorderRadius.circular(RubricRadius.md),
@@ -266,8 +274,13 @@ class DhikrCard extends ConsumerWidget {
                 Row(
                   children: [
                     Expanded(child: Text(sources, style: caption)),
-                    const SizedBox(width: RubricSpace.s3),
-                    _Counter(said: said, count: dhikr.count),
+                    if (_counts) ...[
+                      const SizedBox(width: RubricSpace.s3),
+                      _Counter(said: said, count: dhikr.count),
+                    ] else if (dhikr.count > 1) ...[
+                      const SizedBox(width: RubricSpace.s3),
+                      Text(l.duaTimes(dhikr.count), style: RubricText.label.copyWith(color: c.ink)),
+                    ],
                   ],
                 ),
               ],

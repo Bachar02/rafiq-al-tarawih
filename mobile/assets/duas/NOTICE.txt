@@ -1,0 +1,19 @@
+Duas (duas.json)
+
+Supplications grouped by purpose: forgiveness, worry and distress, guidance
+and the istikhara, knowledge, provision and debt, parents and family,
+illness, travel, the home, meals and the mosque, loss and grief, and duas
+from the Quran.
+
+The Arabic of the duas from the hadith follows Hisn al-Muslim (Fortress of
+the Muslim), by Sa'id ibn Ali ibn Wahf al-Qahtani. Each names the
+collections that report it ("source").
+
+Duas from the Quran are not copied here: "quran" holds a reference, and the
+app shows the ayahs from its own Quran text (assets/quran, Tanzil Project).
+Their source is "quran".
+
+The English and French meanings, the transliterations ("translit": how a
+dua is said, in English and French spelling), and the notes on when to say
+it were written for Rafiq. They are drafts for native review, like the
+adhkar's (assets/adhkar/NOTICE.txt).

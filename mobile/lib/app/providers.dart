@@ -4,11 +4,13 @@ library;
 
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../core/audio/audio_source.dart';
 import '../core/recognition/recognition_engine.dart';
 import '../data/adhkar.dart';
 import '../data/cities.dart';
+import '../data/duas.dart';
 import '../data/khatm.dart';
 import '../data/note.dart';
 import '../data/prayer_settings.dart';
@@ -33,6 +35,7 @@ import '../features/listen/taraweeh_position.dart';
 import '../features/reader/bookmarks.dart';
 import '../features/reader/reading_position.dart';
 import '../features/search/quran_search.dart';
+import '../services/backup_files.dart';
 import '../services/location.dart';
 import '../services/mic_audio_source.dart';
 import '../services/ondevice/model_store.dart';
@@ -95,6 +98,10 @@ final studySourceProvider = Provider.family<StudySource?, StudyKind>((ref, kind)
 /// The bundled adhkar (main.dart loads them; without them the Adhkar screen
 /// is empty and nothing else changes).
 final adhkarProvider = Provider<Adhkar>((ref) => Adhkar.empty);
+
+/// The bundled duas (main.dart loads them; without them the Duas screen is
+/// empty and nothing else changes).
+final duasProvider = Provider<Duas>((ref) => Duas.empty);
 
 /// Loaded once at startup (see main.dart) and injected with an override.
 final adhkarStoreProvider =
@@ -237,6 +244,18 @@ final engineFactoryProvider = Provider<RecognitionEngineFactory>((ref) {
 /// The phone's notifications: the daily reading reminder, dhikr reminders
 /// and the adhan (tests override it).
 final remindersProvider = Provider<Reminders>((ref) => LocalReminders());
+
+/// Where everything the user has is stored (main.dart loads it once and
+/// overrides this): a backup copies it, a restore replaces it.
+final preferencesProvider =
+    Provider<SharedPreferences>((ref) => throw UnimplementedError('preferencesProvider must be overridden'));
+
+/// Where a backup is saved to and opened from (tests override it).
+final backupFilesProvider = Provider<BackupFiles>((ref) => const PlatformBackupFiles());
+
+/// True when the app was opened again after a backup was restored
+/// ([AppScope]): the reminders are scheduled again from what was restored.
+final restoredProvider = Provider<bool>((ref) => false);
 
 /// The phone's share sheet (tests override it).
 final sharerProvider = Provider<Sharer>((ref) => const PlatformSharer());

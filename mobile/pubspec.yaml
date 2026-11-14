@@ -92,6 +92,8 @@ flutter:
     - assets/texts/
     # The adhkar (lib/data/adhkar.dart; sources in assets/adhkar/NOTICE.txt).
     - assets/adhkar/adhkar.json
+    # The duas by purpose (lib/data/duas.dart; sources in assets/duas/NOTICE.txt).
+    - assets/duas/duas.json
     # The towns a place is chosen from (lib/data/cities.dart; GeoNames, see
     # assets/places/NOTICE.txt).
     - assets/places/cities.tsv

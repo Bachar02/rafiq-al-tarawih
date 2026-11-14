@@ -1337,5 +1337,45 @@
         "type": "String"
       }
     }
-  }
+  },
+  "duas": "Duas",
+  "duasDetail": "For forgiveness, worry, travel, illness and more",
+  "duasCount": "{count, plural, =1{1 dua} other{{count} duas}}",
+  "@duasCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "duasNone": "No duas in this version of Rafiq.",
+  "duaTimes": "{count, plural, =1{1 time} other{{count} times}}",
+  "@duaTimes": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "groupData": "Your data",
+  "backupSave": "Save a backup",
+  "backupSaveDetail": "Bookmarks, notes, khatm, reading history and settings, in one file you keep: before deleting Rafiq, or for a new phone",
+  "backupRestore": "Restore a backup",
+  "backupRestoreDetail": "From a file Rafiq saved",
+  "backupSaved": "Backup saved",
+  "backupSaveFailed": "The backup could not be saved. Try another place.",
+  "backupOpenFailed": "That file could not be read.",
+  "backupNotABackup": "This file is not a Rafiq backup.",
+  "backupTooNew": "This backup comes from a newer Rafiq. Update Rafiq, then try again.",
+  "backupRestoreAsk": "Restore the backup of {date}?",
+  "@backupRestoreAsk": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "backupRestoreWarning": "Everything Rafiq holds on this phone is replaced by the backup: bookmarks, notes, khatm, reading history and settings.",
+  "backupRestoreConfirm": "Restore",
+  "backupRestored": "Backup restored"
 }

@@ -1839,4 +1839,82 @@ class AppLocalizationsFr extends AppLocalizations {
   String wordStaleSeconds(String seconds) {
     return '$seconds s sans nouvelle reconnaissance';
   }
+
+  @override
+  String get duas => 'Douas';
+
+  @override
+  String get duasDetail => 'Pour le pardon, les soucis, le voyage, la maladie et plus';
+
+  @override
+  String duasCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count douas',
+      one: '1 doua',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get duasNone => 'Aucune doua dans cette version de Rafiq.';
+
+  @override
+  String duaTimes(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count fois',
+      one: 'une fois',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get groupData => 'Vos données';
+
+  @override
+  String get backupSave => 'Enregistrer une sauvegarde';
+
+  @override
+  String get backupSaveDetail =>
+      'Signets, notes, khatm, historique de lecture et réglages, dans un fichier que vous gardez : avant de supprimer Rafiq, ou pour un nouveau téléphone';
+
+  @override
+  String get backupRestore => 'Restaurer une sauvegarde';
+
+  @override
+  String get backupRestoreDetail => 'À partir d’un fichier enregistré par Rafiq';
+
+  @override
+  String get backupSaved => 'Sauvegarde enregistrée';
+
+  @override
+  String get backupSaveFailed => 'La sauvegarde n’a pas pu être enregistrée. Essayez un autre emplacement.';
+
+  @override
+  String get backupOpenFailed => 'Ce fichier n’a pas pu être lu.';
+
+  @override
+  String get backupNotABackup => 'Ce fichier n’est pas une sauvegarde de Rafiq.';
+
+  @override
+  String get backupTooNew =>
+      'Cette sauvegarde vient d’une version plus récente de Rafiq. Mettez Rafiq à jour, puis réessayez.';
+
+  @override
+  String backupRestoreAsk(String date) {
+    return 'Restaurer la sauvegarde du $date ?';
+  }
+
+  @override
+  String get backupRestoreWarning =>
+      'Tout ce que Rafiq contient sur ce téléphone est remplacé par la sauvegarde : signets, notes, khatm, historique de lecture et réglages.';
+
+  @override
+  String get backupRestoreConfirm => 'Restaurer';
+
+  @override
+  String get backupRestored => 'Sauvegarde restaurée';
 }

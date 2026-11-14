@@ -105,21 +105,22 @@ class AdhanSync {
     return sync();
   }
 
-  /// Schedules [plan] if it changed. Never throws: an adhan that cannot be
-  /// scheduled must not break anything else.
-  Future<void> sync() => _last = _last.then((_) => _sync());
+  /// Schedules [plan] if it changed ([force]: whatever this run scheduled
+  /// before, as after a backup is restored). Never throws: an adhan that
+  /// cannot be scheduled must not break anything else.
+  Future<void> sync({bool force = false}) => _last = _last.then((_) => _sync(force));
 
-  Future<void> _sync() async {
+  Future<void> _sync(bool force) async {
     try {
       final settings = _ref.read(prayerSettingsProvider);
       final on = settings.adhanOn && settings.place != null;
       // Off since the app started: leave the notification system alone
       // (turning off cancels through here, once something was scheduled).
-      if (!on && _scheduled == null) return;
+      if (!force && !on && _scheduled == null) return;
       final reminders = _ref.read(remindersProvider);
       final exact = !on || await reminders.canScheduleExact();
       final next = plan(exact: exact);
-      if (_scheduled != null && sameReminders(_scheduled!, next)) return;
+      if (!force && _scheduled != null && sameReminders(_scheduled!, next)) return;
       final l = lookupAppLocalizations(_ref.read(appLocaleProvider));
       await reminders.replace(next, channelName: l.adhan, kind: ReminderKind.adhan);
       _scheduled = next;

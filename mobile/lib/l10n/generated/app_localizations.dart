@@ -3020,6 +3020,120 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{seconds} s without new recognition'**
   String wordStaleSeconds(String seconds);
+
+  /// No description provided for @duas.
+  ///
+  /// In en, this message translates to:
+  /// **'Duas'**
+  String get duas;
+
+  /// No description provided for @duasDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'For forgiveness, worry, travel, illness and more'**
+  String get duasDetail;
+
+  /// No description provided for @duasCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 dua} other{{count} duas}}'**
+  String duasCount(int count);
+
+  /// No description provided for @duasNone.
+  ///
+  /// In en, this message translates to:
+  /// **'No duas in this version of Rafiq.'**
+  String get duasNone;
+
+  /// No description provided for @duaTimes.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 time} other{{count} times}}'**
+  String duaTimes(int count);
+
+  /// No description provided for @groupData.
+  ///
+  /// In en, this message translates to:
+  /// **'Your data'**
+  String get groupData;
+
+  /// No description provided for @backupSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Save a backup'**
+  String get backupSave;
+
+  /// No description provided for @backupSaveDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'Bookmarks, notes, khatm, reading history and settings, in one file you keep: before deleting Rafiq, or for a new phone'**
+  String get backupSaveDetail;
+
+  /// No description provided for @backupRestore.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore a backup'**
+  String get backupRestore;
+
+  /// No description provided for @backupRestoreDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'From a file Rafiq saved'**
+  String get backupRestoreDetail;
+
+  /// No description provided for @backupSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Backup saved'**
+  String get backupSaved;
+
+  /// No description provided for @backupSaveFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The backup could not be saved. Try another place.'**
+  String get backupSaveFailed;
+
+  /// No description provided for @backupOpenFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'That file could not be read.'**
+  String get backupOpenFailed;
+
+  /// No description provided for @backupNotABackup.
+  ///
+  /// In en, this message translates to:
+  /// **'This file is not a Rafiq backup.'**
+  String get backupNotABackup;
+
+  /// No description provided for @backupTooNew.
+  ///
+  /// In en, this message translates to:
+  /// **'This backup comes from a newer Rafiq. Update Rafiq, then try again.'**
+  String get backupTooNew;
+
+  /// No description provided for @backupRestoreAsk.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore the backup of {date}?'**
+  String backupRestoreAsk(String date);
+
+  /// No description provided for @backupRestoreWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'Everything Rafiq holds on this phone is replaced by the backup: bookmarks, notes, khatm, reading history and settings.'**
+  String get backupRestoreWarning;
+
+  /// No description provided for @backupRestoreConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore'**
+  String get backupRestoreConfirm;
+
+  /// No description provided for @backupRestored.
+  ///
+  /// In en, this message translates to:
+  /// **'Backup restored'**
+  String get backupRestored;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

@@ -1828,4 +1828,81 @@ class AppLocalizationsEn extends AppLocalizations {
   String wordStaleSeconds(String seconds) {
     return '$seconds s without new recognition';
   }
+
+  @override
+  String get duas => 'Duas';
+
+  @override
+  String get duasDetail => 'For forgiveness, worry, travel, illness and more';
+
+  @override
+  String duasCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count duas',
+      one: '1 dua',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get duasNone => 'No duas in this version of Rafiq.';
+
+  @override
+  String duaTimes(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count times',
+      one: '1 time',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get groupData => 'Your data';
+
+  @override
+  String get backupSave => 'Save a backup';
+
+  @override
+  String get backupSaveDetail =>
+      'Bookmarks, notes, khatm, reading history and settings, in one file you keep: before deleting Rafiq, or for a new phone';
+
+  @override
+  String get backupRestore => 'Restore a backup';
+
+  @override
+  String get backupRestoreDetail => 'From a file Rafiq saved';
+
+  @override
+  String get backupSaved => 'Backup saved';
+
+  @override
+  String get backupSaveFailed => 'The backup could not be saved. Try another place.';
+
+  @override
+  String get backupOpenFailed => 'That file could not be read.';
+
+  @override
+  String get backupNotABackup => 'This file is not a Rafiq backup.';
+
+  @override
+  String get backupTooNew => 'This backup comes from a newer Rafiq. Update Rafiq, then try again.';
+
+  @override
+  String backupRestoreAsk(String date) {
+    return 'Restore the backup of $date?';
+  }
+
+  @override
+  String get backupRestoreWarning =>
+      'Everything Rafiq holds on this phone is replaced by the backup: bookmarks, notes, khatm, reading history and settings.';
+
+  @override
+  String get backupRestoreConfirm => 'Restore';
+
+  @override
+  String get backupRestored => 'Backup restored';
 }

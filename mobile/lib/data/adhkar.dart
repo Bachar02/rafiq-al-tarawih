@@ -103,7 +103,61 @@ class Dhikr {
 
   /// Short enough to stand alone in a notification: words, no Quran.
   bool get standsAlone => arabic != null && passages.isEmpty;
+
+  /// Parses and checks one dhikr (or dua) of [file]: something to say, a
+  /// count of at least 1, known [sources], real ayahs. [variant] gives other
+  /// words for the same dhikr (the evening's). Throws [FormatException].
+  factory Dhikr.fromJson(
+    Map<String, dynamic> j, {
+    required Quran quran,
+    required Map<String, Map<String, String>> sources,
+    required String file,
+    Map<String, dynamic>? variant,
+  }) {
+    final id = j['id'];
+    if (id is! String || id.isEmpty) throw FormatException('$file: an item has no id');
+    final arabic = (variant?['ar'] ?? j['ar']) as String?;
+    final passages = [
+      for (final r in (j['quran'] as List<dynamic>? ?? const [])) QuranPassage.parse(r as String, quran)
+    ];
+    final count = j['count'] as int? ?? 1;
+    final keys = (j['source'] as List<dynamic>? ?? const []).cast<String>();
+    if (arabic == null && passages.isEmpty) throw FormatException('$file: $id says nothing');
+    if (count < 1) throw FormatException('$file: $id is said $count times');
+    if (keys.isEmpty) throw FormatException('$file: $id has no source');
+    for (final k in keys) {
+      if (!sources.containsKey(k)) throw FormatException('$file: $id has an unknown source "$k"');
+    }
+    return Dhikr(
+      id: id,
+      arabic: arabic,
+      passages: List.unmodifiable(passages),
+      count: count,
+      notes: _texts(j['note']),
+      meanings: _texts(variant?['meaning'] ?? j['meaning']),
+      sources: List.unmodifiable(keys),
+      // Evening words of their own have their own: the morning's would not match.
+      transliterations: _texts(variant?['ar'] != null ? variant!['translit'] : j['translit']),
+    );
+  }
+
+  static Map<String, String> _texts(Object? j) =>
+      j == null ? const {} : (j as Map<String, dynamic>).cast<String, String>();
 }
+
+/// The names of the collections of hadith (and the Quran) that report the
+/// adhkar and duas, by key and language.
+Map<String, Map<String, String>> parseSourceNames(Object? json, String file) {
+  if (json is! Map<String, dynamic>) throw FormatException('$file: no sources');
+  return {
+    for (final e in json.entries) e.key: (e.value as Map<String, dynamic>).cast<String, String>(),
+  };
+}
+
+/// Each of [keys] by name in [languageCode] (else English, else the key).
+List<String> sourceNamesOf(Map<String, Map<String, String>> names, List<String> keys, String languageCode) => [
+      for (final key in keys) names[key]?[languageCode] ?? names[key]?['en'] ?? key,
+    ];
 
 /// The bundled adhkar.
 class Adhkar {
@@ -126,9 +180,7 @@ class Adhkar {
       ];
 
   /// The sources of [dhikr] by name, in [languageCode].
-  List<String> sourcesOf(Dhikr dhikr, String languageCode) => [
-        for (final key in dhikr.sources) sourceNames[key]?[languageCode] ?? sourceNames[key]?['en'] ?? key,
-      ];
+  List<String> sourcesOf(Dhikr dhikr, String languageCode) => sourceNamesOf(sourceNames, dhikr.sources, languageCode);
 
   /// Parses and checks the file: every collection present, ids unique, a
   /// count of at least 1, something to say, known sources, real ayahs.
@@ -137,10 +189,7 @@ class Adhkar {
   factory Adhkar.fromJson(String raw, Quran quran) {
     final json = jsonDecode(raw);
     if (json is! Map<String, dynamic> || json['v'] != 1) throw const FormatException('adhkar.json: not version 1');
-    final sources = <String, Map<String, String>>{
-      for (final e in (json['sources'] as Map<String, dynamic>).entries)
-        e.key: (e.value as Map<String, dynamic>).cast<String, String>(),
-    };
+    final sources = parseSourceNames(json['sources'], 'adhkar.json');
     final collectionsJson = json['collections'] as Map<String, dynamic>;
 
     List<Map<String, dynamic>> list(String key) {
@@ -149,34 +198,8 @@ class Adhkar {
       return items.cast<Map<String, dynamic>>();
     }
 
-    Map<String, String> texts(Object? j) => j == null ? const {} : (j as Map<String, dynamic>).cast<String, String>();
-
-    Dhikr parse(Map<String, dynamic> j, {Map<String, dynamic>? variant}) {
-      final id = j['id'] as String;
-      final arabic = (variant?['ar'] ?? j['ar']) as String?;
-      final passages = [
-        for (final r in (j['quran'] as List<dynamic>? ?? const [])) QuranPassage.parse(r as String, quran)
-      ];
-      final count = j['count'] as int? ?? 1;
-      final keys = (j['source'] as List<dynamic>? ?? const []).cast<String>();
-      if (arabic == null && passages.isEmpty) throw FormatException('adhkar.json: $id says nothing');
-      if (count < 1) throw FormatException('adhkar.json: $id is said $count times');
-      if (keys.isEmpty) throw FormatException('adhkar.json: $id has no source');
-      for (final k in keys) {
-        if (!sources.containsKey(k)) throw FormatException('adhkar.json: $id has an unknown source "$k"');
-      }
-      return Dhikr(
-        id: id,
-        arabic: arabic,
-        passages: List.unmodifiable(passages),
-        count: count,
-        notes: texts(j['note']),
-        meanings: texts(variant?['meaning'] ?? j['meaning']),
-        sources: List.unmodifiable(keys),
-        // Evening words of their own have their own: the morning's would not match.
-        transliterations: texts(variant?['ar'] != null ? variant!['translit'] : j['translit']),
-      );
-    }
+    Dhikr parse(Map<String, dynamic> j, {Map<String, dynamic>? variant}) =>
+        Dhikr.fromJson(j, quran: quran, sources: sources, file: 'adhkar.json', variant: variant);
 
     // The morning and the evening share one list: the evening says its own
     // words where they differ (أمسينا for أصبحنا), and some are for only one.

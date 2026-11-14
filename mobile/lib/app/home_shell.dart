@@ -49,16 +49,18 @@ class _HomeShellState extends ConsumerState<HomeShell> {
   /// and the adhans their month.
   late final AppLifecycleListener _lifecycle;
 
-  void _syncReminders() {
-    ref.read(reminderSyncProvider).sync();
-    ref.read(dhikrSyncProvider).sync();
-    ref.read(adhanSyncProvider).sync();
+  /// [force]: whatever this run of the app scheduled before (a backup was
+  /// just restored: what it says is on or off decides, not this phone's).
+  void _syncReminders({bool force = false}) {
+    ref.read(reminderSyncProvider).sync(force: force);
+    ref.read(dhikrSyncProvider).sync(force: force);
+    ref.read(adhanSyncProvider).sync(force: force);
   }
 
   /// On screen again, perhaps in another town: a place that came from the
   /// phone's location follows it (which schedules the adhans again).
-  void _shown() {
-    _syncReminders();
+  void _shown({bool force = false}) {
+    _syncReminders(force: force);
     ref.read(prayerSettingsProvider.notifier).followLocation();
   }
 
@@ -95,9 +97,13 @@ class _HomeShellState extends ConsumerState<HomeShell> {
   void initState() {
     super.initState();
     _lifecycle = AppLifecycleListener(onShow: _shown, onHide: _syncReminders);
+    final restored = ref.read(restoredProvider);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _shown();
+      _shown(force: restored);
       _listenForTaps();
+      if (restored && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(context.l10n.backupRestored)));
+      }
     });
     // Pages left from last time: ask once the app is on screen.
     if (ref.read(readingSessionProvider).ask > 0) WidgetsBinding.instance.addPostFrameCallback((_) => _review());

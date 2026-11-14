@@ -1,13 +1,14 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'app/app.dart';
+import 'app/app_scope.dart';
 import 'app/providers.dart';
 import 'app/theme.dart';
 import 'data/adhkar.dart';
+import 'data/duas.dart';
 import 'data/prayer_settings.dart';
 import 'data/quran.dart';
 import 'data/reading_store.dart';
@@ -24,14 +25,18 @@ Future<void> main() async {
     final names = SurahNames.fromJson(await rootBundle.loadString('assets/data/surah-names.json'), quran);
     final texts = StudyCatalog.fromJson(await rootBundle.loadString('assets/texts/catalog.json'));
     final adhkar = await _loadAdhkar(quran);
+    final duas = await _loadDuas(quran);
     final prefs = await SharedPreferences.getInstance();
     runApp(
-      ProviderScope(
+      // A scope that a restored backup can open again from scratch.
+      AppScope(
         overrides: [
+          preferencesProvider.overrideWithValue(prefs),
           quranProvider.overrideWithValue(quran),
           surahTableProvider.overrideWithValue(names),
           studyCatalogProvider.overrideWithValue(texts),
           adhkarProvider.overrideWithValue(adhkar),
+          duasProvider.overrideWithValue(duas),
           adhkarStoreProvider.overrideWithValue(AdhkarStore(prefs)),
           prayerStoreProvider.overrideWithValue(PrayerSettingsStore(prefs)),
           settingsStoreProvider.overrideWithValue(SettingsStore(prefs)),
@@ -55,6 +60,16 @@ Future<Adhkar> _loadAdhkar(Quran quran) async {
   } catch (e, stack) {
     FlutterError.reportError(FlutterErrorDetails(exception: e, stack: stack, library: 'adhkar'));
     return Adhkar.empty;
+  }
+}
+
+/// The duas, or none if the file cannot be read (as the adhkar).
+Future<Duas> _loadDuas(Quran quran) async {
+  try {
+    return Duas.fromJson(await rootBundle.loadString('assets/duas/duas.json'), quran);
+  } catch (e, stack) {
+    FlutterError.reportError(FlutterErrorDetails(exception: e, stack: stack, library: 'duas'));
+    return Duas.empty;
   }
 }
 

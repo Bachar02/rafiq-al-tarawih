@@ -18,8 +18,13 @@ class MainActivity : FlutterActivity() {
     /** Waiting for the user to come back from the "Appear on top" setting. */
     private var onScreenResult: MethodChannel.Result? = null
 
+    /** A backup saved to, or opened from, a file the user picks. */
+    private val backupFiles = BackupFiles(this)
+
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "app.rafiq.rafiq/files")
+            .setMethodCallHandler(backupFiles)
         launchOpen = intent?.getStringExtra(DhikrNotification.EXTRA_OPEN)
         // The dhikr's notification tapped: it was seen, its card goes too.
         if (launchOpen != null) DhikrCard.hide(applicationContext)
@@ -85,6 +90,7 @@ class MainActivity : FlutterActivity() {
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         @Suppress("DEPRECATION")
         super.onActivityResult(requestCode, resultCode, data)
+        if (backupFiles.onResult(requestCode, resultCode, data)) return
         if (requestCode != ON_SCREEN_REQUEST) return
         val result = onScreenResult ?: return
         onScreenResult = null

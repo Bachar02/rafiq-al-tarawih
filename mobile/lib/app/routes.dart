@@ -10,6 +10,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../data/adhkar.dart';
 import '../features/adhkar/adhkar_screen.dart';
+import '../features/duas/duas_screen.dart';
 import '../features/khatm/khatm_screen.dart';
 import '../features/listen/listen_screen.dart';
 import '../features/navigate/navigate_screen.dart';
@@ -33,6 +34,8 @@ abstract final class AppRoutes {
   static const readingName = '/reading';
   static const adhkarName = '/adhkar';
   static const dhikrListName = '/adhkar/list';
+  static const duasName = '/duas';
+  static const duaListName = '/duas/list';
   static const prayerName = '/prayer';
   static const placeName = '/prayer/place';
 
@@ -83,6 +86,14 @@ abstract final class AppRoutes {
   /// One collection of adhkar, to say and count.
   static Future<void> dhikrList(BuildContext context, AdhkarCollection collection) =>
       Navigator.of(context).push(_route<void>(context, dhikrListName, (_) => DhikrListScreen(collection: collection)));
+
+  /// The duas, by purpose.
+  static Future<void> duas(BuildContext context) =>
+      Navigator.of(context).push(_route<void>(context, duasName, (_) => const DuasScreen()));
+
+  /// The duas of one purpose.
+  static Future<void> duaList(BuildContext context, String categoryId) =>
+      Navigator.of(context).push(_route<void>(context, duaListName, (_) => DuaListScreen(categoryId: categoryId)));
 
   /// Prayer times and the adhan.
   static Future<void> prayer(BuildContext context) =>
