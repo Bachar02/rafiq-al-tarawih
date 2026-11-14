@@ -180,8 +180,9 @@ class _DhikrListScreenState extends ConsumerState<DhikrListScreen> {
   }
 }
 
-/// One dhikr: its words (and the Quran it recites), how or when to say it,
-/// its meaning in the interface language, who reports it, and its counter.
+/// One dhikr: its words (and the Quran it recites), how they are said in
+/// Latin letters (outside Arabic), how or when to say it, its meaning in the
+/// interface language, who reports it, and its counter.
 /// The whole card counts; once said enough it rests in `ink-secondary`.
 class DhikrCard extends ConsumerWidget {
   const DhikrCard({super.key, required this.dhikr, required this.said, required this.onCount});
@@ -205,6 +206,7 @@ class DhikrCard extends ConsumerWidget {
     final caption = RubricText.caption.copyWith(color: c.inkSecondary);
     final note = dhikr.note(language);
     final meaning = dhikr.meaning(language);
+    final latin = dhikr.transliteration(language);
     final sources = sourcesLabel(l, ref.watch(adhkarProvider).sourcesOf(dhikr, language));
     return Semantics(
       onTapHint: done ? null : l.hintDhikrCount,
@@ -228,6 +230,15 @@ class DhikrCard extends ConsumerWidget {
                     textScaler: TextScaler.noScaling,
                     style: RubricText.dhikr.copyWith(fontSize: fontSize, color: ink),
                   ),
+                // How to say them, for whoever cannot read the Arabic script.
+                if (latin != null) ...[
+                  const SizedBox(height: RubricSpace.s2),
+                  Text(
+                    latin,
+                    textDirection: TextDirection.ltr,
+                    style: RubricText.label.copyWith(color: ink, fontStyle: FontStyle.italic),
+                  ),
+                ],
                 // The meaning right under the words it explains, before any
                 // Quran (whose meaning is the translation's).
                 if (meaning != null) ...[

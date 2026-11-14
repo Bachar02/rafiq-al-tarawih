@@ -18,6 +18,7 @@ import '../data/reading_store.dart';
 import '../data/settings.dart';
 import '../data/study_text.dart';
 import '../data/surah_names.dart';
+import '../data/taraweeh_ledger.dart';
 import '../l10n/l10n.dart';
 import '../features/adhkar/adhkar_controller.dart';
 import '../features/adhkar/dhikr_reminders.dart';
@@ -139,6 +140,17 @@ final readingStatsProvider = Provider<ReadingStats>(
   ),
 );
 
+/// Where to continue reading (see [resumeVerse]): what the reading reminder
+/// names and opens, and where the khatm's Continue goes.
+final resumeVerseProvider = Provider<int>(
+  (ref) => resumeVerse(
+    ref.watch(quranProvider),
+    position: ref.watch(readingPositionProvider),
+    khatm: ref.watch(khatmProvider.select((b) => b.active)),
+    uncounted: ref.watch(readingSessionProvider.select((s) => s.pending)).days.values.expand((pages) => pages),
+  ),
+);
+
 /// Keeps the scheduled daily reminders in step with the app.
 final reminderSyncProvider = Provider<ReminderSync>(ReminderSync.new);
 
@@ -235,6 +247,10 @@ final healthCheckerProvider = Provider<HealthChecker>((ref) => checkServerHealth
 
 final listenControllerProvider = NotifierProvider<ListenController, ListenState>(ListenController.new);
 
-/// Where Taraweeh last got to (independent of the reading position).
+/// Taraweeh night by night (independent of the reading position).
+final taraweehLedgerProvider =
+    NotifierProvider<TaraweehProgressController, TaraweehLedger>(TaraweehProgressController.new);
+
+/// Where Taraweeh stopped, as the ledger infers it (or the user set it).
 final taraweehPositionProvider =
-    NotifierProvider<TaraweehPositionController, SavedPosition?>(TaraweehPositionController.new);
+    Provider<TaraweehProgress?>((ref) => ref.watch(taraweehLedgerProvider).progress(ref.watch(quranProvider)));

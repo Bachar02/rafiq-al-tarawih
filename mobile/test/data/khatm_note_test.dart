@@ -6,6 +6,8 @@ import 'package:rafiq/data/note.dart';
 import 'package:rafiq/data/reading_store.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../support/fakes.dart' show loadQuran;
+
 void main() {
   final nov1 = DateTime(2026, 11, 1);
   DateTime day(int n) => DateTime(2026, 11, n);
@@ -74,6 +76,14 @@ void main() {
       expect(p.nextPage, isNull);
     });
 
+    test('pages read but not counted yet move the next page on, not the plan', () {
+      final p = plan().reading(nov1, range(1, 10));
+      expect(p.nextPageCounting(range(11, 13)), 14);
+      expect(p.nextPageCounting([300]), 11, reason: 'a page elsewhere fills no gap');
+      expect(p.nextPage, 11);
+      expect(p.read, 10);
+    });
+
     test('a 365-day plan keeps every page, whatever the reading log forgets', () {
       var p = KhatmPlan(startedOn: DateTime(2026, 1, 1), endsOn: DateTime(2026, 12, 31), startPage: 1);
       expect(p.length, 365);
@@ -128,6 +138,35 @@ void main() {
       }, onDropped: () => dropped = true)!;
       expect(p.pages.keys, [1, 2]);
       expect(dropped, isTrue);
+    });
+  });
+
+  group('where to continue', () {
+    final quran = loadQuran();
+    final p = plan().reading(nov1, range(1, 10));
+    int first(int page) => quran.pages.start(page);
+
+    test('the khatm\'s next page, from its first ayah, wherever the reader is', () {
+      expect(resumeVerse(quran, position: first(300), khatm: p), first(11));
+      expect(resumeVerse(quran, position: first(5), khatm: p), first(11));
+    });
+
+    test('stopped in the middle of that page: that very ayah', () {
+      final mid = first(11) + 2;
+      expect(quran.pageOf(mid), 11);
+      expect(resumeVerse(quran, position: mid, khatm: p), mid);
+    });
+
+    test('pages read but not counted yet: after them', () {
+      final mid = first(13) + 1;
+      expect(quran.pageOf(mid), 13);
+      expect(resumeVerse(quran, position: mid, khatm: p, uncounted: range(11, 12)), mid);
+      expect(resumeVerse(quran, position: first(400), khatm: p, uncounted: range(11, 12)), first(13));
+    });
+
+    test('no khatm, or every page read: the reader\'s place', () {
+      expect(resumeVerse(quran, position: 1234), 1234);
+      expect(resumeVerse(quran, position: 1234, khatm: p, uncounted: range(11, 604)), 1234);
     });
   });
 

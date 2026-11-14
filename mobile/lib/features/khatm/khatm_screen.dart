@@ -222,7 +222,9 @@ class _ActivePlan extends ConsumerWidget {
     final c = context.colors;
     final quran = ref.watch(quranProvider);
     final today = dateOnly(ref.read(clockProvider)());
-    final next = plan.nextPage ?? plan.startPage;
+    // Where the user left off: the khatm's next page, at the ayah the reader
+    // stopped on if it is on that page.
+    final resume = ref.watch(resumeVerseProvider);
     final pending = ref.watch(readingSessionProvider.select((s) => s.pending));
 
     return Column(
@@ -276,13 +278,11 @@ class _ActivePlan extends ConsumerWidget {
         FilledButton.icon(
           onPressed: () {
             // Back from the reader returns here, over the tab it came from.
-            ref
-                .read(readerRequestsProvider.notifier)
-                .open(quran.pages.start(next), from: KhatmOrigin(ref.read(homeTabProvider)));
+            ref.read(readerRequestsProvider.notifier).open(resume, from: KhatmOrigin(ref.read(homeTabProvider)));
             Navigator.of(context).popUntil((route) => route.isFirst);
           },
           icon: const Icon(Icons.menu_book_outlined, size: 20),
-          label: Text(l.khatmContinue(next)),
+          label: Text(l.khatmContinue(quran.pageOf(resume))),
         ),
         const SizedBox(height: RubricSpace.s2),
         OutlinedButton.icon(

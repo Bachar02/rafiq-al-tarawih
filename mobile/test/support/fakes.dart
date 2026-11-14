@@ -22,6 +22,7 @@ import 'package:rafiq/data/quran.dart';
 import 'package:rafiq/data/reading_store.dart';
 import 'package:rafiq/data/settings.dart';
 import 'package:rafiq/data/study_text.dart';
+import 'package:rafiq/data/taraweeh_ledger.dart';
 import 'package:rafiq/data/surah_names.dart';
 import 'package:rafiq/services/location.dart';
 import 'package:rafiq/services/reminders.dart';
@@ -136,9 +137,9 @@ class FakeReminders implements Reminders {
   List<Reminder> scheduled = const [];
   String? channel;
 
-  /// Dhikr reminders.
+  /// Dhikr reminders: the rule the phone was last given.
   int dhikrReplaced = 0;
-  List<Reminder> dhikr = const [];
+  DhikrPlan dhikr = DhikrPlan.off;
   String? dhikrChannel;
 
   /// The adhans.
@@ -160,7 +161,9 @@ class FakeReminders implements Reminders {
   bool onScreen = false;
   int onScreenAsked = 0;
   bool grantOnScreen = true;
-  final dhikrShown = <Reminder>[];
+
+  /// "Show one now": the plan each was drawn from.
+  final dhikrShown = <DhikrPlan>[];
   String? closeLabel;
 
   void Function(String payload)? _onOpen;
@@ -179,22 +182,24 @@ class FakeReminders implements Reminders {
     List<Reminder> reminders, {
     required String channelName,
     ReminderKind kind = ReminderKind.reading,
-    String closeLabel = '',
   }) async {
     switch (kind) {
       case ReminderKind.reading:
         replaced++;
         scheduled = List.of(reminders);
         channel = channelName;
-      case ReminderKind.dhikr:
-        dhikrReplaced++;
-        dhikr = List.of(reminders);
-        dhikrChannel = channelName;
-        this.closeLabel = closeLabel;
       case ReminderKind.adhan:
         adhanReplaced++;
         adhan = List.of(reminders);
     }
+  }
+
+  @override
+  Future<void> scheduleDhikr(DhikrPlan plan, {required String channelName, required String closeLabel}) async {
+    dhikrReplaced++;
+    dhikr = plan;
+    dhikrChannel = channelName;
+    this.closeLabel = closeLabel;
   }
 
   @override
@@ -224,8 +229,8 @@ class FakeReminders implements Reminders {
   }
 
   @override
-  Future<void> showDhikr(Reminder reminder, {required String channelName, required String closeLabel}) async =>
-      dhikrShown.add(reminder);
+  Future<void> showDhikr(DhikrPlan plan, {required String channelName, required String closeLabel}) async =>
+      dhikrShown.add(plan);
 
   @override
   Future<void> onOpen(void Function(String payload) handler) async => _onOpen = handler;
@@ -279,7 +284,9 @@ class FailingStore implements ReadingStore {
   @override
   SavedPosition? taraweehPosition() => _inner.taraweehPosition();
   @override
-  Future<bool> saveTaraweehPosition(SavedPosition p) async => !failing && await _inner.saveTaraweehPosition(p);
+  TaraweehLedger? taraweehLedger() => _inner.taraweehLedger();
+  @override
+  Future<bool> saveTaraweehLedger(TaraweehLedger l) async => !failing && await _inner.saveTaraweehLedger(l);
   @override
   List<Bookmark> bookmarks() => _inner.bookmarks();
   @override
@@ -362,7 +369,10 @@ class Harness {
   ReadingStore? readingStore;
 
   /// The time the app sees (change it to cross midnight).
-  DateTime now = DateTime(2026, 11, 4, 20);
+  DateTime now = defaultNow;
+
+  /// What [now] starts at: an evening, 20:00.
+  static final defaultNow = DateTime(2026, 11, 4, 20);
 
   FakeEngine get engine => engines.last;
 

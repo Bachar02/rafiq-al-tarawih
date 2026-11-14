@@ -541,6 +541,10 @@
       {
         "id": "an01",
         "ar": "سُبْحَانَ اللَّهِ وَبِحَمْدِهِ",
+        "translit": {
+          "en": "Subhan Allahi wa bihamdihi",
+          "fr": "Soubhana Allahi wa bihamdihi"
+        },
         "count": 100,
         "meaning": {"en": "Glory be to Allah, and praise be to Him.", "fr": "Gloire et louange à Allah."},
         "source": ["bukhari", "muslim"]
@@ -548,6 +552,10 @@
       {
         "id": "an02",
         "ar": "سُبْحَانَ اللَّهِ وَبِحَمْدِهِ، سُبْحَانَ اللَّهِ الْعَظِيمِ",
+        "translit": {
+          "en": "Subhan Allahi wa bihamdihi, subhan Allahil-’Azim",
+          "fr": "Soubhana Allahi wa bihamdihi, soubhana Allahil-’Azim"
+        },
         "count": 1,
         "meaning": {
           "en": "Glory be to Allah, and praise be to Him; glory be to Allah, the Almighty.",
@@ -558,6 +566,10 @@
       {
         "id": "an03",
         "ar": "سُبْحَانَ اللَّهِ، وَالْحَمْدُ لِلَّهِ، وَلَا إِلَهَ إِلَّا اللَّهُ، وَاللَّهُ أَكْبَرُ",
+        "translit": {
+          "en": "Subhan Allah, walhamdu lillah, wa la ilaha illallah, wallahu akbar",
+          "fr": "Soubhana Allah, wal-hamdou lillah, wa la ilaha illa Allah, wa Allahou akbar"
+        },
         "count": 1,
         "meaning": {
           "en": "Glory be to Allah, praise be to Allah, there is no god but Allah, and Allah is the Greatest.",
@@ -568,6 +580,10 @@
       {
         "id": "an04",
         "ar": "لَا حَوْلَ وَلَا قُوَّةَ إِلَّا بِاللَّهِ",
+        "translit": {
+          "en": "La hawla wa la quwwata illa billah",
+          "fr": "La hawla wa la qouwwata illa billah"
+        },
         "count": 1,
         "meaning": {
           "en": "There is no might and no power except with Allah.",
@@ -578,6 +594,10 @@
       {
         "id": "an05",
         "ar": "لَا إِلَهَ إِلَّا اللَّهُ وَحْدَهُ لَا شَرِيكَ لَهُ، لَهُ الْمُلْكُ وَلَهُ الْحَمْدُ، وَهُوَ عَلَى كُلِّ شَيْءٍ قَدِيرٌ",
+        "translit": {
+          "en": "La ilaha illallahu wahdahu la sharika lah, lahul-mulku wa lahul-hamd, wa huwa ’ala kulli shay’in qadir",
+          "fr": "La ilaha illa Allahou wahdahou la charika lah, lahoul-moulkou wa lahoul-hamd, wa houwa ’ala koulli chay’in qadir"
+        },
         "count": 10,
         "meaning": {
           "en": "There is no god but Allah alone, with no partner. His is the kingdom and His is the praise, and He has power over all things.",
@@ -588,6 +608,10 @@
       {
         "id": "an06",
         "ar": "سُبْحَانَ اللَّهِ",
+        "translit": {
+          "en": "Subhan Allah",
+          "fr": "Soubhana Allah"
+        },
         "count": 100,
         "meaning": {"en": "Glory be to Allah.", "fr": "Gloire à Allah."},
         "source": ["muslim"]
@@ -595,6 +619,10 @@
       {
         "id": "an07",
         "ar": "سُبْحَانَ اللَّهِ الْعَظِيمِ وَبِحَمْدِهِ",
+        "translit": {
+          "en": "Subhan Allahil-’Azimi wa bihamdihi",
+          "fr": "Soubhana Allahil-’Azimi wa bihamdihi"
+        },
         "count": 1,
         "meaning": {
           "en": "Glory be to Allah, the Almighty, and praise be to Him.",
@@ -605,6 +633,10 @@
       {
         "id": "an08",
         "ar": "أَسْتَغْفِرُ اللَّهَ وَأَتُوبُ إِلَيْهِ",
+        "translit": {
+          "en": "Astaghfirullaha wa atubu ilayh",
+          "fr": "Astaghfiroullaha wa atoubou ilayh"
+        },
         "count": 1,
         "meaning": {
           "en": "I ask Allah’s forgiveness and I turn to Him in repentance.",
@@ -615,6 +647,10 @@
       {
         "id": "an09",
         "ar": "اللَّهُمَّ صَلِّ وَسَلِّمْ عَلَى نَبِيِّنَا مُحَمَّدٍ",
+        "translit": {
+          "en": "Allahumma salli wa sallim ’ala nabiyyina Muhammad",
+          "fr": "Allahoumma salli wa sallim ’ala nabiyyina Mouhammad"
+        },
         "count": 1,
         "meaning": {
           "en": "O Allah, send blessings and peace upon our Prophet Muhammad.",
@@ -625,6 +661,10 @@
       {
         "id": "an10",
         "ar": "لَا إِلَهَ إِلَّا اللَّهُ",
+        "translit": {
+          "en": "La ilaha illallah",
+          "fr": "La ilaha illa Allah"
+        },
         "count": 1,
         "meaning": {"en": "There is no god but Allah.", "fr": "Il n’y a de dieu qu’Allah."},
         "source": ["tirmidhi", "ibn_majah"]
@@ -632,6 +672,10 @@
       {
         "id": "an11",
         "ar": "الْحَمْدُ لِلَّهِ",
+        "translit": {
+          "en": "Alhamdu lillah",
+          "fr": "Al-hamdou lillah"
+        },
         "count": 1,
         "meaning": {"en": "Praise be to Allah.", "fr": "Louange à Allah."},
         "source": ["tirmidhi", "ibn_majah"]
@@ -639,6 +683,10 @@
       {
         "id": "an12",
         "ar": "لَا إِلَهَ إِلَّا اللَّهُ وَحْدَهُ لَا شَرِيكَ لَهُ، اللَّهُ أَكْبَرُ كَبِيرًا، وَالْحَمْدُ لِلَّهِ كَثِيرًا، سُبْحَانَ اللَّهِ رَبِّ الْعَالَمِينَ، لَا حَوْلَ وَلَا قُوَّةَ إِلَّا بِاللَّهِ الْعَزِيزِ الْحَكِيمِ",
+        "translit": {
+          "en": "La ilaha illallahu wahdahu la sharika lah, Allahu akbaru kabira, walhamdu lillahi kathira, subhan Allahi Rabbil-’alamin, la hawla wa la quwwata illa billahil-’Azizil-Hakim",
+          "fr": "La ilaha illa Allahou wahdahou la charika lah, Allahou akbarou kabira, wal-hamdou lillahi kathira, soubhana Allahi Rabbil-’alamin, la hawla wa la qouwwata illa billahil-’Azizil-Hakim"
+        },
         "count": 1,
         "meaning": {
           "en": "There is no god but Allah alone, with no partner. Allah is truly the Greatest, much praise be to Allah, glory be to Allah, Lord of the worlds. There is no might and no power except with Allah, the Mighty, the Wise.",
@@ -649,6 +697,10 @@
       {
         "id": "an13",
         "ar": "اللَّهُمَّ اغْفِرْ لِي، وَارْحَمْنِي، وَاهْدِنِي، وَعَافِنِي، وَارْزُقْنِي",
+        "translit": {
+          "en": "Allahummaghfir li, warhamni, wahdini, wa ’afini, warzuqni",
+          "fr": "Allahoumma-ghfir li, warhamni, wahdini, wa ’afini, warzouqni"
+        },
         "count": 1,
         "meaning": {
           "en": "O Allah, forgive me, have mercy on me, guide me, grant me well-being and provide for me.",
@@ -659,6 +711,10 @@
       {
         "id": "an14",
         "ar": "يَا مُقَلِّبَ الْقُلُوبِ، ثَبِّتْ قَلْبِي عَلَى دِينِكَ",
+        "translit": {
+          "en": "Ya Muqallibal-qulub, thabbit qalbi ’ala dinik",
+          "fr": "Ya Mouqallibal-qouloub, thabbit qalbi ’ala dinik"
+        },
         "count": 1,
         "meaning": {
           "en": "O Turner of hearts, keep my heart firm on Your religion.",
@@ -669,6 +725,10 @@
       {
         "id": "an15",
         "ar": "حَسْبُنَا اللَّهُ وَنِعْمَ الْوَكِيلُ",
+        "translit": {
+          "en": "Hasbunallahu wa ni’mal-wakil",
+          "fr": "Hasbouna Allahou wa ni’mal-wakil"
+        },
         "count": 1,
         "meaning": {
           "en": "Allah is enough for us, and He is the best to rely on.",
@@ -679,6 +739,10 @@
       {
         "id": "an16",
         "ar": "سُبْحَانَ اللَّهِ وَبِحَمْدِهِ، عَدَدَ خَلْقِهِ، وَرِضَا نَفْسِهِ، وَزِنَةَ عَرْشِهِ، وَمِدَادَ كَلِمَاتِهِ",
+        "translit": {
+          "en": "Subhan Allahi wa bihamdihi, ’adada khalqihi, wa rida nafsihi, wa zinata ’arshihi, wa midada kalimatihi",
+          "fr": "Soubhana Allahi wa bihamdihi, ’adada khalqihi, wa rida nafsihi, wa zinata ’archihi, wa midada kalimatihi"
+        },
         "count": 1,
         "meaning": {
           "en": "Glory be to Allah, and praise be to Him, as many times as the number of His creation, as much as pleases Him, as much as the weight of His Throne, and as much as the ink of His words.",

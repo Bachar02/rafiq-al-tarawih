@@ -77,10 +77,15 @@ class KhatmPlan {
   int todayTarget(DateTime today) => ((remaining + readOn(today)) / daysLeft(today)).ceil();
 
   /// The first unread page in reading order, or null when every page is read.
-  int? get nextPage {
+  int? get nextPage => nextPageCounting(const []);
+
+  /// [nextPage], counting [alsoRead] as read too: the pages the reader saw
+  /// that the user has not counted yet.
+  int? nextPageCounting(Iterable<int> alsoRead) {
+    final extra = alsoRead is Set<int> ? alsoRead : alsoRead.toSet();
     for (var i = 0; i < Quran.pageCount; i++) {
       final page = (startPage - 1 + i) % Quran.pageCount + 1;
-      if (!pages.containsKey(page)) return page;
+      if (!pages.containsKey(page) && !extra.contains(page)) return page;
     }
     return null;
   }
@@ -162,6 +167,19 @@ class KhatmPlan {
 
   @override
   int get hashCode => Object.hash(startedOn, endsOn, startPage, pages.length);
+}
+
+/// Where to continue reading, as one ayah: the reading reminder names it,
+/// tapping the reminder opens it, and the khatm's Continue goes there.
+///
+/// In a [khatm], its next page (pages read but not yet counted, [uncounted],
+/// count as read): the ayah the reader stopped at ([position]) if it is on
+/// that page, since the user left in the middle of it, else the page's
+/// first ayah. Without a khatm, or with every page read, the reader's place.
+int resumeVerse(Quran quran, {required int position, KhatmPlan? khatm, Iterable<int> uncounted = const []}) {
+  final page = khatm?.nextPageCounting(uncounted);
+  if (page == null) return position;
+  return quran.pageOf(position) == page ? position : quran.pages.start(page);
 }
 
 /// A completed khatm.

@@ -9,6 +9,7 @@ import 'package:rafiq/core/text/quran_display.dart';
 import 'package:rafiq/core/text/word_map.dart';
 import 'package:rafiq/features/listen/listen_controller.dart';
 import 'package:rafiq/features/listen/listen_state.dart';
+import 'package:rafiq/features/listen/taraweeh_position.dart';
 import 'package:rafiq/features/listen/word_highlight.dart';
 import 'package:rafiq/l10n/l10n.dart';
 
@@ -114,6 +115,8 @@ void main() {
       expect(state().liveWord, isNotNull, reason: 'fresh for 1.5 s from when its audio was heard');
       await tester.pump(const Duration(milliseconds: 200));
       expect(state().liveWord, isNull, reason: 'gone 1.5 s after (1.2 s after arriving, 0.3 s transcribing)');
+      // The Taraweeh ledger saves what was heard a few seconds later.
+      await tester.pump(TaraweehProgressController.saveDelay);
     });
 
     test('the threshold is a developer setting', () async {

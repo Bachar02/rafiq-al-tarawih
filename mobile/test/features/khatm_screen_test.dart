@@ -9,6 +9,7 @@ import 'package:rafiq/data/khatm.dart';
 import 'package:rafiq/data/reading_store.dart';
 import 'package:rafiq/features/khatm/khatm_screen.dart';
 import 'package:rafiq/features/reader/reader_screen.dart';
+import 'package:rafiq/services/reminders.dart' show readingPayload;
 
 import '../support/app_nav.dart';
 import '../support/fakes.dart';
@@ -117,6 +118,42 @@ void main() {
     await tapText(tester, 'Continue khatm (page 11)');
     expect(find.byType(KhatmScreen), findsNothing);
     expect(quran.pageOf(container.read(readingPositionProvider)), 11);
+  });
+
+  /// The reader left at [verseId].
+  Map<String, Object> readerAt(int verseId) => {
+        PrefsReadingStore.readingKey:
+            jsonEncode(SavedPosition(verseId: verseId, savedAt: DateTime(2026, 11, 3)).toJson()),
+      };
+
+  testWidgets('a tapped reading reminder opens the khatm where it stopped', (tester) async {
+    final container = await launch(tester, prefs: {
+      'reminder_on': true,
+      ...khatmPrefs(planWith(read: pages(1, 10))),
+      ...readerAt(quran.pages.start(300)), // the reader was elsewhere since
+    });
+    await tester.pumpAndSettle();
+    expect(h.reminders.scheduled.first.body, endsWith('Continue at Al-Baqarah, page 11.'));
+    await openPlanner(tester); // a screen over the reader: the tap closes it
+    h.reminders.tap(readingPayload);
+    await tester.pumpAndSettle();
+    expect(find.byType(KhatmScreen), findsNothing);
+    expect(container.read(readingPositionProvider), quran.pages.start(11));
+  });
+
+  testWidgets('stopped in the middle of the page: the reminder and Continue go back to that ayah', (tester) async {
+    final mid = quran.pages.start(11) + 2;
+    final container = await launch(tester, prefs: {...khatmPrefs(planWith(read: pages(1, 10))), ...readerAt(mid)});
+    await tester.pumpAndSettle();
+    await tapNav(tester, 'Surahs');
+    await tester.pumpAndSettle();
+    h.reminders.tap(readingPayload);
+    await tester.pumpAndSettle();
+    expect(find.byType(ReaderScreen).hitTestable(), findsOneWidget, reason: 'the Read tab');
+    expect(container.read(readingPositionProvider), mid);
+    await openPlanner(tester);
+    await tapText(tester, 'Continue khatm (page 11)');
+    expect(container.read(readingPositionProvider), mid);
   });
 
   testWidgets('change the end date', (tester) async {

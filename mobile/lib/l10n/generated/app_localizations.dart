@@ -879,6 +879,24 @@ abstract class AppLocalizations {
   /// **'Where Taraweeh ended'**
   String get whereTaraweehEnded;
 
+  /// No description provided for @taraweehEndedHere.
+  ///
+  /// In en, this message translates to:
+  /// **'Taraweeh ended here'**
+  String get taraweehEndedHere;
+
+  /// No description provided for @taraweehEndUnknown.
+  ///
+  /// In en, this message translates to:
+  /// **'Not clear from what was heard. Tap an ayah to set it.'**
+  String get taraweehEndUnknown;
+
+  /// No description provided for @taraweehEndSet.
+  ///
+  /// In en, this message translates to:
+  /// **'Taraweeh ended at {place}'**
+  String taraweehEndSet(String place);
+
   /// No description provided for @today.
   ///
   /// In en, this message translates to:

@@ -62,6 +62,7 @@ class Dhikr {
     required this.notes,
     required this.meanings,
     required this.sources,
+    this.transliterations = const {},
   });
 
   /// Unique within its collection; the morning and evening share theirs.
@@ -86,10 +87,19 @@ class Dhikr {
   /// Who reports it: keys of [Adhkar.sourceNames], e.g. `bukhari`.
   final List<String> sources;
 
+  /// How [arabic] is said, in Latin letters, by language (`en`, `fr`): for
+  /// someone who cannot read the Arabic script.
+  final Map<String, String> transliterations;
+
   String? note(String languageCode) => notes[languageCode] ?? notes['en'];
 
   /// Null in Arabic (the words are the text) and for Quran-only adhkar.
   String? meaning(String languageCode) => languageCode == 'ar' ? null : meanings[languageCode] ?? meanings['en'];
+
+  /// [arabic] in Latin letters, the way [languageCode] spells sounds. Null
+  /// in Arabic (the words are the text) and where there is none.
+  String? transliteration(String languageCode) =>
+      languageCode == 'ar' ? null : transliterations[languageCode] ?? transliterations['en'];
 
   /// Short enough to stand alone in a notification: words, no Quran.
   bool get standsAlone => arabic != null && passages.isEmpty;
@@ -109,7 +119,7 @@ class Adhkar {
 
   List<Dhikr> of(AdhkarCollection collection) => _collections[collection]!;
 
-  /// What the dhikr notification picks from: the short adhkar for any time.
+  /// What the dhikr reminders pick from: the short adhkar for any time.
   List<Dhikr> get forNotifications => [
         for (final d in of(AdhkarCollection.anytime))
           if (d.standsAlone) d
@@ -163,6 +173,8 @@ class Adhkar {
         notes: texts(j['note']),
         meanings: texts(variant?['meaning'] ?? j['meaning']),
         sources: List.unmodifiable(keys),
+        // Evening words of their own have their own: the morning's would not match.
+        transliterations: texts(variant?['ar'] != null ? variant!['translit'] : j['translit']),
       );
     }
 

@@ -384,6 +384,16 @@
     }
   },
   "whereTaraweehEnded": "Where Taraweeh ended",
+  "taraweehEndedHere": "Taraweeh ended here",
+  "taraweehEndUnknown": "Not clear from what was heard. Tap an ayah to set it.",
+  "taraweehEndSet": "Taraweeh ended at {place}",
+  "@taraweehEndSet": {
+    "placeholders": {
+      "place": {
+        "type": "String"
+      }
+    }
+  },
   "today": "today",
   "yesterday": "yesterday",
   "daysAgo": "{days, plural, =1{1 day ago} other{{days} days ago}}",

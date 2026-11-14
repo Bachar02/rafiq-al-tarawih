@@ -76,6 +76,18 @@ void main() {
       }
     });
 
+    test('every dhikr the reminders bring says how it is said, in English and French spelling', () {
+      for (final d in adhkar.forNotifications) {
+        expect(d.transliterations.keys, containsAll(['en', 'fr']), reason: d.id);
+        expect(d.transliteration('en'), matches(RegExp(r'^[A-Za-z’ ,-]+$')), reason: '${d.id}: Latin letters');
+        expect(d.transliteration('ar'), isNull, reason: 'the Arabic is its own text');
+      }
+      final istighfar = adhkar.of(AdhkarCollection.anytime).firstWhere((d) => d.id == 'an08');
+      expect(istighfar.transliteration('en'), 'Astaghfirullaha wa atubu ilayh');
+      expect(istighfar.transliteration('fr'), 'Astaghfiroullaha wa atoubou ilayh');
+      expect(istighfar.transliteration('de'), istighfar.transliteration('en'), reason: 'English spelling otherwise');
+    });
+
     test('the tasbih after prayer is 33 each, before sleep 33, 33 and 34', () {
       int count(AdhkarCollection c, String id) => adhkar.of(c).firstWhere((d) => d.id == id).count;
       expect([

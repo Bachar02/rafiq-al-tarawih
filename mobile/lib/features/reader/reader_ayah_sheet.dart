@@ -9,7 +9,7 @@ import '../../data/quran.dart';
 import '../../data/surah_names.dart';
 import '../../l10n/l10n.dart';
 
-enum ReaderAyahAction { bookmark, removeBookmark, note, share, copy, translation, tafsir }
+enum ReaderAyahAction { bookmark, removeBookmark, note, share, copy, translation, tafsir, taraweehEnded }
 
 /// The reader's actions on one ayah (a tap on its text).
 Future<ReaderAyahAction?> showReaderAyahSheet(
@@ -18,6 +18,7 @@ Future<ReaderAyahAction?> showReaderAyahSheet(
   required SurahNames names,
   required bool bookmarked,
   required bool noted,
+  bool offerTaraweehEnd = false,
 }) =>
     showRubricSheet<ReaderAyahAction>(
       context,
@@ -71,6 +72,14 @@ Future<ReaderAyahAction?> showReaderAyahSheet(
               icon: const Icon(Icons.copy_outlined, size: 20),
               label: Text(context.l10n.copyAyah),
             ),
+            // Once Taraweeh has been followed: correct where it stopped,
+            // afterwards (never asked during prayer).
+            if (offerTaraweehEnd)
+              TextButton.icon(
+                onPressed: () => Navigator.pop(context, ReaderAyahAction.taraweehEnded),
+                icon: const Icon(Icons.mic_none, size: 20),
+                label: Text(context.l10n.taraweehEndedHere),
+              ),
           ],
         ),
       ),

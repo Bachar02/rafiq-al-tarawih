@@ -479,6 +479,17 @@ class AppLocalizationsFr extends AppLocalizations {
   String get whereTaraweehEnded => 'Là où les Tarawih se sont arrêtées';
 
   @override
+  String get taraweehEndedHere => 'Les Tarawih se sont arrêtées ici';
+
+  @override
+  String get taraweehEndUnknown => 'Pas clair d’après ce qui a été entendu. Touchez un verset pour l’indiquer.';
+
+  @override
+  String taraweehEndSet(String place) {
+    return 'Les Tarawih se sont arrêtées à $place';
+  }
+
+  @override
   String get today => 'aujourd’hui';
 
   @override

@@ -274,7 +274,7 @@ void main() {
       expect(adhan.last.at.difference(adhan[adhan.length - 2].at), adhanRenewAfter);
       expect(adhan.last.at.day, 9, reason: '9 December, the thirtieth day');
       expect(h.reminders.scheduled, isEmpty, reason: 'the reading reminder is apart');
-      expect(h.reminders.dhikr, isEmpty);
+      expect(h.reminders.dhikr.isOff, isTrue);
     });
 
     testWidgets('each prayer its own way: vibration for Fajr, nothing for Asr', (tester) async {
